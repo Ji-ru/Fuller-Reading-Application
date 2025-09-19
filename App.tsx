@@ -1,103 +1,39 @@
-import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity
-} from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import Video from 'react-native-video';
 
-(Text as any).defaultProps = (Text as any).defaultProps || {};
-(Text as any).defaultProps.style = { fontFamily: 'Satoshi Variable' };
+// Screens
+import LoginScreen from './components/Screens/LoginScreen';
+import LoadingScreen from './components/Screens/LoadingScreen';
+import UserHomeScreen from './components/Screens/UserHomeScreen';
+import SignUpOneScreen from './components/Screens/SignUpOneScreen';
+import SignUpTwoScreen from './components/Screens/SignUpTwoScreen';
+import SignUpCompletedScreen from './components/Screens/SignUpCompletedScreen';
+import PageSelectionScreen from './components/Screens/PageSelectionScreen';
+import ReadingActivityScreen from './components/Screens/ReadingActivityScreen';
+import MiscuesReportsScreen from './components/Screens/MiscuesReportsScreen';
 
-(TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
-(TextInput as any).defaultProps.style = { fontFamily: 'Satoshi Variable' };
+const Stack = createNativeStackNavigator();
 
 function App() {
   return (
     <SafeAreaProvider>
-      <AppContent />
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Loading" component={LoadingScreen} />
+          <Stack.Screen name="UserHome" component={UserHomeScreen} />
+          <Stack.Screen name="SignUpOne" component={SignUpOneScreen} />
+          <Stack.Screen name="SignUpTwo" component={SignUpTwoScreen} />
+          <Stack.Screen name="SignUpCompleted" component={SignUpCompletedScreen} />
+          <Stack.Screen name="PasageSelection" component={PageSelectionScreen} />
+          <Stack.Screen name="ReadingActivity" component={ReadingActivityScreen} />
+          <Stack.Screen name="MiscuesReports" component={MiscuesReportsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }
-
-function AppContent() {
-  return (
-    <View style={styles.container}>
-      <Video
-        style={styles.video}
-        source={require('./assets/videos/cisc_logo_animated.mp4')}
-        repeat={true}
-        resizeMode="cover"
-      />
-      <Text style={styles.label}>Email Address</Text>
-      <TextInput style={styles.textinput} placeholder="juan@gmail.com" />
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.textinput}
-        secureTextEntry
-        placeholder="**********"
-      />
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ECFBFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  video: {
-    width: 300,
-    height: 300,
-    marginBottom: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  label: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    marginStart: 45,
-    marginBottom: 5,
-    fontWeight: 'medium',
-    fontSize: 15,
-    fontFamily: 'Satoshi Variable',
-  },
-  textinput: {
-    width: '100%',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: 'white',
-
-    // Shadows
-    elevation: 5,
-
-    // Dimension
-    maxWidth: 290,
-    maxHeight: 40,
-  },
-  button: {
-    backgroundColor: '#2CA96A',
-    borderRadius: 10,
-    width: 240,
-    height: 40,
-    elevation: 5,
-    alignItems: 'center',
-    textAlign: 'center',
-  },
-  buttonText: {
-    color: '#FFFF',
-    fontSize: 15,
-    fontWeight: 'black'
-  },
-});
 
 export default App;
