@@ -1,0 +1,74 @@
+{
+  "Passages": [
+    {
+      "title": "Hickory Dickory Dock",
+      "author": "Mother Goose",
+      "category": "nursery rhyme",
+      "image": "Hickory",
+      "text": "Hickory dickory dock.\nThe mouse ran up the clock.\nThe clock struck one,\nThe mouse ran down,\nHickory dickory dock."
+    },
+    {
+      "title": "The Itsy Bitsy Spider",
+      "author": "Traditional Nursery Rhyme",
+      "category": "nursery rhyme",
+      "image": " ",
+      "text": "The itsy bitsy spider climbed up the waterspout.\nDown came the rain and washed the spider out.\nOut came the sun and dried up all the rain,\nand the itsy bitsy spider climbed up the spout again."
+    },
+    {
+      "title": "Twinkle, Twinkle, Little Star",
+      "author": "Jane Taylor",
+      "category": "nursery rhyme",
+      "image": " ",
+      "text": "Twinkle, twinkle, little star,\nHow I wonder what you are!\nUp above the world so high,\nLike a diamond in the sky."
+    },
+    {
+      "title": "Humpty Dumpty",
+      "author": "Mother Goose",
+      "category": "nursery rhyme",
+      "image": " ",
+      "text": "Humpty Dumpty sat on a wall,\nHumpty Dumpty had a great fall.\nAll the king's horses and all the king's men\nCouldn't put Humpty together again."
+    },
+    {
+      "title": "The Caterpillar",
+      "author": "Christina Rossetti",
+      "category": "poet",
+      "image": " ",
+      "text": "Brown and furry\nCaterpillar in a hurry,\nTake your walk\nTo the shady leaf, or stalk,\nOr what not,\nWhich may be the chosen spot.\nNo toad spy you,\nHovering bird of prey pass by you;"
+    },
+    {
+      "title": "Hey Diddle Diddle",
+      "author": "Mother Goose",
+      "category": "nursery rhyme",
+      "image": " ",
+      "text": "Hey diddle diddle,\nThe cat and the fiddle,\nThe cow jumped over the moon.\nThe little dog laughed to see such sport,\nAnd the dish ran away with the spoon."
+    },
+    {
+      "title": "At the Zoo",
+      "author": "William Makepeace Thackeray",
+      "category": "poet",
+      "image": " ",
+      "text": "Then I saw the monkeys—mercy, how unpleasantly they smelt!\nThen I saw the wolf, with wolves I have no wish to be acquainted.\nThen I saw the elephant a-waving of his trunk;\nThen I saw the monkeys—mercy, what a rubbish smell!"
+    },
+    {
+      "title": "Jack and Jill",
+      "author": "Mother Goose",
+      "category": "nursery rhyme",
+      "image": " ",
+      "text": "Jack and Jill went up the hill\nTo fetch a pail of water.\nJack fell down and broke his crown,\nAnd Jill came tumbling after."
+    },
+    {
+      "title": "The Rainbow",
+      "author": "Christina Rossetti",
+      "category": "poet",
+      "image": " ",
+      "text": "Boats sail on the rivers,\nAnd ships sail on the seas;\nBut clouds that sail across the sky\nAre prettier far than these."
+    },
+    {
+      "title": "Baa, Baa, Black Sheep",
+      "author": "Mother Goose",
+      "category": "nursery rhyme",
+      "image": " ",
+      "text": "Baa, baa, black sheep,\nHave you any wool?\nYes, sir, yes, sir,\nThree bags full;\nOne for the master,\nAnd one for the dame,\nAnd one for the little boy\nWho lives down the lane."
+    }
+  ]
+}

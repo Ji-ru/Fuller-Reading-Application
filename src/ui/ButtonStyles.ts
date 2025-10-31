@@ -1,0 +1,73 @@
+import { StyleSheet } from 'react-native';
+
+const buttons = StyleSheet.create({
+  nextPageButton: {
+    backgroundColor: '#2CA96A',
+    borderRadius: 5,
+    width: 320,
+    height: 40,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 350,
+    maxHeight: 40,
+    marginBottom: 10,
+    marginTop: 60,
+  },
+  nextPageText: {
+    color: '#FFFF',
+    fontSize: 16,
+    fontFamily: 'Satoshi-Black'
+  },
+  // CANCEL BUTTON
+  cancelButton: {
+    backgroundColor: '#ffff',
+    borderWidth: 0.5,
+    borderColor: '#FE5A59',
+    borderRadius: 5,
+    width: 320,
+    height: 40,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 350,
+    maxHeight: 40,
+  },
+  cancelText: {
+    color: '#FE5A59',
+    fontSize: 16,
+    fontFamily: 'Satoshi-Black'
+  },
+  // START READING BUTTON
+  startReadingButton: {
+    backgroundColor: '#2CA96A',
+    borderRadius: 5,
+    width: 320,
+    height: 40,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 350,
+    maxHeight: 40,
+    marginTop: 100,
+  },
+    // READING HISTORY BUTTON
+    readingHistoryButton: {
+    backgroundColor: '#2CA96A',
+    borderRadius: 5,
+    width: 320,
+    height: 40,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 350,
+    maxHeight: 40,
+    marginTop: 15,
+  },
+});
+
+export default buttons;
