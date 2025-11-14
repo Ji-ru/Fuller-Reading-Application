@@ -5,15 +5,15 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import {
   RootStackParamList,
   useNavigationHelper,
-} from '../../Functions/Buttons';
-import { Passage } from '../../Types/passage';
+} from '../../Controller/NavigationController';
+// import { Passage } from '../../Types/passage';
 import readingStyles from '../../ui/ReadingActivityStyles';
 import bubbles from '../../ui/BubblesDesign';
 import user from '../../ui/UserStyle';
 import selection from '../../ui/PassageSelectionStyles';
 import { API_KEY } from '@env';
 import { readFile } from 'react-native-fs';
-import { AudioPermissionService } from '../../Functions/Permissions';
+import { AudioPermissionService } from '../../Controller/PermissionsController';
 import AudioRecord from 'react-native-audio-record';
 
 type ReadingActivityScreenRouteProp = RouteProp<
@@ -346,6 +346,7 @@ export default function ReadingActivityScreenPage() {
     }
   };
 
+  
   // Add method to check the miscues omitted by the reader
   // This method will be used in miscureReport() method to display all the miscues
   const detectMiscues = () => {

@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import signup from '../../ui/SignUpStyles';
 import DatePicker from 'react-native-date-picker';
-import GradeLevelDropDownSelection from '../Buttons/GradeLevelSelectionButton';
-import { useNavigationHelper } from '../../Functions/Buttons';
+import GradeLevelDropDownSelection from '../../Components/Buttons/GradeLevelSelectionButton';
+import { useNavigationHelper } from '../../Controller/NavigationController';
 import {
   launchImageLibrary,
   launchCamera,
@@ -23,10 +23,17 @@ import buttons from '../../ui/ButtonStyles';
 export default function SignUpOneScreen() {
   // Navigation handlers
   // Add state of the Registration Steps using react hook
-  const { handleNextStep, handleCancelRegistration } = useNavigationHelper();
+  const { handleSignUpNavigationWithData, handleCancelRegistration } = useNavigationHelper();
 
   // current step - UNDER CONSTRUCTION!!
   const [currentStep, setCurrentStep] = useState(1);
+
+  // Personal Infomation States
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [gradeLevel, setGradeLevel] = useState(0);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   // Add code of date picker
   const [date, setDate] = useState(new Date());
@@ -42,8 +49,6 @@ export default function SignUpOneScreen() {
     setShowPicker(true);
   };
 
-  // Profile pricture state
-  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   // Handle profile picture selection
   const handleProfilePicChange = () => {
@@ -100,6 +105,7 @@ export default function SignUpOneScreen() {
       setProfileImage(response.assets[0].uri);
     }
   };
+
 
   return (
     <SafeAreaView style={signup.container}>
@@ -183,14 +189,14 @@ export default function SignUpOneScreen() {
           <Text style={signup.subLabel}>Personal Information</Text>
           {/* FIRST NAME */}
           <Text style={signup.textform}>First Name</Text>
-          <TextInput style={signup.textInputForm} placeholder="e.g Juan " />
+          <TextInput style={signup.textInputForm} placeholder="e.g Juan " value={firstName} onChangeText={setFirstName} />
           {/* MIDDLE NAME */}
           <Text style={signup.textform}>Middle Name</Text>
-          <TextInput style={signup.textInputForm} placeholder="e.g Marasigan" />
+          <TextInput style={signup.textInputForm} placeholder="e.g Marasigan" value={middleName} onChangeText={setMiddleName} />
 
           {/* LAST NAME */}
           <Text style={signup.textform}>Last Name</Text>
-          <TextInput style={signup.textInputForm} placeholder="e.g Campus" />
+          <TextInput style={signup.textInputForm} placeholder="e.g Campus" value={lastName} onChangeText={setLastName} />
 
           {/* DATE OF BIRTH */}
           <Text style={signup.textform}>Date of Birth</Text>
@@ -216,17 +222,25 @@ export default function SignUpOneScreen() {
             }}
             onCancel={() => setShowPicker(false)}
           />
-
           <Text style={signup.textform}>Grade Level</Text>
-          <GradeLevelDropDownSelection />
+          <GradeLevelDropDownSelection onSelect={(value) => setGradeLevel(value)} />
         </View>
+
         {/* NEXT PAGE */}
         <TouchableOpacity
           style={buttons.nextPageButton}
-          onPress={() => handleNextStep('SignUpTwo')}
+          onPress={() => handleSignUpNavigationWithData({
+            profileImage,
+            firstName,
+            middleName,
+            lastName,
+            gradeLevel,
+            dateOfBirth: date,
+          })}
         >
           <Text style={buttons.nextPageText}>Next</Text>
         </TouchableOpacity>
+
         {/* CANCEL */}
         <TouchableOpacity
           style={buttons.cancelButton}

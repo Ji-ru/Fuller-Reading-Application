@@ -1,42 +1,83 @@
 import React, { useEffect } from 'react';
 import Video from 'react-native-video';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
+import { useNavigationHelper } from '../Controller/NavigationController';
+import { auth, db } from '../../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import loading from '../ui/LoadingStyles';
 
 export default function LoadingScreen({ navigation }: any) {
-  // Loads for 3 seconds
+
+  const { handleReplaceStep } = useNavigationHelper();
+
+  const checkUserCredentials = async () => {
+    // Check if the user is logged in
+    const currentUser = auth.currentUser;
+
+    /**
+     * Error handler verifying if the user is logged in 
+     * Goes back to login page if current user is not logged in.
+     */
+    if (!currentUser) {
+      return handleReplaceStep('Login');
+    }
+
+    /**
+     * Fetch user document
+     */
+
+    const ref = doc(db, "students", currentUser.uid);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      return handleReplaceStep('Login');
+    }
+
+    /**
+     * Check role (default to 'student')
+     */
+    const data = snap.data();
+    const role = data.role || 'student'
+
+    /**
+     * NEEDED CHANGES FOR NAVIGATION
+     * - Faculty and Admin Pages still UNDERCONSTRUCTION!!
+     */
+    switch (role) {
+      case 'student':
+        handleReplaceStep('UserHome');
+        break;
+      case 'faculty':
+        handleReplaceStep('UserHome'); // modify placeholder if it already exists
+        break;
+      case 'admin':
+        handleReplaceStep('UserHome'); // modify placeholder if it already exists
+        break;
+      default:
+        handleReplaceStep('UserHome');
+    }
+  };
+
+  /**
+   * Loads for 3 seconds before navigating to the designated page
+   */
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('UserHome');
+    const timer = setTimeout(async () => {
+      await checkUserCredentials();
     }, 3500);
 
     return () => clearTimeout(timer);
-  }, [navigation]);
+  }, []);
 
   return (
-    <View style={styles.container}>
-      <Video 
-      style={styles.video} 
-      source={require('../../assets/videos/cisc_logo_animated.mp4')}
-      repeat={false}
-      resizeMode='cover'
+    <View style={loading.container}>
+      <Video
+        style={loading.video}
+        source={require('../../assets/videos/cisc_logo_animated.mp4')}
+        repeat={false}
+        resizeMode='cover'
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ECFBFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  video: {
-    width: 300,
-    height: 300,
-    marginBottom: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-});

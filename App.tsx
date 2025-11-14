@@ -15,7 +15,7 @@ import SignUpCompletedScreen from './src/Screens/SignUp/SignUpCompletedScreen';
 import PageSelectionScreen from './src/Screens/User/PageSelectionScreen';
 import ReadingActivityScreen from './src/Screens/User/ReadingActivityScreen';
 import MiscuesReportsScreen from './src/Screens/User/MiscuesReportsScreen';
-// import ReadingTesting from './src/Screens/User/ReadingTesting';
+import ReadingActivityScreenPage from './src/Screens/User/ReadingTesting';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,11 +38,12 @@ function App() {
             <Stack.Screen name="PasageSelection" component={PageSelectionScreen} />
             <Stack.Screen name="ReadingActivity" component={ReadingActivityScreen} />
             <Stack.Screen name="MiscuesReports" component={MiscuesReportsScreen} />
-            {/* <Stack.Screen name="ReadingTesting" component={ReadingTesting} /> */}
+            <Stack.Screen name="ReadingTesting" component={ReadingActivityScreenPage} />
 
             {/* ADMIN SCREENS */}
 
             {/* FACULTY SCREENS */}
+            
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

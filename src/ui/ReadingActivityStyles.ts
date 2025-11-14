@@ -3,12 +3,14 @@ import { StyleSheet } from 'react-native';
 const readingStyles = StyleSheet.create({
   container: {
     flex: 1,
+    flexShrink: 1,
     backgroundColor: '#ECFBFF',
     padding: 10,
     position: 'relative',
   },
   insideContainer: {
     flex: 1,
+    justifyContent: 'flex-start',
     position: 'relative',
     zIndex: 1,
   },
@@ -18,13 +20,6 @@ const readingStyles = StyleSheet.create({
     marginVertical: 8,
     marginHorizontal: 16,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
     elevation: 5,
   },
   title: {
@@ -60,15 +55,19 @@ const readingStyles = StyleSheet.create({
     backgroundColor: '#ffffff',
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
     elevation: 5,
-    marginBottom: 20,
+    marginBottom: 10,
+    alignSelf: 'center',
+    flexShrink: 1
+  },
+  passageContainerFeedback: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
+    elevation: 5,
+    alignSelf: 'center',
+    flexShrink: 1,
+    marginBottom: 10,
   },
   passageTitle: {
     fontSize: 25,
@@ -83,13 +82,12 @@ const readingStyles = StyleSheet.create({
     marginBottom: 4,
   },
   textContainer: {
-    marginTop: 16,
+    marginTop: 10,
     fontSize: 25,
   },
   textLine: {
     fontSize: 20,
     lineHeight: 24,
-    marginBottom: 8,
     textAlign: 'center',
     fontFamily: 'Satoshi-Medium',
   },
@@ -119,10 +117,6 @@ const readingStyles = StyleSheet.create({
     alignItems: 'center',
     width: 100,
     height: 100,
-  },
-  highlightedWord: {
-    backgroundColor: 'yellow',
-    borderRadius: 4,
   },
 
   // TESTING
@@ -194,7 +188,7 @@ const readingStyles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-  // RESULT DESIGN
+  // FEEDBACK DESIGN
 
   // Calculation Accuracy Design
   calculationContainer: {

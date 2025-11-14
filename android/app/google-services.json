@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "274037817546",
+    "project_id": "cisckids-25",
+    "storage_bucket": "cisckids-25.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:274037817546:android:37cc2a2e7d0f478b04f433",
+        "android_client_info": {
+          "package_name": "com.example.cisc_kids_2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMG5RvwLzp437kq73K3NlHGHhDQjvopIM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:274037817546:android:7387eefc6cd118a804f433",
+        "android_client_info": {
+          "package_name": "com.miscuereading"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMG5RvwLzp437kq73K3NlHGHhDQjvopIM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

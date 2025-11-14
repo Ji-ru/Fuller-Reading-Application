@@ -4,9 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import user from '../../ui/UserStyle';
 import bubbles from '../../ui/BubblesDesign';
 import buttons from '../../ui/ButtonStyles';
-import { useNavigationHelper } from '../../Functions/Buttons';
+import { useNavigationHelper } from '../../Controller/NavigationController';
 
 export default function UserHomeScreen() {
+  // HANDLES LOADING SCREEN
+  
+
   // HANDLE MENU
   const [menuVisible, setMenuVisible] = useState(false);
   // HANDLE LOGOUT

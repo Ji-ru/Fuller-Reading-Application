@@ -8,7 +8,7 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import { useNavigationHelper } from '../../Functions/Buttons';
+import { useNavigationHelper } from '../../Controller/NavigationController';
 import bubbles from '../../ui/BubblesDesign';
 import user from '../../ui/UserStyle';
 import passagesData from '../../../assets/ReadingMaterial/ReadingMaterial.json';

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Video from 'react-native-video';
 import { TouchableOpacity, View, Text } from 'react-native';
 import signup from '../../ui/SignUpStyles';
-import { useNavigationHelper } from '../../Functions/Buttons';
+import { useNavigationHelper } from '../../Controller/NavigationController';
 import { useNavigation } from '@react-navigation/native';
 import buttons from '../../ui/ButtonStyles';
 
