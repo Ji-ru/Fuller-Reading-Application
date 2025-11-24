@@ -9,14 +9,19 @@ import { Alert } from 'react-native';
 import { Passage } from '../Types/passage';
 
 // Interfaces of Students
-import { StudentInformation } from '../Types/dataInterfaces';
+import { BaseUserInformation, UserRole } from '../Types/dataInterfaces';
 import { ScreenReplaceTypes } from 'react-native-screens';
 
 // Specifies what parameters (data) each screen in your navigation stack can receive.
 export type RootStackParamList = {
   Loading: undefined;
   SignUpCompleted: undefined;
-  SignUpTwo: { studentInfo: StudentInformation };
+  SignUpTwo: { userInfo: BaseUserInformation 
+    additionalData?: {
+      gradeLevel?: number;
+      email?: string; 
+    }
+  };
   SignUpOne: undefined;
   Login: undefined;
   UserHome: undefined;
@@ -58,35 +63,38 @@ export const useNavigationHelper = () => {
     firstName,
     middleName,
     lastName,
+    email,
+    role,
     gradeLevel,
     dateOfBirth,
   }: {
-    profileImage?: string | null;
+    profileImage?: string;
     firstName: string;
     middleName?: string;
     lastName: string;
-    gradeLevel: number;
-    dateOfBirth: Date;
+    email: string;
+    role: UserRole;
+    gradeLevel?: number;
+    dateOfBirth?: Date; 
   }) => {
     // Basic validation
-    if (!firstName || !lastName || !gradeLevel) {
+    if (!firstName || !lastName || !email) {
       Alert.alert('Missing Information', 'Please fill out all required fields.');
       return;
     }
 
     // Build StudentInformation object
-    const studentInfo: StudentInformation = {
+    const userInfo: BaseUserInformation = {
       profileImage: profileImage || '',
       firstName,
       middleName,
       lastName,
-      gradeLevel,
-      email: '', // To be filled in SignUpTwo
-      dateOfBirth,
+      email: '',
+      role // To be filled in SignUpTwo
     };
 
     // Navigate to SignUpTwo with the collected info
-    navigation.navigate('SignUpTwo', { studentInfo });
+    navigation.navigate('SignUpTwo', { userInfo });
   };
 
   // Handles only the Reading Activity Page due to having data passed to the next page.

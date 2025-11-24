@@ -12,7 +12,7 @@ export default function SignUpTwoScreen() {
 
   // Access the studentInfo passed from SignUpOne
   const route = useRoute<RouteProp<RootStackParamList, 'SignUpTwo'>>();
-  const personalInfo = route.params.studentInfo;
+  const personalInfo = route.params.userInfo;
 
   // Updates Current Step Process from SignUpOne - UNDER CONSTRUCTION!!!
   const [currentStep, setCurrentStep] = useState(2);
@@ -44,7 +44,6 @@ export default function SignUpTwoScreen() {
       // Combine data from SignUpOne + SignUpTwo
       const student = {
         ...personalInfo,
-        email,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
