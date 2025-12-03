@@ -43,7 +43,7 @@ export interface Student extends BaseUserInformation {
 export interface Faculty extends BaseUserInformation {
   id: string;
   gradeLevel: number;
-  status?: UserStatus; // allowed or deny
+  status?: UserStatus; // pending / approved / rejected
   createdAt: Date;
   updatedAt: Date;
   classCode?: string; // Assigned class code (created by default after registration) 
@@ -53,7 +53,7 @@ export interface Faculty extends BaseUserInformation {
  * TYPES OF USER ROLES
  *  - used in base user information
  */
-export type UserStatus = 'pending' | 'approval' | 'rejected';
+export type UserStatus = 'pending' | 'approved' | 'rejected';
 
 /**
  * ADMIN INFORMATION extending BASIC INFORMATION
