@@ -8,14 +8,14 @@ import * as eva from '@eva-design/eva';
 // Screens
 import LoginScreen from './src/Screens/LoginScreen';
 import LoadingScreen from './src/Screens/LoadingScreen';
-import UserHomeScreen from './src/Screens/User/UserHomeScreen';
+import UserHomeScreen from './src/Screens/Student/UserHomeScreen';
 import SignUpOneScreen from './src/Screens/SignUp/SignUpOneScreen';
 import SignUpTwoScreen from './src/Screens/SignUp/SignUpTwoScreen';
 import SignUpCompletedScreen from './src/Screens/SignUp/SignUpCompletedScreen';
-import PageSelectionScreen from './src/Screens/User/PageSelectionScreen';
-import ReadingActivityScreen from './src/Screens/User/ReadingActivityScreen';
-import MiscuesReportsScreen from './src/Screens/User/MiscuesReportsScreen';
-import ReadingActivityScreenPage from './src/Screens/User/ReadingTesting';
+import PageSelectionScreen from './src/Screens/Student/PageSelectionScreen';
+import ReadingActivityScreen from './src/Screens/Student/ReadingActivityScreen';
+import MiscuesReportsScreen from './src/Screens/Student/MiscuesReportsScreen';
+import ReadingActivityScreenPage from './src/Screens/Student/ReadingTesting';
 
 const Stack = createNativeStackNavigator();
 

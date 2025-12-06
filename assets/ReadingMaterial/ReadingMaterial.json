@@ -1,4 +1,136 @@
 {
+  "Alphabet": [
+    {
+      "letter": "A",
+      "word": "Apple",
+      "example": "A is for Apple"
+    },
+    {
+      "letter": "B",
+      "word": "Ball",
+      "example": "B is for Ball"
+    },
+    {
+      "letter": "C",
+      "word": "Cat",
+      "example": "C is for Cat"
+    },
+    {
+      "letter": "D",
+      "word": "Dog",
+      "example": "D is for Dog"
+    },
+    {
+      "letter": "E",
+      "word": "Elephant",
+      "example": "E is for Elephant"
+    },
+    {
+      "letter": "F",
+      "word": "Fish",
+      "example": "F is for Fish"
+    },
+    {
+      "letter": "G",
+      "word": "Goat",
+      "example": "G is for Goat"
+    },
+    {
+      "letter": "H",
+      "word": "Hat",
+      "example": "H is for Hat"
+    },
+    {
+      "letter": "I",
+      "word": "Igloo",
+      "example": "I is for Igloo"
+    },
+    {
+      "letter": "J",
+      "word": "Jam",
+      "example": "J is for Jam"
+    },
+    {
+      "letter": "K",
+      "word": "Kite",
+      "example": "K is for Kite"
+    },
+    {
+      "letter": "L",
+      "word": "Lion",
+      "example": "L is for Lion"
+    },
+    {
+      "letter": "M",
+      "word": "Moon",
+      "example": "M is for Moon"
+    },
+    {
+      "letter": "N",
+      "word": "Nest",
+      "example": "N is for Nest"
+    },
+    {
+      "letter": "O",
+      "word": "Orange",
+      "example": "O is for Orange"
+    },
+    {
+      "letter": "P",
+      "word": "Pig",
+      "example": "P is for Pig"
+    },
+    {
+      "letter": "Q",
+      "word": "Queen",
+      "example": "Q is for Queen"
+    },
+    {
+      "letter": "R",
+      "word": "Rabbit",
+      "example": "R is for Rabbit"
+    },
+    {
+      "letter": "S",
+      "word": "Sun",
+      "example": "S is for Sun"
+    },
+    {
+      "letter": "T",
+      "word": "Tree",
+      "example": "T is for Tree"
+    },
+    {
+      "letter": "U",
+      "word": "Umbrella",
+      "example": "U is for Umbrella"
+    },
+    {
+      "letter": "V",
+      "word": "Van",
+      "example": "V is for Van"
+    },
+    {
+      "letter": "W",
+      "word": "Whale",
+      "example": "W is for Whale"
+    },
+    {
+      "letter": "X",
+      "word": "Xylophone",
+      "example": "X is for Xylophone"
+    },
+    {
+      "letter": "Y",
+      "word": "Yoyo",
+      "example": "Y is for Yoyo"
+    },
+    {
+      "letter": "Z",
+      "word": "Zebra",
+      "example": "Z is for Zebra"
+    }
+  ],
   "Passages": [
     {
       "title": "Hickory Dickory Dock",
