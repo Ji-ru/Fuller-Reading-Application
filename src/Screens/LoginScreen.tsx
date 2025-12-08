@@ -9,8 +9,9 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
+  TouchableWithoutFeedback,
   ScrollView,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Video from 'react-native-video';
@@ -41,6 +42,11 @@ export default function LoginScreen() {
    * Used in Register Section () and Sign-in Section
    */
   const { handleNextStep, handleReplaceStep } = useNavigationHelper();
+
+  // Dismiss keyboard when tapping outside inputs
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
 
   // Validation function
   const validateField = (field: 'email' | 'password', value: string) => {
@@ -109,6 +115,9 @@ export default function LoginScreen() {
    * @returns - proceed to enter the designated screen page based on user's role (Admin/Staff/Student)
    */
   const handleLogin = async () => {
+    // Dismiss keyboard when submitting
+    Keyboard.dismiss();
+
     // Validate form
     if (!validateForm()) {
       return;
@@ -159,102 +168,141 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaProvider>
-      <ScrollView>
-        <View style={login.container}>
-          <Video
-            style={login.video}
-            source={require('../../assets/videos/cisc_logo_animated.mp4')}
-            repeat={true}
-          />
-
-          {/* EMAIL INPUT */}
-          <Text style={login.label}>
-            Email Address <Text style={login.requiredStar}>* </Text>
-            {touched.email && errors.email ? (
-              <Text style={login.errorText}>{errors.email}</Text>
-            ) : null}
-          </Text>
-          <TextInput
-            style={getInputStyle('email')}
-            placeholder="example@gmail.com"
-            value={email}
-            onChangeText={handleEmailChange}
-            onBlur={() => handleBlur('email')}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!loading}
-          />
-
-          {/* PASSWORD INPUT */}
-          <Text style={login.label}>
-            Password <Text style={login.requiredStar}>* </Text>
-            {touched.password && errors.password ? (
-              <Text style={login.errorText}>{errors.password}</Text>
-            ) : null}
-          </Text>
-          <TextInput
-            style={getInputStyle('password')}
-            secureTextEntry
-            placeholder="**********"
-            value={password}
-            onChangeText={handlePasswordChange}
-            onBlur={() => handleBlur('password')}
-            editable={!loading}
-          />
-
-          {/* FORGOT PASSWORD */}
-          <TouchableOpacity style={login.forgotPassButton} disabled={loading}>
-            <Text style={login.forgotpass}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          {/* SIGN IN BUTTON */}
-          <TouchableOpacity
-            style={[
-              login.button,
-              loading && login.buttonDisabled,
-              (!email || !password) && login.buttonDisabled,
-            ]}
-            onPress={handleLogin}
-            disabled={loading || !email || !password}
+    <SafeAreaProvider style={login.safeAreaContainer}>
+      <TouchableWithoutFeedback>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior="height"
+          keyboardVerticalOffset={50}
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {loading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={login.buttonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
+            <View style={login.container}>
+              {/* <Video
+                style={login.video}
+                source={require('../../assets/videos/cisc_logo_animated.mp4')}
+                repeat={true}
+              /> */}
+              <Image
+                style={login.video}
+                source={require('../../assets/gifs&animations/')}
+                resizeMode="contain"
+              />
 
-          {/* REGISTER SECTION - KEEP EXACTLY THE SAME */}
-          <View style={login.notRegisteredContainer}>
-            <View style={login.notRegisteredAlignment}>
-              <View style={login.leftLine} />
-              <Text style={login.notRegisteredText}>Not Registered Yet?</Text>
-              <View style={login.rightLine} />
-            </View>
-            <View>
+              {/* EMAIL INPUT */}
+              <Text style={login.label}>
+                Email Address <Text style={login.requiredStar}>* </Text>
+                {touched.email && errors.email ? (
+                  <Text style={login.errorText}>{errors.email}</Text>
+                ) : null}
+              </Text>
+              <TextInput
+                style={getInputStyle('email')}
+                placeholder="example@gmail.com"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={handleEmailChange}
+                onBlur={() => handleBlur('email')}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+                returnKeyType="next"
+              />
+
+              {/* PASSWORD INPUT */}
+              <Text style={login.label}>
+                Password <Text style={login.requiredStar}>* </Text>
+                {touched.password && errors.password ? (
+                  <Text style={login.errorText}>{errors.password}</Text>
+                ) : null}
+              </Text>
+              <TextInput
+                style={getInputStyle('password')}
+                secureTextEntry
+                placeholder="**********"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={handlePasswordChange}
+                onBlur={() => handleBlur('password')}
+                editable={!loading}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+              />
+
+              {/* FORGOT PASSWORD */}
               <TouchableOpacity
-                style={login.signupwithgooglebutton}
-                onPress={() => handleNextStep('SignUpOne')}
-                activeOpacity={0.7}
+                style={login.forgotPassButton}
+                disabled={loading}
+                onPress={() => {
+                  Keyboard.dismiss();
+                }}
               >
-                <Image
-                  style={login.googleimage}
-                  source={require('../../assets/images/Google-icon.png')}
-                />
-                <Text style={login.registerText}>Sign Up with Google</Text>
+                <Text style={login.forgotpass}>Forgot Password?</Text>
               </TouchableOpacity>
+
+              {/* SIGN IN BUTTON */}
               <TouchableOpacity
-                style={login.signupwithemailbutton}
-                onPress={() => handleNextStep('ChooseRole')}
-                activeOpacity={0.7}
+                style={[
+                  login.button,
+                  loading && login.buttonDisabled,
+                  (!email || !password) && login.buttonDisabled,
+                ]}
+                onPress={handleLogin}
+                disabled={loading || !email || !password}
               >
-                <Text style={login.registerText}>Sign Up with Email</Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={login.buttonText}>Sign In</Text>
+                )}
               </TouchableOpacity>
+
+              {/* REGISTER SECTION - KEEP EXACTLY THE SAME */}
+              <View style={login.notRegisteredContainer}>
+                <View style={login.notRegisteredAlignment}>
+                  <View style={login.leftLine} />
+                  <Text style={login.notRegisteredText}>
+                    Not Registered Yet?
+                  </Text>
+                  <View style={login.rightLine} />
+                </View>
+                <View>
+                  <TouchableOpacity
+                    style={login.signupwithgooglebutton}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      handleNextStep('SignUpOne');
+                    }}
+                    activeOpacity={0.7}
+                    disabled={loading}
+                  >
+                    <Image
+                      style={login.googleimage}
+                      source={require('../../assets/images/Google-icon.png')}
+                    />
+                    <Text style={login.registerText}>Sign Up with Google</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={login.signupwithemailbutton}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      handleNextStep('ChooseRole');
+                    }}
+                    activeOpacity={0.7}
+                    disabled={loading}
+                  >
+                    <Text style={login.registerText}>Sign Up with Email</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
-      </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </SafeAreaProvider>
   );
 }

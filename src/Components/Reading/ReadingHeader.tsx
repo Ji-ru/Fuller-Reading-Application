@@ -16,7 +16,8 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
   onLogout,
   menuVisible,
 }) => {
-  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+
+  const [logoutVisible, setLogoutModalVisible] = useState(false);
 
   const handleLogoutPress = () => {
     onMenuToggle();
@@ -25,7 +26,7 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
 
   const confirmLogout = () => {
     setLogoutModalVisible(false);
-    onLogout();
+    onLogout(); // Call parent's logout function
   };
 
   const cancelLogout = () => {
@@ -82,7 +83,7 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
       
       {/* Logout Modal */}
       <LogoutModal
-        visible={logoutModalVisible}
+        visible={logoutVisible}
         onCancel={cancelLogout}
         onConfirm={confirmLogout}
       />

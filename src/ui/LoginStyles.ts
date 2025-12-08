@@ -1,9 +1,11 @@
 import { StyleSheet } from 'react-native';
 
 const login = StyleSheet.create({
+  safeAreaContainer: {
+    backgroundColor: '#ECFBFF',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#ECFBFF',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -27,9 +29,8 @@ const login = StyleSheet.create({
   },
   forgotpass: {
     alignSelf: 'flex-end',
-    marginEnd: 25,
     marginBottom: 10,
-    fontSize: 10,
+    fontSize: 13,
     fontFamily: 'Satoshi-Regular',
 
     textDecorationLine: 'underline',

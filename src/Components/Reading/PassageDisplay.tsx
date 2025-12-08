@@ -88,13 +88,6 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
             </Text>
           </View>
         </View>
-
-        {/* Instructions */}
-        <View style={readingStyles.instructions}>
-          <Text style={readingStyles.instructionText}>
-            Please read the letter "{material.letter}" out loud
-          </Text>
-        </View>
       </View>
     );
   }

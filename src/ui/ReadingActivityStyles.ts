@@ -82,7 +82,7 @@ const readingStyles = StyleSheet.create({
   },
   textContainer: {
     marginTop: 10,
-    fontSize: 25,
+    fontSize: 25
   },
   textLine: {
     fontSize: 20,
@@ -91,8 +91,8 @@ const readingStyles = StyleSheet.create({
     fontFamily: 'Satoshi-Medium',
   },
   readingImage: {
-    width: 250,
-    height: 250,
+    width: 230,
+    height: 230,
     maxHeight: 250,
     maxWidth: 250,
     alignSelf: 'center',
@@ -280,9 +280,10 @@ const readingStyles = StyleSheet.create({
 
   alphabetContainer: {
     marginTop: 50,
+    marginBottom:10,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     width: '100%',
   },
 
@@ -343,23 +344,6 @@ const readingStyles = StyleSheet.create({
     fontWeight: 'bold',
     textDecorationLine: 'underline',
     fontSize: 26,
-  },
-
-  instructions: {
-    marginTop: 30,
-    padding: 16,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FBBF24',
-    width: '100%',
-  },
-
-  instructionText: {
-    fontSize: 16,
-    color: '#92400E',
-    textAlign: 'center',
-    fontWeight: '500',
   },
 });
 

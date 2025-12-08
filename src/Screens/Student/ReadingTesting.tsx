@@ -1,194 +1,3 @@
-// import React, { useState, useEffect } from 'react';
-// import { SafeAreaView } from 'react-native-safe-area-context';
-// import { View, Text, Alert } from 'react-native';
-// import { RouteProp, useRoute } from '@react-navigation/native';
-
-// import { RootStackParamList, useNavigationHelper } from '../../Controller/NavigationController';
-// import readingStyles from '../../ui/ReadingActivityStyles';
-// import bubbles from '../../ui/BubblesDesign';
-// import selection from '../../ui/PassageSelectionStyles';
-
-// import { useAudioRecording } from '../../Controller/AudioRecordingController';
-// import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
-// import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceController';
-// import { ReadingHeader } from '../../Components/Reading/ReadingHeader';
-// import { PassageDisplay } from '../../Components/Reading/PassageDisplay';
-// import { RecordingControls } from '../../Components/Reading/RecordingControls';
-// import { ReadingFeedback } from '../../Components/Reading/ReadingFeedback';
-// import { Miscue } from '../../Types/miscue';
-// import { MiscueReportController } from '../../Controller/MiscueReportController';
-// import {
-//   AlphabetItem,
-//   Passage,
-//   isAlphabet,
-//   isPassage,
-// } from '../../Types/passage';
-// type ReadingActivityScreenRouteProp = RouteProp<RootStackParamList, 'ReadingTesting'>;
-
-// export default function ReadingActivityScreenPage() {
-//   const route = useRoute<ReadingActivityScreenRouteProp>();
-//   const { readingMaterial, type } = route.params;
-
-//   // State
-//   const [spokenText, setSpokenText] = useState('');
-//   const [miscues, setMiscues] = useState<Miscue[]>([]);
-//   const [isReadingCompleted, setIsReadingCompleted] = useState(false);
-//   const [menuVisible, setMenuVisible] = useState(false);
-
-//   // Hooks
-//   const {
-//     isRecording,
-//     hasPermission,
-//     recordTime,
-//     checkPermission,
-//     initializeAudio,
-//     startRecording,
-//     stopRecording,
-//     formatTime,
-//   } = useAudioRecording();
-
-//   const {
-//     isLoading,
-//     processAudioWithGoogle,
-//     getSimulatedResponse,
-//   } = useSpeechToText();
-
-//   // Navigation
-//   const { handleLogout, handleBackStep } = useNavigationHelper();
-
-//   // Effects
-//   useEffect(() => {
-//     checkPermission();
-//     initializeAudio();
-//   }, [checkPermission, initializeAudio]);
-
-//   useEffect(() => {
-//     if (spokenText && spokenText !== 'No speech detected') {
-//       const detectedMiscues = MiscueAnalysisService.detectMiscues(passage.text, spokenText);
-//       setMiscues(detectedMiscues);
-//     }
-//   }, [spokenText, passage.text]);
-
-//   // Handlers
-//   const handleRecordToggle = async () => {
-//     if (isRecording) {
-//       try {
-//         const audioFile = await stopRecording();
-//         await handleAudioProcessing(audioFile);
-//       } catch (error) {
-//         Alert.alert('Error', 'Failed to process recording');
-//       }
-//     } else {
-//       await startRecording(passage.text);
-//     }
-//   };
-
-//   const handleAudioProcessing = async (audioFile: string) => {
-//     try {
-//       const transcription = await processAudioWithGoogle(audioFile);
-//       setSpokenText(transcription);
-
-//       const detectedMiscues = MiscueAnalysisService.detectMiscues(passage.text, transcription);
-//       setMiscues(detectedMiscues);
-
-//       await MiscueReportController.storeReport(passage.title, detectedMiscues);
-
-//       setIsReadingCompleted(true);
-//     } catch (error) {
-//       // Use simulated response as fallback
-//       const simulatedResponse = getSimulatedResponse(passage.text);
-//       setSpokenText(simulatedResponse);
-//       setIsReadingCompleted(true);
-//     }
-//   };
-
-//   const handleTryAgain = () => {
-//     setSpokenText('');
-//     setMiscues([]);
-//     setIsReadingCompleted(false);
-//   };
-
-//   const toggleMenu = () => {
-//     setMenuVisible(!menuVisible);
-//   };
-
-//   // Render
-//   return (
-//     <SafeAreaView style={readingStyles.container}>
-//       <View style={readingStyles.insideContainer}>
-//         {/* Bubble Decorations */}
-//         <View style={bubbles.bubblesContainer} pointerEvents="none">
-//           <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-//           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-//         </View>
-
-//         {/* Header */}
-//         <ReadingHeader
-//           onBack={handleBackStep}
-//           onMenuToggle={toggleMenu}
-//           onLogout={handleLogout}
-//           menuVisible={menuVisible}
-//         />
-
-//         {/* Screen Title */}
-//         <Text style={selection.label}>
-//           {type === 'alphabet' ? 'Alphabet Practice' : 'Reading Activity'}
-//         </Text>
-
-//         {/* Use the updated PassageDisplay component */}
-//         <PassageDisplay
-//           material={readingMaterial}
-//           type={type}
-//           spokenText={spokenText}
-//           isRecording={isRecording}
-//         />
-//         {/* Loading Indicator */}
-//         {isLoading && (
-//           <View>
-//             <Text>Transcribing Audio...</Text>
-//           </View>
-//         )}
-
-//         {/* Results */}
-//         {!isLoading && !isRecording && isReadingCompleted && (
-//           <ReadingFeedback
-//             passageText={passage.text}
-//             spokenText={spokenText}
-//             miscues={miscues}
-//             onTryAgain={handleTryAgain}
-//           />
-//         )}
-
-//         {/* Recording Controls - Only show when not completed */}
-//         {!isReadingCompleted && (
-//           <RecordingControls
-//             isRecording={isRecording}
-//             isLoading={isLoading}
-//             hasPermission={hasPermission}
-//             recordTime={formatTime(recordTime)}
-//             onRecordToggle={handleRecordToggle}
-//           />
-//         )}
-//       </View>
-//     </SafeAreaView>
-//   );
-// }
-
-// ReadingActivityScreenPage.tsx - Simplified version
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, Alert } from 'react-native';
@@ -212,6 +21,7 @@ import { ReadingFeedback } from '../../Components/Reading/ReadingFeedback';
 import { Miscue } from '../../Types/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { isAlphabet, isPassage } from '../../Types/passage';
+import FeedbackModal from '../../Services/FeedbackModal';
 
 type ReadingActivityScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -229,8 +39,15 @@ export default function ReadingActivityScreenPage() {
   const [feedback, setFeedback] = useState('');
   const [isReadingCompleted, setIsReadingCompleted] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackModalType, setFeedbackModalType] = useState<
+    'congratulations' | 'tryAgain' | 'passageSuccess'
+  >('congratulations');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
 
+  // Track if we've already shown the modal for this reading attempt
+  const [hasShownModalForCurrentAttempt, setHasShownModalForCurrentAttempt] =
+    useState(false);
   // Hooks
   const {
     isRecording,
@@ -283,8 +100,58 @@ export default function ReadingActivityScreenPage() {
     }
   }, [spokenText]);
 
+  // Check if reading is perfect for alphabet
+  const isAlphabetPerfect = (spoken: string, target: string): boolean => {
+    // Remove any non-alphabetic characters and whitespace, compare ignoring case
+    const cleanSpoken = spoken.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    const cleanTarget = target.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    return cleanSpoken === cleanTarget;
+  };
+
+  // Show appropriate modal based on results
+  const displayFeedbackModal = (
+    accuracyNum: number,
+    isAlphabetMode: boolean,
+  ) => {
+    // Reset the flag for new attempt
+    setHasShownModalForCurrentAttempt(false);
+
+    let modalType: 'congratulations' | 'tryAgain' | 'passageSuccess' =
+      'tryAgain';
+    let message = '';
+
+    if (isAlphabetMode) {
+      // For alphabet: check if perfect match
+      if (isAlphabetPerfect(spokenText, targetText)) {
+        modalType = 'congratulations';
+      } else {
+        modalType = 'tryAgain';
+        message = `The correct letter is "${targetText}". Try saying it again!`;
+      }
+    } else {
+      // For passage: check if accuracy >= 90%
+      if (accuracyNum >= 80) {
+        modalType = 'passageSuccess';
+        message = `You read with ${accuracy} accuracy! Excellent work!`;
+      } else if (accuracyNum >= 70) {
+        modalType = 'tryAgain';
+        message = `You read with ${accuracy} accuracy. Good job! Try to reach 90% next time.`;
+      } else {
+        modalType = 'tryAgain';
+        message = `You read with ${accuracy} accuracy. Let's practice some more!`;
+      }
+    }
+
+    setFeedbackModalType(modalType);
+    setFeedbackMessage(message);
+    setShowFeedbackModal(true);
+    setHasShownModalForCurrentAttempt(true);
+  };
+
   // Analyze reading based on type
   const analyzeReading = (transcription: string) => {
+    let accuracyNum = 0;
+
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
       // Simple alphabet check
       const result = MiscueAnalysisService.checkAlphabetAccuracy(
@@ -295,6 +162,9 @@ export default function ReadingActivityScreenPage() {
       setAccuracy(result.accuracy);
       setFeedback(result.feedback);
       setMiscues([]); // No complex miscues for alphabet
+
+      // Parse accuracy value
+      accuracyNum = parseFloat(result.accuracy);
     } else if (type === 'passage' && isPassage(readingMaterial)) {
       // Full passage miscue detection
       const detectedMiscues = MiscueAnalysisService.detectMiscues(
@@ -311,6 +181,16 @@ export default function ReadingActivityScreenPage() {
       setMiscues(detectedMiscues);
       setAccuracy(calculatedAccuracy);
       setFeedback(accuracyFeedback);
+
+      // Parse accuracy value (remove % sign)
+      accuracyNum = parseFloat(calculatedAccuracy);
+    }
+
+    // Show feedback modal only if we haven't shown it for this attempt
+    if (!hasShownModalForCurrentAttempt) {
+      setTimeout(() => {
+        displayFeedbackModal(accuracyNum, type === 'alphabet');
+      }, 500);
     }
   };
 
@@ -324,6 +204,9 @@ export default function ReadingActivityScreenPage() {
         Alert.alert('Error', 'Failed to process recording');
       }
     } else {
+      // Reset modal state for new recording
+      setHasShownModalForCurrentAttempt(false);
+      setShowFeedbackModal(false);
       await startRecording(targetText);
     }
   };
@@ -349,30 +232,23 @@ export default function ReadingActivityScreenPage() {
     }
   };
 
+  // Reset all states including modal state
   const handleTryAgain = () => {
     setSpokenText('');
     setMiscues([]);
     setAccuracy('0');
     setFeedback('');
     setIsReadingCompleted(false);
+    setShowFeedbackModal(false);
+    setHasShownModalForCurrentAttempt(false);
+  };
+
+  const handleFeedbackModalClose = () => {
+    setShowFeedbackModal(false);
   };
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
-  };
-
-  const handleLogoutPress = () => {
-    setMenuVisible(false);
-    setLogoutModalVisible(true);
-  };
-
-  const confirmLogout = async () => {
-    setLogoutModalVisible(false);
-    await handleLogout();
-  };
-
-  const cancelLogout = () => {
-    setLogoutModalVisible(false);
   };
 
   // Render
@@ -402,13 +278,13 @@ export default function ReadingActivityScreenPage() {
         <ReadingHeader
           onBack={handleBackStep}
           onMenuToggle={toggleMenu}
-          onLogout={handleLogoutPress}
+          onLogout={handleLogout}
           menuVisible={menuVisible}
         />
 
         {/* Screen Title */}
         <Text style={selection.label}>
-          {type === 'alphabet' ? 'Alphabet Practice' : 'Reading Activity'}
+          {type === 'alphabet' ? 'Alphabet Practice' : 'Reading Practice'}
         </Text>
 
         {/* Display Component */}
@@ -426,7 +302,7 @@ export default function ReadingActivityScreenPage() {
           </View>
         )}
 
-        {/* Feedback */}
+        {/* Feedback - Only show when reading is completed and modal is closed */}
         {!isLoading && !isRecording && isReadingCompleted && (
           <ReadingFeedback
             targetText={targetText}
@@ -439,7 +315,7 @@ export default function ReadingActivityScreenPage() {
           />
         )}
 
-        {/* Recording Controls */}
+        {/* Recording Controls - Only show when not completed */}
         {!isReadingCompleted && (
           <RecordingControls
             isRecording={isRecording}
@@ -449,6 +325,15 @@ export default function ReadingActivityScreenPage() {
             onRecordToggle={handleRecordToggle}
           />
         )}
+
+        {/* Feedback Modal */}
+        <FeedbackModal
+          visible={showFeedbackModal}
+          type={feedbackModalType}
+          onClose={handleFeedbackModalClose}
+          message={feedbackMessage}
+          autoClose={true}
+        />
       </View>
     </SafeAreaView>
   );
