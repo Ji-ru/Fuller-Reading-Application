@@ -8,8 +8,10 @@ const bubbles = StyleSheet.create({
     height: '100%',
     top: 0,
     left: 0,
-    zIndex: -1,
-    overflow: 'visible',
+    right: 0,
+    bottom: 0,
+    zIndex: 0, // Changed from -1 to 0 (negative zIndex can have issues on some platforms)
+    pointerEvents: 'none', // Moved from component to stylesheet
   },
   bubble: {
     position: 'absolute',

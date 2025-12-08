@@ -279,4 +279,41 @@ export class MiscueAnalysisService {
         .join(', ')
     );
   }
+
+  // ==============================
+  // ALPHABET ACCURACY CHECK
+  // ==============================
+
+   /**
+   * Simple alphabet accuracy check - just checks if letter was said correctly
+   * No complex miscue detection needed for single letters
+   */
+   static checkAlphabetAccuracy(targetLetter: string, spokenText: string): {
+    isCorrect: boolean;
+    accuracy: string;
+    feedback: string;
+  } {
+    if (!spokenText || spokenText === 'No Speech Detected!') {
+      return {
+        isCorrect: false,
+        accuracy: '0',
+        feedback: 'No sound detected',
+      };
+    }
+
+    const normalizedTarget = targetLetter.toUpperCase().trim();
+    const normalizedSpoken = spokenText.toUpperCase().trim();
+
+    // Check if the spoken text contains the target letter
+    // This handles cases like "A", "letter A", "the letter A", etc.
+    const isCorrect = normalizedSpoken.includes(normalizedTarget);
+
+    return {
+      isCorrect,
+      accuracy: isCorrect ? '100' : '0',
+      feedback: isCorrect 
+        ? `✓ Correct! You said "${normalizedTarget}"` 
+        : `✗ Incorrect. Expected "${normalizedTarget}", you said "${normalizedSpoken}"`,
+    };
+  }
 }

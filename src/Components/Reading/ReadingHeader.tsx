@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
 import user from '../../ui/UserStyle';
+import LogoutModal from '../Buttons/LogoutModal';
 
 interface ReadingHeaderProps {
   onBack: () => void;
@@ -15,24 +16,29 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
   onLogout,
   menuVisible,
 }) => {
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+
   const handleLogoutPress = () => {
     onMenuToggle();
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: onLogout },
-      ],
-      { cancelable: true },
-    );
+    setLogoutModalVisible(true);
+  };
+
+  const confirmLogout = () => {
+    setLogoutModalVisible(false);
+    onLogout();
+  };
+
+  const cancelLogout = () => {
+    setLogoutModalVisible(false);
   };
 
   return (
     <>
       <View style={user.header}>
         <TouchableOpacity style={user.touchable} onPress={onBack}>
-          <Image source={require('../../../assets/icons/BackButton-icon.png')} />
+          <Image
+            source={require('../../../assets/icons/BackButton-icon.png')}
+          />
         </TouchableOpacity>
         <Image
           style={user.ciscLogo}
@@ -73,6 +79,13 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
           activeOpacity={1}
         />
       )}
+      
+      {/* Logout Modal */}
+      <LogoutModal
+        visible={logoutModalVisible}
+        onCancel={cancelLogout}
+        onConfirm={confirmLogout}
+      />
     </>
   );
 };

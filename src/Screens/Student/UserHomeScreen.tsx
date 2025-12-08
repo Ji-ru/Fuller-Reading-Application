@@ -5,6 +5,7 @@ import user from '../../ui/UserStyle';
 import bubbles from '../../ui/BubblesDesign';
 import buttons from '../../ui/ButtonStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
+import LogoutModal from '../../Components/Buttons/LogoutModal';
 
 export default function UserHomeScreen() {
   // HANDLE MENU
@@ -105,27 +106,11 @@ export default function UserHomeScreen() {
           />
         )}
         {/* LOGOUT MODAL */}
-        <Modal
-          animationType="fade"
-          transparent={true}
+        <LogoutModal
           visible={logoutVisible}
-          onRequestClose={cancelLogout}
-        >
-          <View style={user.modalOverlay}>
-            <View style={user.modalContainer}>
-              <Text style={user.modalTitle}>Logout</Text>
-              <Text style={user.modalMessage}>Are you sure you want to logout?</Text>
-              <View style={user.modalButtonContainer}>
-                <TouchableOpacity style={[ user.modalButton, user.cancelButton]} onPress={cancelLogout}>
-                  <Text style={user.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[user.modalButton, user.logoutButton]} onPress={confirmLogoout}>
-                  <Text style={user.logoutButtonText}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          onCancel={cancelLogout}
+          onConfirm={confirmLogoout}
+        />
 
         {/* INTRO */}
         <Text style={user.text}>Welcome, Learner!</Text>

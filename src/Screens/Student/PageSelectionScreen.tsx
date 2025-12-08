@@ -19,6 +19,7 @@ import {
   isAlphabet,
   isPassage,
 } from '../../Types/passage';
+import LogoutModal from '../../Components/Buttons/LogoutModal';
 
 // Safe data access with fallback
 const alphabetData = readingMaterialData?.Alphabet || [];
@@ -26,7 +27,7 @@ const passages = readingMaterialData?.Passages || [];
 
 export default function PageSelectionScreen() {
   // HANDLE NAVIGATION
-  const { handleLogout, handleNextStep, handleBackStep, handleReadingNext } =
+  const { handleLogout, handleBackStep, handleReadingNext } =
     useNavigationHelper();
 
   // HANDLE MENU
@@ -34,29 +35,24 @@ export default function PageSelectionScreen() {
   const [activeTab, setActiveTab] = useState<'alphabet' | 'passages'>(
     'alphabet',
   );
-
-  const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
-  };
+  const [logoutVisible, setLogoutVisible] = useState(false);
 
   const handleLogoutPress = () => {
     setMenuVisible(false);
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => handleLogout(),
-        },
-      ],
-      { cancelable: true },
-    );
+    setLogoutVisible(true);
+  };
+
+  const confirmLogoout = async () => {
+    setLogoutVisible(false);
+    await handleLogout();
+  };
+
+  const cancelLogout = () => {
+    setLogoutVisible(false);
+  };
+
+  const toggleMenu = () => {
+    setMenuVisible(!menuVisible);
   };
 
   // Handle alphabet selection
@@ -130,6 +126,11 @@ export default function PageSelectionScreen() {
         {/* HEADER (LOGO + MENU ICON) */}
         <View>
           <View style={user.header}>
+            <TouchableOpacity style={user.touchable} onPress={handleBackStep}>
+              <Image
+                source={require('../../../assets/icons/BackButton-icon.png')}
+              />
+            </TouchableOpacity>
             <Image
               style={user.ciscLogo}
               source={require('../../../assets/images/cisckids.png')}
@@ -219,7 +220,7 @@ export default function PageSelectionScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-        
+
         {/* CONTENT BASED ON ACTIVE TAB */}
         <View style={selection.contentContainer}>
           {activeTab === 'alphabet' ? (
@@ -238,7 +239,7 @@ export default function PageSelectionScreen() {
               />
             </>
           ) : (
-            <View  style={selection.passageListContainer}>
+            <View style={selection.passageListContainer}>
               <Text style={selection.sublabel}>Select a passage:</Text>
               {passages.length > 0 ? (
                 <FlatList
@@ -254,6 +255,12 @@ export default function PageSelectionScreen() {
             </View>
           )}
         </View>
+
+        <LogoutModal
+          visible={logoutVisible}
+          onCancel={cancelLogout}
+          onConfirm={confirmLogoout}
+        />
       </View>
     </SafeAreaView>
   );
