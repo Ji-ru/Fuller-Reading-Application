@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import user from '../../ui/UserStyle';
 import bubbles from '../../ui/BubblesDesign';
@@ -7,36 +7,30 @@ import buttons from '../../ui/ButtonStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 
 export default function UserHomeScreen() {
-  // HANDLES LOADING SCREEN
-  
-
   // HANDLE MENU
   const [menuVisible, setMenuVisible] = useState(false);
   // HANDLE LOGOUT
-  const { handleLogout, handleNextStep, handleCancelRegistration } =
-    useNavigationHelper();
+  const { handleLogout, handleNextStep } = useNavigationHelper();
+
+  // HANDLE LOGOUT MODAL VISIBILITY
+  const [logoutVisible, setLogoutVisible] = useState(false);
+
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
   };
 
   const handleLogoutPress = () => {
     setMenuVisible(false);
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => handleLogout(),
-        },
-      ],
-      { cancelable: true },
-    );
+    setLogoutVisible(true);
+  };
+
+  const confirmLogoout = async () => {
+    setLogoutVisible(false);
+    await handleLogout();
+  };
+
+  const cancelLogout = () => {
+    setLogoutVisible(false);
   };
 
   return (
@@ -110,6 +104,28 @@ export default function UserHomeScreen() {
             activeOpacity={1}
           />
         )}
+        {/* LOGOUT MODAL */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={logoutVisible}
+          onRequestClose={cancelLogout}
+        >
+          <View style={user.modalOverlay}>
+            <View style={user.modalContainer}>
+              <Text style={user.modalTitle}>Logout</Text>
+              <Text style={user.modalMessage}>Are you sure you want to logout?</Text>
+              <View style={user.modalButtonContainer}>
+                <TouchableOpacity style={[ user.modalButton, user.cancelButton]} onPress={cancelLogout}>
+                  <Text style={user.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[user.modalButton, user.logoutButton]} onPress={confirmLogoout}>
+                  <Text style={user.logoutButtonText}>Logout</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* INTRO */}
         <Text style={user.text}>Welcome, Learner!</Text>
@@ -128,12 +144,11 @@ export default function UserHomeScreen() {
         </Text>
 
         {/* BUTTONS */}
-        <TouchableOpacity style={buttons.startReadingButton}
-          onPress={() => handleNextStep('PasageSelection')}
+        <TouchableOpacity
+          style={buttons.startReadingButton}
+          onPress={() => handleNextStep('PassageSelection')}
         >
-          <Text style={buttons.nextPageText}>
-            Start Learning
-          </Text>
+          <Text style={buttons.nextPageText}>Start Learning</Text>
         </TouchableOpacity>
         <TouchableOpacity style={buttons.readingHistoryButton}>
           <Text style={buttons.nextPageText}>Reading History</Text>

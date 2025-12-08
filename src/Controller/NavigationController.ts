@@ -5,29 +5,26 @@ import { StackNavigationProp } from '@react-navigation/stack';
 // React-native Built-in Components
 import { Alert } from 'react-native';
 
-// Interfaces of the passages to be passed on with RootStackParamList 
-import { Passage } from '../Types/passage';
+// Interfaces of the passages to be passed on with RootStackParamList
+import { ReadingMaterial } from '../Types/passage';
 
 // Interfaces of Students
-import { BaseUserInformation, UserRole } from '../Types/dataInterfaces';
+import { UserDocument, UserRole } from '../Types/dataInterfaces';
 import { ScreenReplaceTypes } from 'react-native-screens';
+import { logoutUser } from './AuthenticationController';
 
 // Specifies what parameters (data) each screen in your navigation stack can receive.
 export type RootStackParamList = {
   Loading: undefined;
   SignUpCompleted: undefined;
-  SignUpTwo: { userInfo: BaseUserInformation 
-    additionalData?: {
-      gradeLevel?: number;
-      email?: string; 
-    }
-  };
-  SignUpOne: undefined;
+  SignUpTwo: { userInfo: Partial<UserDocument> };
+  SignUpOne: { role: UserRole };
   Login: undefined;
   UserHome: undefined;
-  PasageSelection: undefined;
-  ReadingActivity: { passage: Passage };
-  ReadingTesting: { passage: Passage };
+  PassageSelection: undefined;
+  // ReadingActivity: { passage: Passage };
+  ReadingTesting: { readingMaterial: ReadingMaterial; type: 'alphabet' | 'passage' };
+  ChooseRole: undefined;
 };
 
 // A list of all the screens within RootStackParamList
@@ -59,48 +56,64 @@ export const useNavigationHelper = () => {
 
   // Handle navigation for SignUpOne to SignUpTwo conatining the necessary data for registration
   const handleSignUpNavigationWithData = ({
-    profileImage,
+    profileImageUrl,
     firstName,
     middleName,
     lastName,
     email,
     role,
+    sex,
     gradeLevel,
     dateOfBirth,
   }: {
-    profileImage?: string;
+    profileImageUrl?: string;
     firstName: string;
     middleName?: string;
     lastName: string;
     email: string;
     role: UserRole;
-    gradeLevel?: number;
-    dateOfBirth?: Date; 
+    sex: string;
+    gradeLevel: number;
+    dateOfBirth: string;
   }) => {
     // Basic validation
-    if (!firstName || !lastName || !email) {
-      Alert.alert('Missing Information', 'Please fill out all required fields.');
+    if (!firstName || !lastName || !dateOfBirth) {
+      Alert.alert(
+        'Missing Information',
+        'Please fill out all required fields.',
+      );
       return;
     }
 
     // Build StudentInformation object
-    const userInfo: BaseUserInformation = {
-      profileImage: profileImage || '',
+    const userInfo: Partial<UserDocument> = {
+      profileImageUrl: profileImageUrl || '',
       firstName,
       middleName,
       lastName,
       email: '',
-      role // To be filled in SignUpTwo
+      role,
+      sex,
+      studentData: {
+        gradeLevel,
+        dateOfBirth,
+        reading_Level: 'beginner',
+      },
     };
 
     // Navigate to SignUpTwo with the collected info
     navigation.navigate('SignUpTwo', { userInfo });
   };
 
+  // Add a method to navigate from ChooseRole to SignUpOne
+  const handleRoleSelection = (role: UserRole) => {
+    navigation.navigate('SignUpOne', { role });
+  };
+
   // Handles only the Reading Activity Page due to having data passed to the next page.
-  const handleReadingNext = (passage: Passage) => {
+  const handleReadingNext = (readingMaterial: ReadingMaterial, type: 'alphabet' | 'passage') => {
     // navigation.navigate('ReadingActivity', { passage });
-    navigation.navigate('ReadingTesting', { passage });
+    navigation.navigate('ReadingTesting', { readingMaterial, type });
   };
   // Handles Back Button in any page the current user is in
   const handleBackStep = () => {
@@ -108,11 +121,19 @@ export const useNavigationHelper = () => {
   };
 
   // Handles Logout Event (Needed modification when Firebase Auth is integrated)
-  const handleLogout = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+  const handleLogout = async () => {
+    try {
+      // Call the firebase logout function
+      await logoutUser();
+
+      // Reset Navigation Login screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      Alert.alert('Logout Failed', 'Unable to logout. Please try again.');
+    }
   };
 
   // Handles canceling of registration (Needed modification when Firebase Auth is integrated)
@@ -135,6 +156,7 @@ export const useNavigationHelper = () => {
     handleNextStep,
     handleReplaceStep,
     handleSignUpNavigationWithData,
+    handleRoleSelection,
     handleReadingNext,
     handleBackStep,
     handleLogout,

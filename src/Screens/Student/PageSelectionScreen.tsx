@@ -11,25 +11,29 @@ import {
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import bubbles from '../../ui/BubblesDesign';
 import user from '../../ui/UserStyle';
-import passagesData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
+import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import selection from '../../ui/PassageSelectionStyles';
-import { Passage } from '../../Types/passage';
+import {
+  AlphabetItem,
+  Passage,
+  isAlphabet,
+  isPassage,
+} from '../../Types/passage';
 
 // Safe data access with fallback
-const passages = passagesData?.Passages || [];
+const alphabetData = readingMaterialData?.Alphabet || [];
+const passages = readingMaterialData?.Passages || [];
 
 export default function PageSelectionScreen() {
   // HANDLE NAVIGATION
-  const {
-    handleLogout,
-    handleNextStep,
-    handleCancelRegistration,
-    handleBackStep,
-    handleReadingNext,
-  } = useNavigationHelper();
+  const { handleLogout, handleNextStep, handleBackStep, handleReadingNext } =
+    useNavigationHelper();
 
   // HANDLE MENU
   const [menuVisible, setMenuVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<'alphabet' | 'passages'>(
+    'alphabet',
+  );
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
@@ -55,12 +59,31 @@ export default function PageSelectionScreen() {
     );
   };
 
-  // Handle passage selection
-  const handlePassageSelect = (passage: Passage) => {
-    handleReadingNext(passage); 
+  // Handle alphabet selection
+  const handleAlphabetSelect = (alphabet: AlphabetItem) => {
+    handleReadingNext(alphabet, 'alphabet');
   };
 
-  const renderItem = ({ item }: { item: Passage }) => (
+  // Handle passage selection
+  const handlePassageSelect = (passage: Passage) => {
+    handleReadingNext(passage, 'passage');
+  };
+
+  // Render alphabet item
+  const renderAlphabetItem = ({ item }: { item: AlphabetItem }) => (
+    <TouchableOpacity
+      style={selection.alphabetItem}
+      onPress={() => handleAlphabetSelect(item)}
+    >
+      <View style={selection.alphabetContainer}>
+        <Text style={selection.alphabetLetter}>{item.letter}</Text>
+        <Text style={selection.alphabetWord}>{item.word}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  // Render passage item
+  const renderPassageItem = ({ item }: { item: Passage }) => (
     <View style={selection.itemWrapper}>
       <TouchableOpacity
         style={selection.item}
@@ -104,7 +127,6 @@ export default function PageSelectionScreen() {
           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
         </View>
-
         {/* HEADER (LOGO + MENU ICON) */}
         <View>
           <View style={user.header}>
@@ -120,7 +142,6 @@ export default function PageSelectionScreen() {
             </TouchableOpacity>
           </View>
         </View>
-
         {/* DROPDOWN MENU */}
         {menuVisible && (
           <View style={user.dropdownMenu}>
@@ -141,7 +162,6 @@ export default function PageSelectionScreen() {
             </TouchableOpacity>
           </View>
         )}
-
         {/* OVERLAY TO CLOSE MENU */}
         {menuVisible && (
           <TouchableOpacity
@@ -150,10 +170,8 @@ export default function PageSelectionScreen() {
             activeOpacity={1}
           />
         )}
-
         {/* SCREEN TITLE */}
         <Text style={selection.label}>Register</Text>
-
         {/* IMAGE */}
         <View style={selection.image_text_container}>
           <Image
@@ -166,19 +184,74 @@ export default function PageSelectionScreen() {
           </View>
         </View>
 
-        {/* PASSAGES LIST */}
-        <View style={selection.passageListContainer}>
-        <Text style={selection.sublabel}>Select a passage:</Text>          
-          {passages.length > 0 ? (
-            <FlatList
-              data={passages}
-              renderItem={renderItem}
-              keyExtractor={(item, index) => index.toString()}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-            />
+        {/* TABS */}
+        <View style={selection.tabContainer}>
+          <TouchableOpacity
+            style={[
+              selection.tab,
+              activeTab === 'alphabet' && selection.activeTab,
+            ]}
+            onPress={() => setActiveTab('alphabet')}
+          >
+            <Text
+              style={[
+                selection.tabText,
+                activeTab === 'alphabet' && selection.activeTabText,
+              ]}
+            >
+              Alphabet
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              selection.tab,
+              activeTab === 'passages' && selection.activeTab,
+            ]}
+            onPress={() => setActiveTab('passages')}
+          >
+            <Text
+              style={[
+                selection.tabText,
+                activeTab === 'passages' && selection.activeTabText,
+              ]}
+            >
+              Passages
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* CONTENT BASED ON ACTIVE TAB */}
+        <View style={selection.contentContainer}>
+          {activeTab === 'alphabet' ? (
+            <>
+              <Text style={selection.sublabel}>
+                Select a letter to practice:
+              </Text>
+              <FlatList
+                data={alphabetData}
+                renderItem={renderAlphabetItem}
+                keyExtractor={item => item.letter}
+                numColumns={4}
+                columnWrapperStyle={selection.alphabetRow}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={selection.alphabetListContainer}
+              />
+            </>
           ) : (
-            <Text>No passages available</Text>
+            <View  style={selection.passageListContainer}>
+              <Text style={selection.sublabel}>Select a passage:</Text>
+              {passages.length > 0 ? (
+                <FlatList
+                  data={passages}
+                  renderItem={renderPassageItem}
+                  keyExtractor={(item, index) => index.toString()}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                />
+              ) : (
+                <Text>No passages available</Text>
+              )}
+            </View>
           )}
         </View>
       </View>

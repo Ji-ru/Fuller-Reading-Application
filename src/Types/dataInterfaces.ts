@@ -15,32 +15,33 @@ export interface UserDocument {
   // USER ID
   uid: string;
   email: string;
-  role: UserRole;
+  role: string;
 
   // USER PROFILE INFORMATION
   profileImageUrl?: string;
   firstName: string;
   middleName?: string;
   lastName: string;
+  sex: string;
 
   // ROLE SPECIFIC DATA
   // Student specific data
   studentData?: {
     gradeLevel: number;
-    dateOfBirth: Date;
+    dateOfBirth: string;
     classId?: string;
-    reading_Level? : 'beginner' | 'intermediate' | 'advanced';
+    reading_Level?: 'beginner' | 'intermediate' | 'advanced';
   };
 
   // Faculty specific data
   facultyData?: {
     assignedGradeLevels: number[];
-    assignedClassCode: string[];
+    assignedClassIds: string[];
   };
 
   // Creation and update from Firestore Timestamp
   createdAt: any; 
-  updatedAt: any; 
+  updatedAt?: any; 
 }
 
 /**
@@ -62,7 +63,7 @@ export interface ClassDocument {
   isActive: boolean;
   // Creation and update from Firestore Timestamp
   createdAt: any; 
-  updatedAt: any; 
+  updatedAt?: any; 
 }
 
 /**

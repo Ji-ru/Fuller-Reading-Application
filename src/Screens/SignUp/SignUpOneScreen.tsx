@@ -19,11 +19,20 @@ import {
 } from 'react-native-image-picker';
 import bubbles from '../../ui/BubblesDesign';
 import buttons from '../../ui/ButtonStyles';
+import GenderSelection from '../../Components/Buttons/GenderRadioButton';
+import { RootStackParamList } from '../../Controller/NavigationController';
+import { RouteProp, useRoute } from '@react-navigation/native';
+type SignUpOneRouteProp = RouteProp<RootStackParamList, 'SignUpOne'>;
 
 export default function SignUpOneScreen() {
   // Navigation handlers
+  // Get role from navigation params
+  const route = useRoute<SignUpOneRouteProp>();
+  const { role } = route.params;
+
   // Add state of the Registration Steps using react hook
-  const { handleSignUpNavigationWithData, handleCancelRegistration } = useNavigationHelper();
+  const { handleSignUpNavigationWithData, handleCancelRegistration } =
+    useNavigationHelper();
 
   // current step - UNDER CONSTRUCTION!!
   const [currentStep, setCurrentStep] = useState(1);
@@ -39,16 +48,19 @@ export default function SignUpOneScreen() {
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
 
+  // Set user sex
+  const [gender, setGender] = useState('');
+
   const onChange = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
     if (selectedDate) {
       setDate(selectedDate);
     }
   };
+
   const showDatePicker = () => {
     setShowPicker(true);
   };
-
 
   // Handle profile picture selection
   const handleProfilePicChange = () => {
@@ -105,7 +117,6 @@ export default function SignUpOneScreen() {
       setProfileImage(response.assets[0].uri);
     }
   };
-
 
   return (
     <SafeAreaView style={signup.container}>
@@ -189,14 +200,33 @@ export default function SignUpOneScreen() {
           <Text style={signup.subLabel}>Personal Information</Text>
           {/* FIRST NAME */}
           <Text style={signup.textform}>First Name</Text>
-          <TextInput style={signup.textInputForm} placeholder="e.g Juan " value={firstName} onChangeText={setFirstName} />
+          <TextInput
+            style={signup.textInputForm}
+            placeholder="e.g Juan "
+            value={firstName}
+            onChangeText={setFirstName}
+          />
           {/* MIDDLE NAME */}
           <Text style={signup.textform}>Middle Name</Text>
-          <TextInput style={signup.textInputForm} placeholder="e.g Marasigan" value={middleName} onChangeText={setMiddleName} />
+          <TextInput
+            style={signup.textInputForm}
+            placeholder="e.g Marasigan"
+            value={middleName}
+            onChangeText={setMiddleName}
+          />
 
           {/* LAST NAME */}
           <Text style={signup.textform}>Last Name</Text>
-          <TextInput style={signup.textInputForm} placeholder="e.g Campus" value={lastName} onChangeText={setLastName} />
+          <TextInput
+            style={signup.textInputForm}
+            placeholder="e.g Campus"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+
+          {/* SEX */}
+          <Text style={signup.textform}>Select Gender:</Text>
+          <GenderSelection onGenderSelect={setGender} />
 
           {/* DATE OF BIRTH */}
           <Text style={signup.textform}>Date of Birth</Text>
@@ -223,20 +253,27 @@ export default function SignUpOneScreen() {
             onCancel={() => setShowPicker(false)}
           />
           <Text style={signup.textform}>Grade Level</Text>
-          <GradeLevelDropDownSelection onSelect={(value) => setGradeLevel(value)} />
+          <GradeLevelDropDownSelection
+            onSelect={value => setGradeLevel(value)}
+          />
         </View>
 
         {/* NEXT PAGE */}
         <TouchableOpacity
           style={buttons.nextPageButton}
-          onPress={() => handleSignUpNavigationWithData({
-            profileImage,
-            firstName,
-            middleName,
-            lastName,
-            gradeLevel,
-            dateOfBirth: date,
-          })}
+          onPress={() =>
+            handleSignUpNavigationWithData({
+              profileImageUrl: profileImage || '',
+              firstName: firstName.trim(),
+              middleName: middleName.trim(),
+              lastName: lastName.trim(),
+              email: '',
+              role,
+              sex: gender,
+              gradeLevel,
+              dateOfBirth: date,
+            })
+          }
         >
           <Text style={buttons.nextPageText}>Next</Text>
         </TouchableOpacity>

@@ -239,6 +239,92 @@ const readingStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+
+  // ALPHABET DISPLAY STYLE
+
+  alphabetContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  
+  letterContainer: {
+    backgroundColor: '#4F46E5',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 40,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  
+  bigLetter: {
+    fontSize: 64,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  
+  alphabetExamples: {
+    backgroundColor: 'white',
+    padding: 24,
+    borderRadius: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  
+  exampleSection: {
+    marginBottom: 20,
+  },
+  
+  exampleLabel: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#4F46E5',
+    marginBottom: 8,
+  },
+  
+  exampleText: {
+    fontSize: 24,
+    color: '#333',
+    lineHeight: 32,
+  },
+  
+  highlightedLetter: {
+    color: '#EF4444',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    fontSize: 26,
+  },
+  
+  instructions: {
+    marginTop: 30,
+    padding: 16,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FBBF24',
+    width: '100%',
+  },
+  
+  instructionText: {
+    fontSize: 16,
+    color: '#92400E',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
 });
 
 export default readingStyles;
