@@ -1,5 +1,6 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore"
-import { db, auth } from "../../firebaseConfig";
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { Miscue } from "../Types/miscue";
 import { MiscueReport } from "../Types/dataInterfaces";
 import { MiscueAnalysisService } from "./MiscueAnalysisServiceController";
@@ -8,7 +9,7 @@ import { MiscueAnalysisService } from "./MiscueAnalysisServiceController";
 export const MiscueReportController = {
     async storeReport(passageTitle: string, miscues: Miscue[]) {
         try {
-            const user = auth.currentUser;
+            const user = auth.;
             if (!user) throw new Error("No Authenticated User Found!");
 
             // Summarizes Miscues into report format

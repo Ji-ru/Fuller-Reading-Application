@@ -63,7 +63,9 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     }
     return null;
   };
-
+  
+  
+  // ALPHABET DISPLAY 
   if (isAlphabet(material)) {
     return (
       <View style={readingStyles.alphabetContainer}>
@@ -92,6 +94,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     );
   }
 
+  // PASSAGE DISPLAY 
   return (
     <View style={readingStyles.insideContainer}>
       <Image

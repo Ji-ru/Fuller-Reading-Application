@@ -116,7 +116,7 @@ export default function LoginScreen() {
    */
   const handleLogin = async () => {
     // Dismiss keyboard when submitting
-    Keyboard.dismiss();
+    dismissKeyboard();
 
     // Validate form
     if (!validateForm()) {
@@ -181,16 +181,16 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={login.container}>
-              {/* <Video
+              <Video
                 style={login.video}
                 source={require('../../assets/videos/cisc_logo_animated.mp4')}
                 repeat={true}
-              /> */}
-              <Image
+              />
+              {/* <Image
                 style={login.video}
                 source={require('../../assets/gifs&animations/')}
                 resizeMode="contain"
-              />
+              /> */}
 
               {/* EMAIL INPUT */}
               <Text style={login.label}>
@@ -238,7 +238,7 @@ export default function LoginScreen() {
                 style={login.forgotPassButton}
                 disabled={loading}
                 onPress={() => {
-                  Keyboard.dismiss();
+                  dismissKeyboard();
                 }}
               >
                 <Text style={login.forgotpass}>Forgot Password?</Text>
@@ -274,7 +274,7 @@ export default function LoginScreen() {
                   <TouchableOpacity
                     style={login.signupwithgooglebutton}
                     onPress={() => {
-                      Keyboard.dismiss();
+                      dismissKeyboard();
                       handleNextStep('SignUpOne');
                     }}
                     activeOpacity={0.7}
@@ -289,7 +289,7 @@ export default function LoginScreen() {
                   <TouchableOpacity
                     style={login.signupwithemailbutton}
                     onPress={() => {
-                      Keyboard.dismiss();
+                      dismissKeyboard();
                       handleNextStep('ChooseRole');
                     }}
                     activeOpacity={0.7}

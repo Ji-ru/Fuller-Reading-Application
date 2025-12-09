@@ -1,5 +1,7 @@
 import { MiscueType } from "./miscue";
+export interface MiscueReport {
 
+};
 /**
  * TYPES OF USER ROLES
  *  - used in base user information
