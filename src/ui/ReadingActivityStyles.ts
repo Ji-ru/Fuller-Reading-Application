@@ -50,6 +50,8 @@ const readingStyles = StyleSheet.create({
     color: '#666',
     marginTop: 50,
   },
+
+  // FEEDBACK
   passageContainer: {
     backgroundColor: '#ffffff',
     padding: 20,
@@ -82,7 +84,7 @@ const readingStyles = StyleSheet.create({
   },
   textContainer: {
     marginTop: 10,
-    fontSize: 25
+    fontSize: 25,
   },
   textLine: {
     fontSize: 20,
@@ -97,7 +99,18 @@ const readingStyles = StyleSheet.create({
     maxWidth: 250,
     alignSelf: 'center',
   },
-
+  substitutionText: {
+    color: '#FF2726',
+  },
+  omissionText: {
+    color: '#FF941A',
+  },
+  insertionText: {
+    color: '#1A81FF',
+  },
+  repetitionText: {
+    color: '#BF00DD',
+  },
   // MICROPHONE
   microphoneContainer: {
     marginTop: 50,
@@ -280,7 +293,7 @@ const readingStyles = StyleSheet.create({
 
   alphabetContainer: {
     marginTop: 50,
-    marginBottom:10,
+    marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 10,
@@ -295,10 +308,6 @@ const readingStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 40,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
     elevation: 10,
   },
 
@@ -313,10 +322,6 @@ const readingStyles = StyleSheet.create({
     padding: 24,
     borderRadius: 20,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
     elevation: 5,
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -345,6 +350,107 @@ const readingStyles = StyleSheet.create({
     textDecorationLine: 'underline',
     fontSize: 26,
   },
+
+  // WORD DISPLAY STYLE
+  wordCardContainer: {
+    marginTop: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginBottom: 120
+  },
+
+  wordCard: {
+    backgroundColor: '#c0e8f2',
+    paddingVertical: 40,
+    paddingHorizontal: 50,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#1a73e8',
+    elevation: 6,
+    marginBottom: 100
+  },
+
+  wordCardText: {
+    fontSize: 64,
+    fontWeight: 'bold',
+    color: '#1a73e8',
+    textAlign: 'center',
+  },
+
+  wordCardInstruction: {
+    fontSize: 20,
+    color: '#6c757d',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+    // =====================================
+  // WORD & ALPHABET FEEDBACK CARD STYLES
+  // =====================================
+
+  waFeedbackContainer: {
+    alignSelf: 'center',
+    marginTop: 24,
+    width: '90%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    elevation: 6,
+  },
+
+  waFeedbackAnimation: {
+    width: 140,
+    height: 140,
+    marginBottom: 12,
+  },
+
+  waFeedbackTitle: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#2C2C2C',
+    marginBottom: 8,
+    textAlign: 'center',
+    fontFamily: 'Satoshi-Bold',
+  },
+
+  waFeedbackMessage: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#555',
+    textAlign: 'center',
+    paddingHorizontal: 8,
+    fontFamily: 'Satoshi-Medium',
+  },
+
+  waFeedbackWordBox: {
+    backgroundColor: '#F4F8FF',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+
+  waFeedbackExpectedText: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#1A73E8',
+    letterSpacing: 2,
+    fontFamily: 'Satoshi-Bold',
+  },
+
+  waFeedbackSpokenText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#D32F2F',
+    marginTop: 6,
+    fontFamily: 'Satoshi-Medium',
+  },
+
 });
 
 export default readingStyles;

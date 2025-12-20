@@ -48,14 +48,19 @@ export default function LoadingScreen() {
         }
 
         const userData = userDoc.data();
-        const role = userData?.role || 'student';
+        const role = userData?.role;
         
         console.log(`LoadingScreen: User verified as ${role}, going to UserHome`);
         setStatusMessage(`Welcome ${userData?.firstName || ''}!`);
 
         // Success - navigate to UserHome
         setTimeout(() => {
-          handleReplaceStep('UserHome');
+          if (role === 'student') {
+            handleReplaceStep('UserHome');
+          } else if (role === 'faculty') {
+            handleReplaceStep('FacultyDashboard');
+          }
+          
         }, 500);
 
       } catch (error) {
@@ -69,8 +74,8 @@ export default function LoadingScreen() {
 
     // Set a timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
-      console.log('LoadingScreen: Timeout reached, going to UserHome');
-      handleReplaceStep('UserHome');
+      console.log('LoadingScreen: Timeout reached, going to Login');
+      handleReplaceStep('Login');
     }, 3500);
 
     // Start verification after a short delay

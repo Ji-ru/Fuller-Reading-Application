@@ -2,8 +2,7 @@ export type MiscueType =
   | 'substitution'
   | 'omission'
   | 'insertion'
-  | 'repetition'
-  | 'mispronunciation';
+  | 'repetition';
 
 export interface Miscue {
   expected: string;
@@ -23,4 +22,36 @@ export interface RecordingState {
   audioPath: string;
   isReadingCompleted: boolean;
   currentWordIndex: number;
+}
+
+export interface MiscueCounts {
+  substitution: number;
+  omission: number;
+  omissionCount?: number;
+  insertion: number;
+  repetition: number;
+}
+
+export interface MiscuePercentage {
+  type: string;
+  percentage: number;
+  count: number;
+  color: string;
+}
+
+export interface FacultyMiscueStats {
+  miscuePercentages: MiscuePercentage[];
+  averageAccuracy: number;
+  totalStudents: number;
+  totalMiscues: number;
+}
+
+export interface StudentMiscueReport {
+  accuracyRate: number;
+  miscues?: Array<{
+    type: MiscueType;
+    expectedWord?: string;
+    spokenWord?: string;
+  }>; 
+
 }

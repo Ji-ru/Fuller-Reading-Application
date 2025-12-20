@@ -27,7 +27,7 @@ export default function SignUpTwoScreen() {
   const [currentStep, setCurrentStep] = useState(2);
 
   // Handles Navigation After Registration
-  const { handleNextStep, handleCancelRegistration } = useNavigationHelper();
+  const { handleDesignatedUserPage, handleCancelRegistration } = useNavigationHelper();
 
   // User Account Credential States
   const [email, setEmail] = useState('');
@@ -42,7 +42,7 @@ export default function SignUpTwoScreen() {
   // Ref for Lottie animation
   const congratulationsRef = useRef<LottieView>(null);
   const confettiRef = useRef<LottieView>(null);
-
+  
   // Handles Registration Logic
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
@@ -59,16 +59,28 @@ export default function SignUpTwoScreen() {
       setModalVisible(true);
 
       // Call with correct parameters - using non-null assertion since we validated above
-      await SignUpUserCredentials(email, password, {
-        role: personalInfo.role!,
-        firstName: personalInfo.firstName!,
-        middleName: personalInfo.middleName,
-        lastName: personalInfo.lastName!,
-        sex: personalInfo.sex!,
-        profileImageUrl: personalInfo?.profileImageUrl,
-        gradeLevel: personalInfo.studentData?.gradeLevel,
-        dateOfBirth: personalInfo.studentData?.dateOfBirth,
-      });
+      if (personalInfo.role! === 'student') {
+        await SignUpUserCredentials(email, password, {
+          role: personalInfo.role!,
+          firstName: personalInfo.firstName!,
+          middleName: personalInfo.middleName,
+          lastName: personalInfo.lastName!,
+          sex: personalInfo.sex!,
+          profileImageUrl: personalInfo?.profileImageUrl,
+          gradeLevel: personalInfo.studentData?.gradeLevel,
+          dateOfBirth: personalInfo.studentData?.dateOfBirth,
+        });        
+      } else if (personalInfo.role! === 'faculty') {
+        await SignUpUserCredentials(email, password, {
+          role: personalInfo.role!,
+          firstName: personalInfo.firstName!,
+          middleName: personalInfo.middleName,
+          lastName: personalInfo.lastName!,
+          sex: personalInfo.sex!,
+          profileImageUrl: personalInfo?.profileImageUrl,
+          assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
+        });  
+      }
 
       // Switch to success modal
       setModalType('success');
@@ -87,7 +99,7 @@ export default function SignUpTwoScreen() {
       // Wait 2 seconds to show success animation, then navigate
       setTimeout(() => {
         setModalVisible(false);
-        handleNextStep('SignUpCompleted');
+        handleDesignatedUserPage(personalInfo.role!);
       }, 2000);
     } catch (error: any) {
       setModalVisible(false);
@@ -212,9 +224,9 @@ export default function SignUpTwoScreen() {
       {/* LOADING MODAL */}
       <Modal
         transparent={true}
-        animationType='fade'
+        animationType="fade"
         visible={modalVisible}
-        onRequestClose={()=>{}} // Empty function for Android back button
+        onRequestClose={() => {}} // Empty function for Android back button
         onDismiss={handleModalClose}
       >
         <View style={signup.modalOverlay}>
@@ -237,7 +249,7 @@ export default function SignUpTwoScreen() {
                   style={signup.confettiAnimation}
                   resizeMode="cover"
                 />
-                
+
                 {/* Congratulations animation (foreground) */}
                 <LottieView
                   ref={congratulationsRef}
@@ -247,8 +259,10 @@ export default function SignUpTwoScreen() {
                   style={signup.congratulationsAnimation}
                   resizeMode="contain"
                 />
-                
-                <Text style={[signup.modalText, signup.successText]}>{modalMessage}</Text>
+
+                <Text style={[signup.modalText, signup.successText]}>
+                  {modalMessage}
+                </Text>
               </>
             )}
           </View>

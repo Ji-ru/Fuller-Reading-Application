@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
 import user from '../../ui/UserStyle';
 import LogoutModal from '../Buttons/LogoutModal';
+import upperNav from '../../ui/UpperNavigation';
 
 interface ReadingHeaderProps {
   onBack: () => void;
@@ -35,47 +36,42 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
 
   return (
     <>
-      <View style={user.header}>
-        <TouchableOpacity style={user.touchable} onPress={onBack}>
+      <View style={upperNav.header}>
+        <TouchableOpacity style={upperNav.touchable} onPress={onBack}>
           <Image
             source={require('../../../assets/icons/BackButton-icon.png')}
           />
         </TouchableOpacity>
         <Image
-          style={user.ciscLogo}
+          style={upperNav.ciscLogo}
           source={require('../../../assets/images/cisckids.png')}
         />
-        <TouchableOpacity style={user.touchable} onPress={onMenuToggle}>
+        <TouchableOpacity style={upperNav.touchable} onPress={onMenuToggle}>
           <Image
-            style={user.menuIcon}
+            style={upperNav.menuIcon}
             source={require('../../../assets/icons/Menu-icon.png')}
           />
         </TouchableOpacity>
       </View>
 
       {menuVisible && (
-        <View style={user.dropdownMenu}>
+        <View style={upperNav.dropdownMenu}>
           <TouchableOpacity
             onPress={handleLogoutPress}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              padding: 16,
-              borderRadius: 12,
-            }}
+            style={upperNav.logoutButton}
           >
             <Image
               source={require('../../../assets/icons/Logout-icon.png')}
-              style={user.logoutIcon}
+              style={upperNav.logoutIcon}
             />
-            <Text style={user.logoutText}>Logout</Text>
+            <Text style={upperNav.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
       )}
 
       {menuVisible && (
         <TouchableOpacity
-          style={user.closeMenu}
+          style={upperNav.closeMenu}
           onPress={onMenuToggle}
           activeOpacity={1}
         />

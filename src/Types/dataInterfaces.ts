@@ -1,6 +1,11 @@
 import { MiscueType } from "./miscue";
 export interface MiscueReport {
-
+  studentId: string;
+  substitution: string;
+  omission: string;
+  insertion: string;
+  repetition: string;
+  timestamp: Date;
 };
 /**
  * TYPES OF USER ROLES
@@ -25,12 +30,12 @@ export interface UserDocument {
   middleName?: string;
   lastName: string;
   sex: string;
-
+  
   // ROLE SPECIFIC DATA
   // Student specific data
   studentData?: {
     gradeLevel: number;
-    dateOfBirth: string;
+    dateOfBirth?: string;
     classId?: string;
     reading_Level?: 'beginner' | 'intermediate' | 'advanced';
   };
@@ -75,26 +80,30 @@ export interface ClassDocument {
 export interface MiscueReportDocument {
   reportId: string;
   studentId: string;
-  classId: string; // Reference to the class document (UID)
 
   // Passage Information
   passageTitle: string;
-  passageText: string;
+
+  // Overall Overview before aside from storing in array
+  substitution: string;
+  omission: string;
+  insertion: string;
+  repetition: string;
 
   // Miscue Data (Stored in Array for Flexibility)
   miscues: {
     type: MiscueType;
     expectedWord: string; // Word in passage
     spokenWord?: string; // What student said (null for omissions)
-    position?: number;  // Position in the passage (word index)
   }[];
   
   // Performance Metrics
   accuracyRate: number;
-  recordingDuration?: number;
+  wordPerMin: number;
+  recordingDuration?: string;
 
   // Creation from Firestore Timestamp
-  createdAt: any;
+  timestamp: any;
 }
 
 

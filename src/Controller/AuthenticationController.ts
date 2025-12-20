@@ -1,9 +1,7 @@
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { Alert } from 'react-native';
 import {
   UserDocument,
-  UserRole,
   MiscueReportDocument,
   ClassDocument,
 } from '../Types/dataInterfaces';
@@ -54,18 +52,17 @@ export const SignUpUserCredentials = async (
       profileImageUrl: userData.profileImageUrl,
       createdAt: firestore.FieldValue.serverTimestamp(),
     };
-
-    let readableDOB: string | undefined = undefined;
+    
+    let readableDOB: string = '';
     if (userData.dateOfBirth) {
       readableDOB = formatDateToReadable(userData.dateOfBirth);
     }
-
-
+    
     // 3. Role-specific data
     if (userData.role === 'student') {
       userDocument.studentData = {
         gradeLevel: userData.gradeLevel || 1,
-        dateOfBirth: readableDOB  || ' ',
+        dateOfBirth: readableDOB,
         classId: '',
         reading_Level: 'beginner',
       };
@@ -85,12 +82,12 @@ export const SignUpUserCredentials = async (
       userData.assignedGradeLevels &&
       userData.assignedGradeLevels.length > 0
     ) {
-      const initialGrade = userData.assignedGradeLevels[0];
+      const initialAssignedGrade = userData.assignedGradeLevels[0];
       await createClass(
         user.uid,
         userData.firstName,
         userData.lastName,
-        initialGrade,
+        initialAssignedGrade,
       );
     }
 
@@ -255,7 +252,7 @@ export const createMiscueReport = async (
     const report: MiscueReportDocument = {
       ...reportData,
       reportId: reportRef.id,
-      createdAt: firestore.FieldValue.serverTimestamp(),
+      timestamp: firestore.FieldValue.serverTimestamp(),
     };
 
     await reportRef.set(report);

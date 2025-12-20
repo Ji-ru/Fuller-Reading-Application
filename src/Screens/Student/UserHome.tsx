@@ -6,6 +6,7 @@ import bubbles from '../../ui/BubblesDesign';
 import buttons from '../../ui/ButtonStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/Buttons/LogoutModal';
+import upperNav from '../../ui/UpperNavigation';
 
 export default function UserHomeScreen() {
   // HANDLE MENU
@@ -25,7 +26,7 @@ export default function UserHomeScreen() {
     setLogoutVisible(true);
   };
 
-  const confirmLogoout = async () => {
+  const confirmLogout = async () => {
     setLogoutVisible(false);
     await handleLogout();
   };
@@ -62,14 +63,14 @@ export default function UserHomeScreen() {
 
         {/* HEADER (LOGO + MENU ICON) */}
         <View>
-          <View style={user.header}>
+          <View style={upperNav.header}>
             <Image
-              style={user.ciscLogo}
+              style={upperNav.ciscLogo}
               source={require('../../../assets/images/cisckids.png')}
             />
-            <TouchableOpacity style={user.touchable} onPress={toggleMenu}>
+            <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
               <Image
-                style={user.menuIcon}
+                style={upperNav.menuIcon}
                 source={require('../../../assets/icons/Menu-icon.png')}
               />
             </TouchableOpacity>
@@ -78,21 +79,16 @@ export default function UserHomeScreen() {
 
         {/* DROPDOWN MENU */}
         {menuVisible && (
-          <View style={user.dropdownMenu}>
+          <View style={upperNav.dropdownMenu}>
             <TouchableOpacity
               onPress={handleLogoutPress}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 16,
-                borderRadius: 12,
-              }}
+              style={upperNav.logoutButton}
             >
               <Image
                 source={require('../../../assets/icons/Logout-icon.png')}
-                style={user.logoutIcon}
+                style={upperNav.logoutIcon}
               />
-              <Text style={user.logoutText}>Logout</Text>
+              <Text style={upperNav.logoutText}>Logout</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -100,7 +96,7 @@ export default function UserHomeScreen() {
         {/* OVERLAY TO CLOSE MENU */}
         {menuVisible && (
           <TouchableOpacity
-            style={user.closeMenu}
+            style={upperNav.closeMenu}
             onPress={() => setMenuVisible(false)}
             activeOpacity={1}
           />
@@ -109,7 +105,7 @@ export default function UserHomeScreen() {
         <LogoutModal
           visible={logoutVisible}
           onCancel={cancelLogout}
-          onConfirm={confirmLogoout}
+          onConfirm={confirmLogout}
         />
 
         {/* INTRO */}
@@ -135,8 +131,11 @@ export default function UserHomeScreen() {
         >
           <Text style={buttons.nextPageText}>Start Learning</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={buttons.readingHistoryButton}>
+        <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('ReadingHistory')}>
           <Text style={buttons.nextPageText}>Reading History</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('Profile')}>
+          <Text style={buttons.nextPageText}>My Profile</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

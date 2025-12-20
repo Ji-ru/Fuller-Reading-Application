@@ -36,7 +36,12 @@ export class MiscueAnalysisService {
       }
 
       // Case 2: Check for repetition first (since it's most specific)
-      const repetitionMiscue = this.detectRepetition(targetWords, userWords, targetIndex, userIndex);
+      const repetitionMiscue = this.detectRepetition(
+        targetWords,
+        userWords,
+        targetIndex,
+        userIndex,
+      );
       if (repetitionMiscue) {
         detectedMiscues.push(repetitionMiscue);
         userIndex++; // Only advance user index for repetition
@@ -44,7 +49,12 @@ export class MiscueAnalysisService {
       }
 
       // Case 3: Check if current spoken word matches next target word (omission)
-      const omissionMiscue = this.detectOmission(targetWords, userWords, targetIndex, userIndex);
+      const omissionMiscue = this.detectOmission(
+        targetWords,
+        userWords,
+        targetIndex,
+        userIndex,
+      );
       if (omissionMiscue.miscue) {
         for (let i = 0; i < omissionMiscue.skipCount; i++) {
           detectedMiscues.push({
@@ -60,7 +70,12 @@ export class MiscueAnalysisService {
       }
 
       // Case 4: Check if current target word matches next spoken word (insertion)
-      const insertionMiscue = this.detectInsertion(targetWords, userWords, targetIndex, userIndex);
+      const insertionMiscue = this.detectInsertion(
+        targetWords,
+        userWords,
+        targetIndex,
+        userIndex,
+      );
       if (insertionMiscue.miscue) {
         for (let i = 0; i < insertionMiscue.skipCount; i++) {
           detectedMiscues.push({
@@ -77,7 +92,9 @@ export class MiscueAnalysisService {
 
       // Case 5: Substitution (words don't match but positions align)
       // DIRECT APPROACH
-      detectedMiscues.push(this.detectSubstitution(expectedWord, spokenWord, targetIndex));
+      detectedMiscues.push(
+        this.detectSubstitution(expectedWord, spokenWord, targetIndex),
+      );
       targetIndex++;
       userIndex++;
       continue;
@@ -122,7 +139,7 @@ export class MiscueAnalysisService {
      * First if statement:
      * - 1st Condition: Check if userIndex is less the the length of user words (spoken)
      * - 2nd Condition: Check if current word is same as previous word
-     * 
+     *
      * Second if statement:
      * - both 1st and 2nd conditions in the targetIndex and targetWords are similar with the First if statement
      */
@@ -133,7 +150,10 @@ export class MiscueAnalysisService {
        * If yes then, its not a MISCUE
        * @returns null since its not a repetitive word
        */
-      if (targetIndex > 0 && targetWords[targetIndex] === targetWords[targetIndex - 1]) {
+      if (
+        targetIndex > 0 &&
+        targetWords[targetIndex] === targetWords[targetIndex - 1]
+      ) {
         return null;
       }
       return {
@@ -152,14 +172,17 @@ export class MiscueAnalysisService {
     targetWords: string[],
     userWords: string[],
     targetIndex: number,
-    userIndex: number
+    userIndex: number,
   ): { miscue: Miscue | null; skipCount: number } {
-
-    // Look ahead instance 
+    // Look ahead instance
     const LOOKAHEAD = 5;
 
     // Check if current spoken word matches any upcoming target word
-    for (let i = 1; i <= LOOKAHEAD && targetIndex + i < targetWords.length; i++) {
+    for (
+      let i = 1;
+      i <= LOOKAHEAD && targetIndex + i < targetWords.length;
+      i++
+    ) {
       if (userWords[userIndex] === targetWords[targetIndex + i]) {
         // Found a match at position +i, so i words were omitted
         return {
@@ -170,7 +193,7 @@ export class MiscueAnalysisService {
             timestamp: new Date(),
             type: 'omission',
           },
-          skipCount: i // Tell caller how many words to skip
+          skipCount: i, // Tell caller how many words to skip
         };
       }
     }
@@ -181,18 +204,18 @@ export class MiscueAnalysisService {
     targetWords: string[],
     userWords: string[],
     targetIndex: number,
-    userIndex: number
+    userIndex: number,
   ): { miscue: Miscue | null; skipCount: number } {
     const LOOKAHEAD = 5;
     /**
      * Detects word insertions by looking ahead in spoken text
-     * 
+     *
      * Example:
      *   Target: "the cat"
      *   Spoken: "the big brown cat"
      *   At "big": looks ahead and finds "cat" at position +2
      *   Returns: miscue for "big", skipCount = 2 (skip "big" and "brown")
-     * 
+     *
      * @returns miscue for first inserted word, skipCount = total inserted words
      */
     for (let i = 1; i <= LOOKAHEAD && userIndex + i < userWords.length; i++) {
@@ -205,14 +228,18 @@ export class MiscueAnalysisService {
             timestamp: new Date(),
             type: 'insertion',
           },
-          skipCount: i // Tell caller how many inserted words to skip
+          skipCount: i, // Tell caller how many inserted words to skip
         };
       }
     }
     return { miscue: null, skipCount: 0 };
   }
 
-  private static detectSubstitution(expected: string, spoken: string, position: number): Miscue {
+  private static detectSubstitution(
+    expected: string,
+    spoken: string,
+    position: number,
+  ): Miscue {
     return {
       expected,
       spoken,
@@ -234,11 +261,12 @@ export class MiscueAnalysisService {
     const miscues = this.detectMiscues(passageText, spokenText);
 
     // Count all error types that affect accuracy
-    const errorCount = miscues.filter(miscue =>
-      miscue.type === 'omission' ||
-      miscue.type === 'substitution' ||
-      miscue.type === 'insertion' ||
-      miscue.type === 'repetition'
+    const errorCount = miscues.filter(
+      miscue =>
+        miscue.type === 'omission' ||
+        miscue.type === 'substitution' ||
+        miscue.type === 'insertion' ||
+        miscue.type === 'repetition',
     ).length;
 
     const correctCount = targetWords.length - errorCount;
@@ -259,36 +287,32 @@ export class MiscueAnalysisService {
   static formatMiscueWords(miscues: Miscue[]): string {
     if (miscues.length === 0) return 'None';
 
-    return (
-      miscues
-        .slice(0, 5)
-        .map(miscue => {
-          switch (miscue.type) {
-            case 'omission':
-              return `"${miscue.expected}"`;
-            case 'insertion':
-              return `"${miscue.spoken}"`;
-            case 'repetition':
-              return `"${miscue.spoken}"`;
-            case 'substitution':
-              return `"${miscue.expected}"`;
-            default:
-              return `"${miscue.spoken}"`;
-          }
-        })
-        .join(', ')
-    );
+    return miscues
+      .slice(0, 5)
+      .map(miscue => {
+        switch (miscue.type) {
+          case 'omission':
+            return `"${miscue.expected}"`;
+          case 'insertion':
+            return `"${miscue.spoken}"`;
+          case 'repetition':
+            return `"${miscue.spoken}"`;
+          case 'substitution':
+            return `"${miscue.expected}"`;
+          default:
+            return `"${miscue.spoken}"`;
+        }
+      })
+      .join(', ');
   }
 
   // ==============================
-  // ALPHABET ACCURACY CHECK
+  // ALPHABET PHONEME ACCURACY (STRICT)
   // ==============================
-
-   /**
-   * Simple alphabet accuracy check - just checks if letter was said correctly
-   * No complex miscue detection needed for single letters
-   */
-   static checkAlphabetAccuracy(targetLetter: string, spokenText: string): {
+  static checkAlphabetPhonemeAccuracy(
+    targetLetter: string,
+    spokenText: string,
+  ): {
     isCorrect: boolean;
     accuracy: string;
     feedback: string;
@@ -304,16 +328,60 @@ export class MiscueAnalysisService {
     const normalizedTarget = targetLetter.toUpperCase().trim();
     const normalizedSpoken = spokenText.toUpperCase().trim();
 
-    // Check if the spoken text contains the target letter
-    // This handles cases like "A", "letter A", "the letter A", etc.
-    const isCorrect = normalizedSpoken.includes(normalizedTarget);
+    // Remove everything except letters
+    const cleanSpoken = normalizedSpoken.replace(/[^A-Z]/g, '');
+
+    // For alphabet phoneme: must be exactly the single letter
+    // Examples that should PASS: "A", "A.", "A!", "A "
+    // Examples that should FAIL: "Apple", "A cat", "The letter A"
+    const isCorrect = cleanSpoken === normalizedTarget;
 
     return {
       isCorrect,
       accuracy: isCorrect ? '100' : '0',
-      feedback: isCorrect 
-        ? `✓ Correct! You said "${normalizedTarget}"` 
-        : `✗ Incorrect. Expected "${normalizedTarget}", you said "${normalizedSpoken}"`,
+      feedback: isCorrect
+        ? `✓ Perfect! You said the letter "${normalizedTarget}" correctly.`
+        : `✗ Try again. Say just the letter "${normalizedTarget}". You said: "${normalizedSpoken}"`,
+    };
+  }
+
+  // ==============================
+  // WORD ACCURACY (More tolerant)
+  // ==============================
+  static checkWordAccuracy(
+    targetWord: string,
+    spokenText: string,
+  ): {
+    isCorrect: boolean;
+    accuracy: string;
+    feedback: string;
+  } {
+    if (!spokenText || spokenText === 'No Speech Detected!') {
+      return {
+        isCorrect: false,
+        accuracy: '0',
+        feedback: 'No sound detected',
+      };
+    }
+
+    const normalizedTarget = targetWord.toUpperCase().trim();
+    const normalizedSpoken = spokenText.toUpperCase().trim();
+
+    // Remove non-alphabetic characters but keep spaces for multi-word phrases
+    const cleanSpoken = normalizedSpoken.replace(/[^A-Z\s]/g, '').trim();
+    const cleanTarget = normalizedTarget.replace(/[^A-Z\s]/g, '').trim();
+
+    // For words: check if spoken contains the word (more tolerant)
+    const isCorrect =
+      cleanSpoken === cleanTarget || // Exact match
+      cleanSpoken.includes(cleanTarget); // Word appears within spoken text
+
+    return {
+      isCorrect,
+      accuracy: isCorrect ? '100' : '0',
+      feedback: isCorrect
+        ? `✓ Great! You said "${cleanTarget}" correctly.`
+        : `✗ Try again. Expected "${cleanTarget}", you said: "${normalizedSpoken}"`,
     };
   }
 }

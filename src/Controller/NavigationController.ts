@@ -16,15 +16,26 @@ import { logoutUser } from './AuthenticationController';
 // Specifies what parameters (data) each screen in your navigation stack can receive.
 export type RootStackParamList = {
   Loading: undefined;
-  SignUpCompleted: undefined;
+  SignUpCompleted: { role: UserRole };
   SignUpTwo: { userInfo: Partial<UserDocument> };
   SignUpOne: { role: UserRole };
   Login: undefined;
+
+  // STUDENT NAVIGATION
   UserHome: undefined;
   PassageSelection: undefined;
-  // ReadingActivity: { passage: Passage };
-  ReadingTesting: { readingMaterial: ReadingMaterial; type: 'alphabet' | 'passage' };
+  ReadingActivity: {
+    readingMaterial: ReadingMaterial;
+    type: 'alphabet' | 'passage' | 'word';
+  };
+  ReadingHistory: undefined;
   ChooseRole: undefined;
+  Profile: undefined;
+
+  // FACULTY NAVIGATION
+  FacultyDashboard: undefined;
+  FacultyProfile: undefined;
+  MyClass: undefined;
 };
 
 // A list of all the screens within RootStackParamList
@@ -65,6 +76,7 @@ export const useNavigationHelper = () => {
     sex,
     gradeLevel,
     dateOfBirth,
+    assignedGradeLevels,
   }: {
     profileImageUrl?: string;
     firstName: string;
@@ -73,14 +85,31 @@ export const useNavigationHelper = () => {
     email: string;
     role: UserRole;
     sex: string;
-    gradeLevel: number;
-    dateOfBirth: string;
+    gradeLevel?: number;
+    dateOfBirth?: string;
+    assignedGradeLevels?: number[];
   }) => {
     // Basic validation
-    if (!firstName || !lastName || !dateOfBirth) {
+    if (!firstName || !lastName) {
       Alert.alert(
         'Missing Information',
         'Please fill out all required fields.',
+      );
+      return;
+    }
+
+    if (role === 'student' && (!gradeLevel || !dateOfBirth)) {
+      Alert.alert(
+        'Missing Information',
+        'Please fill out all required fields for student registration.',
+      );
+      return;
+    }
+
+    if (role === 'faculty' && !assignedGradeLevels) {
+      Alert.alert(
+        'Missing Information',
+        'Please select an assigned grade level for faculty.',
       );
       return;
     }
@@ -94,12 +123,20 @@ export const useNavigationHelper = () => {
       email: '',
       role,
       sex,
-      studentData: {
-        gradeLevel,
-        dateOfBirth,
-        reading_Level: 'beginner',
-      },
     };
+    // Add role-specific data
+    if (role === 'student') {
+      userInfo.studentData = {
+        gradeLevel: gradeLevel!,
+        dateOfBirth: dateOfBirth!,
+        reading_Level: 'beginner',
+      };
+    } else if (role === 'faculty') {
+      userInfo.facultyData = {
+        assignedGradeLevels: assignedGradeLevels!,
+        assignedClassIds: [],
+      };
+    }
 
     // Navigate to SignUpTwo with the collected info
     navigation.navigate('SignUpTwo', { userInfo });
@@ -107,14 +144,39 @@ export const useNavigationHelper = () => {
 
   // Add a method to navigate from ChooseRole to SignUpOne
   const handleRoleSelection = (role: UserRole) => {
-    navigation.navigate('SignUpOne', { role });
+    if (role === 'student') {
+      navigation.navigate('SignUpOne', { role });
+    } else if (role === 'admin') {
+      navigation.navigate('SignUpOne', { role });
+    } else {
+      navigation.navigate('SignUpOne', { role });
+    }
+  };
+
+  const handleCompletedRegistration = (role: UserRole) => {
+        navigation.navigate('SignUpCompleted', { role });
+    };
+  
+  const handleDesignatedUserPage = (role: string) => {
+    if (role === 'student') {
+      navigation.navigate('UserHome');
+    } else if (role === 'faculty') {
+      navigation.navigate('FacultyDashboard');
+    } 
   };
 
   // Handles only the Reading Activity Page due to having data passed to the next page.
-  const handleReadingNext = (readingMaterial: ReadingMaterial, type: 'alphabet' | 'passage') => {
-    // navigation.navigate('ReadingActivity', { passage });
-    navigation.navigate('ReadingTesting', { readingMaterial, type });
+  const handleReadingNext = (
+    readingMaterial: ReadingMaterial,
+    type: 'alphabet' | 'passage' | 'word',
+  ) => {
+    navigation.navigate('ReadingActivity', { readingMaterial, type });
   };
+
+  const handleHistoryNext = () => {
+    navigation.navigate('ReadingHistory');
+  };
+
   // Handles Back Button in any page the current user is in
   const handleBackStep = () => {
     navigation.goBack();
@@ -156,8 +218,11 @@ export const useNavigationHelper = () => {
     handleNextStep,
     handleReplaceStep,
     handleSignUpNavigationWithData,
+    handleDesignatedUserPage,
+    handleCompletedRegistration,
     handleRoleSelection,
     handleReadingNext,
+    handleHistoryNext,
     handleBackStep,
     handleLogout,
     handleCancelRegistration,

@@ -22,6 +22,7 @@ import buttons from '../../ui/ButtonStyles';
 import GenderSelection from '../../Components/Buttons/GenderRadioButton';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { RouteProp, useRoute } from '@react-navigation/native';
+
 type SignUpOneRouteProp = RouteProp<RootStackParamList, 'SignUpOne'>;
 
 export default function SignUpOneScreen() {
@@ -116,6 +117,14 @@ export default function SignUpOneScreen() {
     } else if (response.assets && response.assets[0].uri) {
       setProfileImage(response.assets[0].uri);
     }
+  };
+
+  // Helper function to format date as "7 December 2025"
+  const formatDateToReadable = (dateObj: Date): string => {
+    const day = dateObj.getDate();
+    const month = dateObj.toLocaleString('default', { month: 'long' });
+    const year = dateObj.getFullYear();
+    return `${day} ${month} ${year}`;
   };
 
   return (
@@ -240,6 +249,7 @@ export default function SignUpOneScreen() {
               style={signup.icon}
             />
           </TouchableOpacity>
+          
           <DatePicker
             modal
             mode="date"
@@ -252,7 +262,8 @@ export default function SignUpOneScreen() {
             }}
             onCancel={() => setShowPicker(false)}
           />
-          <Text style={signup.textform}>Grade Level</Text>
+          
+          <Text style={signup.textform}>{role === 'student' ? 'Grade Level': 'Assigned Grade Level'}</Text>
           <GradeLevelDropDownSelection
             onSelect={value => setGradeLevel(value)}
           />
@@ -261,18 +272,32 @@ export default function SignUpOneScreen() {
         {/* NEXT PAGE */}
         <TouchableOpacity
           style={buttons.nextPageButton}
-          onPress={() =>
-            handleSignUpNavigationWithData({
-              profileImageUrl: profileImage || '',
-              firstName: firstName.trim(),
-              middleName: middleName.trim(),
-              lastName: lastName.trim(),
-              email: '',
-              role,
-              sex: gender,
-              gradeLevel,
-              dateOfBirth: date,
-            })
+          onPress={() =>{
+            if (role === 'student') {
+              handleSignUpNavigationWithData({
+                profileImageUrl: profileImage || '',
+                firstName: firstName.trim(),
+                middleName: middleName.trim(),
+                lastName: lastName.trim(),
+                email: '',
+                role,
+                sex: gender,
+                gradeLevel,
+                dateOfBirth: formatDateToReadable(date),
+              });
+            } else if ( role === 'faculty') {
+              handleSignUpNavigationWithData({
+                profileImageUrl: profileImage || '',
+                firstName: firstName.trim(),
+                middleName: middleName.trim(),
+                lastName: lastName.trim(),
+                email: '',
+                role,
+                sex: gender,
+                assignedGradeLevels: [gradeLevel],
+              });
+            }
+          }
           }
         >
           <Text style={buttons.nextPageText}>Next</Text>

@@ -5,9 +5,15 @@ import signup from '../../ui/SignUpStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { useNavigation } from '@react-navigation/native';
 import buttons from '../../ui/ButtonStyles';
+import { RootStackParamList } from '../../Controller/NavigationController';
+import { RouteProp, useRoute } from '@react-navigation/native';
+
+type SignUpCompleteRouteProp = RouteProp<RootStackParamList, 'SignUpCompleted'>;
 
 export default function SignUpCompletedScreen() {
   // Add navigation code here for where it logs in automatically to user screen after signing up
+  const route = useRoute<SignUpCompleteRouteProp>();
+  const { role } = route.params;
 
   const navigation = useNavigation() as any;
   
@@ -20,7 +26,7 @@ export default function SignUpCompletedScreen() {
     return () => clearTimeout(timer);
   }, [navigation]);
 
-  const { handleNextStep }  = useNavigationHelper();
+  const { handleDesignatedUserPage }  = useNavigationHelper();
 
   return (
     <View style={signup.completeSignUpContainer}>
@@ -37,7 +43,7 @@ export default function SignUpCompletedScreen() {
         you better in reading.
       </Text>
 
-      <TouchableOpacity style={signup.completeNextButton} onPress={() => handleNextStep('UserHome')}>
+      <TouchableOpacity style={signup.completeNextButton} onPress={() => handleDesignatedUserPage(role)}>
         <Text style={buttons.nextPageText}>Start Learning</Text>
       </TouchableOpacity>
 

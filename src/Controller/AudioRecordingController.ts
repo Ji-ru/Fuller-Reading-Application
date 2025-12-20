@@ -66,7 +66,16 @@ export const useAudioRecording = () => {
     const wordCount = passageText.split(/\s+/).length;
     const wordsPerMinute = 150;
     const minutes = wordCount / wordsPerMinute;
-    return Math.ceil(minutes * 60) - 2;
+    const rawDuration = Math.ceil(minutes * 60);
+    
+    // Set minimum duration for short texts
+    const MIN_DURATION = 30; // Minimum 30 seconds for any recording
+    const MAX_DURATION = 120; // Maximum 2 minutes
+    
+    let duration = Math.max(rawDuration, MIN_DURATION);
+    duration = Math.min(duration, MAX_DURATION);
+    
+    return duration;
   }, []);
 
   const startRecording = useCallback(async (passageText: string) => {

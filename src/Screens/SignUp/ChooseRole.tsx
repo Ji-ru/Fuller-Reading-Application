@@ -6,6 +6,7 @@ import chooseRole from '../../ui/ChooseRoleStyle';
 import bubbles from '../../ui/BubblesDesign';
 import user from '../../ui/UserStyle';
 import buttons from '../../ui/ButtonStyles';
+import upperNav from '../../ui/UpperNavigation';
 
 export default function ChooseRole() {
   const { handleRoleSelection } = useNavigationHelper();
@@ -38,9 +39,9 @@ export default function ChooseRole() {
 
         {/* HEADER (LOGO + MENU ICON) */}
         <View>
-          <View style={user.header}>
+          <View style={upperNav.header}>
             <Image
-              style={user.ciscLogo}
+              style={upperNav.ciscLogo}
               source={require('../../../assets/images/cisckids.png')}
             />
           </View>
@@ -60,7 +61,7 @@ export default function ChooseRole() {
             <TouchableOpacity style={buttons.studentButton} onPress={() => handleRoleSelection('student')}>
                 <Text style={buttons.nextPageText}>I am a Student</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={buttons.teacherButton}>
+            <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('faculty')}>
                 <Text style={buttons.nextPageText}>I am a Teacher</Text>
             </TouchableOpacity>
         </View>

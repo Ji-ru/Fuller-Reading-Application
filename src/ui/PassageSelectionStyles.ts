@@ -50,21 +50,38 @@ const selection = StyleSheet.create({
     marginVertical: 10,
     marginTop: 20
   },
-
-  // PASSAGE LIST
+  
+  // FOR CATEGORIES THAT ARE DISPLAYED AS LIST (WORD AND PASSAGE)
   item: {
-    padding: 10,
-    width: 370,
-    height: 55,
+    padding: 5,
+    width: 'auto',
+    height: 'auto',
     backgroundColor: '#ffff',
     borderRadius: 10,
     elevation: 4,
   },
   itemWrapper: {
-    margin: 3,
+    margin: 5,
   },
+  
+  // WORD LIST
+  word: {
+    fontSize: 30,
+    fontWeight: '600',
+    fontFamily: 'Satoshi-MediumItalic',
+  },
+  wordSectionContainer: {
+    marginVertical: 5
+  },
+  wordSection: {
+    fontSize: 25,
+    fontFamily: 'Satoshi-BlackItalic',
+    left: 10
+  },
+
+  // PASSAGE LIST
   title: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: '600',
     fontFamily: 'Satoshi-MediumItalic',
   },
@@ -74,7 +91,7 @@ const selection = StyleSheet.create({
   },
   passageListContainer: {
     flex: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   arrowContainer: {
     width: 25,
@@ -93,6 +110,8 @@ const selection = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    alignContent: 'center',
+    padding: 5
   },
 
    // Tab Styles
