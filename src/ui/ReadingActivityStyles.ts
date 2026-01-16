@@ -3,12 +3,13 @@ import { StyleSheet } from 'react-native';
 const readingStyles = StyleSheet.create({
   container: {
     flex: 1,
+    flexShrink: 1,
     backgroundColor: '#ECFBFF',
     padding: 10,
     position: 'relative',
   },
   insideContainer: {
-    flex: 1,
+    justifyContent: 'flex-start',
     position: 'relative',
     zIndex: 1,
   },
@@ -18,13 +19,6 @@ const readingStyles = StyleSheet.create({
     marginVertical: 8,
     marginHorizontal: 16,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
     elevation: 5,
   },
   title: {
@@ -56,19 +50,25 @@ const readingStyles = StyleSheet.create({
     color: '#666',
     marginTop: 50,
   },
+
+  // FEEDBACK
   passageContainer: {
     backgroundColor: '#ffffff',
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
     elevation: 5,
-    marginBottom: 20,
+    marginBottom: 10,
+    alignSelf: 'center',
+    flexShrink: 1,
+  },
+  passageContainerFeedback: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
+    elevation: 5,
+    alignSelf: 'center',
+    flexShrink: 1,
+    marginBottom: 10,
   },
   passageTitle: {
     fontSize: 25,
@@ -83,25 +83,37 @@ const readingStyles = StyleSheet.create({
     marginBottom: 4,
   },
   textContainer: {
-    marginTop: 16,
+    marginTop: 10,
     fontSize: 25,
   },
   textLine: {
     fontSize: 20,
     lineHeight: 24,
-    marginBottom: 8,
     textAlign: 'center',
     fontFamily: 'Satoshi-Medium',
   },
   readingImage: {
-    width: 250,
-    height: 250,
+    width: 230,
+    height: 230,
     maxHeight: 250,
     maxWidth: 250,
     alignSelf: 'center',
   },
+  substitutionText: {
+    color: '#FF2726',
+  },
+  omissionText: {
+    color: '#FF941A',
+  },
+  insertionText: {
+    color: '#1A81FF',
+  },
+  repetitionText: {
+    color: '#BF00DD',
+  },
+  // MICROPHONE
   microphoneContainer: {
-    marginTop: 10,
+    marginTop: 50,
     alignItems: 'center',
   },
   microphone: {
@@ -119,10 +131,6 @@ const readingStyles = StyleSheet.create({
     alignItems: 'center',
     width: 100,
     height: 100,
-  },
-  highlightedWord: {
-    backgroundColor: 'yellow',
-    borderRadius: 4,
   },
 
   // TESTING
@@ -159,10 +167,10 @@ const readingStyles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  errorText: {
-    color: 'red',
-    marginTop: 8,
-  },
+  // errorText: {
+  //   color: 'red',
+  //   marginTop: 8,
+  // },
   miscueContainer: {
     margin: 16,
     padding: 16,
@@ -194,7 +202,21 @@ const readingStyles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-  // RESULT DESIGN
+  // LOADING INDICATOR STYLES
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    marginTop: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'Satoshi-Medium',
+    textAlign: 'center',
+  },
+
+  // FEEDBACK DESIGN
 
   // Calculation Accuracy Design
   calculationContainer: {
@@ -212,6 +234,13 @@ const readingStyles = StyleSheet.create({
     fontSize: 20,
     color: '#ffff',
   },
+  correctContainer: {
+    backgroundColor: '#4CAF50',
+  },
+  incorrectContainer: {
+    backgroundColor: '#FF5252',
+  },
+
   // FEEDBACK REPORT
   feedbackContainer: {
     backgroundColor: '#ffff',
@@ -226,6 +255,20 @@ const readingStyles = StyleSheet.create({
   feedbackLabel: {
     fontSize: 15,
     padding: 5,
+    fontFamily: 'Satoshi-Bold',
+  },
+  boldText: {
+    fontWeight: 'bold',
+    fontFamily: 'Satoshi-Bold',
+  },
+  successText: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+    fontFamily: 'Satoshi-Bold',
+  },
+  errorText: {
+    color: '#FF5252',
+    fontWeight: 'bold',
     fontFamily: 'Satoshi-Bold',
   },
 
@@ -245,6 +288,169 @@ const readingStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+
+  // ALPHABET DISPLAY STYLE
+
+  alphabetContainer: {
+    marginTop: 50,
+    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    width: '100%',
+  },
+
+  letterContainer: {
+    backgroundColor: '#4F46E5',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 40,
+    elevation: 10,
+  },
+
+  bigLetter: {
+    fontSize: 64,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+
+  alphabetExamples: {
+    backgroundColor: 'white',
+    padding: 24,
+    borderRadius: 20,
+    width: '100%',
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  exampleSection: {
+    marginBottom: 20,
+  },
+
+  exampleLabel: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#4F46E5',
+    marginBottom: 8,
+  },
+
+  exampleText: {
+    fontSize: 24,
+    color: '#333',
+    lineHeight: 32,
+  },
+
+  highlightedLetter: {
+    color: '#EF4444',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    fontSize: 26,
+  },
+
+  // WORD DISPLAY STYLE
+  wordCardContainer: {
+    marginTop: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginBottom: 120
+  },
+
+  wordCard: {
+    backgroundColor: '#c0e8f2',
+    paddingVertical: 40,
+    paddingHorizontal: 50,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#1a73e8',
+    elevation: 6,
+    marginBottom: 100
+  },
+
+  wordCardText: {
+    fontSize: 64,
+    fontWeight: 'bold',
+    color: '#1a73e8',
+    textAlign: 'center',
+  },
+
+  wordCardInstruction: {
+    fontSize: 20,
+    color: '#6c757d',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+    // =====================================
+  // WORD & ALPHABET FEEDBACK CARD STYLES
+  // =====================================
+
+  waFeedbackContainer: {
+    alignSelf: 'center',
+    marginTop: 24,
+    width: '90%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    elevation: 6,
+  },
+
+  waFeedbackAnimation: {
+    width: 140,
+    height: 140,
+    marginBottom: 12,
+  },
+
+  waFeedbackTitle: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#2C2C2C',
+    marginBottom: 8,
+    textAlign: 'center',
+    fontFamily: 'Satoshi-Bold',
+  },
+
+  waFeedbackMessage: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#555',
+    textAlign: 'center',
+    paddingHorizontal: 8,
+    fontFamily: 'Satoshi-Medium',
+  },
+
+  waFeedbackWordBox: {
+    backgroundColor: '#F4F8FF',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+
+  waFeedbackExpectedText: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#1A73E8',
+    letterSpacing: 2,
+    fontFamily: 'Satoshi-Bold',
+  },
+
+  waFeedbackSpokenText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#D32F2F',
+    marginTop: 6,
+    fontFamily: 'Satoshi-Medium',
+  },
+
 });
 
 export default readingStyles;

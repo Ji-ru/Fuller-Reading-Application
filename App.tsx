@@ -5,17 +5,33 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ApplicationProvider } from '@ui-kitten/components';
 import * as eva from '@eva-design/eva';
 
-// Screens
+// ========================================================================
+// PAGES
+// ========================================================================
+
 import LoginScreen from './src/Screens/LoginScreen';
 import LoadingScreen from './src/Screens/LoadingScreen';
-import UserHomeScreen from './src/Screens/User/UserHomeScreen';
-import SignUpOneScreen from './src/Screens/SignUp/SignUpOneScreen';
-import SignUpTwoScreen from './src/Screens/SignUp/SignUpTwoScreen';
-import SignUpCompletedScreen from './src/Screens/SignUp/SignUpCompletedScreen';
-import PageSelectionScreen from './src/Screens/User/PageSelectionScreen';
-import ReadingActivityScreen from './src/Screens/User/ReadingActivityScreen';
-import MiscuesReportsScreen from './src/Screens/User/MiscuesReportsScreen';
-// import ReadingTesting from './src/Screens/User/ReadingTesting';
+
+// SIGN UP PAGE
+import ChooseRole from './src/Screens/SignUp/ChooseRole';
+import SignUpOneScreen from './src/Screens/SignUp/SignUpOne';
+import SignUpTwoScreen from './src/Screens/SignUp/SignUpTwo';
+import SignUpCompletedScreen from './src/Screens/SignUp/SignUpCompleted';
+
+// STUDENT PAGE
+import UserHomeScreen from './src/Screens/Student/UserHome';
+import PageSelectionScreen from './src/Screens/Student/PageSelection';
+import ReadingActivityScreenPage from './src/Screens/Student/ReadingActivity';
+import ReadingHistoryScreen from './src/Screens/Student/History';
+import StudentProfile from './src/Screens/Profile';
+// import FacultyStack from './FacultyStack';
+
+// FACULTY PAGE
+import FacultyDashboard from './src/Screens/Faculty/FacultyDashboard';
+import FacultyProfile from './src/Screens/Faculty/FacultyProfile';
+import MyClass from './src/Screens/Faculty/MyClass';
+import MyStudents from './src/Screens/Faculty/MyStudents';
+import StudentViewProfile from './src/Screens/Faculty/StudentViewProfile';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,24 +41,37 @@ function App() {
     <SafeAreaProvider>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+
+            {/* SIGN IN PAGES */}
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Loading" component={LoadingScreen} />
+            <Stack.Screen name="Profile" component={StudentProfile} />
 
-            {/* SIGNUP SCREENS */}
+            {/* SIGNUP PAGES */}
+            <Stack.Screen name="ChooseRole" component={ChooseRole} />
             <Stack.Screen name="SignUpOne" component={SignUpOneScreen} />
             <Stack.Screen name="SignUpTwo" component={SignUpTwoScreen} />
             <Stack.Screen name="SignUpCompleted" component={SignUpCompletedScreen} />
 
-            {/* USER SCREENS */}
+            {/* USER PAGES */}
             <Stack.Screen name="UserHome" component={UserHomeScreen} />
-            <Stack.Screen name="PasageSelection" component={PageSelectionScreen} />
-            <Stack.Screen name="ReadingActivity" component={ReadingActivityScreen} />
-            <Stack.Screen name="MiscuesReports" component={MiscuesReportsScreen} />
-            {/* <Stack.Screen name="ReadingTesting" component={ReadingTesting} /> */}
+            <Stack.Screen name="PassageSelection" component={PageSelectionScreen} />
+            <Stack.Screen name="ReadingActivity" component={ReadingActivityScreenPage} />
+            <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
 
-            {/* ADMIN SCREENS */}
+            {/* FACULTY PAGES */}
+              <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
+              <Stack.Screen name="FacultyProfile" component={FacultyProfile} />
+              <Stack.Screen name="MyClass" component={MyClass} />
+              <Stack.Screen name="MyStudents" component={MyStudents} />
+              <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
+              {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}
 
-            {/* FACULTY SCREENS */}
+            {/* ADMIN PAGES */}
+
+            
+
+            
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

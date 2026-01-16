@@ -13,7 +13,7 @@ const buttons = StyleSheet.create({
     maxWidth: 350,
     maxHeight: 40,
     marginBottom: 10,
-    marginTop: 60,
+    marginTop: 35,
   },
   nextPageText: {
     color: '#FFFF',
@@ -68,6 +68,49 @@ const buttons = StyleSheet.create({
     maxHeight: 40,
     marginTop: 15,
   },
+  // CHOOSE ROLE BUTTON
+  studentButton: {
+    backgroundColor: '#2CA96A',
+    borderRadius: 5,
+    width: 320,
+    height: 40,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 350,
+    maxHeight: 40,
+    marginTop: 15,
+  },
+  teacherButton: {
+    backgroundColor: '#2CA96A',
+    borderRadius: 5,
+    width: 320,
+    height: 40,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 350,
+    maxHeight: 40,
+    marginTop: 15,
+  },
+  sexRadioButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 350,
+    height: 40,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    backgroundColor: 'white',
+    elevation: 5,
+    maxWidth: 350,
+    maxHeight: 40,
+    alignSelf: 'center',
+    marginVertical: 2,
+    fontFamily: 'Satoshi-Medium',
+  }
 });
 
 export default buttons;

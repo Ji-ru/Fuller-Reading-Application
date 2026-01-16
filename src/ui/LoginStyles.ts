@@ -1,9 +1,11 @@
 import { StyleSheet } from 'react-native';
 
 const login = StyleSheet.create({
+  safeAreaContainer: {
+    backgroundColor: '#ECFBFF',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#ECFBFF',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -27,9 +29,8 @@ const login = StyleSheet.create({
   },
   forgotpass: {
     alignSelf: 'flex-end',
-    marginEnd: 25,
     marginBottom: 10,
-    fontSize: 10,
+    fontSize: 13,
     fontFamily: 'Satoshi-Regular',
 
     textDecorationLine: 'underline',
@@ -49,6 +50,7 @@ const login = StyleSheet.create({
     elevation: 5,
     maxWidth: 350,
     maxHeight: 40,
+    color: 'black'
   },
 
   // LOGIN BUTTON
@@ -138,6 +140,67 @@ const login = StyleSheet.create({
     height: 42,
   },
   registerText: {
+    fontFamily: 'Satoshi-Medium',
+  },
+
+   // Input field error state
+   textInputError: {
+    borderColor: '#FF3B30',
+    backgroundColor: '#FFF5F5',
+    borderWidth: 2,
+  },
+  
+  // Input field valid state
+  textInputValid: {
+    borderColor: '#34C759',
+    borderWidth: 1.5,
+  },
+  
+  // Error message text
+  errorText: {
+    fontSize: 12,
+    color: '#FF3B30',
+    marginBottom: 10,
+    marginLeft: 10,
+    fontFamily: 'Satoshi-Regular',
+  },
+  
+  // Required field asterisk
+  requiredStar: {
+    color: '#FF3B30',
+    fontSize: 16,
+  },
+  
+  // Disabled button state
+  buttonDisabled: {
+    backgroundColor: '#C7C7CC',
+    opacity: 0.7,
+  },
+  
+  // Forgot password as a button wrapper
+  forgotPassButton: {
+    alignSelf: 'flex-end',
+    marginEnd: 25,
+    marginBottom: 10,
+  },
+  
+  // Simple divider for OR (if you want to add it)
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    width: '100%',
+    maxWidth: 350,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#C7C7CC',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#8E8E93',
+    fontSize: 14,
     fontFamily: 'Satoshi-Medium',
   },
 });

@@ -61,7 +61,7 @@ const signup = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 20,
+    marginVertical: 5,
   },
   stepCircle: {
     width: 24,
@@ -107,6 +107,7 @@ const signup = StyleSheet.create({
     alignSelf: 'center',
     marginVertical: 2,
     fontFamily: 'Satoshi-Medium',
+    color: 'black',
   },
   dateText: {
     textAlign: 'left',
@@ -220,6 +221,62 @@ const signup = StyleSheet.create({
     maxHeight: 40,
     marginBottom: 10,
     marginTop: 20,
+  },
+
+  // SIGN UP LOADING COMPLETION MODAL
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    elevation: 5,
+    minWidth: 250,
+    minHeight: 300,
+    justifyContent: 'center',
+    overflow: 'hidden', // Important for confetti animation
+  },
+  modalText: {
+    marginTop: 20,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+    zIndex: 10, // Make sure text is above animations
+  },
+  successText: {
+    color: '#4CAF50',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  // Confetti animation (background)
+  confettiAnimation: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 1, // Lower zIndex to be in background
+  },
+  // Congratulations animation (foreground)
+  congratulationsAnimation: {
+    width: 200,
+    height: 200,
+    zIndex: 2, // Higher zIndex to be in foreground
+    marginBottom: -20, // Adjust spacing between animation and text
+  },
+  // Keep old lottieAnimation as fallback or remove if not needed
+  lottieAnimation: {
+    width: 120,
+    height: 120,
+    marginBottom: -10,
   },
 });
 

@@ -16,21 +16,18 @@ const selection = StyleSheet.create({
   label: {
     fontSize: 35,
     fontFamily: 'Satoshi-Bold',
-    textShadowColor: '#0000004D',
-    textShadowOffset: { width: 4, height: 0 },
-    textShadowRadius: 10,
+    elevation: 5,
     textAlign: 'center',
   },
   sublabel: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    alignSelf: 'flex-start'
+    alignSelf: 'flex-start',
+    marginVertical: 5
   },
   image: {
-    width: 200,
-    height: 195,
-    maxHeight: 195,
-    maxWidth: 200,
+    width: 150,
+    height: 150,
   },
   text: {
     fontFamily: 'Satoshi-Regular',
@@ -53,21 +50,38 @@ const selection = StyleSheet.create({
     marginVertical: 10,
     marginTop: 20
   },
-
-  // PASSAGE LIST
+  
+  // FOR CATEGORIES THAT ARE DISPLAYED AS LIST (WORD AND PASSAGE)
   item: {
-    padding: 10,
-    width: 370,
-    height: 55,
+    padding: 5,
+    width: 'auto',
+    height: 'auto',
     backgroundColor: '#ffff',
     borderRadius: 10,
     elevation: 4,
   },
   itemWrapper: {
-    margin: 3,
+    margin: 5,
   },
+  
+  // WORD LIST
+  word: {
+    fontSize: 30,
+    fontWeight: '600',
+    fontFamily: 'Satoshi-MediumItalic',
+  },
+  wordSectionContainer: {
+    marginVertical: 5
+  },
+  wordSection: {
+    fontSize: 25,
+    fontFamily: 'Satoshi-BlackItalic',
+    left: 10
+  },
+
+  // PASSAGE LIST
   title: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: '600',
     fontFamily: 'Satoshi-MediumItalic',
   },
@@ -77,8 +91,7 @@ const selection = StyleSheet.create({
   },
   passageListContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   arrowContainer: {
     width: 25,
@@ -97,9 +110,81 @@ const selection = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    alignContent: 'center',
+    padding: 5
   },
 
+   // Tab Styles
+   tabContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginTop: 10,
+    backgroundColor: '#c0e8f2',
+    borderRadius: 12,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  activeTab: {
+    backgroundColor: '#2CA96A',
+    shadowColor: '#4F46E5',
+    elevation: 3,
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'black',
+  },
+  activeTabText: {
+    color: 'white',
+  },
   
+  // Content Container
+  contentContainer: {
+    flex: 1,
+    marginTop: 10,
+    width: '100%',
+  },
+  
+  // Alphabet Styles
+  alphabetListContainer: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  alphabetRow: {
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  alphabetItem: {
+    width: '23%',
+    aspectRatio: 1,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  alphabetContainer: {
+    alignItems: 'center',
+    padding: 8,
+  },
+  alphabetLetter: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2CA96A',
+  },
+  alphabetWord: {
+    fontSize: 10,
+    color: '#666',
+    marginTop: 4,
+    textAlign: 'center',
+  },
 });
 
 export default selection;

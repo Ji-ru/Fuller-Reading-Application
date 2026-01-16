@@ -1,74 +1,501 @@
 {
+  "Alphabet": [
+    {"letter": "A"}, {"letter": "B"}, {"letter": "C"}, {"letter": "D"}, {"letter": "E"},
+    {"letter": "F"}, {"letter": "G"}, {"letter": "H"}, {"letter": "I"}, {"letter": "J"},
+    {"letter": "K"}, {"letter": "L"}, {"letter": "M"}, {"letter": "N"}, {"letter": "O"},
+    {"letter": "P"}, {"letter": "Q"}, {"letter": "R"}, {"letter": "S"}, {"letter": "T"},
+    {"letter": "U"}, {"letter": "V"}, {"letter": "W"}, {"letter": "X"}, {"letter": "Y"},
+    {"letter": "Z"}
+  ],
+
+  "Words": [
+    {
+      "letter": "A",
+      "contrasts": [
+        {
+          "phoneme": "short_a",
+          "ipa": "/æ/",
+          "words": ["ant", "cat", "bat", "hat", "map", "pan", "rat", "jam", "fan", "cap"]
+        },
+        {
+          "phoneme": "long_a",
+          "ipa": "/eɪ/",
+          "words": ["ape", "cake", "face", "game", "lake", "name", "rain", "train", "day", "play"]
+        }
+      ]
+    },
+
+    {
+      "letter": "B",
+      "contrasts": [
+        {
+          "phoneme": "initial_b",
+          "ipa": "/b/",
+          "words": ["ball", "bat", "bed", "bus", "bug", "bag", "box", "boy", "bear", "bike"]
+        },
+        {
+          "phoneme": "final_b",
+          "ipa": "/b/",
+          "words": ["web", "tub", "crib", "grab", "crab", "blob", "bulb", "club", "robe", "cube"]
+        }
+      ]
+    },
+
+    {
+      "letter": "C",
+      "contrasts": [
+        {
+          "phoneme": "hard_c",
+          "ipa": "/k/",
+          "words": ["cat", "cap", "cup", "car", "cow", "cake", "corn", "crab", "cage", "candy"]
+        },
+        {
+          "phoneme": "soft_c",
+          "ipa": "/s/",
+          "words": ["cent", "city", "circle", "cement", "celery", "cider", "citrus", "civil", "celebrate", "cycle"]
+        }
+      ]
+    },
+
+    {
+      "letter": "D",
+      "contrasts": [
+        {
+          "phoneme": "initial_d",
+          "ipa": "/d/",
+          "words": ["dog", "duck", "dad", "door", "day", "doll", "dish", "desk", "dust", "dinner"]
+        },
+        {
+          "phoneme": "final_d",
+          "ipa": "/d/",
+          "words": ["bed", "red", "mad", "sad", "glad", "hand", "card", "bird", "cold", "wind"]
+        }
+      ]
+    },
+
+    {
+      "letter": "E",
+      "contrasts": [
+        {
+          "phoneme": "short_e",
+          "ipa": "/ɛ/",
+          "words": ["egg", "bed", "red", "pen", "ten", "net", "jet", "leg", "men", "pet"]
+        },
+        {
+          "phoneme": "long_e",
+          "ipa": "/iː/",
+          "words": ["bee", "tree", "see", "key", "tea", "me", "we", "she", "green", "feet"]
+        }
+      ]
+    },
+
+    {
+      "letter": "F",
+      "contrasts": [
+        {
+          "phoneme": "initial_f",
+          "ipa": "/f/",
+          "words": ["fish", "fan", "fox", "frog", "foot", "farm", "fire", "flag", "fun", "food"]
+        },
+        {
+          "phoneme": "final_f",
+          "ipa": "/f/",
+          "words": ["if", "off", "cuff", "puff", "cliff", "wolf", "leaf", "roof", "self", "staff"]
+        }
+      ]
+    },
+
+    {
+      "letter": "G",
+      "contrasts": [
+        {
+          "phoneme": "hard_g",
+          "ipa": "/g/",
+          "words": ["goat", "game", "gate", "gum", "gift", "gorilla", "grass", "gold", "garden", "goose"]
+        },
+        {
+          "phoneme": "soft_g",
+          "ipa": "/dʒ/",
+          "words": ["giant", "giraffe", "gym", "gem", "age", "cage", "page", "stage", "bridge", "edge"]
+        }
+      ]
+    },
+
+    {
+      "letter": "H",
+      "contrasts": [
+        {
+          "phoneme": "initial_h",
+          "ipa": "/h/",
+          "words": ["hat", "hand", "house", "horse", "hill", "honey", "hammer", "heart", "hot", "help"]
+        },
+        {
+          "phoneme": "silent_h",
+          "ipa": "∅",
+          "words": ["hour", "honor", "honest", "heir", "herb", "ghost", "what", "when", "where", "white"]
+        }
+      ]
+    },
+
+    {
+      "letter": "I",
+      "contrasts": [
+        {
+          "phoneme": "short_i",
+          "ipa": "/ɪ/",
+          "words": ["igloo", "ink", "insect", "inch", "ill", "in", "it", "is", "if", "its"]
+        },
+        {
+          "phoneme": "long_i",
+          "ipa": "/aɪ/",
+          "words": ["ice", "idea", "iron", "island", "ivy", "eye", "five", "bike", "kite", "light"]
+        }
+      ]
+    },
+
+    {
+      "letter": "J",
+      "contrasts": [
+        {
+          "phoneme": "j_sound",
+          "ipa": "/dʒ/",
+          "words": ["jam", "jet", "jug", "jacket", "jelly", "jewel", "jump", "jungle", "juice", "joker"]
+        },
+        {
+          "phoneme": "j_vowel_following",
+          "ipa": "/dʒ/",
+          "words": ["jay", "joy", "jeans", "jingle", "jolly", "jumbo", "jigsaw", "jukebox", "jamboree", "jog"]
+        }
+      ]
+    },
+
+    {
+      "letter": "K",
+      "contrasts": [
+        {
+          "phoneme": "k_sound",
+          "ipa": "/k/",
+          "words": ["kite", "king", "key", "kitten", "kitchen", "kettle", "kangaroo", "ketchup", "kiwi", "kick"]
+        },
+        {
+          "phoneme": "silent_k",
+          "ipa": "∅",
+          "words": ["knee", "knife", "knock", "know", "knit", "knob", "kneel", "knockout", "known", "knelt"]
+        }
+      ]
+    },
+
+    {
+      "letter": "L",
+      "contrasts": [
+        {
+          "phoneme": "initial_l",
+          "ipa": "/l/",
+          "words": ["lion", "lamp", "leg", "leaf", "lake", "lock", "ladder", "lemon", "lady", "laugh"]
+        },
+        {
+          "phoneme": "final_l",
+          "ipa": "/l/",
+          "words": ["ball", "bell", "fall", "wall", "doll", "call", "tail", "pool", "school", "mail"]
+        }
+      ]
+    },
+
+    {
+      "letter": "M",
+      "contrasts": [
+        {
+          "phoneme": "initial_m",
+          "ipa": "/m/",
+          "words": ["moon", "map", "mug", "mom", "man", "milk", "monkey", "mouse", "mitten", "mop"]
+        },
+        {
+          "phoneme": "final_m",
+          "ipa": "/m/",
+          "words": ["ham", "jam", "dam", "gum", "drum", "plum", "room", "team", "arm", "farm"]
+        }
+      ]
+    },
+
+    {
+      "letter": "N",
+      "contrasts": [
+        {
+          "phoneme": "initial_n",
+          "ipa": "/n/",
+          "words": ["nest", "net", "nut", "nose", "neck", "nail", "nurse", "night", "name", "new"]
+        },
+        {
+          "phoneme": "final_n",
+          "ipa": "/n/",
+          "words": ["can", "fan", "man", "pen", "ten", "sun", "moon", "rain", "train", "brain"]
+        }
+      ]
+    },
+
+    {
+      "letter": "O",
+      "contrasts": [
+        {
+          "phoneme": "short_o",
+          "ipa": "/ɒ/",
+          "words": ["octopus", "on", "off", "ox", "odd", "olive", "otter", "orange", "ocean", "open"]
+        },
+        {
+          "phoneme": "long_o",
+          "ipa": "/oʊ/",
+          "words": ["over", "oval", "own", "old", "only", "oak", "bone", "rose", "home", "rope"]
+        }
+      ]
+    },
+
+    {
+      "letter": "P",
+      "contrasts": [
+        {
+          "phoneme": "initial_p",
+          "ipa": "/p/",
+          "words": ["pig", "pen", "pan", "pot", "pet", "park", "peach", "pizza", "pumpkin", "pin"]
+        },
+        {
+          "phoneme": "final_p",
+          "ipa": "/p/",
+          "words": ["cap", "map", "lap", "tap", "hop", "top", "mop", "pop", "stop", "cup"]
+        }
+      ]
+    },
+
+    {
+      "letter": "Q",
+      "contrasts": [
+        {
+          "phoneme": "qu_sound",
+          "ipa": "/kw/",
+          "words": ["queen", "quilt", "quick", "quiet", "quack", "question", "quarter", "quiz", "quail", "quote"]
+        },
+        {
+          "phoneme": "squ_sound",
+          "ipa": "/skw/",
+          "words": ["square", "squeeze", "squirrel", "squat", "squeak", "squad", "squeal", "squash", "squawk", "squire"]
+        }
+      ]
+    },
+
+    {
+      "letter": "R",
+      "contrasts": [
+        {
+          "phoneme": "initial_r",
+          "ipa": "/r/",
+          "words": ["rabbit", "rat", "rug", "run", "rain", "robot", "rocket", "rose", "ring", "river"]
+        },
+        {
+          "phoneme": "final_r",
+          "ipa": "/r/",
+          "words": ["car", "star", "far", "jar", "door", "bear", "ear", "four", "your", "chair"]
+        }
+      ]
+    },
+
+    {
+      "letter": "S",
+      "contrasts": [
+        {
+          "phoneme": "initial_s",
+          "ipa": "/s/",
+          "words": ["sun", "sock", "seal", "soup", "soap", "sand", "salt", "sink", "seven", "six"]
+        },
+        {
+          "phoneme": "final_s",
+          "ipa": "/s/",
+          "words": ["has", "is", "was", "his", "as", "these", "those", "please", "cheese", "boys"]
+        }
+      ]
+    },
+
+    {
+      "letter": "T",
+      "contrasts": [
+        {
+          "phoneme": "initial_t",
+          "ipa": "/t/",
+          "words": ["tree", "top", "ten", "tap", "tub", "tag", "truck", "turtle", "tiger", "tooth"]
+        },
+        {
+          "phoneme": "final_t",
+          "ipa": "/t/",
+          "words": ["cat", "hat", "bat", "rat", "sit", "hit", "pot", "hot", "cut", "nut"]
+        }
+      ]
+    },
+
+    {
+      "letter": "U",
+      "contrasts": [
+        {
+          "phoneme": "short_u",
+          "ipa": "/ʌ/",
+          "words": ["umbrella", "up", "under", "ugly", "umpire", "uncle", "until", "us", "utter", "bug"]
+        },
+        {
+          "phoneme": "long_u",
+          "ipa": "/juː/",
+          "words": ["unicorn", "uniform", "use", "useful", "user", "unite", "unit", "ukulele", "music", "cube"]
+        }
+      ]
+    },
+
+    {
+      "letter": "V",
+      "contrasts": [
+        {
+          "phoneme": "initial_v",
+          "ipa": "/v/",
+          "words": ["van", "vet", "vest", "vine", "vote", "vowel", "volcano", "violin", "vegetable", "valley"]
+        },
+        {
+          "phoneme": "final_v",
+          "ipa": "/v/",
+          "words": ["have", "give", "live", "love", "move", "above", "dove", "glove", "shove", "stove"]
+        }
+      ]
+    },
+
+    {
+      "letter": "W",
+      "contrasts": [
+        {
+          "phoneme": "initial_w",
+          "ipa": "/w/",
+          "words": ["whale", "web", "wig", "wind", "window", "wolf", "worm", "wagon", "water", "winter"]
+        },
+        {
+          "phoneme": "silent_w",
+          "ipa": "∅",
+          "words": ["write", "wrong", "wrap", "wrist", "answer", "saw", "draw", "law", "paw", "raw"]
+        }
+      ]
+    },
+
+    {
+      "letter": "X",
+      "contrasts": [
+        {
+          "phoneme": "x_final",
+          "ipa": "/ks/",
+          "words": ["box", "fox", "mix", "six", "ax", "ox", "fix", "wax", "tax", "relax"]
+        },
+        {
+          "phoneme": "x_initial",
+          "ipa": "/z/",
+          "words": ["xylophone", "x-ray", "xenon", "xerox", "xenops", "xenia", "xeric", "xylan", "xyster", "xenial"]
+        }
+      ]
+    },
+
+    {
+      "letter": "Y",
+      "contrasts": [
+        {
+          "phoneme": "initial_y",
+          "ipa": "/j/",
+          "words": ["yoyo", "yarn", "yell", "yes", "yellow", "yard", "year", "young", "yogurt", "yam"]
+        },
+        {
+          "phoneme": "final_y",
+          "ipa": "/aɪ/",
+          "words": ["my", "by", "fly", "sky", "dry", "try", "cry", "why", "shy", "buy"]
+        }
+      ]
+    },
+
+    {
+      "letter": "Z",
+      "contrasts": [
+        {
+          "phoneme": "initial_z",
+          "ipa": "/z/",
+          "words": ["zebra", "zoo", "zero", "zap", "zigzag", "zombie", "zipper", "zest", "zone", "zoom"]
+        },
+        {
+          "phoneme": "final_z",
+          "ipa": "/z/",
+          "words": ["buzz", "fizz", "jazz", "fuzz", "whiz", "quiz", "topaz", "blitz", "waltz", "spritz"]
+        }
+      ]
+    }
+  ],
+
   "Passages": [
     {
       "title": "Hickory Dickory Dock",
       "author": "Mother Goose",
       "category": "nursery rhyme",
       "image": "Hickory",
-      "text": "Hickory dickory dock.\nThe mouse ran up the clock.\nThe clock struck one,\nThe mouse ran down,\nHickory dickory dock."
+      "text": "Hickory dickory dock.\n The mouse ran up the clock.\n The clock struck one,\n The mouse ran down,\n Hickory dickory dock."
     },
     {
       "title": "The Itsy Bitsy Spider",
       "author": "Traditional Nursery Rhyme",
       "category": "nursery rhyme",
-      "image": " ",
-      "text": "The itsy bitsy spider climbed up the waterspout.\nDown came the rain and washed the spider out.\nOut came the sun and dried up all the rain,\nand the itsy bitsy spider climbed up the spout again."
+      "image": "",
+      "text": "The itsy bitsy spider climbed up the waterspout.\n Down came the rain and washed the spider out.\n Out came the sun and dried up all the rain,\n and the itsy bitsy spider climbed up the spout again."
     },
     {
       "title": "Twinkle, Twinkle, Little Star",
       "author": "Jane Taylor",
       "category": "nursery rhyme",
-      "image": " ",
-      "text": "Twinkle, twinkle, little star,\nHow I wonder what you are!\nUp above the world so high,\nLike a diamond in the sky."
+      "image": "",
+      "text": "Twinkle, twinkle, little star,\n How I wonder what you are!\n Up above the world so high,\n Like a diamond in the sky."
     },
     {
       "title": "Humpty Dumpty",
       "author": "Mother Goose",
       "category": "nursery rhyme",
-      "image": " ",
-      "text": "Humpty Dumpty sat on a wall,\nHumpty Dumpty had a great fall.\nAll the king's horses and all the king's men\nCouldn't put Humpty together again."
+      "image": "",
+      "text": "Humpty Dumpty sat on a wall,\n Humpty Dumpty had a great fall.\n All the king's horses and all the king's men\n Couldn't put Humpty together again."
     },
     {
       "title": "The Caterpillar",
       "author": "Christina Rossetti",
       "category": "poet",
-      "image": " ",
-      "text": "Brown and furry\nCaterpillar in a hurry,\nTake your walk\nTo the shady leaf, or stalk,\nOr what not,\nWhich may be the chosen spot.\nNo toad spy you,\nHovering bird of prey pass by you;"
+      "image": "",
+      "text": "Brown and furry\n Caterpillar in a hurry,\n Take your walk\n To the shady leaf, or stalk,\n Or what not,\n Which may be the chosen spot.\n No toad spy you,\n Hovering bird of prey pass by you;"
     },
     {
       "title": "Hey Diddle Diddle",
       "author": "Mother Goose",
       "category": "nursery rhyme",
-      "image": " ",
-      "text": "Hey diddle diddle,\nThe cat and the fiddle,\nThe cow jumped over the moon.\nThe little dog laughed to see such sport,\nAnd the dish ran away with the spoon."
+      "image": "",
+      "text": "Hey diddle diddle,\n The cat and the fiddle,\n The cow jumped over the moon.\n The little dog laughed to see such sport,\n And the dish ran away with the spoon."
     },
     {
       "title": "At the Zoo",
       "author": "William Makepeace Thackeray",
       "category": "poet",
-      "image": " ",
-      "text": "Then I saw the monkeys—mercy, how unpleasantly they smelt!\nThen I saw the wolf, with wolves I have no wish to be acquainted.\nThen I saw the elephant a-waving of his trunk;\nThen I saw the monkeys—mercy, what a rubbish smell!"
+      "image": "",
+      "text": "First I saw the white bear, then I saw the black;\n Then I saw the camel with a hump upon his back;\n Then I saw the grey wolf, with mutton in his maw;\n Then I saw the wombat waddle in the straw;\n Then I saw the elephant a-waving of his trunk;\n Then I saw the monkeys—mercy, how unpleasantly they smelt!"
     },
     {
       "title": "Jack and Jill",
       "author": "Mother Goose",
       "category": "nursery rhyme",
-      "image": " ",
-      "text": "Jack and Jill went up the hill\nTo fetch a pail of water.\nJack fell down and broke his crown,\nAnd Jill came tumbling after."
+      "image": "",
+      "text": "Jack and Jill went up the hill\n To fetch a pail of water.\n Jack fell down and broke his crown,\n And Jill came tumbling after."
     },
     {
       "title": "The Rainbow",
       "author": "Christina Rossetti",
       "category": "poet",
-      "image": " ",
-      "text": "Boats sail on the rivers,\nAnd ships sail on the seas;\nBut clouds that sail across the sky\nAre prettier far than these."
+      "image": "",
+      "text": "Boats sail on the rivers,\n And ships sail on the seas;\n But clouds that sail across the sky\n Are prettier far than these."
     },
     {
       "title": "Baa, Baa, Black Sheep",
       "author": "Mother Goose",
       "category": "nursery rhyme",
-      "image": " ",
-      "text": "Baa, baa, black sheep,\nHave you any wool?\nYes, sir, yes, sir,\nThree bags full;\nOne for the master,\nAnd one for the dame,\nAnd one for the little boy\nWho lives down the lane."
+      "image": "",
+      "text": "Baa, baa, black sheep,\n Have you any wool?\n Yes, sir, yes, sir,\n Three bags full;\n One for the master,\n And one for the dame,\n And one for the little boy\n Who lives down the lane."
     }
   ]
 }
