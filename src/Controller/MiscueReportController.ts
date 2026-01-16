@@ -1,7 +1,24 @@
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
 import { Miscue } from '../Types/miscue';
 import { MiscueReportDocument } from '../Types/dataInterfaces';
+import { getAuth } from '@react-native-firebase/auth';
+import firestore, {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  updateDoc,
+  serverTimestamp,
+  arrayRemove,
+  arrayUnion,
+} from '@react-native-firebase/firestore';
+
+// Initialize instances
+const auth = getAuth();
+const db = getFirestore();
 
 export const MiscueReportController = {
   async storeReport(
@@ -9,10 +26,11 @@ export const MiscueReportController = {
     miscues: Miscue[],
     accuracy: number,
     wordPerMin: number,
-    recordingDuration?: string,
+    totalWords: number,
+    recordingDuration?: string
   ): Promise<string> {
     try {
-      const user = auth().currentUser;
+      const user = auth.currentUser;
       if (!user) {
         throw new Error(
           'No authenticated user found. Please sign in to save reports.',
@@ -51,6 +69,7 @@ export const MiscueReportController = {
           spokenWord: m.spoken,
         })),
 
+        totalWords: totalWords,
         accuracyRate: accuracy,
         wordPerMin: wordPerMin,
         recordingDuration: recordingDuration,
@@ -146,7 +165,7 @@ export const MiscueReportController = {
    */
   async storeWordCorrectAttempt(letter: string, word: string): Promise<string> {
     try {
-      const user = auth().currentUser;
+      const user = auth.currentUser;
       if (!user) {
         throw new Error(
           'No authenticated user found. Please sign in to save reports.',
@@ -212,7 +231,7 @@ export const MiscueReportController = {
    */
   async storeAlphabetCorrectAttempt(letter: string): Promise<string> {
     try {
-      const user = auth().currentUser;
+      const user = auth.currentUser;
       if (!user) {
         throw new Error(
           'No authenticated user found. Please sign in to save reports.',
@@ -320,8 +339,9 @@ export const MiscueReportController = {
   // ==========================================================================================================================
 
   /**
+   * UPDATED TO React Native Firebase v22
    * ==========================================================================
-   * GET STUDENT REPORTS
+   * GET STUDENT REPORTS 
    * ==========================================================================
    * Retrieves all reports for a specific student, sorted by most recent first.
    *
@@ -333,21 +353,54 @@ export const MiscueReportController = {
    */
   async getStudentReports(studentId: string): Promise<MiscueReportDocument[]> {
     try {
-      const snapshot = await firestore()
-        .collection('miscueReports')
-        .where('studentId', '==', studentId)
-        .get();
-
-      return snapshot.docs.map(
-        doc =>
-          ({
-            reportId: doc.id,
-            ...doc.data(),
-          } as MiscueReportDocument),
+      const reportRef = collection(db, 'miscueReports');
+      const studentMiscueReport = query(
+        reportRef,
+        where('studentId', '==', studentId),
       );
+
+      const studentReportSnapshot = await getDocs(studentMiscueReport);
+
+      return studentReportSnapshot.docs.map((doc: any) => ({
+        uid: doc.reportId,
+        ...doc.data(),
+      })) as MiscueReportDocument[];
+
     } catch (error: any) {
       console.error('Failed to fetch student reports:', error);
       throw new Error(`Failed to fetch reports: ${error.message}`);
+    }
+  },
+
+  /**
+   * UPDATED TO React Native Firebase v22
+   * Get all recording duration in a class
+   * 
+   * @param studentId 
+   * @returns - all recording duration
+   */
+  async getRecordingDuration(studentId: string): Promise<MiscueReportDocument[]> {
+    try {
+      const recordRef = collection(db, 'miscueReports');
+      const studentRecordingQuery = query(recordRef, where('studentId', '==', studentId));
+
+      const studentRecordingSnapshot = await getDocs(studentRecordingQuery);
+
+      return studentRecordingSnapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        return {
+          reportId: doc.id,
+          ...data,
+          // Ensure all required fields are included
+          miscues: data.miscues || [],
+          accuracyRate: data.accuracyRate || 0,
+          wordPerMin: data.wordPerMin || 0,
+          recordingDuration: data.recordingDuration || '00:00:00',
+        } as MiscueReportDocument;
+      });
+    } catch (error: any) {
+      throw new Error("Failed to fetch duration: " + error.message);
+      
     }
   },
 
@@ -362,33 +415,33 @@ export const MiscueReportController = {
    * @returns Array of MiscueReportDocument objects
    * ==========================================================================
    */
-  async getPassageReports(
-    passageTitle: string,
-    studentId?: string,
-  ): Promise<MiscueReportDocument[]> {
-    try {
-      let query = firestore()
-        .collection('miscueReports')
-        .where('passageTitle', '==', passageTitle);
+  // async getPassageReports(
+  //   passageTitle: string,
+  //   studentId?: string,
+  // ): Promise<MiscueReportDocument[]> {
+  //   try {
+  //     let query = firestore()
+  //       .collection('miscueReports')
+  //       .where('passageTitle', '==', passageTitle);
 
-      if (studentId) {
-        query = query.where('studentId', '==', studentId);
-      }
+  //     if (studentId) {
+  //       query = query.where('studentId', '==', studentId);
+  //     }
 
-      const snapshot = await query.orderBy('timestamp', 'desc').get();
+  //     const snapshot = await query.orderBy('timestamp', 'desc').get();
 
-      return snapshot.docs.map(
-        doc =>
-          ({
-            reportId: doc.id,
-            ...doc.data(),
-          } as MiscueReportDocument),
-      );
-    } catch (error: any) {
-      console.error('Failed to fetch passage reports:', error);
-      throw new Error(`Failed to fetch passage reports: ${error.message}`);
-    }
-  },
+  //     return snapshot.docs.map(
+  //       doc =>
+  //         ({
+  //           reportId: doc.id,
+  //           ...doc.data(),
+  //         } as MiscueReportDocument),
+  //     );
+  //   } catch (error: any) {
+  //     console.error('Failed to fetch passage reports:', error);
+  //     throw new Error(`Failed to fetch passage reports: ${error.message}`);
+  //   }
+  // },
 
   /**
    * ==========================================================================
@@ -400,26 +453,26 @@ export const MiscueReportController = {
    * @returns MiscueReportDocument or null if not found
    * ==========================================================================
    */
-  async getReportById(reportId: string): Promise<MiscueReportDocument | null> {
-    try {
-      const doc = await firestore()
-        .collection('miscueReports')
-        .doc(reportId)
-        .get();
+  // async getReportById(reportId: string): Promise<MiscueReportDocument | null> {
+  //   try {
+  //     const doc = await firestore()
+  //       .collection('miscueReports')
+  //       .doc(reportId)
+  //       .get();
 
-      if (!doc.exists) {
-        return null;
-      }
+  //     if (!doc.exists) {
+  //       return null;
+  //     }
 
-      return {
-        reportId: doc.id,
-        ...doc.data(),
-      } as MiscueReportDocument;
-    } catch (error: any) {
-      console.error('Failed to fetch report by ID:', error);
-      throw new Error(`Failed to fetch report: ${error.message}`);
-    }
-  },
+  //     return {
+  //       reportId: doc.id,
+  //       ...doc.data(),
+  //     } as MiscueReportDocument;
+  //   } catch (error: any) {
+  //     console.error('Failed to fetch report by ID:', error);
+  //     throw new Error(`Failed to fetch report: ${error.message}`);
+  //   }
+  // },
 
   /**
    * ==========================================================================
@@ -431,16 +484,16 @@ export const MiscueReportController = {
    * @throws Error - If Firestore operation fails
    * ==========================================================================
    */
-  async deleteReport(reportId: string): Promise<void> {
-    try {
-      await firestore().collection('miscueReports').doc(reportId).delete();
+  // async deleteReport(reportId: string): Promise<void> {
+  //   try {
+  //     await firestore().collection('miscueReports').doc(reportId).delete();
 
-      console.log(`âœ… Report ${reportId} deleted successfully`);
-    } catch (error: any) {
-      console.error('Failed to delete report:', error);
-      throw new Error(`Failed to delete report: ${error.message}`);
-    }
-  },
+  //     console.log(`âœ… Report ${reportId} deleted successfully`);
+  //   } catch (error: any) {
+  //     console.error('Failed to delete report:', error);
+  //     throw new Error(`Failed to delete report: ${error.message}`);
+  //   }
+  // },
 
   /**
    * ==========================================================================
@@ -453,26 +506,25 @@ export const MiscueReportController = {
    * @throws Error - If Firestore operation fails
    * ==========================================================================
    */
-  async updateReport(
-    reportId: string,
-    updates: Partial<Omit<MiscueReportDocument, 'reportId' | 'timestamp'>>,
-  ): Promise<void> {
-    try {
-      await firestore()
-        .collection('miscueReports')
-        .doc(reportId)
-        .update({
-          ...updates,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
+  // async updateReport(
+  //   reportId: string,
+  //   updates: Partial<Omit<MiscueReportDocument, 'reportId' | 'timestamp'>>,
+  // ): Promise<void> {
+  //   try {
+  //     await firestore()
+  //       .collection('miscueReports')
+  //       .doc(reportId)
+  //       .update({
+  //         ...updates,
+  //         updatedAt: firestore.FieldValue.serverTimestamp(),
+  //       });
 
-      console.log(`âœ… Report ${reportId} updated successfully`);
-    } catch (error: any) {
-      console.error('Failed to update report:', error);
-      throw new Error(`Failed to update report: ${error.message}`);
-    }
-  },
-
+  //     console.log(`âœ… Report ${reportId} updated successfully`);
+  //   } catch (error: any) {
+  //     console.error('Failed to update report:', error);
+  //     throw new Error(`Failed to update report: ${error.message}`);
+  //   }
+  // },
   // =====================================
 
   // Add these functions to your DatabaseController

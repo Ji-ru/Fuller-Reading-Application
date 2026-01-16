@@ -24,11 +24,15 @@ import PageSelectionScreen from './src/Screens/Student/PageSelection';
 import ReadingActivityScreenPage from './src/Screens/Student/ReadingActivity';
 import ReadingHistoryScreen from './src/Screens/Student/History';
 import StudentProfile from './src/Screens/Profile';
+// import FacultyStack from './FacultyStack';
 
 // FACULTY PAGE
 import FacultyDashboard from './src/Screens/Faculty/FacultyDashboard';
 import FacultyProfile from './src/Screens/Faculty/FacultyProfile';
 import MyClass from './src/Screens/Faculty/MyClass';
+import MyStudents from './src/Screens/Faculty/MyStudents';
+import StudentViewProfile from './src/Screens/Faculty/StudentViewProfile';
+
 const Stack = createNativeStackNavigator();
 
 function App() {
@@ -56,9 +60,12 @@ function App() {
             <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
 
             {/* FACULTY PAGES */}
-            <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
-            <Stack.Screen name="FacultyProfile" component={FacultyProfile} />
-            <Stack.Screen name="MyClass" component={MyClass} />
+              <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
+              <Stack.Screen name="FacultyProfile" component={FacultyProfile} />
+              <Stack.Screen name="MyClass" component={MyClass} />
+              <Stack.Screen name="MyStudents" component={MyStudents} />
+              <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
+              {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}
 
             {/* ADMIN PAGES */}
 

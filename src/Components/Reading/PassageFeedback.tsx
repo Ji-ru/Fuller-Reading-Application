@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Miscue } from '../../Types/miscue';
 import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceController';
 import readingStyles from '../../ui/ReadingActivityStyles';
-import LottieView from 'lottie-react-native';
 
 interface ReadingFeedbackProps {
   targetText: string;

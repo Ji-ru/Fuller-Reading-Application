@@ -19,7 +19,7 @@ import { PassageDisplay } from '../../Components/Reading/TextDisplay';
 import { RecordingControls } from '../../Components/Reading/RecordingControls';
 import { FeedbackResult } from '../../Components/Reading/PassageFeedback';
 import { Miscue } from '../../Types/miscue';
-import { MiscueReportController } from '../../Controller/DatabaseController';
+import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { isAlphabet, isPassage, isWords } from '../../Types/passage';
 import { FeedbackModal } from '../../Services/FeedbackModal';
 import auth from '@react-native-firebase/auth';
@@ -44,6 +44,7 @@ export default function ReadingActivityScreenPage() {
   const [feedbackModalType, setFeedbackModalType] = useState<
     'congratulations' | 'tryAgain' | 'passageSuccess' | 'goodJob'
   >('congratulations');
+  const [totalWords, setTotalWords] = useState(0);
 
   // Track if we've already shown the modal for this reading attempt
   const [hasShownModalForCurrentAttempt, setHasShownModalForCurrentAttempt] =
@@ -116,8 +117,14 @@ export default function ReadingActivityScreenPage() {
   useEffect(() => {
     checkPermission();
     initializeAudio();
-  }, [checkPermission, initializeAudio]);
-
+    
+    // Calculate total words for passages
+    if (type === 'passage' && isPassage(readingMaterial)) {
+      const count = calculateTotalWords();
+      setTotalWords(count);
+    }
+  }, [checkPermission, initializeAudio, type, readingMaterial]);
+  
   /**
    * Checks if the spoken text matches the target perfectly (alphabet or word).
    * Ignores non-letter characters and is case insensitive.
@@ -183,6 +190,18 @@ export default function ReadingActivityScreenPage() {
   };
 
   /**
+   * Calculates the total number of words in a passage
+   * @returns {number} Total word count
+   */
+  const calculateTotalWords = (): number => {
+    if (type === 'passage' && isPassage(readingMaterial)) {
+      // Split by whitespace and filter out empty strings
+      const words = readingMaterial.text.trim().split(/\s+/);
+      return words.length;
+    }
+    return 0;
+  };
+  /**
    * Handles the record/play toggle for recording user speech:
    * - Stops recording and processes audio if already recording
    * - Starts a new recording otherwise
@@ -243,19 +262,14 @@ export default function ReadingActivityScreenPage() {
    * @returns {number} Words per minute
    */
   const calculateWordsPerMin = (
-    spokenText: string,
+    totalWords: number,
     durationSeconds: number,
   ): number => {
-    if (!spokenText || spokenText.trim() === '') return 0;
-    if (durationSeconds <= 0) return 0;
-
-    // count words in spoken text
-    const wordCount = spokenText.trim().split(/\s+/).length;
+    if (totalWords <= 0 || durationSeconds <= 0) return 0;
+  
     const minutes = durationSeconds / 60;
-
-    return Math.round(wordCount / minutes);
+    return Math.round(totalWords / minutes);
   };
-
 
   /**
    * Helper to convert an accuracy string (e.g. "85.5%") to a clamped number (0-100).
@@ -315,6 +329,7 @@ export default function ReadingActivityScreenPage() {
    * Analyzes user transcription depending on reading type (alphabet, word, passage).
    * Calculates and sets miscues, accuracy, feedback, and stores report if eligible.
    * Shows feedback modal if not already shown for a given attempt.
+   *
    * @param transcription - The transcription of spoken audio
    * @param duration - Recording duration (in seconds)
    */
@@ -375,7 +390,7 @@ export default function ReadingActivityScreenPage() {
 
       // Calculate accuracy number for storage
       accuracyNum = convertAccuracyStringToNumber(calculatedAccuracy);
-      const wpm = calculateWordsPerMin(transcription, duration);
+      const wpm = calculateWordsPerMin(totalWords, duration);
       setWordPerMin(wpm);
 
       // add the function of storeMiscueReport
@@ -486,7 +501,8 @@ export default function ReadingActivityScreenPage() {
         miscues,
         accuracyNum,
         wpm,
-        formattedDuration,
+        totalWords,
+        formattedDuration
       );
 
       Alert.alert('Success', 'Successfully stored the miscues data');

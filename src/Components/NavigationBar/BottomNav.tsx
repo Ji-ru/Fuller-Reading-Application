@@ -1,41 +1,63 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import { Icon } from '@ui-kitten/components';
-
+import { useNavigation, useRoute } from '@react-navigation/native';
 /**
  * Bottom navigation bar component for faculty role
  * Provides navigation buttons for Faculty Dashboard, MyClass, and FacultyProfile
  */
 const BottomNav = () => {
   // Hook from NavigationController for navigating
-  const { handleNextStep } = useNavigationHelper();
+  const { handleTabNavigation } = useNavigationHelper();
   
   // State to track selected tab
-  const [selectedIndex, setSelectedIndex] = React.useState(0);
+  // Get current route information
+  const route = useRoute();
+  const navigation = useNavigation();
+  
+  // Determine selected index based on current route name
+  const getSelectedIndex = () => {
+    const routeName = route.name;
+    
+    switch(routeName) {
+      case 'FacultyDashboard':
+        return 0;
+      case 'MyClass':
+        return 1;
+      case 'FacultyProfile':
+        return 2;
+      default:
+        return 0; // Default to Dashboard
+    }
+  };
+  
+  const selectedIndex = getSelectedIndex();
 
   /**
    * Navigates to the FacultyDashboard page
    */
   const goToDashboard = () => {
-    setSelectedIndex(0);
-    handleNextStep('FacultyDashboard');
+    if (route.name !== 'FacultyDashboard') {
+    handleTabNavigation('FacultyDashboard');
+  }
   };
 
   /**
    * Navigates to the MyClass page
    */
   const goToMyClass = () => {
-    setSelectedIndex(1);
-    handleNextStep('MyClass');
+    if (route.name !== 'MyClass') {
+      handleTabNavigation('MyClass');
+    }
   };
 
   /**
    * Navigates to the FacultyProfile page
    */
   const goToFacultyProfile = () => {
-    setSelectedIndex(2);
-    handleNextStep('FacultyProfile');
+    if (route.name !== 'FacultyProfile') {
+      handleTabNavigation('FacultyProfile');
+    }
   };
 
   return (
@@ -48,11 +70,6 @@ const BottomNav = () => {
         ]} 
         onPress={goToDashboard}
       >
-        {/* <Icon 
-          name="home-outline" 
-          style={styles.icon}
-          fill={selectedIndex === 0 ? '#3366FF' : '#8F9BB3'}
-        /> */}
         <Text style={[
           styles.text,
           selectedIndex === 0 && styles.selectedText
@@ -69,11 +86,6 @@ const BottomNav = () => {
         ]} 
         onPress={goToMyClass}
       >
-        {/* <Icon 
-          name="people-outline" 
-          style={styles.icon}
-          fill={selectedIndex === 1 ? '#3366FF' : '#8F9BB3'}
-        /> */}
         <Text style={[
           styles.text,
           selectedIndex === 1 && styles.selectedText
@@ -90,11 +102,6 @@ const BottomNav = () => {
         ]} 
         onPress={goToFacultyProfile}
       >
-        {/* <Icon 
-          name="person-outline" 
-          style={styles.icon}
-          fill={selectedIndex === 2 ? '#3366FF' : '#8F9BB3'}
-        /> */}
         <Text style={[
           styles.text,
           selectedIndex === 2 && styles.selectedText
@@ -105,6 +112,9 @@ const BottomNav = () => {
     </View>
   );
 };
+
+export default BottomNav;
+
 
 /**
  * Styles matching UI Kitten's BottomNavigation design
@@ -119,10 +129,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#EDF1F7',
     paddingVertical: 8,
     elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   tab: {
     flex: 1,
@@ -131,7 +137,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   selectedTab: {
-    // Optional: add background color for selected tab
     backgroundColor: '#F7F9FC',
   },
   icon: {
@@ -143,10 +148,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
     color: '#8F9BB3',
+    fontFamily: 'Satoshi-Bold',
   },
   selectedText: {
     color: '#3366FF',
   },
 });
-
-export default BottomNav;

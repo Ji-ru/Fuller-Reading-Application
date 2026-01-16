@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import bubbles from '../../ui/BubblesDesign';
-import user from '../../ui/UserStyle';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import selection from '../../ui/PassageSelectionStyles';
 import { Alphabet, Contrasts, Passage, Word } from '../../Types/passage';

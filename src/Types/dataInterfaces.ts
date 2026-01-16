@@ -36,7 +36,7 @@ export interface UserDocument {
   studentData?: {
     gradeLevel: number;
     dateOfBirth?: string;
-    classId?: string;
+    classCode?: string;
     reading_Level?: 'beginner' | 'intermediate' | 'advanced';
   };
 
@@ -61,6 +61,9 @@ export interface ClassDocument {
   classCode: string; // Human-readable code, e.g., "GR1-A" where code is generated for the students to join
   className?: string; // Optional: full class name
   gradeLevel: number; 
+  acadYear: string;
+  // term?: string; // For quarterly/semester systems
+
 
   // References
   facultyId: string; // Reference to the faculty document (UID)
@@ -98,6 +101,7 @@ export interface MiscueReportDocument {
   }[];
   
   // Performance Metrics
+  totalWords: number;
   accuracyRate: number;
   wordPerMin: number;
   recordingDuration?: string;

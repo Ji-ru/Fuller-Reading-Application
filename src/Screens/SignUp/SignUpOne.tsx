@@ -22,6 +22,8 @@ import buttons from '../../ui/ButtonStyles';
 import GenderSelection from '../../Components/Buttons/GenderRadioButton';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { RouteProp, useRoute } from '@react-navigation/native';
+import { getCurrentAcademicYear } from '../../Utils/acadYearUtils';
+import AcademicYearDropDownSelection from '../../Components/Buttons/AcademicYearDropdown';
 
 type SignUpOneRouteProp = RouteProp<RootStackParamList, 'SignUpOne'>;
 
@@ -44,8 +46,6 @@ export default function SignUpOneScreen() {
   const [lastName, setLastName] = useState('');
   const [gradeLevel, setGradeLevel] = useState(0);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-
-  // Add code of date picker
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
 
@@ -249,7 +249,7 @@ export default function SignUpOneScreen() {
               style={signup.icon}
             />
           </TouchableOpacity>
-          
+
           <DatePicker
             modal
             mode="date"
@@ -262,8 +262,10 @@ export default function SignUpOneScreen() {
             }}
             onCancel={() => setShowPicker(false)}
           />
-          
-          <Text style={signup.textform}>{role === 'student' ? 'Grade Level': 'Assigned Grade Level'}</Text>
+
+          <Text style={signup.textform}>
+            {role === 'student' ? 'Grade Level' : 'Assigned Grade Level'}
+          </Text>
           <GradeLevelDropDownSelection
             onSelect={value => setGradeLevel(value)}
           />
@@ -272,7 +274,7 @@ export default function SignUpOneScreen() {
         {/* NEXT PAGE */}
         <TouchableOpacity
           style={buttons.nextPageButton}
-          onPress={() =>{
+          onPress={() => {
             if (role === 'student') {
               handleSignUpNavigationWithData({
                 profileImageUrl: profileImage || '',
@@ -285,7 +287,7 @@ export default function SignUpOneScreen() {
                 gradeLevel,
                 dateOfBirth: formatDateToReadable(date),
               });
-            } else if ( role === 'faculty') {
+            } else if (role === 'faculty') {
               handleSignUpNavigationWithData({
                 profileImageUrl: profileImage || '',
                 firstName: firstName.trim(),
@@ -297,8 +299,7 @@ export default function SignUpOneScreen() {
                 assignedGradeLevels: [gradeLevel],
               });
             }
-          }
-          }
+          }}
         >
           <Text style={buttons.nextPageText}>Next</Text>
         </TouchableOpacity>

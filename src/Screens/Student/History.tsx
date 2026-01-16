@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
-import { MiscueReportController } from '../../Controller/DatabaseController';
+import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/Buttons/LogoutModal';
 import user from '../../ui/UserStyle';

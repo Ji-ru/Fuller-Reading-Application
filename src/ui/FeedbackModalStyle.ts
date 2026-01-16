@@ -48,6 +48,7 @@ const feedbackModal = StyleSheet.create({
       color: '#333',
       marginTop: 10,
       marginBottom: 8,
+      fontFamily: 'Satoshi-Bold',
       textAlign: 'center',
     },
     message: {
@@ -57,13 +58,15 @@ const feedbackModal = StyleSheet.create({
       marginHorizontal: 10,
       marginBottom: 20,
       lineHeight: 22,
+      fontFamily: 'Satoshi-Regular',
     },
     autoCloseText: {
       fontSize: 12,
       color: '#999',
       textAlign: 'center',
       marginTop: 10,
-      fontStyle: 'italic',
+      fontFamily: 'Satoshi-MediumItalic',
+
     },
   });
   

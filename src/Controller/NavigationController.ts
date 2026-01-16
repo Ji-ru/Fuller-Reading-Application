@@ -28,6 +28,7 @@ export type RootStackParamList = {
     readingMaterial: ReadingMaterial;
     type: 'alphabet' | 'passage' | 'word';
   };
+
   ReadingHistory: undefined;
   ChooseRole: undefined;
   Profile: undefined;
@@ -36,6 +37,17 @@ export type RootStackParamList = {
   FacultyDashboard: undefined;
   FacultyProfile: undefined;
   MyClass: undefined;
+  MyStudents: {
+    classId: string;
+    className?: string;
+    classCode: string;
+    acadYear: string;
+  };
+  StudentViewProfile: {
+    studentId: string;
+    studentName: string;
+    readingLevel: string;
+  };
 };
 
 // A list of all the screens within RootStackParamList
@@ -54,6 +66,13 @@ export const useNavigationHelper = () => {
    */
   const handleNextStep = (destination: ScreenNames) => {
     navigation.navigate(destination as any);
+  };
+
+  /**
+   * For bottom navigation - always uses replace
+   */
+  const handleTabNavigation = (destination: ScreenNames) => {
+    navigation.replace(destination as any);
   };
 
   /**
@@ -154,15 +173,15 @@ export const useNavigationHelper = () => {
   };
 
   const handleCompletedRegistration = (role: UserRole) => {
-        navigation.navigate('SignUpCompleted', { role });
-    };
-  
+    navigation.navigate('SignUpCompleted', { role });
+  };
+
   const handleDesignatedUserPage = (role: string) => {
     if (role === 'student') {
       navigation.navigate('UserHome');
     } else if (role === 'faculty') {
       navigation.navigate('FacultyDashboard');
-    } 
+    }
   };
 
   // Handles only the Reading Activity Page due to having data passed to the next page.
@@ -175,6 +194,23 @@ export const useNavigationHelper = () => {
 
   const handleHistoryNext = () => {
     navigation.navigate('ReadingHistory');
+  };
+
+  const handleClassStudents = (classData: {
+    classId: string;
+    className?: string;
+    classCode: string;
+    acadYear: string
+  }) => {
+    navigation.navigate('MyStudents', classData);
+  };
+
+  const handleStudentViewStats = (studentData: {
+    studentId: string;
+    studentName: string;
+    readingLevel: string;
+  }) => {
+    navigation.navigate('StudentViewProfile', studentData);
   };
 
   // Handles Back Button in any page the current user is in
@@ -216,6 +252,7 @@ export const useNavigationHelper = () => {
   };
   return {
     handleNextStep,
+    handleTabNavigation,
     handleReplaceStep,
     handleSignUpNavigationWithData,
     handleDesignatedUserPage,
@@ -223,6 +260,8 @@ export const useNavigationHelper = () => {
     handleRoleSelection,
     handleReadingNext,
     handleHistoryNext,
+    handleClassStudents,
+    handleStudentViewStats,
     handleBackStep,
     handleLogout,
     handleCancelRegistration,

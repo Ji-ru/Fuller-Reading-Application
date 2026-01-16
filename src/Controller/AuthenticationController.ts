@@ -1,15 +1,33 @@
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from '@react-native-firebase/auth';
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  limit,
+  serverTimestamp,
+  arrayUnion
+} from '@react-native-firebase/firestore';
 import {
   UserDocument,
   MiscueReportDocument,
   ClassDocument,
 } from '../Types/dataInterfaces';
+import { getCurrentAcademicYear } from '../Utils/acadYearUtils';
+
+// Initialize Firebase instances once
+const auth = getAuth();
+const db = getFirestore();
 
 // Helper to format date as "7 December 2025"
 const formatDateToReadable = (date: any): string => {
   const day = date.getDate();
-  const month = date.toLocaleString('default', { month: 'long' }); // Full month name
+  const month = date.toLocaleString('default', { month: 'long' });
   const year = date.getFullYear();
   return `${day} ${month} ${year}`;
 };
@@ -33,8 +51,9 @@ export const SignUpUserCredentials = async (
   },
 ) => {
   try {
-    // 1. Create user
-    const userCredential = await auth().createUserWithEmailAndPassword(
+    // 1. Create user - MODULAR API
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
       email,
       password,
     );
@@ -50,7 +69,7 @@ export const SignUpUserCredentials = async (
       lastName: userData.lastName,
       sex: userData.sex,
       profileImageUrl: userData.profileImageUrl,
-      createdAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
     };
     
     let readableDOB: string = '';
@@ -63,7 +82,7 @@ export const SignUpUserCredentials = async (
       userDocument.studentData = {
         gradeLevel: userData.gradeLevel || 1,
         dateOfBirth: readableDOB,
-        classId: '',
+        classCode: '',
         reading_Level: 'beginner',
       };
     } else if (userData.role === 'faculty') {
@@ -73,8 +92,9 @@ export const SignUpUserCredentials = async (
       };
     }
 
-    // 4. Write user document
-    await firestore().collection('users').doc(user.uid).set(userDocument);
+    // 4. Write user document - MODULAR API
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(userRef, userDocument);
 
     // 5. Auto-create class for faculty
     if (
@@ -117,27 +137,31 @@ export const createClass = async (
       classCode,
       className: `${firstName} ${lastName}'s Class`,
       gradeLevel,
+      acadYear: getCurrentAcademicYear(),
       facultyId,
       studentIds: [],
       isActive: true,
-      createdAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
     };
 
-    // Store class
-    await firestore().collection('classes').doc(classId).set(classDocument);
+    // Store class - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await setDoc(classRef, classDocument);
 
-    // Update faculty document
-    await firestore().collection('users').doc(facultyId).update({
-      'facultyData.assignedClassIds':
-        firestore.FieldValue.arrayUnion(classId),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+    // Update faculty document - MODULAR API
+    const facultyRef = doc(db, 'users', facultyId);
+    await updateDoc(facultyRef, {
+      'facultyData.assignedClassIds': arrayUnion(classId),
+      'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
+      updatedAt: serverTimestamp(),
     });
 
-    return classCode;
+    return { classId, classCode, acadYear: classDocument.acadYear };
   } catch (error: any) {
     throw new Error(`Automatic Class Registration Failed: ${error.message}`);
   }
 };
+
 
 /* -------------------------------------------------------------
    CLASS CODE GENERATOR
@@ -151,18 +175,75 @@ const generateClassCode = () => {
   return code;
 };
 
-/* -------------------------------------------------------------
-   GET CLASS BY ID
-------------------------------------------------------------- */
-export const getClassById = async (classId: string) => {
+export const createCustomClass = async (
+  facultyId: string,
+  className: string,
+  gradeLevel: number,
+  acadYear: string, 
+
+) => {
   try {
-    const docSnap = await firestore().collection('classes').doc(classId).get();
+    const classId = `Class_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+    const classCode = generateClassCode();
 
-    if (!docSnap.exists) return null;
-
-    return { id: docSnap.id, ...docSnap.data() } as ClassDocument & {
-      id: string;
+    const classDocument: ClassDocument = {
+      classId,
+      classCode,
+      className: className,
+      gradeLevel,
+      acadYear: acadYear,
+      facultyId,
+      studentIds: [],
+      isActive: true,
+      createdAt: serverTimestamp(),
     };
+
+    // Store class - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await setDoc(classRef, classDocument);
+
+    // Update faculty document - MODULAR API
+    const facultyRef = doc(db, 'users', facultyId);
+    await updateDoc(facultyRef, {
+      'facultyData.assignedClassIds': arrayUnion(classId),
+      'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
+      updatedAt: serverTimestamp(),
+    });
+
+    return classCode;
+  } catch (error: any) {
+    throw new Error(`Automatic Class Registration Failed: ${error.message}`);
+  }
+};
+
+
+
+/* -------------------------------------------------------------
+   GET CLASS BY ID (ADMIN USE)
+------------------------------------------------------------- */
+export const getClassByCode = async (classCode: string) => {
+  try {
+    const classesRef = collection(db, 'classes');
+    const q = query(
+      classesRef, 
+      where('classCode', '==', classCode), 
+      where('isActive', '==', true), 
+      limit(1)
+    );
+    
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) return null;
+
+    // Get the first (and should be only) document
+    const doc = querySnapshot.docs[0];
+    
+    return { 
+      id: doc.id, 
+      ...doc.data() 
+    } as ClassDocument & { id: string };
   } catch (error: any) {
     throw new Error('Failed to get class: ' + error.message);
   }
@@ -175,8 +256,14 @@ export const getUserProfile = async (
   uid: string,
 ): Promise<UserDocument | null> => {
   try {
-    const docSnap = await firestore().collection('users').doc(uid).get();
-    return (docSnap.data() as UserDocument);
+    const userRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(userRef);
+    
+    if (!docSnap.exists()) {
+      return null;
+    }
+    
+    return docSnap.data() as UserDocument;
   } catch (error: any) {
     throw new Error(`Error getting user profile: ${error.message}`);
   }
@@ -190,9 +277,10 @@ export const updateUserProfile = async (
   updates: Partial<UserDocument>,
 ) => {
   try {
-    await firestore().collection('users').doc(uid).update({
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, {
       ...updates,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
     return { success: true };
   } catch (error: any) {
@@ -205,17 +293,20 @@ export const updateUserProfile = async (
 ------------------------------------------------------------- */
 export const joinClass = async (studentId: string, joinClassCode: string) => {
   try {
-    // Search class by code
-    const classQuery = await firestore()
-      .collection('classes')
-      .where('classCode', '==', joinClassCode)
-      .where('isActive', '==', true)
-      .limit(1)
-      .get();
+    // Search class by code - MODULAR API
+    const classesRef = collection(db, 'classes');
+    const classQuery = query(
+      classesRef,
+      where('classCode', '==', joinClassCode),
+      where('isActive', '==', true),
+      limit(1)
+    );
+    
+    const querySnapshot = await getDocs(classQuery);
 
-    if (classQuery.empty) throw new Error('Invalid or inactive class code');
+    if (querySnapshot.empty) throw new Error('Invalid or inactive class code');
 
-    const classDoc = classQuery.docs[0];
+    const classDoc = querySnapshot.docs[0];
     const classData = classDoc.data() as ClassDocument;
     const classId = classData.classId;
 
@@ -223,16 +314,18 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     if (classData.studentIds.includes(studentId))
       throw new Error('Already enrolled in this class');
 
-    // Add student to class
-    await firestore().collection('classes').doc(classId).update({
-      studentIds: firestore.FieldValue.arrayUnion(studentId),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+    // Add student to class - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await updateDoc(classRef, {
+      studentIds: arrayUnion(studentId),
+      updatedAt: serverTimestamp(),
     });
 
-    // Update student's classId
-    await firestore().collection('users').doc(studentId).update({
-      'studentData.classId': classId,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+    // Update student's classId - MODULAR API
+    const studentRef = doc(db, 'users', studentId);
+    await updateDoc(studentRef, {
+      'studentData.classCode': joinClassCode,
+      updatedAt: serverTimestamp(),
     });
 
     return { success: true, classId, className: classData.className };
@@ -245,17 +338,18 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
    CREATE MISCUE REPORT
 ------------------------------------------------------------- */
 export const createMiscueReport = async (
-  reportData: Omit<MiscueReportDocument, 'reportId' | 'createdAt'>,
+  reportData: Omit<MiscueReportDocument, 'reportId' | 'timestamp'>,
 ) => {
   try {
-    const reportRef = firestore().collection('miscueReports').doc();
+    const miscueReportsRef = collection(db, 'miscueReports');
+    const reportRef = doc(miscueReportsRef); // Auto-generate ID
     const report: MiscueReportDocument = {
       ...reportData,
       reportId: reportRef.id,
-      timestamp: firestore.FieldValue.serverTimestamp(),
+      timestamp: serverTimestamp(),
     };
 
-    await reportRef.set(report);
+    await setDoc(reportRef, report);
 
     return { success: true, reportId: reportRef.id };
   } catch (error: any) {
@@ -264,37 +358,20 @@ export const createMiscueReport = async (
 };
 
 /* -------------------------------------------------------------
-   GET FACULTY CLASSES
-------------------------------------------------------------- */
-export const getFacultyClasses = async (facultyId: string) => {
-  try {
-    const querySnap = await firestore()
-      .collection('classes')
-      .where('facultyId', '==', facultyId)
-      .get();
-
-    return querySnap.docs.map(doc => doc.data()) as ClassDocument[];
-  } catch (error: any) {
-    throw new Error('Failed to get Faculty classes: ' + error.message);
-  }
-};
-
-/* -------------------------------------------------------------
    GET STUDENT CURRENT CLASS
 ------------------------------------------------------------- */
 export const getStudentClass = async (studentId: string) => {
   try {
-    const studentSnap = await firestore().collection('users').doc(studentId).get();
+    const studentRef = doc(db, 'users', studentId);
+    const studentSnap = await getDoc(studentRef);
     const studentData = studentSnap.data() as UserDocument;
 
-    if (!studentData?.studentData?.classId) return null;
+    if (!studentData?.studentData?.classCode) return null;
 
-    const classSnap = await firestore()
-      .collection('classes')
-      .doc(studentData.studentData.classId)
-      .get();
+    const classRef = doc(db, 'classes', studentData.studentData.classCode);
+    const classSnap = await getDoc(classRef);
 
-    if (!classSnap.exists) return null;
+    if (!classSnap.exists()) return null;
 
     return classSnap.data() as ClassDocument;
   } catch (error: any) {
@@ -307,8 +384,8 @@ export const getStudentClass = async (studentId: string) => {
 ------------------------------------------------------------- */
 export const loginUser = async (email: string, password: string) => {
   try {
-    // Sign in with email and password
-    const userCredential = await auth().signInWithEmailAndPassword(email, password);
+    // Sign in with email and password - MODULAR API
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
     return { 
@@ -348,7 +425,7 @@ export const loginUser = async (email: string, password: string) => {
    GET CURRENT USER
 ------------------------------------------------------------- */
 export const getCurrentUser = () => {
-  return auth().currentUser;
+  return auth.currentUser; // Direct property access, not function call
 };
 
 /* -------------------------------------------------------------
@@ -356,7 +433,7 @@ export const getCurrentUser = () => {
 ------------------------------------------------------------- */
 export const logoutUser = async () => {
   try {
-    await auth().signOut();
+    await signOut(auth); // MODULAR API
     return { success: true };
   } catch (error: any) {
     throw new Error(`Logout failed: ${error.message}`);

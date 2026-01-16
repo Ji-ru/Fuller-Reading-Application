@@ -5,7 +5,8 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import bubbles from '../../ui/BubblesDesign';
 import upperNav from '../../ui/UpperNavigation';
 import LogoutModal from '../../Components/Buttons/LogoutModal';
-
+import BottomNav from '../../Components/NavigationBar/BottomNav'; 
+import facultyProfile from '../../ui/FacultyProfile';
 export default function FacultyProfile() {
   // ========================================================================
   // STATE MANAGEMENT 
@@ -46,8 +47,9 @@ export default function FacultyProfile() {
   };
 
   return (
-    <SafeAreaView>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={facultyProfile.container}>
+        <View style={facultyProfile.insideContainer}>
+
         {/* BUBBLE DECORATIONS */}
         <View style={bubbles.bubblesContainer}>
           <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
@@ -70,12 +72,6 @@ export default function FacultyProfile() {
 
         {/* HEADER */}
         <View style={upperNav.header}>
-          <TouchableOpacity
-            style={upperNav.touchable}
-            onPress={() => handleBackStep()}
-          >
-            <Image source={require('../../../assets/icons/BackButton-icon.png')} />
-          </TouchableOpacity>
 
           <Image
             style={upperNav.ciscLogo}
@@ -119,7 +115,8 @@ export default function FacultyProfile() {
           onCancel={cancelLogout}
           onConfirm={confirmLogout}
         />
-      </ScrollView>
+        </View>
+      <BottomNav />
     </SafeAreaView>
   );
 }
