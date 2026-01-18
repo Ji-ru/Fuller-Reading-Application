@@ -6,10 +6,12 @@ import {
   ProgressData,
   OverAllStudentTopMiscue,
   AverageWPMandAccuracy,
-  ClassReadingHealth
+  ClassReadingHealth,
 } from '../Types/miscue';
 import { getForStudentsMiscueStats } from './useForStudentMiscueStats';
 import { useClassReadingHealth } from './useClassReadingHealth';
+import { getFacultyClasses_Student } from './useFacultyClasses_Students';
+import { FilterOptions } from '../Types/miscue';
 
 /**
  * Gets the top miscued passages and words of each student
@@ -53,13 +55,65 @@ export function useStudentReadingStats(studentId: string) {
   };
 }
 
+
+/**
+ * Hook to get classes for filter dropdown
+ */
+export const useFacultyClassesFilter = (facultyId: string | null) => {
+  const [classes, setClasses] = useState<Array<{
+    classId: string;
+    className: string;
+    gradeLevel: number;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { getFacultyClasses } = getFacultyClasses_Student;
+
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        if (!facultyId) {
+          setClasses([]);
+          setLoading(false);
+          return;
+        }
+
+        const data = await getFacultyClasses(facultyId);
+        
+        // Transform to the format needed for the filter
+        const formattedClasses = data.map(cls => ({
+          classId: cls.classId,
+          className: cls.className || `Grade ${cls.gradeLevel}`,
+          gradeLevel: cls.gradeLevel,
+        }));
+        
+        setClasses(formattedClasses);
+      } catch (error: any) {
+        setError('Error fetching classes: ' + error.message);
+        setClasses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClasses();
+  }, [facultyId]);
+  
+  return { classes, loading, error };
+};
+
 /**
  * Gets the Overall Common Miscue Type for all the students in a class
  *
  * @param facultyId - an identifier of the faculty to get the its class and students
  * @returns - percentage of each miscued type
  */
-export const useMiscueAnalystics = (facultyId: string | null) => {
+export const useMiscueAnalystics = (
+  facultyId: string | null,
+  filter?: FilterOptions
+) => {
   const [miscueData, setMiscueData] = useState<MiscuePercentage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +132,7 @@ export const useMiscueAnalystics = (facultyId: string | null) => {
           return;
         }
 
-        const data = await getOverallCommonMiscueType(facultyId);
+        const data = await getOverallCommonMiscueType(facultyId, filter);
         setMiscueData(data);
       } catch (error: any) {
         setError('Error fetching miscue analytics: ' + error.message);
@@ -88,7 +142,7 @@ export const useMiscueAnalystics = (facultyId: string | null) => {
       }
     };
     fetchMiscueData();
-  }, [facultyId]);
+  }, [facultyId, filter]);
   return { miscueData, loading, error };
 };
 
@@ -98,7 +152,10 @@ export const useMiscueAnalystics = (facultyId: string | null) => {
  * @param facultyId - an identifier of the faculty to get its class and students
  * @returns - top miscue type and common miscue words with error examples
  */
-export const useTopMiscueIdentifier = (facultyId: string | null) => {
+export const useTopMiscueIdentifier = (
+  facultyId: string | null,
+  filter?: FilterOptions
+) => {
   const [topMiscue, setTopMiscue] = useState<OverAllStudentTopMiscue[] | null>(
     null,
   );
@@ -119,7 +176,7 @@ export const useTopMiscueIdentifier = (facultyId: string | null) => {
           return;
         }
 
-        const data = await getOverallTopMiscueType(facultyId);
+        const data = await getOverallTopMiscueType(facultyId, filter);
         setTopMiscue(data);
       } catch (error: any) {
         setTopMiscue([]);
@@ -130,7 +187,7 @@ export const useTopMiscueIdentifier = (facultyId: string | null) => {
     };
 
     fetchTopMiscue();
-  }, [facultyId]);
+  }, [facultyId, filter]);
   return { topMiscue, loading, error };
 };
 
@@ -140,7 +197,10 @@ export const useTopMiscueIdentifier = (facultyId: string | null) => {
  * @param facultyId - an identifier of the faculty to get its class and students
  * @returns - average accuracy, average WPM, total reports, and total students
  */
-export const useOverallAverageWPMandAccuracy = (facultyId: string | null) => {
+export const useOverallAverageWPMandAccuracy = (
+  facultyId: string | null,
+  filter?: FilterOptions
+) => {
   const [averages, setAverages] = useState<AverageWPMandAccuracy | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -159,7 +219,7 @@ export const useOverallAverageWPMandAccuracy = (facultyId: string | null) => {
           return;
         }
 
-        const data = await getOverallAverageWPMandAccuracy(facultyId);
+        const data = await getOverallAverageWPMandAccuracy(facultyId, filter);
         setAverages(data);
       } catch (error: any) {
         setError('Failed to fetch overall averages: ' + error.message);
@@ -170,15 +230,16 @@ export const useOverallAverageWPMandAccuracy = (facultyId: string | null) => {
     };
 
     fetchAverages();
-  }, [facultyId]);
-  
+  }, [facultyId, filter]);
+
   return { averages, loading, error };
 };
 
-
 export const useFetchClassReadingHealth = (facultyId: string | null) => {
   const [loading, setLoading] = useState(true);
-  const [classHealthData, setClassHealthData] = useState<ClassReadingHealth[]>([]);
+  const [classHealthData, setClassHealthData] = useState<ClassReadingHealth[]>(
+    [],
+  );
   const [error, setError] = useState<string | null>(null);
   const { getClassReadingHealth } = useClassReadingHealth();
 
@@ -189,7 +250,7 @@ export const useFetchClassReadingHealth = (facultyId: string | null) => {
         setLoading(false);
         return;
       }
-  
+
       try {
         setLoading(true);
         setError(null);

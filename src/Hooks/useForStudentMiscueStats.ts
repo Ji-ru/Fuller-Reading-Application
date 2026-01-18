@@ -18,10 +18,10 @@ import { MiscueReportController } from '../Controller/MiscueReportController';
 import {
   MiscuePercentage,
   OverAllStudentTopMiscue,
-  ProgressData,
   AverageWPMandAccuracy,
 } from '../Types/miscue';
-import { ClassDocument } from '../Types/dataInterfaces';
+import { getDateRangeForTimeFilter } from '../Utils/dateRange';
+import { FilterOptions } from '../Types/miscue';
 
 // Initialize instances
 const db = getFirestore();
@@ -30,6 +30,156 @@ export const getForStudentsMiscueStats = () => {
   const { getStudentReports, formatMiscueType, getRecordingDuration } =
     MiscueReportController;
   const { getFacultyClasses } = getFacultyClasses_Student;
+
+  const getActiveHours = async (
+    facultyId: string,
+    timeRange: 'week' | 'month' | 'year',
+  ): Promise<{ day: string; hours: number }[]> => {
+    try {
+      const classes = await getFacultyClasses(facultyId);
+      const { start, end } = getDateRangeForTimeFilter(timeRange);
+
+      let buckets: string[] = [];
+      let totals: Record<string, number> = {};
+
+      if (timeRange === 'week') {
+        buckets = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
+      } else if (timeRange === 'month') {
+        buckets = ['W1', 'W2', 'W3', 'W4', 'W5'];
+      } else {
+        // Based on starting academic year of DepEd
+        buckets = [
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+        ];
+      }
+
+      buckets.forEach(b => (totals[b] = 0));
+
+      for (const classItem of classes) {
+        const studentIds = classItem.studentIds || [];
+
+        for (const studentId of studentIds) {
+          const reports = await getRecordingDuration(studentId);
+
+          for (const report of reports) {
+            const reportDate = report.timestamp.toDate();
+            if (reportDate < start || reportDate > end) continue;
+
+            const hours = convertDurationToHours(
+              report.recordingDuration || '0:00',
+            );
+
+            let bucket: string | null = null;
+
+            if (timeRange === 'week') {
+              bucket = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'][
+                reportDate.getDay()
+              ];
+            } else if (timeRange === 'month') {
+              const weekOfMonth = Math.ceil(reportDate.getDate() / 7);
+              bucket = `W${weekOfMonth}`;
+            } else {
+              bucket = reportDate.toLocaleString('en-US', { month: 'short' });
+            }
+
+            if (bucket && totals[bucket] !== undefined) {
+              totals[bucket] += hours;
+            }
+          }
+        }
+      }
+
+      console.log('This is the output of the active hours: ' + totals);
+      return buckets.map(b => ({
+        day: b,
+        hours: totals[b],
+      }));
+    } catch (error: any) {
+      throw new Error('Failed to get active hours: ' + error.message);
+    }
+  };
+
+  /**
+   * Convert duration string to hours (decimal)
+   * Supports both formats:
+   * - M:SS (0:15 = 15 seconds)
+   * - HH:MM:SS (0:15:30 = 15 minutes 30 seconds)
+   */
+  const convertDurationToHours = (duration: string): number => {
+    if (!duration) return 0;
+
+    try {
+      const parts = duration.split(':').map(part => parseInt(part) || 0);
+
+      if (parts.length === 2) {
+        // Format: M:SS (minutes:seconds)
+        const minutes = parts[0];
+        const seconds = parts[1];
+
+        // Convert to hours: (minutes * 60 + seconds) / 3600
+        const totalSeconds = minutes * 60 + seconds;
+        return totalSeconds / 3600;
+      } else if (parts.length === 3) {
+        // Format: HH:MM:SS (hours:minutes:seconds)
+        const hours = parts[0];
+        const minutes = parts[1];
+        const seconds = parts[2];
+
+        return hours + minutes / 60 + seconds / 3600;
+      } else {
+        console.warn('Invalid duration format:', duration);
+        return 0;
+      }
+    } catch (error) {
+      console.error('Error converting duration:', duration, error);
+      return 0;
+    }
+  };
+
+  /**
+   * Get student IDs based on filter
+   */
+  const getFilteredStudentIds = async (
+    facultyId: string,
+    filter?: FilterOptions,
+  ): Promise<{ studentIds: string[]; className?: string }> => {
+    try {
+      const classes = await getFacultyClasses(facultyId);
+
+      if (filter?.type === 'class' && filter.classId) {
+        // Get specific class
+        const selectedClass = classes.find(
+          cls => cls.classId === filter.classId,
+        );
+        if (!selectedClass) {
+          throw new Error('Class not found');
+        }
+        return {
+          studentIds: selectedClass.studentIds || [],
+          className: selectedClass.className,
+        };
+      } else {
+        // Get all students from all classes
+        const allStudentIds = classes.flatMap(cls => cls.studentIds || []);
+        // Remove duplicates (students might be in multiple classes?)
+        const uniqueStudentIds = Array.from(new Set(allStudentIds));
+        return { studentIds: uniqueStudentIds };
+      }
+    } catch (error: any) {
+      throw new Error('Failed to get filtered students: ' + error.message);
+    }
+  };
 
   /**
    * Get class count
@@ -81,267 +231,6 @@ export const getForStudentsMiscueStats = () => {
   };
 
   /**
-   * Get aggregated active hours by day for all students in a class
-   */
-  const getActiveHours = async (
-    facultyId: string,
-  ): Promise<{ day: string; hours: number }[]> => {
-    try {
-      // 1. Get all students in the class
-      const classes = await getFacultyClasses(facultyId);
-
-      // Initialize daily hours (0 for all days)
-      const daysOfWeek = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-      const dailyHours = daysOfWeek.reduce((acc, day) => {
-        acc[day] = 0;
-        return acc;
-      }, {} as Record<string, number>);
-
-      // 2. For each student, get their reports and sum recording durations
-      for (const classItem of classes) {
-        const studentIds = classItem.studentIds || [];
-
-        // 3. For each student, get their reports and sum recording durations
-        for (const studentId of studentIds) {
-          const reports = await getRecordingDuration(studentId);
-
-          for (const report of reports) {
-            // Convert recording duration string to hours
-            const hours = convertDurationToHours(
-              report.recordingDuration || '0:00',
-            );
-
-            // Get day of week from timestamp
-            const reportDate = report.timestamp.toDate();
-            // 0 = Sunday, 1 = Monday, etc.
-            const dayIndex = reportDate.getDay();
-            const dayAbbreviation = daysOfWeek[dayIndex];
-
-            // Add to daily total
-            dailyHours[dayAbbreviation] += hours;
-          }
-        }
-      }
-
-      // 4. Convert to array format for the chart
-      return daysOfWeek.map(day => ({
-        day,
-        hours: dailyHours[day],
-      }));
-    } catch (error: any) {
-      throw new Error('Failed to get active hours:' + error.message);
-    }
-  };
-
-// /**
-//  * Get aggregated active hours with proper time filtering by calendar year
-//  */
-// const getActiveHours = async (
-//   facultyId: string,
-//   timeRange: 'week' | 'month' | 'year' = 'week',
-//   selectedYear: number = new Date().getFullYear()
-// ): Promise<{ day: string; hours: number }[]> => {
-//   try {
-//     // 1. Get all classes for the faculty (no academic year filtering needed)
-//     const allClasses = await getFacultyClasses(facultyId);
-
-//     // 2. Calculate date range based on timeRange and selectedYear
-//     let startDate: Date;
-//     let endDate: Date;
-//     const now = new Date();
-//     const currentYear = now.getFullYear();
-
-//     switch (timeRange) {
-//       case 'week':
-//         // For current year: last 4 weeks from now
-//         // For past years: last 4 weeks of that year
-//         if (selectedYear === currentYear) {
-//           endDate = now;
-//           startDate = new Date(now);
-//           startDate.setDate(now.getDate() - 28);
-//         } else {
-//           // For past years: last 4 weeks of December
-//           endDate = new Date(selectedYear, 11, 31); // Dec 31
-//           startDate = new Date(endDate);
-//           startDate.setDate(endDate.getDate() - 28);
-//         }
-//         break;
-        
-//       case 'month':
-//         // Show current month for current year, or entire month for past years
-//         if (selectedYear === currentYear) {
-//           endDate = now;
-//           startDate = new Date(selectedYear, now.getMonth(), 1);
-//         } else {
-//           // For past years: show all 12 months
-//           endDate = new Date(selectedYear, 11, 31);
-//           startDate = new Date(selectedYear, 0, 1); // Jan 1
-//         }
-//         break;
-        
-//       case 'year':
-//         // Entire year
-//         endDate = new Date(selectedYear, 11, 31);
-//         startDate = new Date(selectedYear, 0, 1);
-//         break;
-        
-//       default:
-//         endDate = now;
-//         startDate = new Date(now);
-//         startDate.setDate(now.getDate() - 28);
-//         break;
-//     }
-
-//     // 3. Initialize data structure based on time range
-//     let chartData: { day: string; hours: number }[] = [];
-
-//     if (timeRange === 'week') {
-//       // For week view: 4 weeks
-//       chartData = Array.from({ length: 4 }, (_, i) => ({
-//         day: `Week ${i + 1}`,
-//         hours: 0
-//       }));
-//     } else if (timeRange === 'month') {
-//       if (selectedYear === currentYear) {
-//         // Current year: days up to today
-//         const daysInMonth = now.getDate();
-//         chartData = Array.from({ length: daysInMonth }, (_, i) => ({
-//           day: (i + 1).toString(),
-//           hours: 0
-//         }));
-//       } else {
-//         // Past year: all 12 months
-//         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-//                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-//         chartData = months.map(month => ({ day: month, hours: 0 }));
-//       }
-//     } else if (timeRange === 'year') {
-//       // Year view: all 12 months
-//       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-//                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-//       chartData = months.map(month => ({ day: month, hours: 0 }));
-//     }
-
-//     // 4. Collect all student IDs from all classes
-//     const allStudentIds: string[] = [];
-//     for (const classItem of allClasses) {
-//       allStudentIds.push(...(classItem.studentIds || []));
-//     }
-
-//     // Remove duplicates
-//     const uniqueStudentIds = [...new Set(allStudentIds)];
-
-//     // 5. Process reports for all unique students
-//     for (const studentId of uniqueStudentIds) {
-//       try {
-//         const reports = await getRecordingDuration(studentId);
-
-//         // Filter reports by date range
-//         const filteredReports = reports.filter(report => {
-//           const reportDate = report.timestamp.toDate();
-//           return reportDate >= startDate && reportDate <= endDate;
-//         });
-
-//         // Aggregate hours for each report
-//         for (const report of filteredReports) {
-//           const hours = convertDurationToHours(report.recordingDuration || '0:00');
-//           const reportDate = report.timestamp.toDate();
-          
-//           // Add to appropriate time bucket
-//           if (timeRange === 'week') {
-//             // Calculate which week (0-3) the report falls into
-//             const daysSinceStart = Math.floor(
-//               (reportDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
-//             );
-//             const weekIndex = Math.floor(daysSinceStart / 7);
-//             if (weekIndex >= 0 && weekIndex < 4) {
-//               chartData[weekIndex].hours += hours;
-//             }
-//           } else if (timeRange === 'month') {
-//             if (selectedYear === currentYear) {
-//               // Current year: by day
-//               const dayOfMonth = reportDate.getDate() - 1;
-//               if (dayOfMonth >= 0 && dayOfMonth < chartData.length) {
-//                 chartData[dayOfMonth].hours += hours;
-//               }
-//             } else {
-//               // Past year: by month
-//               const monthIndex = reportDate.getMonth();
-//               chartData[monthIndex].hours += hours;
-//             }
-//           } else if (timeRange === 'year') {
-//             const monthIndex = reportDate.getMonth();
-//             chartData[monthIndex].hours += hours;
-//           }
-//         }
-//       } catch (error) {
-//         console.error(`Error processing student ${studentId}:`, error);
-//         continue;
-//       }
-//     }
-
-//     // 6. Round hours to 2 decimal places
-//     chartData.forEach(item => {
-//       item.hours = parseFloat(item.hours.toFixed(2));
-//     });
-
-//     return chartData;
-//   } catch (error: any) {
-//     throw new Error('Failed to get active hours: ' + error.message);
-//   }
-// };
-
-// // Helper function to generate year options
-// const getAvailableYears = (): number[] => {
-//   const currentYear = new Date().getFullYear();
-//   const years: number[] = [];
-  
-//   // Show current year and previous 4 years
-//   for (let i = 0; i <= 4; i++) {
-//     years.push(currentYear - i);
-//   }
-  
-//   return years;
-// };
-
-  /**
-   * Convert duration string to hours (decimal)
-   * Supports both formats:
-   * - M:SS (0:15 = 15 seconds)
-   * - HH:MM:SS (0:15:30 = 15 minutes 30 seconds)
-   */
-  const convertDurationToHours = (duration: string): number => {
-    if (!duration) return 0;
-
-    try {
-      const parts = duration.split(':').map(part => parseInt(part) || 0);
-
-      if (parts.length === 2) {
-        // Format: M:SS (minutes:seconds)
-        const minutes = parts[0];
-        const seconds = parts[1];
-
-        // Convert to hours: (minutes * 60 + seconds) / 3600
-        const totalSeconds = minutes * 60 + seconds;
-        return totalSeconds / 3600;
-      } else if (parts.length === 3) {
-        // Format: HH:MM:SS (hours:minutes:seconds)
-        const hours = parts[0];
-        const minutes = parts[1];
-        const seconds = parts[2];
-
-        return hours + minutes / 60 + seconds / 3600;
-      } else {
-        console.warn('Invalid duration format:', duration);
-        return 0;
-      }
-    } catch (error) {
-      console.error('Error converting duration:', duration, error);
-      return 0;
-    }
-  };
-
-  /**
    * Process:
    * - Get class from the class of the faculty using facultyId
    * - Get the students from that class
@@ -353,10 +242,11 @@ export const getForStudentsMiscueStats = () => {
    */
   const getOverallCommonMiscueType = async (
     facultyId: string,
+    filter?: FilterOptions,
   ): Promise<MiscuePercentage[]> => {
     try {
       // Get all the classes handled by the faculty
-      const classes = await getFacultyClasses(facultyId);
+      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
 
       // Initialize miscue type counters
       const miscueCounts = {
@@ -370,44 +260,39 @@ export const getForStudentsMiscueStats = () => {
       let totalReports = 0;
       let totalMiscues = 0;
 
-      // Get all student IDs from each class
-      for (const classItem of classes) {
-        const studentIds = classItem.studentIds || [];
-        totalStudents += studentIds.length;
+      // For each students, get all their reports using getStudentReports function
+      for (const studentId of studentIds) {
+        const reports = await getStudentReports(studentId);
+        totalReports += reports.length;
 
-        // For each students, get all their reports using getStudentReports function
-        for (const studentId of studentIds) {
-          const reports = await getStudentReports(studentId);
-          totalReports += reports.length;
+        // Aggregate miscue counts from each report
+        for (const report of reports) {
+          if (report.miscues && Array.isArray(report.miscues)) {
+            totalMiscues += report.miscues.length;
 
-          // Aggregate miscue counts from each report
-          for (const report of reports) {
-            if (report.miscues && Array.isArray(report.miscues)) {
-              totalMiscues += report.miscues.length;
-
-              // Count each miscue type
-              for (const miscue of report.miscues) {
-                switch (miscue.type) {
-                  case 'substitution':
-                    miscueCounts.substitution++;
-                    break;
-                  case 'omission':
-                    miscueCounts.omission++;
-                    break;
-                  case 'insertion':
-                    miscueCounts.insertion++;
-                    break;
-                  case 'repetition':
-                    miscueCounts.repetition++;
-                    break;
-                  default:
-                    console.log('Unknown miscue type:', miscue.type);
-                }
+            // Count each miscue type
+            for (const miscue of report.miscues) {
+              switch (miscue.type) {
+                case 'substitution':
+                  miscueCounts.substitution++;
+                  break;
+                case 'omission':
+                  miscueCounts.omission++;
+                  break;
+                case 'insertion':
+                  miscueCounts.insertion++;
+                  break;
+                case 'repetition':
+                  miscueCounts.repetition++;
+                  break;
+                default:
+                  console.log('Unknown miscue type:', miscue.type);
               }
             }
           }
         }
       }
+
       // Calculate Percentage
       const total = Object.values(miscueCounts).reduce(
         (sum, count) => sum + count,
@@ -474,10 +359,11 @@ export const getForStudentsMiscueStats = () => {
    */
   const getOverallTopMiscueType = async (
     facultyId: string,
+    filter?: FilterOptions,
   ): Promise<OverAllStudentTopMiscue[]> => {
     try {
-      // Get all the classes handled by the faculty
-      const classes = await getFacultyClasses(facultyId);
+      // Get filtered student IDs
+      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
 
       // Initialize data structure for aggregation
       const allMiscues: Array<{
@@ -498,45 +384,40 @@ export const getForStudentsMiscueStats = () => {
         }
       > = {};
 
-      // For each class, get all the students
-      for (const classItem of classes) {
-        const studentIds = classItem.studentIds || [];
+      // For each student, get their miscue reports
+      for (const studentId of studentIds) {
+        const reports = await getStudentReports(studentId);
 
-        // For each student, get their miscue reports
-        for (const studentId of studentIds) {
-          const reports = await getStudentReports(studentId);
+        // Collect all miscues from all reports
+        for (const report of reports) {
+          // Track passage data
+          if (report.passageTitle) {
+            const passageTitle = report.passageTitle;
+            if (!passageMap[passageTitle]) {
+              passageMap[passageTitle] = {
+                miscueCount: 0,
+                accuracySum: 0,
+                attemptCount: 0,
+              };
+            }
+            passageMap[passageTitle].attemptCount++;
+            passageMap[passageTitle].accuracySum += report.accuracyRate || 0;
+          }
 
-          // Collect all miscues from all reports
-          for (const report of reports) {
-            // Track passage data
-            if (report.passageTitle) {
-              const passageTitle = report.passageTitle;
-              if (!passageMap[passageTitle]) {
-                passageMap[passageTitle] = {
-                  miscueCount: 0,
-                  accuracySum: 0,
-                  attemptCount: 0,
-                };
+          if (report.miscues && Array.isArray(report.miscues)) {
+            report.miscues.forEach(miscue => {
+              if (report.passageTitle) {
+                passageMap[report.passageTitle].miscueCount++;
               }
-              passageMap[passageTitle].attemptCount++;
-              passageMap[passageTitle].accuracySum += report.accuracyRate || 0;
-            }
 
-            if (report.miscues && Array.isArray(report.miscues)) {
-              report.miscues.forEach(miscue => {
-                if (report.passageTitle) {
-                  passageMap[report.passageTitle].miscueCount++;
-                }
-
-                allMiscues.push({
-                  type: miscue.type,
-                  expectedWord: miscue.expectedWord,
-                  spokenWord: miscue.spokenWord || '',
-                  passageTitle: report.passageTitle || 'Unknown Passage',
-                  accuracyRate: report.accuracyRate || 0,
-                });
+              allMiscues.push({
+                type: miscue.type,
+                expectedWord: miscue.expectedWord,
+                spokenWord: miscue.spokenWord || '',
+                passageTitle: report.passageTitle || 'Unknown Passage',
+                accuracyRate: report.accuracyRate || 0,
               });
-            }
+            });
           }
         }
       }
@@ -662,7 +543,7 @@ export const getForStudentsMiscueStats = () => {
                 ? parseFloat(
                     (
                       topPassageData.accuracySum / topPassageData.attemptCount
-                    ).toFixed(1),
+                    ).toFixed(2),
                   )
                 : 0,
             attempts: topPassageData.attemptCount,
@@ -685,10 +566,14 @@ export const getForStudentsMiscueStats = () => {
 
   const getOverallAverageWPMandAccuracy = async (
     facultyId: string,
+    filter?: FilterOptions,
   ): Promise<AverageWPMandAccuracy> => {
     try {
-      const classes = await getFacultyClasses(facultyId);
-
+      // Get filtered student IDs
+      const { studentIds } = await getFilteredStudentIds(
+        facultyId,
+        filter || { type: 'overall' },
+      );
       let totalStudentAverageAccuracy = 0;
       let totalStudentAverageWPM = 0;
       let totalStudentsWithReports = 0;
@@ -697,40 +582,37 @@ export const getForStudentsMiscueStats = () => {
 
       const processedStudents = new Set<string>();
 
-      for (const classItem of classes) {
-        const studentIds = classItem.studentIds || [];
-        for (const studentId of studentIds) {
-          if (processedStudents.has(studentId)) continue;
+      for (const studentId of studentIds) {
+        if (processedStudents.has(studentId)) continue;
 
-          processedStudents.add(studentId);
-          totalStudents++;
+        processedStudents.add(studentId);
+        totalStudents++;
 
-          const reports = await getStudentReports(studentId);
-          const studentReportsCount = reports.length;
+        const reports = await getStudentReports(studentId);
+        const studentReportsCount = reports.length;
 
-          if (studentReportsCount > 0) {
-            // Calculate THIS STUDENT'S averages
-            const studentTotalAccuracy = reports.reduce(
-              (sum, report) => sum + (report.accuracyRate || 0),
-              0,
-            );
-            const studentTotalWPM = reports.reduce(
-              (sum, report) => sum + (report.wordPerMin || 0),
-              0,
-            );
+        if (studentReportsCount > 0) {
+          // Calculate THIS STUDENT'S averages
+          const studentTotalAccuracy = reports.reduce(
+            (sum, report) => sum + (report.accuracyRate || 0),
+            0,
+          );
+          const studentTotalWPM = reports.reduce(
+            (sum, report) => sum + (report.wordPerMin || 0),
+            0,
+          );
 
-            const studentAverageAccuracy =
-              studentTotalAccuracy / studentReportsCount;
-            const studentAverageWPM = studentTotalWPM / studentReportsCount;
+          const studentAverageAccuracy =
+            studentTotalAccuracy / studentReportsCount;
+          const studentAverageWPM = studentTotalWPM / studentReportsCount;
 
-            // Add this student's averages to the overall totals
-            totalStudentAverageAccuracy += studentAverageAccuracy;
-            totalStudentAverageWPM += studentAverageWPM;
-            totalStudentsWithReports++;
-          }
-
-          totalReports += studentReportsCount;
+          // Add this student's averages to the overall totals
+          totalStudentAverageAccuracy += studentAverageAccuracy;
+          totalStudentAverageWPM += studentAverageWPM;
+          totalStudentsWithReports++;
         }
+
+        totalReports += studentReportsCount;
       }
 
       // Calculate overall averages (average of student averages)

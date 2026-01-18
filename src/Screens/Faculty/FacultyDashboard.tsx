@@ -39,6 +39,7 @@ export default function FacultyDashboard() {
   const auth = getAuth();
   const { getNumberOfClasses, getNumbersOfAllStudents } =
   getForStudentsMiscueStats();
+  
 
   // ========================================================================
   // DATA FETCHING

@@ -22,7 +22,7 @@ const AcademicYearDropDownSelection: React.FC<AcademicYearDropDownSelectionProps
   label = 'Academic Year',
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const academicYears = getAcademicYearOptions(2, 2);
+  const academicYears = getAcademicYearOptions();
 
   const handleSelect = (year: string) => {
     onSelect(year);

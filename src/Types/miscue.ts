@@ -179,3 +179,16 @@ export interface StudentReadingStatus {
   trend: 'improving' | 'stable' | 'declining';
   lastReportDate: Date;
 }
+
+// FOR COMMON MISCUE TYPE / WORDS / PASSAGE
+export interface FilterOptions {
+  type: 'overall' | 'class';
+  classId?: string;
+  className?: string;
+}
+
+export interface ClassFilterData {
+  classId: string;
+  className: string;
+  gradeLevel: number;
+}

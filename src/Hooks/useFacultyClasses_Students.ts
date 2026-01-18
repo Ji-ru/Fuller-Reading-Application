@@ -43,6 +43,7 @@ export const getFacultyClasses_Student = {
       throw new Error("Failed to fetch faculty's classes. " + error.message);
     }
   },
+  
 
   // ====================================================================
   // STUDENT RELATED FUNCTIONS

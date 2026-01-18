@@ -35,7 +35,9 @@ export default function MyClass() {
   const [classes, setClasses] = useState<ClassDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [ellipsisVisible, setEllipsisVisible] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<ClassDocument | null>(null);
+  const [selectedClass, setSelectedClass] = useState<ClassDocument | null>(
+    null,
+  );
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingClassName, setEditingClassName] = useState('');
@@ -131,7 +133,6 @@ export default function MyClass() {
         currentUser.uid,
         newClassName.trim(),
         selectedGrade,
-        academicYear,
       );
       await fetchClasses();
       Alert.alert(
@@ -257,7 +258,13 @@ export default function MyClass() {
     );
   };
 
-  const renderClassItem = ({ item, index }: { item: ClassDocument; index: number }) => (
+  const renderClassItem = ({
+    item,
+    index,
+  }: {
+    item: ClassDocument;
+    index: number;
+  }) => (
     <TouchableOpacity
       style={[myClass.classCard, { marginTop: index === 0 ? 0 : 12 }]}
       onPress={() => {
@@ -284,7 +291,9 @@ export default function MyClass() {
         <View style={myClass.classInfo}>
           <Text style={myClass.className} numberOfLines={1}>
             {item.className}
+            <Text style={myClass.classMetaValue}> ({item.acadYear})</Text>
           </Text>
+
           <View style={myClass.classMetaRow}>
             <View style={myClass.classMetaChip}>
               <Text style={myClass.classMetaLabel}>Grade</Text>
@@ -528,22 +537,6 @@ export default function MyClass() {
                     <Text style={myClass.formHelperText}>
                       Selected: Grade {gradeLevel}
                     </Text>
-                  </View>
-
-                  <View style={myClass.formGroup}>
-                    <Text style={myClass.formLabel}>Academic Year *</Text>
-                    <AcademicYearDropDownSelection
-                      onSelect={(selectedYear: string) =>
-                        setAcademicYear(selectedYear)
-                      }
-                      selectedValue={academicYear}
-                      label="Academic Year"
-                    />
-                    {academicYear ? (
-                      <Text style={myClass.formHelperText}>
-                        Selected: {academicYear}
-                      </Text>
-                    ) : null}
                   </View>
 
                   <View style={myClass.modalInfoBox}>

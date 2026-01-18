@@ -61,7 +61,7 @@ export interface ClassDocument {
   classCode: string; // Human-readable code, e.g., "GR1-A" where code is generated for the students to join
   className?: string; // Optional: full class name
   gradeLevel: number; 
-  acadYear: string;
+  acadYear: string; // Ex. 2025-2026
   // term?: string; // For quarterly/semester systems
 
 

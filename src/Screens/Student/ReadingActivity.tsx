@@ -72,7 +72,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, processAudioWithGoogle, getSimulatedResponse } =
+  const { isLoading, getSimulatedResponse, processAudioWithHuggingFace } =
     useSpeechToText();
 
   // Navigation
@@ -237,7 +237,8 @@ export default function ReadingActivityScreenPage() {
    */
   const handleAudioProcessing = async (audioFile: string, duration: number) => {
     try {
-      const transcription = await processAudioWithGoogle(audioFile);
+      // const transcription = await processAudioWithGoogle(audioFile);
+      const transcription = await processAudioWithHuggingFace(audioFile);
       setSpokenText(transcription);
 
       // Also update the state for display if needed

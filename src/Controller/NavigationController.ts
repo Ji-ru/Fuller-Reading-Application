@@ -1,3 +1,6 @@
+// This file defines a custom React hook: you can use React hooks like useState, useEffect, useRef, useCallback, useMemo inside this function component or custom hook.
+// For example: useState for local state, useCallback for memoized navigation handlers, useEffect for side effects, useRef to hold persistent values, useMemo for memoized values.
+// Only call hooks at the top level of a function component or custom hook (never in regular JS functions or classes).
 // Navigation Dependencies
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
