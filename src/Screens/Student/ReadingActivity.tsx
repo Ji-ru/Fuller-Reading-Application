@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// This screen uses React hooks (useState, useEffect) to manage UI state and side effects.
+// Firebase usage is up-to-date for React Native Firebase v22 (auth().currentUser for user, all Firestore via controller-services).
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, Alert } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -22,7 +24,7 @@ import { Miscue } from '../../Types/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { isAlphabet, isPassage, isWords } from '../../Types/passage';
 import { FeedbackModal } from '../../Services/FeedbackModal';
-import auth from '@react-native-firebase/auth';
+import { getAuth } from '@react-native-firebase/auth';
 
 type ReadingActivityScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -30,6 +32,8 @@ type ReadingActivityScreenRouteProp = RouteProp<
 >;
 
 export default function ReadingActivityScreenPage() {
+  // Ref: Store a retry timeout id for feedback modal
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const route = useRoute<ReadingActivityScreenRouteProp>();
   const { readingMaterial, type } = route.params;
 
@@ -84,7 +88,7 @@ export default function ReadingActivityScreenPage() {
    * - Passage: returns whole passage text
    * - Word: returns the first word in contrasts
    */
-  const getTargetText = (): string => {
+  const getTargetText = useCallback((): string => {
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
       return readingMaterial.letter;
     } else if (type === 'passage' && isPassage(readingMaterial)) {
@@ -94,7 +98,7 @@ export default function ReadingActivityScreenPage() {
       return readingMaterial.contrasts[0].words[0];
     }
     return '';
-  };
+  }, [readingMaterial, type]);
 
   const targetText = getTargetText();
 
@@ -102,7 +106,7 @@ export default function ReadingActivityScreenPage() {
    * Generates a human-readable title for storage/reporting based on the reading type and material.
    * @returns {string} Report title
    */
-  const getTitle = (): string => {
+  const getTitle = useCallback((): string => {
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
       return `Alphabet - ${readingMaterial.letter}`;
     } else if (type === 'passage' && isPassage(readingMaterial)) {
@@ -111,28 +115,39 @@ export default function ReadingActivityScreenPage() {
       return `Words for ${readingMaterial.letter}`;
     }
     return 'Unknown';
-  };
+  }, [readingMaterial, type]);
 
-  // Effects
+  // useMemo: Memoize word count calculation for performance
+  const passageWordCount = useMemo(() => {
+    if (type === 'passage' && isPassage(readingMaterial)) {
+      return readingMaterial.text.trim().split(/\s+/).length;
+    }
+    return 0;
+  }, [readingMaterial, type]);
+
+  /**
+   * Effects to mount or initialize the permission and audio recording
+   */
   useEffect(() => {
     checkPermission();
     initializeAudio();
     
-    // Calculate total words for passages
+    // Use memoized word count for passages
     if (type === 'passage' && isPassage(readingMaterial)) {
-      const count = calculateTotalWords();
-      setTotalWords(count);
+      setTotalWords(passageWordCount);
     }
-  }, [checkPermission, initializeAudio, type, readingMaterial]);
+  }, [checkPermission, initializeAudio, type, readingMaterial, passageWordCount]);
   
   /**
+   * APPLICABLE TO ONLY FOR ALPHABET AND WORD 
+   * 
    * Checks if the spoken text matches the target perfectly (alphabet or word).
    * Ignores non-letter characters and is case insensitive.
    * @param spoken - The spoken/transcribed text
    * @param target - The target letter/word
    * @returns {boolean} Whether the spoken text perfectly matches the target
    */
-  const isTextPerfect = (spoken: string, target: string): boolean => {
+  const isTextPerfect = useCallback((spoken: string, target: string): boolean => {
     const cleanSpoken = spoken.replace(/[^a-zA-Z]/g, '').toLowerCase();
     const cleanTarget = target.replace(/[^a-zA-Z]/g, '').toLowerCase();
     console.log('isTextPerfect comparison:', {
@@ -143,7 +158,7 @@ export default function ReadingActivityScreenPage() {
       match: cleanSpoken === cleanTarget,
     });
     return cleanSpoken === cleanTarget;
-  };
+  }, []);
 
   /**
    * Opens the feedback modal with the appropriate message and modal type,
@@ -152,7 +167,7 @@ export default function ReadingActivityScreenPage() {
    * @param isAlphabetAndWordMode - True for alphabet or word mode
    * @param isCorrect - (Optional) Whether the attempt was correct
    */
-  const displayFeedbackModal = (
+  const displayFeedbackModal = useCallback((
     accuracyNum: number,
     isAlphabetAndWordMode: boolean,
     isCorrect?: boolean,
@@ -173,7 +188,6 @@ export default function ReadingActivityScreenPage() {
         modalType = 'tryAgain';
         message = `Try saying it again! Keep practicing.`;
       }
-      // setShowWordAlphabetFeedback(true);
     } else {
       if (accuracyNum >= 90) {
         modalType = 'passageSuccess';
@@ -187,26 +201,57 @@ export default function ReadingActivityScreenPage() {
     setFeedbackModalType(modalType);
     setShowFeedbackModal(true);
     setHasShownModalForCurrentAttempt(true);
-  };
+  }, []);
 
   /**
    * Calculates the total number of words in a passage
    * @returns {number} Total word count
    */
-  const calculateTotalWords = (): number => {
+  const calculateTotalWords = useCallback((): number => {
     if (type === 'passage' && isPassage(readingMaterial)) {
       // Split by whitespace and filter out empty strings
       const words = readingMaterial.text.trim().split(/\s+/);
       return words.length;
     }
     return 0;
-  };
+  }, [readingMaterial, type]);
+
+  /**
+   * Processes recorded audio by transcribing with Google or fallback to a simulated response.
+   * Updates states and triggers analysis and UI changes.
+   * @param audioFile - Path to the recorded audio file
+   * @param duration - Duration of the recording (seconds)
+   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
+    try {
+      // const transcription = await processAudioWithGoogle(audioFile);
+      const transcription = await processAudioWithHuggingFace(audioFile);
+      setSpokenText(transcription);
+      console.log('THIS IS THE SPOKEN: ' + transcription);
+
+      // Also update the state for display if needed
+      setRecordingDuration(duration);
+
+      analyzeReading(transcription, duration);
+      setIsReadingCompleted(true);
+    } catch (error) {
+      // Use simulated response as fallback
+      const simulatedResponse = getSimulatedResponse(targetText);
+      setSpokenText(simulatedResponse);
+      // Use 0 or a default duration for simulated response
+      analyzeReading(simulatedResponse, 0);
+      setIsReadingCompleted(true);
+    }
+    // Note: analyzeReading is defined later in the component but used here
+  }, [processAudioWithHuggingFace, getSimulatedResponse, targetText]);
+
   /**
    * Handles the record/play toggle for recording user speech:
-   * - Stops recording and processes audio if already recording
+   * - Stops recording and processes audio
    * - Starts a new recording otherwise
    */
-  const handleRecordToggle = async () => {
+  const handleRecordToggle = useCallback(async () => {
     if (isRecording) {
       try {
         const currentRecordTime = recordTime;
@@ -227,34 +272,7 @@ export default function ReadingActivityScreenPage() {
       setHasStoredCorrectAttempt(false); // Reset storage flag for new attempt
       await startRecording(targetText);
     }
-  };
-
-  /**
-   * Processes recorded audio by transcribing with Google or fallback to a simulated response.
-   * Updates states and triggers analysis and UI changes.
-   * @param audioFile - Path to the recorded audio file
-   * @param duration - Duration of the recording (seconds)
-   */
-  const handleAudioProcessing = async (audioFile: string, duration: number) => {
-    try {
-      // const transcription = await processAudioWithGoogle(audioFile);
-      const transcription = await processAudioWithHuggingFace(audioFile);
-      setSpokenText(transcription);
-
-      // Also update the state for display if needed
-      setRecordingDuration(duration);
-
-      analyzeReading(transcription, duration);
-      setIsReadingCompleted(true);
-    } catch (error) {
-      // Use simulated response as fallback
-      const simulatedResponse = getSimulatedResponse(targetText);
-      setSpokenText(simulatedResponse);
-      // Use 0 or a default duration for simulated response
-      analyzeReading(simulatedResponse, 0);
-      setIsReadingCompleted(true);
-    }
-  };
+  }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText]);
 
   /**
    * Calculates the Words Per Minute (WPM) given transcribed speech and duration in seconds.
@@ -262,7 +280,7 @@ export default function ReadingActivityScreenPage() {
    * @param durationSeconds - Duration in seconds
    * @returns {number} Words per minute
    */
-  const calculateWordsPerMin = (
+  const calculateWordsPerMin = useCallback((
     totalWords: number,
     durationSeconds: number,
   ): number => {
@@ -270,19 +288,19 @@ export default function ReadingActivityScreenPage() {
   
     const minutes = durationSeconds / 60;
     return Math.round(totalWords / minutes);
-  };
+  }, []);
 
   /**
    * Helper to convert an accuracy string (e.g. "85.5%") to a clamped number (0-100).
    * @param accuracyStr - String containing accuracy value, possibly with '%'
    * @returns {number} Numeric accuracy value (0-100)
    */
-  const convertAccuracyStringToNumber = (accuracyStr: string): number => {
+  const convertAccuracyStringToNumber = useCallback((accuracyStr: string): number => {
     // Remove any non-numeric characters except decimal point
     const cleanStr = accuracyStr.replace(/[^0-9.]/g, '');
     const num = parseFloat(cleanStr);
     return isNaN(num) ? 0 : Math.min(100, Math.max(0, num)); // Clamp 0-100
-  };
+  }, []);
 
   /**
    * Effect: On mount or material/type change, check if the reading item was already completed by the user.
@@ -291,7 +309,8 @@ export default function ReadingActivityScreenPage() {
   useEffect(() => {
     const checkIfAlreadyCompleted = async () => {
       try {
-        const user = auth().currentUser;
+        const auth = getAuth();
+        const user = auth.currentUser;
         if (!user) return;
 
         if (type === 'alphabet' && isAlphabet(readingMaterial)) {
@@ -324,7 +343,7 @@ export default function ReadingActivityScreenPage() {
     };
 
     checkIfAlreadyCompleted();
-  }, [type, readingMaterial]);
+  }, [type, readingMaterial, getTargetText]);
 
   /**
    * Analyzes user transcription depending on reading type (alphabet, word, passage).
@@ -338,8 +357,8 @@ export default function ReadingActivityScreenPage() {
     let accuracyNum = 0;
     let isWordAlphabetCorrect = false; // Track correct status locally
 
+    // ALPHABET READING ANALYZATION
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
-      // Alphabet check
       const result = MiscueAnalysisService.checkAlphabetPhonemeAccuracy(
         readingMaterial.letter,
         transcription,
@@ -366,9 +385,13 @@ export default function ReadingActivityScreenPage() {
           console.error('Failed to store alphabet attempt:', error);
         }
       } else if (result.isCorrect && alreadyCompleted) {
+        // return nothing if already stored or incorrect which ends the analyzation
         console.log('Alphabet already completed earlier');
       }
-    } else if (type === 'passage' && isPassage(readingMaterial)) {
+    } 
+
+    // PASSAGE READING ANALYZATION AND DATABASE STORING
+    else if (type === 'passage' && isPassage(readingMaterial)) {
       // Passage miscue detection
       const detectedMiscues = MiscueAnalysisService.detectMiscues(
         readingMaterial.text,
@@ -394,11 +417,14 @@ export default function ReadingActivityScreenPage() {
       const wpm = calculateWordsPerMin(totalWords, duration);
       setWordPerMin(wpm);
 
-      // add the function of storeMiscueReport
-      if (type === 'passage' && !hasStoredReport) {
+      // To avoid duplication it needs to check if it was already stored 
+      if (!hasStoredReport) {
         storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
       }
-    } else if (type === 'word' && isWords(readingMaterial)) {
+    }
+    
+    // WORD READING ANALYZATION AND DATABASE STORING
+    else if (type === 'word' && isWords(readingMaterial)) {
       const targetWord = getTargetText();
       const correct = isTextPerfect(transcription, targetWord);
 
@@ -408,7 +434,10 @@ export default function ReadingActivityScreenPage() {
         getTargetText(),
         transcription,
       );
+
+      // Used for congratulation modal if correct and if incorrect either try again or you're almost there
       setIsCorrectAttempt(result.isCorrect);
+
       setAccuracyString(result.accuracy);
       setFeedback(result.feedback);
       setFeedback(
@@ -455,7 +484,7 @@ export default function ReadingActivityScreenPage() {
    * @param miscues - Array of detected Miscue objects
    * @param wpm - Words per minute metric
    */
-  const storeMiscueReport = async (
+  const storeMiscueReport = useCallback(async (
     accuracyNum: number,
     duration: number,
     miscues: Miscue[],
@@ -511,13 +540,13 @@ export default function ReadingActivityScreenPage() {
     } catch (error: any) {
       throw new Error('Failed to store miscue report: ' + error.message);
     }
-  };
+  }, [hasStoredReport, spokenText, getTitle, totalWords]);
 
   /**
    * Handler to reset all reading states (text, miscues, accuracy, modal, etc).
    * Used for retrying the activity cleanly.
    */
-  const handleTryAgain = () => {
+  const handleTryAgain = useCallback(() => {
     setSpokenText('');
     setMiscues([]);
     setAccuracyString('0');
@@ -530,21 +559,21 @@ export default function ReadingActivityScreenPage() {
     setIsCorrectAttempt(false);
     setRecordingDuration(0);
     setWordPerMin(0);
-  };
+  }, []);
 
   /**
    * Handler to close the feedback modal dialog.
    */
-  const handleFeedbackModalClose = () => {
+  const handleFeedbackModalClose = useCallback(() => {
     setShowFeedbackModal(false);
-  };
+  }, []);
 
   /**
    * Toggles visibility of the screen options/menu.
    */
-  const toggleMenu = () => {
+  const toggleMenu = useCallback(() => {
     setMenuVisible(!menuVisible);
-  };
+  }, [menuVisible]);
 
   // Render
   return (

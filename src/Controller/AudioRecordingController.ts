@@ -76,6 +76,12 @@ export const useAudioRecording = () => {
     }
   }, [requestPermission]);
 
+  /**
+   * UPDATED!!
+   * Caclulate the expected duration of reading the passage
+   *  - this is a general expected duration regardless of what alphabet, word, or passage the user selected.
+   * 
+   */
   const calculateExpectedDuration = useCallback((passageText: string) => {
     const wordCount = passageText.split(/\s+/).length;
     const wordsPerMinute = 150;
@@ -83,7 +89,7 @@ export const useAudioRecording = () => {
     const rawDuration = Math.ceil(minutes * 60);
 
     // Set minimum duration for short texts
-    const MIN_DURATION = 30; // Minimum 30 seconds for any recording
+    const MIN_DURATION = 1; // Minimum 1 second for any recording
     const MAX_DURATION = 120; // Maximum 2 minutes
 
     let duration = Math.max(rawDuration, MIN_DURATION);
@@ -92,8 +98,14 @@ export const useAudioRecording = () => {
     return duration;
   }, []);
 
+  /**
+   * NEED UPDATE
+   * Start recording the selected passage
+   * 
+   */
   const startRecording = useCallback(
     async (passageText: string) => {
+      // Check if granted permission
       if (!hasPermission) {
         const grantedPermission = await requestPermission();
         if (!grantedPermission) {
@@ -111,7 +123,7 @@ export const useAudioRecording = () => {
         setAudioPath('');
 
         AudioRecord.start();
-
+          
         const expectedDuration = calculateExpectedDuration(passageText);
 
         const interval = setInterval(() => {
@@ -139,6 +151,9 @@ export const useAudioRecording = () => {
     [hasPermission, requestPermission, calculateExpectedDuration],
   );
 
+  /**
+   * Stops the recording
+   */
   const stopRecording = useCallback(async (): Promise<string> => {
     try {
       const audioFile = await AudioRecord.stop();
@@ -156,6 +171,10 @@ export const useAudioRecording = () => {
     }
   }, []);
 
+  /**
+   * Formats the time into 0:00 for counting the duration during the start of recording
+   * 
+   */
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;

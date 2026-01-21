@@ -24,8 +24,10 @@ const BottomNav = () => {
         return 0;
       case 'MyClass':
         return 1;
-      case 'FacultyProfile':
+      case 'Archive':
         return 2;
+      case 'FacultyProfile':
+          return 3;
       default:
         return 0; // Default to Dashboard
     }
@@ -92,19 +94,35 @@ const BottomNav = () => {
         ]}>
           MY CLASS
         </Text>
+
+      </TouchableOpacity>
+            {/* My Class Tab */}
+            <TouchableOpacity 
+        style={[
+          styles.tab,
+          selectedIndex === 2 && styles.selectedTab
+        ]} 
+        onPress={goToMyClass}
+      >
+        <Text style={[
+          styles.text,
+          selectedIndex === 2 && styles.selectedText
+        ]}>
+          ARCHIVE
+        </Text>
       </TouchableOpacity>
 
       {/* Profile Tab */}
       <TouchableOpacity 
         style={[
           styles.tab,
-          selectedIndex === 2 && styles.selectedTab
+          selectedIndex === 3 && styles.selectedTab
         ]} 
         onPress={goToFacultyProfile}
       >
         <Text style={[
           styles.text,
-          selectedIndex === 2 && styles.selectedText
+          selectedIndex === 3 && styles.selectedText
         ]}>
           PROFILE
         </Text>

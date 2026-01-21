@@ -23,7 +23,6 @@ import { getFacultyClasses_Student } from '../../Hooks/useFacultyClasses_Student
 import myClass from '../../ui/MyClassStyles';
 import { createCustomClass } from '../../Controller/AuthenticationController';
 import GradeLevelDropDownSelection from '../../Components/Buttons/GradeLevelSelectionButton';
-import AcademicYearDropDownSelection from '../../Components/Buttons/AcademicYearDropdown';
 import { getAcademicYearOptions } from '../../Utils/acadYearUtils';
 
 export default function MyClass() {
