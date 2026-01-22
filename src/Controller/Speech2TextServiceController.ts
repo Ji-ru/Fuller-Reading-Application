@@ -6,7 +6,7 @@ import { readFile } from 'react-native-fs';
 import { API_KEY } from '@env';
 import { Buffer } from 'buffer';
 
-const SPACE_URL = 'https://jayarizco101-fuller-wav2vec2.hf.space/gradio_api/call/transcribe';
+const SPACE_URL = '';
 
 export const useSpeechToText = () => {
   const [isLoading, setIsLoading] = useState(false);
