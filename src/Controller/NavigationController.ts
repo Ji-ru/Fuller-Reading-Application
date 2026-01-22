@@ -9,10 +9,10 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Alert } from 'react-native';
 
 // Interfaces of the passages to be passed on with RootStackParamList
-import { ReadingMaterial } from '../Types/passage';
+import { ReadingMaterial } from '../Interfaces/passage';
 
 // Interfaces of Students
-import { UserDocument, UserRole } from '../Types/dataInterfaces';
+import { UserDocument, UserRole } from '../Interfaces/dataInterfaces';
 import { ScreenReplaceTypes } from 'react-native-screens';
 import { logoutUser } from './AuthenticationController';
 

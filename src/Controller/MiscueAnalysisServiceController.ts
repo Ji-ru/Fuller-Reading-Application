@@ -1,7 +1,7 @@
 // Note: React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used here,
 // because this file defines a service class, not a React component or custom hook.
 // React hooks are only usable inside function components or custom React hooks (functions prefixed with 'use').
-import { Miscue } from '../Types/miscue';
+import { Miscue } from '../Interfaces/miscue';
 
 export class MiscueAnalysisService {
   static detectMiscues(passageText: string, spokenText: string): Miscue[] {

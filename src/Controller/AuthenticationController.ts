@@ -20,8 +20,8 @@ import {
   UserDocument,
   MiscueReportDocument,
   ClassDocument,
-} from '../Types/dataInterfaces';
-import { getCurrentAcademicYear } from '../Utils/acadYearUtils';
+} from '../Interfaces/dataInterfaces';
+import { getCurrentAcademicYear } from '../Utilities/acadYearUtils';
 
 // Initialize Firebase instances once
 const auth = getAuth();
