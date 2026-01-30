@@ -39,8 +39,8 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
         <Image
           source={
             isRecording
-              ? require('../../../assets/icons/MicrophoneSlash-icon.png')
-              : require('../../../assets/icons/Microphone-icon.png')
+              ? require('../../../../assets/icons/MicrophoneSlash-icon.png')
+              : require('../../../../assets/icons/Microphone-icon.png')
           }
           style={isLoading ? { opacity: 1 } : {}}
         />

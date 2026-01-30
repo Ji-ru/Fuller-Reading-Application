@@ -106,7 +106,7 @@ export default function LoadingScreen() {
     <View style={loading.container}>
       <Video
         style={loading.video}
-        source={require('../../assets/videos/cisc_logo_animated.mp4')}
+        source={require('../../../assets/videos/cisc_logo_animated.mp4')}
         repeat={true}
         resizeMode='cover'
       />

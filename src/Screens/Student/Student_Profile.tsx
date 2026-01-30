@@ -278,18 +278,18 @@ export default function Profile() {
                 onPress={() => handleBackStep()}
               >
                 <Image
-                  source={require('../../assets/icons/BackButton-icon.png')}
+                  source={require('../../../assets/icons/BackButton-icon.png')}
                 />
               </TouchableOpacity>
 
               <Image
                 style={upperNav.ciscLogo}
-                source={require('../../assets/images/cisckids.png')}
+                source={require('../../../assets/images/cisckids.png')}
               />
               <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
                 <Image
                   style={upperNav.menuIcon}
-                  source={require('../../assets/icons/Menu-icon.png')}
+                  source={require('../../../assets/icons/Menu-icon.png')}
                 />
               </TouchableOpacity>
             </View>
@@ -302,7 +302,7 @@ export default function Profile() {
                   style={styles.logoutButton}
                 >
                   <Image
-                    source={require('../../assets/icons/Logout-icon.png')}
+                    source={require('../../../assets/icons/Logout-icon.png')}
                     style={upperNav.logoutIcon}
                   />
                   <Text style={upperNav.logoutText}>Logout</Text>
@@ -327,7 +327,7 @@ export default function Profile() {
                 source={
                   profileData?.profileImageUrl
                     ? { uri: profileData.profileImageUrl }
-                    : require('../../assets/images/defaultProfile.png')
+                    : require('../../../assets/images/defaultProfile.png')
                 }
                 style={styles.profileImage}
               />

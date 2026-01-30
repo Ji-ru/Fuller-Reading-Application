@@ -120,7 +120,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           {(type === 'congratulations' || type === 'passageSuccess' || type === 'goodJob') && (
             <LottieView
               ref={confettiRef}
-              source={require('../../assets/gifs&animations/Confetti.json')}
+              source={require('../../../../assets/gifs&animations/Confetti.json')}
               autoPlay={false}
               loop={false}
               style={feedbackModal.confettiAnimation}
@@ -132,7 +132,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           {(type === 'congratulations') && (
             <LottieView
               ref={congratulationsRef}
-              source={require('../../assets/gifs&animations/Star_Success.json')}
+              source={require('../../../../assets/gifs&animations/Star_Success.json')}
               autoPlay={false}
               loop={false}
               style={feedbackModal.excellentAnimation}
@@ -144,7 +144,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           {(type === 'passageSuccess') && (
             <LottieView
               ref={congratulationsRef}
-              source={require('../../assets/gifs&animations/Star_Success.json')}
+              source={require('../../../../assets/gifs&animations/Star_Success.json')}
               autoPlay={false}
               loop={false}
               style={feedbackModal.excellentAnimation}
@@ -156,7 +156,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           {(type === 'goodJob') && (
             <LottieView
               ref={congratulationsRef}
-              source={require('../../assets/gifs&animations/Medal.json')}
+              source={require('../../../../assets/gifs&animations/Medal.json')}
               autoPlay={false}
               loop={false}
               style={feedbackModal.goodJobAnimation}
@@ -168,7 +168,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           {type === 'tryAgain' && (
             <LottieView
               ref={tryAgainRef}
-              source={require('../../assets/gifs&animations/Failed.json')}
+              source={require('../../../../assets/gifs&animations/Failed.json')}
               autoPlay={false}
               loop={false}
               style={feedbackModal.tryAgainAnimation}
