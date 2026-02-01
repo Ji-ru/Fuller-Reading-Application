@@ -9,29 +9,29 @@ import * as eva from '@eva-design/eva';
 // PAGES
 // ========================================================================
 
-import LoginScreen from './src/Screens/LoginScreen';
-import LoadingScreen from './src/Screens/LoadingScreen';
+import LoginScreen from './src/Screens/User_SignIn_Screen';
+import LoadingScreen from './src/Components/GlobalUse/Loading_Screen';
 
 // SIGN UP PAGE
-import ChooseRole from './src/Screens/SignUp/ChooseRole';
-import SignUpOneScreen from './src/Screens/SignUp/SignUpOne';
-import SignUpTwoScreen from './src/Screens/SignUp/SignUpTwo';
-import SignUpCompletedScreen from './src/Screens/SignUp/SignUpCompleted';
+import ChooseRole from './src/Screens/SignUp/Choose_User_Role';
+import SignUpOneScreen from './src/Screens/SignUp/SignUp_One';
+import SignUpTwoScreen from './src/Screens/SignUp/SignUp_Two';
+import SignUpCompletedScreen from './src/Screens/SignUp/SignUp_Completed';
 
 // STUDENT PAGE
-import UserHomeScreen from './src/Screens/Student/UserHome';
-import PageSelectionScreen from './src/Screens/Student/PageSelection';
-import ReadingActivityScreenPage from './src/Screens/Student/ReadingActivity';
-import ReadingHistoryScreen from './src/Screens/Student/History';
-import StudentProfile from './src/Screens/Profile';
+import UserHomeScreen from './src/Screens/Student/Student_Home';
+import PageSelectionScreen from './src/Screens/Student/Student_Reading_Selection';
+import ReadingActivityScreenPage from './src/Screens/Student/Student_Reading_Activity';
+import ReadingHistoryScreen from './src/Screens/Student/Student_History';
+import StudentProfile from './src/Screens/Student/Student_Profile';
 // import FacultyStack from './FacultyStack';
 
 // FACULTY PAGE
-import FacultyDashboard from './src/Screens/Faculty/FacultyDashboard';
-import FacultyProfile from './src/Screens/Faculty/FacultyProfile';
-import MyClass from './src/Screens/Faculty/MyClass';
-import MyStudents from './src/Screens/Faculty/MyStudents';
-import StudentViewProfile from './src/Screens/Faculty/StudentViewProfile';
+import FacultyDashboard from './src/Screens/Faculty/Faculty_Dashboard';
+import FacultyProfile from './src/Screens/Faculty/Faculty_Profile';
+import MyClass from './src/Screens/Faculty/Faculty_MyClass';
+import MyStudents from './src/Screens/Faculty/Faculty_MyStudents';
+import StudentViewProfile from './src/Screens/Faculty/Student_View_Profile';
 
 const Stack = createNativeStackNavigator();
 

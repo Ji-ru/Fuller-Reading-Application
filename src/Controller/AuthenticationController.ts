@@ -1,3 +1,6 @@
+// Note: This file is a pure service/controller—not a React function component or hook.
+// React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used or allowed here.
+// Only use hooks inside function components or custom hooks (functions starting with 'use').
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from '@react-native-firebase/auth';
 import {
   getFirestore,
@@ -17,8 +20,8 @@ import {
   UserDocument,
   MiscueReportDocument,
   ClassDocument,
-} from '../Types/dataInterfaces';
-import { getCurrentAcademicYear } from '../Utils/acadYearUtils';
+} from '../Interfaces/dataInterfaces';
+import { getCurrentAcademicYear } from '../Utilities/acadYearUtils';
 
 // Initialize Firebase instances once
 const auth = getAuth();
@@ -179,7 +182,6 @@ export const createCustomClass = async (
   facultyId: string,
   className: string,
   gradeLevel: number,
-  acadYear: string, 
 
 ) => {
   try {
@@ -193,7 +195,7 @@ export const createCustomClass = async (
       classCode,
       className: className,
       gradeLevel,
-      acadYear: acadYear,
+      acadYear: getCurrentAcademicYear(),
       facultyId,
       studentIds: [],
       isActive: true,

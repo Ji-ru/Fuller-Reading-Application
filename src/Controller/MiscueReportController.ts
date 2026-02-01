@@ -1,5 +1,8 @@
-import { Miscue } from '../Types/miscue';
-import { MiscueReportDocument } from '../Types/dataInterfaces';
+// Note: This is a controller/service object, not a React component or custom hook.
+// React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used in this file.
+// Use hooks only inside React function components or hooks that start with 'use'.
+import { Miscue } from '../Interfaces/miscue';
+import { MiscueReportDocument } from '../Interfaces/dataInterfaces';
 import { getAuth } from '@react-native-firebase/auth';
 import firestore, {
   getFirestore,
