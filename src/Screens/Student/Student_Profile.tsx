@@ -10,8 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import bubbles from '../../UI_Designs/BubblesDesign';
-import user from '../../UI_Designs/UserStyle';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import {
@@ -19,10 +17,14 @@ import {
   getCurrentUser,
   getClassByCode,
 } from '../../Controller/AuthenticationController';
-import { MiscueReportController } from '../../Controller/MiscueReportController';
+import { getAuth } from '@react-native-firebase/auth';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
-
+import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
+import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Status/Student_Accuracy_Chart';
+import StudentMiscueAnalytics from '../../Components/Faculty/StudentView_Status/Student_MiscueChart';
+import StudentTopMiscuePassageAndWords from '../../Components/Faculty/StudentView_Status/Student_TopPassage&TopWords';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 /**
  * ==========================================================================
  * STUDENT PROFILE COMPONENT
@@ -55,6 +57,7 @@ interface ProgressData {
 }
 
 export default function Profile() {
+  const auth = getAuth();
   // ========================================================================
   // STATE MANAGEMENT
   // ========================================================================
@@ -135,18 +138,6 @@ export default function Profile() {
         console.log(profile.studentData.classCode);
         setClassData(classInfo);
       }
-
-      // Fetch reading statistics
-      const stats = await MiscueReportController.getStudentReadingStats(
-        currentUser.uid,
-      );
-      setReadingStats(stats);
-
-      // Fetch progress data for charts
-      const progress = await MiscueReportController.getStudentProgressOverTime(
-        currentUser.uid,
-      );
-      setProgressData(progress);
     } catch (err: any) {
       console.error('Error fetching profile data:', err);
       setError(err.message || 'Failed to load profile data');
@@ -244,31 +235,15 @@ export default function Profile() {
   // ========================================================================
   // MAIN RENDER
   // ========================================================================
-
+  console.log("The current user: " + getCurrentUser);
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.innerContainer}>
 
           {/* BUBBLE DECORATIONS */}
-          <View style={bubbles.bubblesContainer}>
-            <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-            <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-            <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-          </View>
+          <BubbleBackground />
+
 
           {/* HEADER */}
           <View style={styles.header}>
@@ -278,18 +253,18 @@ export default function Profile() {
                 onPress={() => handleBackStep()}
               >
                 <Image
-                  source={require('../../assets/icons/BackButton-icon.png')}
+                  source={require('../../../assets/icons/BackButton-icon.png')}
                 />
               </TouchableOpacity>
 
               <Image
                 style={upperNav.ciscLogo}
-                source={require('../../assets/images/cisckids.png')}
+                source={require('../../../assets/images/cisckids.png')}
               />
               <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
                 <Image
                   style={upperNav.menuIcon}
-                  source={require('../../assets/icons/Menu-icon.png')}
+                  source={require('../../../assets/icons/Menu-icon.png')}
                 />
               </TouchableOpacity>
             </View>
@@ -302,7 +277,7 @@ export default function Profile() {
                   style={styles.logoutButton}
                 >
                   <Image
-                    source={require('../../assets/icons/Logout-icon.png')}
+                    source={require('../../../assets/icons/Logout-icon.png')}
                     style={upperNav.logoutIcon}
                   />
                   <Text style={upperNav.logoutText}>Logout</Text>
@@ -327,7 +302,7 @@ export default function Profile() {
                 source={
                   profileData?.profileImageUrl
                     ? { uri: profileData.profileImageUrl }
-                    : require('../../assets/images/defaultProfile.png')
+                    : require('../../../assets/images/defaultProfile.png')
                 }
                 style={styles.profileImage}
               />
@@ -364,8 +339,8 @@ export default function Profile() {
                   profileData?.sex === 'male'
                     ? 'Male'
                     : profileData?.sex === 'female'
-                    ? 'Female'
-                    : 'N/A'
+                      ? 'Female'
+                      : 'N/A'
                 }
               />
             </View>
@@ -394,89 +369,33 @@ export default function Profile() {
 
           {/* READING STATISTICS */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Reading Statistics</Text>
-            <View style={styles.statsGrid}>
-              <StatCard
-                number={readingStats?.totalAttempts || 0}
-                label="Total Attempts"
-              />
-              <StatCard
-                number={`${readingStats?.averageAccuracy || 0}%`}
-                label="Avg. Accuracy"
-              />
-              <StatCard
-                number={readingStats?.topMiscueType || 'N/A'}
-                label="Top Miscue Type"
-              />
-            </View>
 
-            {/* TOP MISCUED PASSAGE */}
-            {topMiscuedPassage && (
-              <View style={styles.miscueCard}>
-                <Text style={styles.miscueTitle}>Top Miscued Passage</Text>
-                <Text style={styles.miscuePassage}>
-                  {topMiscuedPassage.title}
-                </Text>
-                <View style={styles.miscueStats}>
-                  <Text style={styles.miscueStat}>
-                    Accuracy:{' '}
-                    <Text style={styles.miscueStatValue}>
-                      {topMiscuedPassage.accuracy.toFixed(1)}%
-                    </Text>
-                  </Text>
-                  <Text style={styles.miscueStat}>
-                    Attempts:{' '}
-                    <Text style={styles.miscueStatValue}>
-                      {topMiscuedPassage.attempts}
-                    </Text>
-                  </Text>
-                </View>
-              </View>
-            )}
+            {/* ACCURACY TRENDS */}
+            <StudentAccuracyTrendsChart studentId={auth.currentUser?.uid || ''} />
 
-            {/* MOST COMMON MISCUE WORDS */}
-            {readingStats?.mostCommonMiscueWords &&
-              readingStats.mostCommonMiscueWords.length > 0 && (
-                <View style={styles.miscueCard}>
-                  <Text style={styles.miscueTitle}>
-                    Most Common Miscue Words
-                  </Text>
-                  <View style={styles.wordList}>
-                    {readingStats.mostCommonMiscueWords.map((item, index) => (
-                      <View key={index} style={styles.wordItem}>
-                        <Text style={styles.wordText}>"{item.word}"</Text>
-                        <Text style={styles.wordCount}>{item.count} times</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
+          </View>
+
+          <View style={styles.section}>
+
+            {/* MISCUE TYPE CHART */}
+            <StudentMiscueAnalytics studentId={auth.currentUser?.uid || ''} />
+
+            {/* TOP MISCUED PASSAGE AND MOST COMMON MISCUE WORDS  */}
+            <StudentTopMiscuePassageAndWords studentId={auth.currentUser?.uid || ''} />
+
+          </View>
+
+          <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Activity Tracking</Text>
+
+            {/* ACTIVITY TRACKING */}
+            <StudentActivityTrackingCard studentId={auth.currentUser?.uid || ''} />
           </View>
 
           {/* READING PROGRESS CHARTS */}
-          {hasProgressData && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Reading Progress</Text>
 
-              {/* ACCURACY OVER TIME CHART */}
-              <AccuracyChart data={progressData} />
-
-              {/* WPM OVER TIME CHART */}
-              <WPMChart data={progressData} />
-
-              {/* PERFORMANCE SUMMARY */}
-              <PerformanceSummary data={progressData} />
-            </View>
-          )}
-
-          {/* REFRESH BUTTON */}
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={fetchProfileData}
-          >
-            <Text style={styles.refreshButtonText}>Refresh Data</Text>
-          </TouchableOpacity>
         </View>
+
       </ScrollView>
 
       {/* LOGOUT MODAL */}
@@ -574,8 +493,8 @@ const AccuracyChart = ({ data }: { data: ProgressData[] }) => {
                 item.accuracy >= 90
                   ? '#10b981'
                   : item.accuracy >= 75
-                  ? '#f59e0b'
-                  : '#ef4444';
+                    ? '#f59e0b'
+                    : '#ef4444';
 
               return (
                 <View key={index} style={styles.chartBarWrapper}>
@@ -832,7 +751,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   innerContainer: {
-    padding: 10
   },
   loadingContainer: {
     flex: 1,
@@ -880,10 +798,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 4,
   },
   profileImageContainer: {
@@ -914,14 +828,10 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: 'white',
-    marginHorizontal: 16,
+    marginHorizontal: 10,
     marginTop: 16,
     padding: 20,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 4,
   },
   sectionTitle: {

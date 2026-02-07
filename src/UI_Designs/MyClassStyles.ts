@@ -162,6 +162,55 @@ const myClass = StyleSheet.create({
     height: 16,
   },
 
+  // ==========================================
+  // ARCHIVED CLASSES SPECIFIC STYLES
+  // ==========================================
+  archivedClassCard: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+  },
+  archivedClassCardContent: {
+    opacity: 0.75,
+  },
+  archivedClassIconContainer: {
+    backgroundColor: '#FEF3C7',
+  },
+  archivedClassIcon: {
+    fontSize: 24,
+    opacity: 0.6,
+  },
+  archivedClassName: {
+    color: '#6B7280',
+  },
+  archivedClassEmail: {
+    color: '#9CA3AF',
+  },
+  archivedMetaChip: {
+    backgroundColor: '#FEF3C7',
+  },
+  archivedMetaLabel: {
+    color: '#92400E',
+  },
+  archivedMetaValue: {
+    color: '#B45309',
+  },
+  archivedEllipsisButton: {
+    backgroundColor: '#FEF3C7',
+  },
+  archivedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 14,
+    pointerEvents: 'none',
+  },
+  // ==========================================
+
   // CONTEXT MENU
   fullScreenOverlay: {
     position: 'absolute',
@@ -215,6 +264,13 @@ const myClass = StyleSheet.create({
   },
   deleteMenuText: {
     color: '#EF4444',
+  },
+  archiveMenuItem: {
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  archiveMenuText: {
+    color: '#F59E0B',
   },
 
   // MODAL STYLES

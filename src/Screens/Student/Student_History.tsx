@@ -13,10 +13,9 @@ import auth from '@react-native-firebase/auth';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import user from '../../UI_Designs/UserStyle';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 /**
  * Interface for grouped report data by passage
@@ -147,7 +146,7 @@ export default function ReadingHistoryScreen() {
       // Convert MiscueReportDocument to ReportData
       const reportData: ReportData = {
         id: report.reportId, // Using reportId from the new structure
-        timestamp: report.timestamp,
+        timestamp: report.createdAt,
         accuracyRate: report.accuracyRate || 0,
         wordPerMin: report.wordPerMin || 0,
         recordingDuration: report.recordingDuration,
@@ -344,27 +343,8 @@ export default function ReadingHistoryScreen() {
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView>
         {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer} pointerEvents="none">
-          {/* Top Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
+        <BubbleBackground />
 
-          {/* Bottom Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
 
         {/* HEADER (LOGO + MENU ICON) */}
         <View>

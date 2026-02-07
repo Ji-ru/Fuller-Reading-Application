@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import BottomNav from '../../Components/Faculty/NavigationBar/BottomNav'; 
 import facultyProfile from '../../UI_Designs/FacultyProfile';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 export default function FacultyProfile() {
   // ========================================================================
   // STATE MANAGEMENT 
@@ -17,13 +16,13 @@ export default function FacultyProfile() {
 
   /** Controls visibility of logout confirmation modal */
   const [logoutVisible, setLogoutVisible] = useState(false);
-  
+
   // ========================================================================
   // HOOKS  
   // ========================================================================
-  
+
   const { handleBackStep, handleLogout } = useNavigationHelper();
-  
+
   // ========================================================================
   // EVENT HANDLER   
   // ========================================================================
@@ -48,27 +47,11 @@ export default function FacultyProfile() {
 
   return (
     <SafeAreaView style={facultyProfile.container}>
-        <View style={facultyProfile.insideContainer}>
+      <View style={facultyProfile.insideContainer}>
 
         {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer}>
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
+        <BubbleBackground />
+
 
         {/* HEADER */}
         <View style={upperNav.header}>
@@ -115,8 +98,7 @@ export default function FacultyProfile() {
           onCancel={cancelLogout}
           onConfirm={confirmLogout}
         />
-        </View>
-      <BottomNav />
+      </View>
     </SafeAreaView>
   );
 }

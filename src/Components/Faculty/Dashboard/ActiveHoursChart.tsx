@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { useActiveHours } from '../../../Hooks/useActiveHours';
+import { useActiveHours } from '../../../Hooks/use_ActiveHours';
 
 type TimeRange = 'week' | 'month' | 'year';
 

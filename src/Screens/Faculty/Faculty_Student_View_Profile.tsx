@@ -1,20 +1,51 @@
-import React, { use } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   StyleSheet,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
-
-import bubbles from '../../UI_Designs/BubblesDesign';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import { useStudentReadingStats } from '../../Hooks/use_ReadingStudentStats';
+import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Status/Student_Accuracy_Chart';
+import StudentMiscueAnalytics from '../../Components/Faculty/StudentView_Status/Student_MiscueChart';
+import StudentTopMiscuePassageAndWords from '../../Components/Faculty/StudentView_Status/Student_TopPassage&TopWords';
+import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+
+/**
+ * BASIC INFORMATION
+ *  - First Name
+ *  - Middle Name
+ *  - Last Name
+ *  - Sex
+ *  - Birthdate
+ * 
+ * ACADEMIC INFORMATION
+ *  - Class 
+ *  - Grade Level
+ *  - Reading Level
+ * 
+ * READING STATUS
+ *  - Accuracy Trends (Weekly, Monthly, Yearly)
+ *      - Average, Highest, Trend (Improving, Declining, Stagnant)
+ *  - Activity Tracking (Weekly, Monthly, Yearly)
+ *      - Total Mins, Average Mins
+ *  - Top and Common Miscue Type
+ *      - Top Miscued Passage (Accuracy, Attempts, Miscues)
+ *      - Most Common Miscue Words (Word, Miscue Type, Attempt) 
+ *  - Performance Summary
+ *      - Best Accuracy (Add Lowest), Average WPM (Add best and lowest), Total Readings (Last 7 days Total Readings)
+ *  - Overall Progress
+ *      - Insights
+ * 
+ */
+
+
 
 /* -------------------------------------------------------------------------- */
 /* TYPES                                                                      */
@@ -44,124 +75,6 @@ export default function StudentViewProfile() {
   const { studentId, studentName, readingLevel } = route.params;
 
   const { handleBackStep } = useNavigationHelper();
-  const { stats, progress, loading, error, refresh } =
-    useStudentReadingStats(studentId);
-
-  const topMiscuedPassage = stats?.passagePerformance?.[0];
-  const hasProgressData = progress.length > 0;
-
-  /* ------------------------------------------------------------------------ */
-  /* LOADING                                                                  */
-  /* ------------------------------------------------------------------------ */
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Loading reading statistics...</Text>
-      </SafeAreaView>
-    );
-  }
-
-  /* ------------------------------------------------------------------------ */
-  /* ERROR                                                                    */
-  /* ------------------------------------------------------------------------ */
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={refresh}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  /**
-   * ==========================================================================
-   * ACCURACY CHART COMPONENT
-   * ==========================================================================
-   * Renders a line chart showing accuracy progression over time
-   * Features:
-   * - Animated bars with connecting lines
-   * - Y-axis percentage labels
-   * - Color-coded by performance level
-   * @param data - Array of progress data points
-   * ==========================================================================
-   */
-  const AccuracyChart = ({ data }: { data: ProgressData[] }) => {
-    const maxHeight = 120;
-    const chartData = data.slice(-10); // Show last 10 readings
-
-    return (
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartSubtitle}>Accuracy Over Time</Text>
-        <View style={styles.chartWrapper}>
-          {/* Y-Axis Labels */}
-          <View style={styles.yAxis}>
-            <Text style={styles.yAxisLabel}>100%</Text>
-            <Text style={styles.yAxisLabel}>75%</Text>
-            <Text style={styles.yAxisLabel}>50%</Text>
-            <Text style={styles.yAxisLabel}>25%</Text>
-            <Text style={styles.yAxisLabel}>0%</Text>
-          </View>
-
-          {/* Chart Bars */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.chartScroll}
-          >
-            <View style={styles.chartBarsContainer}>
-              {chartData.map((item, index) => {
-                const height = (item.accuracy / 100) * maxHeight;
-                const isLast = index === chartData.length - 1;
-                const barColor =
-                  item.accuracy >= 90
-                    ? '#10b981'
-                    : item.accuracy >= 75
-                    ? '#f59e0b'
-                    : '#ef4444';
-
-                return (
-                  <View key={index} style={styles.chartBarWrapper}>
-                    <View style={styles.chartBarColumn}>
-                      {/* Accuracy Value */}
-                      <Text style={[styles.chartValue, { color: barColor }]}>
-                        {item.accuracy}%
-                      </Text>
-
-                      {/* Bar */}
-                      <View
-                        style={[
-                          styles.chartBar,
-                          { height, backgroundColor: barColor },
-                        ]}
-                      />
-
-                      {/* Connector Line */}
-                      {!isLast && (
-                        <View
-                          style={[
-                            styles.chartConnector,
-                            { backgroundColor: barColor },
-                          ]}
-                        />
-                      )}
-                    </View>
-
-                    {/* Date Label */}
-                    <Text style={styles.chartLabel}>{item.date}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    );
-  };
 
   /**
    * ==========================================================================
@@ -384,11 +297,7 @@ export default function StudentViewProfile() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.innerContainer}>
           {/* BUBBLES */}
-          <View style={bubbles.bubblesContainer}>
-            <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          </View>
+          <BubbleBackground />
 
           {/* HEADER */}
           <View style={upperNav.header}>
@@ -417,97 +326,29 @@ export default function StudentViewProfile() {
           {/* READING STATISTICS */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Reading Statistics</Text>
-
-            <View style={styles.statsGrid}>
-              <StatCard
-                number={stats?.totalAttempts || 0}
-                label="Total Attempts"
-              />
-              <StatCard
-                number={`${stats?.averageAccuracy || 0}%`}
-                label="Avg. Accuracy"
-              />
-              <StatCard
-                number={stats?.topMiscueType || 'N/A'}
-                label="Top Miscue Type"
-              />
-            </View>
-
-            {topMiscuedPassage && (
-              <View style={styles.miscueCard}>
-                <Text style={styles.miscueTitle}>Top Miscued Passage</Text>
-                <Text style={styles.miscuePassage}>
-                  {topMiscuedPassage.title}
-                </Text>
-                <View style={styles.miscueStats}>
-                  <Text style={styles.miscueStat}>
-                    Accuracy:{' '}
-                    <Text style={styles.miscueStatValue}>
-                      {topMiscuedPassage.accuracy.toFixed(1)}%
-                    </Text>
-                  </Text>
-                  <Text style={styles.miscueStat}>
-                    Attempts:{' '}
-                    <Text style={styles.miscueStatValue}>
-                      {topMiscuedPassage.attempts}
-                    </Text>
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {stats?.mostCommonMiscueWords?.length ? (
-              <View style={styles.miscueCard}>
-                <Text style={styles.miscueTitle}>Most Common Miscue Words</Text>
-                {stats.mostCommonMiscueWords.map((item, index) => (
-                  <View key={index} style={styles.wordItem}>
-                    <Text style={styles.wordText}>"{item.word}"</Text>
-                    <Text style={styles.wordCount}>{item.count}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : null}
+            <StudentMiscueAnalytics studentId={studentId}/>          
+            <StudentTopMiscuePassageAndWords studentId={studentId}/>
           </View>
 
           {/* PROGRESS */}
-          {hasProgressData && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Reading Progress</Text>
-              <AccuracyChart data={progress} />
-              <WPMChart data={progress} />
-              <PerformanceSummary data={progress} />
-            </View>
-          )}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Reading Progress</Text>
+            <StudentAccuracyTrendsChart studentId={studentId} />
+            {/* <WPMChart data={progress} />
+            <PerformanceSummary data={progress} /> */}
+          </View>
+
+          <StudentActivityTrackingCard studentId={studentId}/>
 
           {/* REFRESH */}
-          <TouchableOpacity style={styles.refreshButton} onPress={refresh}>
+          {/* <TouchableOpacity style={styles.refreshButton} onPress={refresh}>
             <Text style={styles.refreshButtonText}>Refresh Data</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* REUSED CHILD COMPONENTS (UNCHANGED LOGIC)                                  */
-/* -------------------------------------------------------------------------- */
-
-const StatCard = ({
-  number,
-  label,
-}: {
-  number: number | string;
-  label: string;
-}) => (
-  <View style={styles.statCard}>
-    <Text style={styles.statNumber}>{number}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
-
-/* ⬇️ AccuracyChart, WPMChart, PerformanceSummary
-   COPY DIRECTLY FROM Profile — NO CHANGES REQUIRED ⬇️ */
 
 // ============================================================================
 // STYLES
@@ -601,14 +442,9 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: 'white',
-    marginHorizontal: 16,
     marginTop: 16,
     padding: 20,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 4,
   },
   sectionTitle: {

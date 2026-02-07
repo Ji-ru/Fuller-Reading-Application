@@ -18,7 +18,6 @@ import Video from 'react-native-video';
 
 // Styles
 import login from '../UI_Designs/LoginStyles';
-import bubbles from '../UI_Designs/BubblesDesign';
 
 // Controllers (Hooks)
 import { useNavigationHelper } from '../Controller/NavigationController';

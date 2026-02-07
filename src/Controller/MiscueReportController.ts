@@ -7,22 +7,17 @@ import { getAuth } from '@react-native-firebase/auth';
 import firestore, {
   getFirestore,
   collection,
-  doc,
-  getDoc,
   getDocs,
   query,
   where,
-  deleteDoc,
-  updateDoc,
-  serverTimestamp,
-  arrayRemove,
-  arrayUnion,
 } from '@react-native-firebase/firestore';
+import { StudentProgressResult } from '../Interfaces/miscue';
+import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
+import { ProgressData } from '../Interfaces/miscue';
 
 // Initialize instances
 const auth = getAuth();
 const db = getFirestore();
-
 export const MiscueReportController = {
   async storeReport(
     passageTitle: string,
@@ -30,7 +25,7 @@ export const MiscueReportController = {
     accuracy: number,
     wordPerMin: number,
     totalWords: number,
-    recordingDuration?: string
+    recordingDuration?: string,
   ): Promise<string> {
     try {
       const user = auth.currentUser;
@@ -41,12 +36,12 @@ export const MiscueReportController = {
       }
 
       const { substitution, omission, insertion, repetition } =
-        this.generateMiscueSummary(miscues);
+        MiscueReportController.generateMiscueSummary(miscues);
 
       const reportId = firestore().collection('miscueReports').doc().id;
 
-      const reportData: Omit<MiscueReportDocument, 'timestamp'> & {
-        timestamp: any;
+      const reportData: Omit<MiscueReportDocument, 'createdAt'> & {
+        createdAt: any;
         substitutionCount?: number;
         omissionCount?: number;
         insertionCount?: number;
@@ -83,7 +78,7 @@ export const MiscueReportController = {
         insertionCount: miscues.filter(m => m.type === 'insertion').length,
         repetitionCount: miscues.filter(m => m.type === 'repetition').length,
         // Firestore server timestamp
-        timestamp: firestore.FieldValue.serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       };
 
       // ======================================================================
@@ -175,7 +170,11 @@ export const MiscueReportController = {
         );
       }
       // Check if this word has already been completed by this student
-      const existing = await this.hasWordBeenCompleted(user.uid, letter, word);
+      const existing = await MiscueReportController.hasWordBeenCompleted(
+        user.uid,
+        letter,
+        word,
+      );
       if (existing) {
         console.log('The Word already completed, skipping storage');
         return existing;
@@ -241,7 +240,10 @@ export const MiscueReportController = {
         );
       }
       // Check if this word has already been completed by this student
-      const existing = await this.hasAlphabetBeenCompleted(user.uid, letter);
+      const existing = await MiscueReportController.hasAlphabetBeenCompleted(
+        user.uid,
+        letter,
+      );
       if (existing) {
         console.log('The current alphabet already completed, skipping storage');
         return existing;
@@ -344,7 +346,7 @@ export const MiscueReportController = {
   /**
    * UPDATED TO React Native Firebase v22
    * ==========================================================================
-   * GET STUDENT REPORTS 
+   * GET STUDENT REPORTS
    * ==========================================================================
    * Retrieves all reports for a specific student, sorted by most recent first.
    *
@@ -365,10 +367,9 @@ export const MiscueReportController = {
       const studentReportSnapshot = await getDocs(studentMiscueReport);
 
       return studentReportSnapshot.docs.map((doc: any) => ({
-        uid: doc.reportId,
+        reportId: doc.id,
         ...doc.data(),
       })) as MiscueReportDocument[];
-
     } catch (error: any) {
       console.error('Failed to fetch student reports:', error);
       throw new Error(`Failed to fetch reports: ${error.message}`);
@@ -378,14 +379,19 @@ export const MiscueReportController = {
   /**
    * UPDATED TO React Native Firebase v22
    * Get all recording duration in a class
-   * 
-   * @param studentId 
+   *
+   * @param studentId
    * @returns - all recording duration
    */
-  async getRecordingDuration(studentId: string): Promise<MiscueReportDocument[]> {
+  async getRecordingDuration(
+    studentId: string,
+  ): Promise<MiscueReportDocument[]> {
     try {
       const recordRef = collection(db, 'miscueReports');
-      const studentRecordingQuery = query(recordRef, where('studentId', '==', studentId));
+      const studentRecordingQuery = query(
+        recordRef,
+        where('studentId', '==', studentId),
+      );
 
       const studentRecordingSnapshot = await getDocs(studentRecordingQuery);
 
@@ -402,8 +408,7 @@ export const MiscueReportController = {
         } as MiscueReportDocument;
       });
     } catch (error: any) {
-      throw new Error("Failed to fetch duration: " + error.message);
-      
+      throw new Error('Failed to fetch duration: ' + error.message);
     }
   },
 
@@ -532,122 +537,14 @@ export const MiscueReportController = {
 
   // Add these functions to your DatabaseController
 
-  /**
-   * ==========================================================================
-   * GET STUDENT READING STATISTICS
-   * ==========================================================================
-   * Calculates various reading statistics for a student
-   * @param studentId - Firebase Auth UID of the student
-   * @returns Object containing reading statistics
-   */
-  async getStudentReadingStats(studentId: string): Promise<{
-    totalAttempts: number;
-    averageAccuracy: number;
-    topMiscueType: string;
-    mostCommonMiscueWords: { word: string; count: number }[];
-    passagePerformance: { title: string; accuracy: number; attempts: number }[];
-  }> {
-    try {
-      // Get all miscue reports for the student
-      const miscueReports = await this.getStudentReports(studentId);
+  // ============================================================================
+  //FETCHING STUDENT DATA STUDENT
+  // ============================================================================
 
-      if (miscueReports.length === 0) {
-        return {
-          totalAttempts: 0,
-          averageAccuracy: 0,
-          topMiscueType: 'No data',
-          mostCommonMiscueWords: [],
-          passagePerformance: [],
-        };
-      }
-
-      // Calculate total attempts and average accuracy
-      const totalAttempts = miscueReports.length;
-      const totalAccuracy = miscueReports.reduce(
-        (sum, report) => sum + report.accuracyRate,
-        0,
-      );
-      const averageAccuracy = totalAccuracy / totalAttempts;
-
-      // Calculate miscue type frequencies
-      const miscueTypeCount = {
-        substitution: 0,
-        omission: 0,
-        insertion: 0,
-        repetition: 0,
-      };
-
-      // Get all miscues from all reports
-      const allMiscues: Array<{ type: string; expectedWord: string }> = [];
-      miscueReports.forEach(report => {
-        if (report.miscues && Array.isArray(report.miscues)) {
-          report.miscues.forEach(miscue => {
-            miscueTypeCount[miscue.type as keyof typeof miscueTypeCount]++;
-            allMiscues.push({
-              type: miscue.type,
-              expectedWord: miscue.expectedWord,
-            });
-          });
-        }
-      });
-
-      // Find top miscue type
-      const topMiscueType = Object.entries(miscueTypeCount).sort(
-        ([, a], [, b]) => b - a,
-      )[0][0];
-
-      // Find most common miscue words
-      const wordFrequency: Record<string, number> = {};
-      allMiscues.forEach(miscue => {
-        if (miscue.expectedWord) {
-          wordFrequency[miscue.expectedWord] =
-            (wordFrequency[miscue.expectedWord] || 0) + 1;
-        }
-      });
-
-      const mostCommonMiscueWords = Object.entries(wordFrequency)
-        .map(([word, count]) => ({ word, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5); // Top 5 most common miscue words
-
-      // Calculate passage performance
-      const passageMap: Record<string, { accuracy: number; attempts: number }> =
-        {};
-      miscueReports.forEach(report => {
-        if (report.passageTitle) {
-          if (!passageMap[report.passageTitle]) {
-            passageMap[report.passageTitle] = { accuracy: 0, attempts: 0 };
-          }
-          passageMap[report.passageTitle].accuracy += report.accuracyRate;
-          passageMap[report.passageTitle].attempts++;
-        }
-      });
-
-      const passagePerformance = Object.entries(passageMap)
-        .map(([title, data]) => ({
-          title,
-          accuracy: data.accuracy / data.attempts,
-          attempts: data.attempts,
-        }))
-        .sort((a, b) => b.attempts - a.attempts); // Sort by number of attempts
-
-      return {
-        totalAttempts,
-        averageAccuracy: parseFloat(averageAccuracy.toFixed(2)),
-        topMiscueType: this.formatMiscueType(topMiscueType),
-        mostCommonMiscueWords,
-        passagePerformance,
-      };
-    } catch (error: any) {
-      console.error('Failed to get student reading stats:', error);
-      throw new Error(`Failed to get reading statistics: ${error.message}`);
-    }
-  },
 
   /**
-   * ==========================================================================
    * FORMAT MISCUE TYPE
-   * ==========================================================================
+   *
    * Converts miscue type code to readable format
    * @param type - Miscue type code
    * @returns Formatted miscue type string
@@ -663,48 +560,210 @@ export const MiscueReportController = {
   },
 
   /**
-   * ==========================================================================
    * GET STUDENT PROGRESS OVER TIME
-   * ==========================================================================
+   *
    * Retrieves student's progress data for chart visualization
+   *
    * @param studentId - Firebase Auth UID of the student
-   * @returns Array of progress data points
+   * @param timeRange - Time period for analysis ('week' | 'month' | 'year')
+   * @returns StudentProgressResult with timeline and metrics
    */
-  async getStudentProgressOverTime(studentId: string): Promise<
-    Array<{
-      date: string;
-      accuracy: number;
-      wpm: number;
-      passageTitle: string;
-    }>
-  > {
+  async getStudentProgressOverTime(
+    studentId: string,
+    timeRange: 'week' | 'month' | 'year' = 'week',
+  ): Promise<StudentProgressResult> {
     try {
-      const snapshot = await firestore()
-        .collection('miscueReports')
-        .where('studentId', '==', studentId)
-        .limit(20) // Last 20 attempts
-        .get();
-
-      return snapshot.docs
-        .map(doc => {
-          const data = doc.data();
-          const timestamp = data.timestamp?.toDate();
-          return {
-            date: timestamp
-              ? timestamp.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })
-              : 'Unknown Date',
-            accuracy: data.accuracyRate || 0,
-            wpm: data.wordPerMin || 0,
-            passageTitle: data.passageTitle || 'Unknown Passage',
-          };
-        })
-        .reverse(); // Reverse to show oldest first
+      // Step 1: Get all student reports
+      const allReports = await MiscueReportController.getStudentReports(studentId);
+      
+      // Step 2: Get date range for filtering
+      const { start, end } = getDateRangeForTimeFilter(timeRange);
+      console.log(
+        `Date range for ${timeRange}: ${start.toDateString()} to ${end.toDateString()}`,
+      );
+  
+      // Step 3: Filter reports by time range
+      const filteredReports = allReports.filter(report => {
+        if (!report.createdAt) return false;
+        
+        const reportDate = report.createdAt.toDate
+          ? report.createdAt.toDate()
+          : new Date(report.createdAt.toDate());
+        
+        return reportDate >= start && reportDate <= end;
+      });
+        
+      // Step 4: Calculate overall averages
+      const totalWPM = filteredReports.reduce((sum, report) => sum + report.wordPerMin, 0);
+      const totalAccuracy = filteredReports.reduce((sum, report) => sum + report.accuracyRate, 0);
+      const totalWords = filteredReports.reduce((sum, report) => sum + report.totalWords, 0);
+      
+      const averageWPM = totalWPM / filteredReports.length;
+      const averageAccuracy = totalAccuracy / filteredReports.length;
+  
+      // Step 5: Generate timeline - USING THE CONSISTENT APPROACH
+      const timeline = MiscueReportController.generateTimeline(filteredReports, timeRange, start, end);
+            
+      // Step 6: Return result
+      return {
+        timeline,
+        averageWPM,
+        averageAccuracy,
+        totalWords,
+      };
     } catch (error: any) {
-      console.error('Failed to get student progress:', error);
-      return [];
+      console.error('Failed to calculate student progress:', error);
+      throw new Error(`Progress calculation failed: ${error.message}`);
+    }
+  },
+  
+  /**
+   * Generate timeline with all periods (including empty ones)
+   */
+  generateTimeline(
+    reports: MiscueReportDocument[], 
+    timeRange: 'week' | 'month' | 'year',
+    start: Date, 
+    end: Date
+  ): ProgressData[] {
+    // Step 1: Generate all periods for this time range
+    const allPeriods = MiscueReportController.getAllPeriods(timeRange, start, end);
+    
+    // Step 2: Group reports by period
+    const periodData = new Map<string, { accuracySum: number; wpmSum: number; count: number }>();
+    
+    for (const report of reports) {
+      if (!report.createdAt) continue;
+      
+      const reportDate = report.createdAt.toDate
+        ? report.createdAt.toDate()
+        : new Date(report.createdAt.toDate());
+      
+      const periodKey = MiscueReportController.getPeriodKey(reportDate, timeRange);
+      
+      if (!periodKey) continue;
+      
+      const existing = periodData.get(periodKey);
+      if (existing) {
+        existing.accuracySum += report.accuracyRate;
+        existing.wpmSum += report.wordPerMin;
+        existing.count += 1;
+      } else {
+        periodData.set(periodKey, {
+          accuracySum: report.accuracyRate,
+          wpmSum: report.wordPerMin,
+          count: 1
+        });
+      }
+    }
+    
+    // Step 3: Combine periods with data
+    return allPeriods.map(period => {
+      const data = periodData.get(period.key);
+      
+      if (data && data.count > 0) {
+        return {
+          date: period.displayDate,
+          accuracy: data.accuracySum / data.count,
+          wpm: data.wpmSum / data.count,
+        };
+      }
+      
+      return {
+        date: period.displayDate,
+        accuracy: 0,
+        wpm: 0,
+      };
+    });
+  },
+  
+  /**
+   * Get all periods for a time range (with keys and display dates)
+   */
+  getAllPeriods(
+    timeRange: 'week' | 'month' | 'year',
+    start: Date,
+    end: Date
+  ): Array<{key: string; displayDate: string}> {
+    const periods: Array<{key: string; displayDate: string}> = [];
+    
+    switch (timeRange) {
+      case 'week':
+        // Generate 7 days from Sunday to Saturday
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weekStart = new Date(start); // Should be Sunday
+        
+        for (let i = 0; i < 7; i++) {
+          const currentDate = new Date(weekStart);
+          currentDate.setDate(weekStart.getDate() + i);
+          
+          const dayName = days[currentDate.getDay()];
+          const dayNumber = currentDate.getDate();
+          
+          // Key format: "Sun 24"
+          const key = `${dayName} ${dayNumber}`;
+          periods.push({
+            key: key,
+            displayDate: key
+          });
+        }
+        break;
+        
+      case 'month':
+        // Always show 4 weeks for consistency
+        for (let week = 1; week <= 4; week++) {
+          const key = `W${week}`;
+          periods.push({
+            key: key,
+            displayDate: key
+          });
+        }
+        break;
+        
+      case 'year':
+        // Show all 12 months
+        const monthNames = [
+          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+        
+        for (let month = 0; month < 12; month++) {
+          const key = monthNames[month];
+          periods.push({
+            key: key,
+            displayDate: key
+          });
+        }
+        break;
+    }
+    
+    return periods;
+  },
+  
+  /**
+   * Get period key for a date (MUST MATCH getAllPeriods format!)
+   */
+  getPeriodKey(date: Date, timeRange: 'week' | 'month' | 'year'): string | null {
+    switch (timeRange) {
+      case 'week':
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayName = days[date.getDay()];
+        const dayNumber = date.getDate();
+        return `${dayName} ${dayNumber}`;
+        
+      case 'month':
+        // Calculate week of month (1-4)
+        const dayOfMonth = date.getDate();
+        const weekOfMonth = Math.min(Math.ceil(dayOfMonth / 7), 4);
+        return `W${weekOfMonth}`;
+        
+      case 'year':
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return monthNames[date.getMonth()];
+        
+      default:
+        return null;
     }
   },
 };

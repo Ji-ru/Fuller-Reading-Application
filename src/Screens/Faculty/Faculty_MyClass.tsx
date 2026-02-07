@@ -13,17 +13,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import BottomNav from '../../Components/Faculty/NavigationBar/BottomNav';
 import { getAuth } from '@react-native-firebase/auth';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import myClass from '../../UI_Designs/MyClassStyles';
-import { createCustomClass } from '../../Controller/AuthenticationController';
+import { archiveClass, createCustomClass } from '../../Controller/AuthenticationController';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
 import { getAcademicYearOptions } from '../../Utilities/acadYearUtils';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 export default function MyClass() {
   // ========================================================================
@@ -46,9 +45,11 @@ export default function MyClass() {
   const [gradeLevel, setGradeLevel] = useState<string>('1');
   const [academicYear, setAcademicYear] = useState<string>('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const ignoreNextTouchRef = useRef(false);
-
+  
+  const currentUser = getAuth().currentUser;
   // ========================================================================
   // HOOKS
   // ========================================================================
@@ -57,26 +58,21 @@ export default function MyClass() {
   // ========================================================================
   // FETCH CLASSES
   // ========================================================================
-  const fetchClasses = useCallback(async () => {
-    try {
-      const currentUser = getAuth().currentUser;
-      if (!currentUser) {
-        throw new Error('User not authenticated');
-      }
-      const facultyClasses = await getFacultyClasses_Student.getFacultyClasses(
-        currentUser.uid,
-      );
-      setClasses(facultyClasses);
-    } catch (error: any) {
-      throw new Error('Failed to Fetch Classes');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchClasses();
-  }, [fetchClasses]);
+    if (!currentUser) return;
+  
+    const unsubscribe =
+      getFacultyClasses_Student.getToFacultyClassesRealTime(
+        currentUser.uid,
+        classes => {
+          setClasses(classes.filter(c => c.status === 'active'));
+          setLoading(false);
+        },
+      );
+  
+    return unsubscribe;
+  }, [currentUser]);
+  
 
   // ========================================================================
   // EVENT HANDLERS
@@ -119,7 +115,6 @@ export default function MyClass() {
       return;
     }
 
-    const currentUser = getAuth().currentUser;
     if (!currentUser) {
       Alert.alert('Error', 'User not authenticated');
       return;
@@ -133,7 +128,6 @@ export default function MyClass() {
         newClassName.trim(),
         selectedGrade,
       );
-      await fetchClasses();
       Alert.alert(
         'Class Created 🎉',
         `Class Name: ${newClassName}\nGrade: ${selectedGrade}\nCode: ${classCode}`,
@@ -209,13 +203,6 @@ export default function MyClass() {
       );
 
       if (result.success) {
-        setClasses(prevClasses =>
-          prevClasses.map(cls =>
-            cls.classId === selectedClass.classId
-              ? { ...cls, className: editingClassName.trim() }
-              : cls,
-          ),
-        );
         Alert.alert('Success', result.message);
         setEditModalVisible(false);
       }
@@ -225,6 +212,30 @@ export default function MyClass() {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleArchivePress = async (classItem: ClassDocument) => {
+    Alert.alert(
+      'Archive Class',
+      `Are you sure you want to archive "${classItem.className}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Archive',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await archiveClass(classItem.classId, currentUser?.uid || '');
+              Alert.alert('Success', 'Class archived successfully');
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to archive class');
+            } finally {
+              setIsArchiving(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleDeletePress = async (classItem: ClassDocument) => {
@@ -242,9 +253,6 @@ export default function MyClass() {
                 classItem.classId,
               );
               if (result.success) {
-                setClasses(prevClasses =>
-                  prevClasses.filter(cls => cls.classId !== classItem.classId),
-                );
                 Alert.alert('Success', result.message);
               }
             } catch (error: any) {
@@ -331,24 +339,8 @@ export default function MyClass() {
 
       <View style={myClass.insideContainer}>
         {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer}>
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
+        <BubbleBackground />
+
 
         {/* HEADER */}
         <View style={upperNav.header}>
@@ -411,6 +403,7 @@ export default function MyClass() {
                 ]}
                 pointerEvents="box-none"
               >
+                {/* EDIT CLASS */}
                 <TouchableOpacity
                   style={myClass.contextMenuItem}
                   onPress={() => handleEditPress(selectedClass)}
@@ -421,6 +414,24 @@ export default function MyClass() {
                   />
                   <Text style={myClass.contextMenuText}>Edit Class</Text>
                 </TouchableOpacity>
+
+                {/* ARCHIVE CLASS */}
+                <TouchableOpacity
+                  style={[myClass.contextMenuItem, myClass.archiveMenuItem]}
+                  onPress={() => handleArchivePress(selectedClass)}
+                >
+                  <Image
+                    source={require('../../../assets/icons/Archive-icon.png')}
+                    style={myClass.contextMenuIcon}
+                  />
+                  <Text
+                    style={myClass.contextMenuText}
+                  >
+                    Archive Class
+                  </Text>
+                </TouchableOpacity>
+
+                {/* DELETE CLASS */}
                 <TouchableOpacity
                   style={[myClass.contextMenuItem, myClass.deleteMenuItem]}
                   onPress={() => handleDeletePress(selectedClass)}
@@ -628,7 +639,6 @@ export default function MyClass() {
             </View>
           </Modal>
         </View>
-        <BottomNav />
       </View>
     </SafeAreaView>
   );

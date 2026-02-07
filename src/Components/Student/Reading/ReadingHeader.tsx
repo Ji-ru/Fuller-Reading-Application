@@ -39,17 +39,17 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
       <View style={upperNav.header}>
         <TouchableOpacity style={upperNav.touchable} onPress={onBack}>
           <Image
-            source={require('../../../assets/icons/BackButton-icon.png')}
+            source={require('../../../../assets/icons/BackButton-icon.png')}
           />
         </TouchableOpacity>
         <Image
           style={upperNav.ciscLogo}
-          source={require('../../../assets/images/cisckids.png')}
+          source={require('../../../../assets/images/cisckids.png')}
         />
         <TouchableOpacity style={upperNav.touchable} onPress={onMenuToggle}>
           <Image
             style={upperNav.menuIcon}
-            source={require('../../../assets/icons/Menu-icon.png')}
+            source={require('../../../../assets/icons/Menu-icon.png')}
           />
         </TouchableOpacity>
       </View>
@@ -61,7 +61,7 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
             style={upperNav.logoutButton}
           >
             <Image
-              source={require('../../../assets/icons/Logout-icon.png')}
+              source={require('../../../../assets/icons/Logout-icon.png')}
               style={upperNav.logoutIcon}
             />
             <Text style={upperNav.logoutText}>Logout</Text>

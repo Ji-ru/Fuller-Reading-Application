@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MiscueReportController } from '../Controller/MiscueReportController';
 import {
   MiscuePercentage,
-  StudentStats,
-  ProgressData,
   OverAllStudentTopMiscue,
   AverageWPMandAccuracy,
   ClassReadingHealth,
@@ -12,49 +10,6 @@ import { getForStudentsMiscueStats } from './use_ForStudentMiscueStats';
 import { useClassReadingHealth } from './use_ClassReadingHealth';
 import { getFacultyClasses_Student } from './use_FacultyClasses_Students';
 import { FilterOptions } from '../Interfaces/miscue';
-
-/**
- * Gets the top miscued passages and words of each student
- *
- * @param studentId - student's ID to get their progress
- * @returns - top reading miscued, attempts, and accuracy
- */
-export function useStudentReadingStats(studentId: string) {
-  const [stats, setStats] = useState<StudentStats | null>(null);
-  const [progress, setProgress] = useState<ProgressData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { getStudentReadingStats, getStudentProgressOverTime } =
-    MiscueReportController;
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const statsResult = await getStudentReadingStats(studentId);
-      const progressResult = await getStudentProgressOverTime(studentId);
-
-      setStats(statsResult);
-      setProgress(progressResult);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load reading statistics');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, [studentId]);
-
-  return {
-    stats,
-    progress,
-    loading,
-    error,
-    refresh: fetchStats,
-  };
-}
-
 
 /**
  * Hook to get classes for filter dropdown

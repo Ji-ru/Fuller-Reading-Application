@@ -1,18 +1,3 @@
-import { useState } from 'react';
-import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  updateDoc,
-  serverTimestamp,
-  arrayRemove,
-  arrayUnion,
-} from '@react-native-firebase/firestore';
 import { getFacultyClasses_Student } from './use_FacultyClasses_Students';
 import { MiscueReportController } from '../Controller/MiscueReportController';
 import {
@@ -22,14 +7,12 @@ import {
 } from '../Interfaces/miscue';
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
 import { FilterOptions } from '../Interfaces/miscue';
-
-// Initialize instances
-const db = getFirestore();
+import { convertDurationToHours } from '../Utilities/convertDurationToHours';
 
 export const getForStudentsMiscueStats = () => {
   const { getStudentReports, formatMiscueType, getRecordingDuration } =
     MiscueReportController;
-  const { getFacultyClasses } = getFacultyClasses_Student;
+  const { getFacultyClasses, getFilteredStudentIds } = getFacultyClasses_Student;
 
   const getActiveHours = async (
     facultyId: string,
@@ -73,7 +56,7 @@ export const getForStudentsMiscueStats = () => {
           const reports = await getRecordingDuration(studentId);
 
           for (const report of reports) {
-            const reportDate = report.timestamp.toDate();
+            const reportDate = report.createdAt.toDate();
             if (reportDate < start || reportDate > end) continue;
 
             const hours = convertDurationToHours(
@@ -107,77 +90,6 @@ export const getForStudentsMiscueStats = () => {
       }));
     } catch (error: any) {
       throw new Error('Failed to get active hours: ' + error.message);
-    }
-  };
-
-  /**
-   * Convert duration string to hours (decimal)
-   * Supports both formats:
-   * - M:SS (0:15 = 15 seconds)
-   * - HH:MM:SS (0:15:30 = 15 minutes 30 seconds)
-   */
-  const convertDurationToHours = (duration: string): number => {
-    if (!duration) return 0;
-
-    try {
-      const parts = duration.split(':').map(part => parseInt(part) || 0);
-
-      if (parts.length === 2) {
-        // Format: M:SS (minutes:seconds)
-        const minutes = parts[0];
-        const seconds = parts[1];
-
-        // Convert to hours: (minutes * 60 + seconds) / 3600
-        const totalSeconds = minutes * 60 + seconds;
-        return totalSeconds / 3600;
-      } else if (parts.length === 3) {
-        // Format: HH:MM:SS (hours:minutes:seconds)
-        const hours = parts[0];
-        const minutes = parts[1];
-        const seconds = parts[2];
-
-        return hours + minutes / 60 + seconds / 3600;
-      } else {
-        console.warn('Invalid duration format:', duration);
-        return 0;
-      }
-    } catch (error) {
-      console.error('Error converting duration:', duration, error);
-      return 0;
-    }
-  };
-
-  /**
-   * Get student IDs based on filter
-   */
-  const getFilteredStudentIds = async (
-    facultyId: string,
-    filter?: FilterOptions,
-  ): Promise<{ studentIds: string[]; className?: string }> => {
-    try {
-      const classes = await getFacultyClasses(facultyId);
-
-      if (filter?.type === 'class' && filter.classId) {
-        // Get specific class
-        const selectedClass = classes.find(
-          cls => cls.classId === filter.classId,
-        );
-        if (!selectedClass) {
-          throw new Error('Class not found');
-        }
-        return {
-          studentIds: selectedClass.studentIds || [],
-          className: selectedClass.className,
-        };
-      } else {
-        // Get all students from all classes
-        const allStudentIds = classes.flatMap(cls => cls.studentIds || []);
-        // Remove duplicates (students might be in multiple classes?)
-        const uniqueStudentIds = Array.from(new Set(allStudentIds));
-        return { studentIds: uniqueStudentIds };
-      }
-    } catch (error: any) {
-      throw new Error('Failed to get filtered students: ' + error.message);
     }
   };
 
@@ -246,7 +158,10 @@ export const getForStudentsMiscueStats = () => {
   ): Promise<MiscuePercentage[]> => {
     try {
       // Get all the classes handled by the faculty
-      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      const { studentIds } = await getFilteredStudentIds(
+        facultyId,
+        filter || { type: 'overall' },
+      );
 
       // Initialize miscue type counters
       const miscueCounts = {
@@ -363,7 +278,10 @@ export const getForStudentsMiscueStats = () => {
   ): Promise<OverAllStudentTopMiscue[]> => {
     try {
       // Get filtered student IDs
-      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      const { studentIds } = await getFilteredStudentIds(
+        facultyId,
+        filter || { type: 'overall' },
+      );
 
       // Initialize data structure for aggregation
       const allMiscues: Array<{

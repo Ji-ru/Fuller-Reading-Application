@@ -13,7 +13,6 @@ import { ReadingMaterial } from '../Interfaces/passage';
 
 // Interfaces of Students
 import { UserDocument, UserRole } from '../Interfaces/dataInterfaces';
-import { ScreenReplaceTypes } from 'react-native-screens';
 import { logoutUser } from './AuthenticationController';
 
 // Specifies what parameters (data) each screen in your navigation stack can receive.
@@ -40,6 +39,7 @@ export type RootStackParamList = {
   FacultyDashboard: undefined;
   FacultyProfile: undefined;
   MyClass: undefined;
+  MyArchive: undefined;
   MyStudents: {
     classId: string;
     className?: string;
@@ -51,6 +51,16 @@ export type RootStackParamList = {
     studentName: string;
     readingLevel: string;
   };
+
+  // ADMIN NAVIGATION
+  AdminDashboard: undefined;
+  AdminUserManagement: undefined;
+  AdminViewFacultyData: {
+    facultyId: string;
+    facultyName: string;
+  }
+
+  FacultyTabs: undefined;
 };
 
 // A list of all the screens within RootStackParamList
@@ -69,13 +79,6 @@ export const useNavigationHelper = () => {
    */
   const handleNextStep = (destination: ScreenNames) => {
     navigation.navigate(destination as any);
-  };
-
-  /**
-   * For bottom navigation - always uses replace
-   */
-  const handleTabNavigation = (destination: ScreenNames) => {
-    navigation.replace(destination as any);
   };
 
   /**
@@ -168,7 +171,7 @@ export const useNavigationHelper = () => {
   const handleRoleSelection = (role: UserRole) => {
     if (role === 'student') {
       navigation.navigate('SignUpOne', { role });
-    } else if (role === 'admin') {
+    } else if (role === 'faculty') {
       navigation.navigate('SignUpOne', { role });
     } else {
       navigation.navigate('SignUpOne', { role });
@@ -181,11 +184,56 @@ export const useNavigationHelper = () => {
 
   const handleDesignatedUserPage = (role: string) => {
     if (role === 'student') {
-      navigation.navigate('UserHome');
+      navigation.replace('UserHome');
     } else if (role === 'faculty') {
-      navigation.navigate('FacultyDashboard');
+      navigation.replace('FacultyTabs');
+    } else if (role === 'admin') {
+      navigation.replace('AdminDashboard');
     }
   };
+
+  /**
+   * Handles naviagtion based on the selected user to view their information and monitor progress of a student or faculty
+   * @param param - multiple varibales in array is used to pass information to another page (either Faculty_Student_View_Profile or Admin_ViewFacultyData)
+   * 
+   * PENDING ADMIN INFORMATION (STILL UNDECIDED IF NECESSARY)
+   */
+  const handleNavigateToUserDetail = ({
+    uid,
+    firstName,
+    middleName,
+    lastName,
+    email,
+    role,
+    sex,
+    reading_Level,
+  }: {
+    uid: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email?: string;
+    role?: UserRole;
+    sex: string;
+    reading_Level?: 'beginner' | 'intermediate' | 'advanced',
+  }) => {
+    if (role === 'student') {
+      handleStudentViewStats({
+        studentId: uid,
+        studentName: `${firstName} ${middleName ?? ''} ${lastName}`.trim(),
+        readingLevel: reading_Level || ''
+      })
+    } else if (role === 'faculty') {
+      handleFacultyViewData({
+        facultyId: uid,
+        facultyName: `${firstName} ${middleName ?? ''} ${lastName}`.trim(),
+        email: email || '',
+        role: role,
+        sex: sex
+      })
+    }
+  };
+
 
   // Handles only the Reading Activity Page due to having data passed to the next page.
   const handleReadingNext = (
@@ -199,6 +247,7 @@ export const useNavigationHelper = () => {
     navigation.navigate('ReadingHistory');
   };
 
+  // Handles navigation to view the faculty's class. Must be signed-in faculty credentials
   const handleClassStudents = (classData: {
     classId: string;
     className?: string;
@@ -208,6 +257,18 @@ export const useNavigationHelper = () => {
     navigation.navigate('MyStudents', classData);
   };
 
+  // Handles navigation to view faculty data to monitor their class' progress
+  const handleFacultyViewData = (facultyData: {
+    facultyId: string;
+    facultyName: string;
+    email: string,
+    role: UserRole,
+    sex: string
+  }) => {
+    navigation.navigate('AdminViewFacultyData', facultyData);
+  }
+
+  // Handles navigation to view students progress
   const handleStudentViewStats = (studentData: {
     studentId: string;
     studentName: string;
@@ -254,11 +315,12 @@ export const useNavigationHelper = () => {
     );
   };
   return {
+    handleNavigateToUserDetail,
     handleNextStep,
-    handleTabNavigation,
     handleReplaceStep,
     handleSignUpNavigationWithData,
     handleDesignatedUserPage,
+    handleFacultyViewData,
     handleCompletedRegistration,
     handleRoleSelection,
     handleReadingNext,

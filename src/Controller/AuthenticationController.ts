@@ -14,26 +14,23 @@ import {
   where,
   limit,
   serverTimestamp,
-  arrayUnion
+  arrayUnion,
+  startAfter,
+  Timestamp,
 } from '@react-native-firebase/firestore';
 import {
   UserDocument,
   MiscueReportDocument,
   ClassDocument,
+  UserRole,
 } from '../Interfaces/dataInterfaces';
 import { getCurrentAcademicYear } from '../Utilities/acadYearUtils';
+import { queryRef } from 'firebase/data-connect';
+import { QueryDocumentSnapshot } from 'firebase/firestore';
 
 // Initialize Firebase instances once
 const auth = getAuth();
 const db = getFirestore();
-
-// Helper to format date as "7 December 2025"
-const formatDateToReadable = (date: any): string => {
-  const day = date.getDate();
-  const month = date.toLocaleString('default', { month: 'long' });
-  const year = date.getFullYear();
-  return `${day} ${month} ${year}`;
-};
 
 /* -------------------------------------------------------------
    CREATE USER ACCOUNT (FACULTY OR STUDENT)
@@ -42,7 +39,7 @@ export const SignUpUserCredentials = async (
   email: string,
   password: string,
   userData: {
-    role: string;
+    role: UserRole;
     firstName: string;
     middleName?: string;
     lastName: string;
@@ -74,17 +71,12 @@ export const SignUpUserCredentials = async (
       profileImageUrl: userData.profileImageUrl,
       createdAt: serverTimestamp(),
     };
-    
-    let readableDOB: string = '';
-    if (userData.dateOfBirth) {
-      readableDOB = formatDateToReadable(userData.dateOfBirth);
-    }
-    
+
     // 3. Role-specific data
     if (userData.role === 'student') {
       userDocument.studentData = {
         gradeLevel: userData.gradeLevel || 1,
-        dateOfBirth: readableDOB,
+        dateOfBirth: userData.dateOfBirth,
         classCode: '',
         reading_Level: 'beginner',
       };
@@ -143,8 +135,8 @@ export const createClass = async (
       acadYear: getCurrentAcademicYear(),
       facultyId,
       studentIds: [],
-      isActive: true,
-      createdAt: serverTimestamp(),
+      status: 'active',
+      createdAt: serverTimestamp() as Timestamp,
     };
 
     // Store class - MODULAR API
@@ -156,7 +148,7 @@ export const createClass = async (
     await updateDoc(facultyRef, {
       'facultyData.assignedClassIds': arrayUnion(classId),
       'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp() as Timestamp,
     });
 
     return { classId, classCode, acadYear: classDocument.acadYear };
@@ -198,8 +190,8 @@ export const createCustomClass = async (
       acadYear: getCurrentAcademicYear(),
       facultyId,
       studentIds: [],
-      isActive: true,
-      createdAt: serverTimestamp(),
+      status: 'active',
+      createdAt: serverTimestamp() as Timestamp,
     };
 
     // Store class - MODULAR API
@@ -221,6 +213,44 @@ export const createCustomClass = async (
 };
 
 
+/* -------------------------------------------------------------
+   CLASS ARCHIVING AND UNARCHIVING
+------------------------------------------------------------- */
+/**
+ * Used to archive a class 
+ * 
+ * @param classId - gets the classId to be archived
+ * @param facultyId - gets also the facultyId to check which teacher is assigned to the class
+ */
+export const archiveClass = async (
+  classId: string,
+  facultyId: string,
+) => {
+  const classRef = doc(db, 'classes', classId);
+
+  await updateDoc(classRef, {
+    status: 'archived',
+    archivedAt: serverTimestamp() as Timestamp,
+    archivedBy: facultyId,
+    updatedAt: serverTimestamp() as Timestamp,
+  });
+};
+
+/**
+ * Used to unarchive a class
+ * 
+ * @param classId - gets the class that was archived to be unarchived
+ */
+export const unarchiveClass = async (classId: string) => {
+  const classRef = doc(db, 'classes', classId);
+
+  await updateDoc(classRef, {
+    status: 'active',
+    archivedAt: null,
+    archivedBy: null,
+    updatedAt: serverTimestamp() as Timestamp,
+  });
+};
 
 /* -------------------------------------------------------------
    GET CLASS BY ID (ADMIN USE)
@@ -229,22 +259,22 @@ export const getClassByCode = async (classCode: string) => {
   try {
     const classesRef = collection(db, 'classes');
     const q = query(
-      classesRef, 
-      where('classCode', '==', classCode), 
-      where('isActive', '==', true), 
+      classesRef,
+      where('classCode', '==', classCode),
+      where('status', '==', 'active'),
       limit(1)
     );
-    
+
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) return null;
 
     // Get the first (and should be only) document
     const doc = querySnapshot.docs[0];
-    
-    return { 
-      id: doc.id, 
-      ...doc.data() 
+
+    return {
+      id: doc.id,
+      ...doc.data()
     } as ClassDocument & { id: string };
   } catch (error: any) {
     throw new Error('Failed to get class: ' + error.message);
@@ -260,11 +290,11 @@ export const getUserProfile = async (
   try {
     const userRef = doc(db, 'users', uid);
     const docSnap = await getDoc(userRef);
-    
+
     if (!docSnap.exists()) {
       return null;
     }
-    
+
     return docSnap.data() as UserDocument;
   } catch (error: any) {
     throw new Error(`Error getting user profile: ${error.message}`);
@@ -282,7 +312,7 @@ export const updateUserProfile = async (
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, {
       ...updates,
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp() as Timestamp,
     });
     return { success: true };
   } catch (error: any) {
@@ -300,10 +330,10 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     const classQuery = query(
       classesRef,
       where('classCode', '==', joinClassCode),
-      where('isActive', '==', true),
+      where('status', '==', 'active'),
       limit(1)
     );
-    
+
     const querySnapshot = await getDocs(classQuery);
 
     if (querySnapshot.empty) throw new Error('Invalid or inactive class code');
@@ -348,7 +378,7 @@ export const createMiscueReport = async (
     const report: MiscueReportDocument = {
       ...reportData,
       reportId: reportRef.id,
-      timestamp: serverTimestamp(),
+      createdAt: serverTimestamp() as Timestamp,
     };
 
     await setDoc(reportRef, report);
@@ -389,15 +419,15 @@ export const loginUser = async (email: string, password: string) => {
     // Sign in with email and password - MODULAR API
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       user,
       uid: user.uid
     };
   } catch (error: any) {
     let errorMessage = 'Login failed. Please try again.';
-    
+
     // Handle specific Firebase errors
     switch (error.code) {
       case 'auth/invalid-email':
@@ -418,7 +448,7 @@ export const loginUser = async (email: string, password: string) => {
       default:
         errorMessage = error.message || 'Login failed. Please try again.';
     }
-    
+
     throw new Error(errorMessage);
   }
 };
@@ -440,4 +470,100 @@ export const logoutUser = async () => {
   } catch (error: any) {
     throw new Error(`Logout failed: ${error.message}`);
   }
+};
+
+/* -------------------------------------------------------------
+   ADMIN FUNCTIONS
+------------------------------------------------------------- */
+
+export interface GetUsersResult {
+  users: UserDocument[];
+  lastDoc?: QueryDocumentSnapshot<UserDocument>;
+}
+
+export const getUsers = async ({
+  role,
+  searchTerm,
+  lastDoc,
+}: {
+  role?: UserRole;
+  searchTerm?: string;
+  lastDoc?: QueryDocumentSnapshot<UserDocument>;
+}): Promise<GetUsersResult> => {
+  try {
+    // SEARCH MODE: Different strategy when searching
+    if (searchTerm) {
+      return await searchUsers({ searchTerm, role });
+    }
+    // BROWSE MODE: Original pagination logic
+    let baseUserQuery = query(
+      collection(db, 'users'),
+
+      limit(60)
+    );
+
+    // Role filter
+    if (role) {
+      baseUserQuery = query(baseUserQuery, where("role", "==", role));
+    }
+
+    // Pagination
+    if (lastDoc) {
+      baseUserQuery = query(baseUserQuery, startAfter(lastDoc));
+    }
+
+    const userQuerySnapshot = await getDocs(baseUserQuery);
+
+    const users: UserDocument[] = userQuerySnapshot.docs.map(
+      (doc: QueryDocumentSnapshot<UserDocument>) => {
+        return {
+          ...doc.data(),
+          uid: doc.id,
+        };
+      }
+    );
+
+    return {
+      users,
+      lastDoc: userQuerySnapshot.docs[userQuerySnapshot.docs.length - 1],
+    };
+  } catch (error: any) {
+    throw new Error("Failed to fetch the users: " + error.message);
+  }
+}
+
+// Separate search function
+const searchUsers = async ({
+  searchTerm,
+  role,
+}: {
+  searchTerm: string;
+  role?: UserRole;
+}): Promise<GetUsersResult> => {
+  // Option 1: Fetch ALL users (if dataset is small <1000 users)
+  let searchQuery = query(
+    collection(db, 'users')
+  );
+
+  // Apply role filter BEFORE fetching (reduces data transfer)
+  if (role) {
+    searchQuery = query(searchQuery, where('role', '==', role));
+  }
+
+  const snapshot = await getDocs(searchQuery);
+  const users = snapshot.docs.map((doc: QueryDocumentSnapshot<UserDocument>) => ({
+    ...doc.data(),
+    uid: doc.id,
+  }));
+
+  const filtered = users.filter((user: any) =>
+    `${user.firstName} ${user.lastName}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
+  return {
+    users: filtered,
+    lastDoc: undefined, // No pagination in search mode
+  };
 };

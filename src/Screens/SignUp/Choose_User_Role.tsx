@@ -3,10 +3,9 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import chooseRole from '../../UI_Designs/ChooseRoleStyle';
-import bubbles from '../../UI_Designs/BubblesDesign';
-import user from '../../UI_Designs/UserStyle';
 import buttons from '../../UI_Designs/ButtonStyles';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 export default function ChooseRole() {
   const { handleRoleSelection } = useNavigationHelper();
@@ -15,27 +14,7 @@ export default function ChooseRole() {
     <SafeAreaView style={chooseRole.container}>
       <View>
         {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer}>
-          {/* Top Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-
-          {/* Bottom Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
+        <BubbleBackground />
 
         {/* HEADER (LOGO + MENU ICON) */}
         <View>
@@ -63,6 +42,9 @@ export default function ChooseRole() {
             </TouchableOpacity>
             <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('faculty')}>
                 <Text style={buttons.nextPageText}>I am a Teacher</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('admin')}>
+                <Text style={buttons.nextPageText}>Admin</Text>
             </TouchableOpacity>
         </View>
       </View>

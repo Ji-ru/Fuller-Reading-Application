@@ -17,13 +17,11 @@ import {
   launchCamera,
   ImagePickerResponse,
 } from 'react-native-image-picker';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import buttons from '../../UI_Designs/ButtonStyles';
 import GenderSelection from '../../Components/SignUp/Buttons/GenderRadioButton';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { getCurrentAcademicYear } from '../../Utilities/acadYearUtils';
-import AcademicYearDropDownSelection from '../../Components/SignUp/Buttons/AcademicYearDropdown';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 type SignUpOneRouteProp = RouteProp<RootStackParamList, 'SignUpOne'>;
 
@@ -130,27 +128,8 @@ export default function SignUpOneScreen() {
   return (
     <SafeAreaView style={signup.container}>
       {/* BUBBLE DECORATIONS */}
-      <View style={bubbles.bubblesContainer}>
-        {/* Top Bubbles */}
-        <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-        <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-        <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-        <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-        <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-        <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-        <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-        <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
+      <BubbleBackground />
 
-        {/* Bottom Bubbles */}
-        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-      </View>
       <View>
         {/* CISC KIDS TITLE */}
         <Image
@@ -263,12 +242,17 @@ export default function SignUpOneScreen() {
             onCancel={() => setShowPicker(false)}
           />
 
-          <Text style={signup.textform}>
-            {role === 'student' ? 'Grade Level' : 'Assigned Grade Level'}
-          </Text>
-          <GradeLevelDropDownSelection
-            onSelect={value => setGradeLevel(value)}
-          />
+          {/*  */}
+          {role !== 'admin' && (
+            <>
+              <Text style={signup.textform}>
+                {role === 'student' ? 'Grade Level' : 'Assigned Grade Level'}
+              </Text>
+              <GradeLevelDropDownSelection
+                onSelect={value => setGradeLevel(value)}
+              />
+            </>
+          )}
         </View>
 
         {/* NEXT PAGE */}
@@ -298,6 +282,17 @@ export default function SignUpOneScreen() {
                 sex: gender,
                 assignedGradeLevels: [gradeLevel],
               });
+            } else if (role === 'admin') {
+              // Admin
+              handleSignUpNavigationWithData({
+                profileImageUrl: profileImage || '',
+                firstName: firstName.trim(),
+                middleName: middleName.trim(),
+                lastName: lastName.trim(),
+                email: '',
+                role,
+                sex: gender
+              })
             }
           }}
         >

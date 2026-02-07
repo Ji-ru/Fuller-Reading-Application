@@ -8,17 +8,17 @@ import * as eva from '@eva-design/eva';
 // ========================================================================
 // PAGES
 // ========================================================================
-
+// SIGN IN PAGES
 import LoginScreen from './src/Screens/User_SignIn_Screen';
 import LoadingScreen from './src/Components/GlobalUse/Loading_Screen';
 
-// SIGN UP PAGE
+// SIGN UP PAGES
 import ChooseRole from './src/Screens/SignUp/Choose_User_Role';
 import SignUpOneScreen from './src/Screens/SignUp/SignUp_One';
 import SignUpTwoScreen from './src/Screens/SignUp/SignUp_Two';
 import SignUpCompletedScreen from './src/Screens/SignUp/SignUp_Completed';
 
-// STUDENT PAGE
+// STUDENT PAGES
 import UserHomeScreen from './src/Screens/Student/Student_Home';
 import PageSelectionScreen from './src/Screens/Student/Student_Reading_Selection';
 import ReadingActivityScreenPage from './src/Screens/Student/Student_Reading_Activity';
@@ -26,19 +26,22 @@ import ReadingHistoryScreen from './src/Screens/Student/Student_History';
 import StudentProfile from './src/Screens/Student/Student_Profile';
 // import FacultyStack from './FacultyStack';
 
-// FACULTY PAGE
-import FacultyDashboard from './src/Screens/Faculty/Faculty_Dashboard';
-import FacultyProfile from './src/Screens/Faculty/Faculty_Profile';
-import MyClass from './src/Screens/Faculty/Faculty_MyClass';
+// FACULTY PAGES
+import FacultyTabNavigator from './src/Components/Faculty/NavigationBar/FacultyTabNavigator';
 import MyStudents from './src/Screens/Faculty/Faculty_MyStudents';
-import StudentViewProfile from './src/Screens/Faculty/Student_View_Profile';
+import StudentViewProfile from './src/Screens/Faculty/Faculty_Student_View_Profile';
+
+// ADMIN PAGES
+import AdminDashboard from './src/Screens/Admin/Admin_Dashboard';
+import AdminUserManagement from './src/Screens/Admin/Admin_UserManagement';
+import AdminViewFacultyData from './src/Screens/Admin/Admin_ViewFacultyData';
 
 const Stack = createNativeStackNavigator();
 
 function App() {
   return (
-  <ApplicationProvider {...eva} theme={eva.light}>
-    <SafeAreaProvider>
+    <ApplicationProvider {...eva} theme={eva.light}>
+      <SafeAreaProvider>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
 
@@ -60,18 +63,16 @@ function App() {
             <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
 
             {/* FACULTY PAGES */}
-              <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
-              <Stack.Screen name="FacultyProfile" component={FacultyProfile} />
-              <Stack.Screen name="MyClass" component={MyClass} />
-              <Stack.Screen name="MyStudents" component={MyStudents} />
-              <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
-              {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}
+            <Stack.Screen name="FacultyTabs" component={FacultyTabNavigator} />
+            <Stack.Screen name="MyStudents" component={MyStudents} />
+            <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
 
             {/* ADMIN PAGES */}
+            <Stack.Screen name='AdminDashboard' component={AdminDashboard} />
+            <Stack.Screen name='AdminUserManagement' component={AdminUserManagement} />
+            <Stack.Screen name='AdminViewFacultyData' component={AdminViewFacultyData} />
 
-            
 
-            
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

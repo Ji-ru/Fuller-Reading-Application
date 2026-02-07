@@ -10,7 +10,6 @@ import {
   useNavigationHelper,
 } from '../../Controller/NavigationController';
 import readingStyles from '../../UI_Designs/ReadingActivityStyles';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import selection from '../../UI_Designs/PassageSelectionStyles';
 
 import { useAudioRecording } from '../../Controller/AudioRecordingController';
@@ -25,6 +24,7 @@ import { MiscueReportController } from '../../Controller/MiscueReportController'
 import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
 import { FeedbackModal } from '../../Components/Student/Reading/FeedbackModal';
 import { getAuth } from '@react-native-firebase/auth';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 type ReadingActivityScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -33,7 +33,6 @@ type ReadingActivityScreenRouteProp = RouteProp<
 
 export default function ReadingActivityScreenPage() {
   // Ref: Store a retry timeout id for feedback modal
-  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const route = useRoute<ReadingActivityScreenRouteProp>();
   const { readingMaterial, type } = route.params;
 
@@ -76,7 +75,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithHuggingFace } =
+  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI } =
     useSpeechToText();
 
   // Navigation
@@ -226,25 +225,25 @@ export default function ReadingActivityScreenPage() {
   const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
     try {
       // const transcription = await processAudioWithGoogle(audioFile);
-      const transcription = await processAudioWithHuggingFace(audioFile);
+      const transcription = await processAudioWithAssemblyAI(audioFile);
       setSpokenText(transcription);
       console.log('THIS IS THE SPOKEN: ' + transcription);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      analyzeReading(transcription, duration);
+      await analyzeReading(transcription, duration);
       setIsReadingCompleted(true);
     } catch (error) {
       // Use simulated response as fallback
       const simulatedResponse = getSimulatedResponse(targetText);
       setSpokenText(simulatedResponse);
       // Use 0 or a default duration for simulated response
-      analyzeReading(simulatedResponse, 0);
+      await analyzeReading(simulatedResponse, 0);
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithHuggingFace, getSimulatedResponse, targetText]);
+  }, [processAudioWithAssemblyAI, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:
@@ -356,7 +355,7 @@ export default function ReadingActivityScreenPage() {
   const analyzeReading = async (transcription: string, duration: number) => {
     let accuracyNum = 0;
     let isWordAlphabetCorrect = false; // Track correct status locally
-
+    console.log("This is the passage type: " + type);
     // ALPHABET READING ANALYZATION
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
       const result = MiscueAnalysisService.checkAlphabetPhonemeAccuracy(
@@ -397,16 +396,20 @@ export default function ReadingActivityScreenPage() {
         readingMaterial.text,
         transcription,
       );
+      console.log('This is detected miscues: ' + detectedMiscues);
 
       // Calculate accuracy
       const calculatedAccuracy = MiscueAnalysisService.calculateAccuracy(
         readingMaterial.text,
         transcription,
       );
+      console.log('This is calculated accuracy: ' + calculatedAccuracy);
+
 
       // Accuracy Feedback after calculation
       const accuracyFeedback =
         MiscueAnalysisService.getAccuracyFeedback(calculatedAccuracy);
+        console.log('This is accuracy feedback: ' + accuracyFeedback);
 
       setMiscues(detectedMiscues);
       setAccuracyString(calculatedAccuracy); // String: "85.5"
@@ -417,16 +420,21 @@ export default function ReadingActivityScreenPage() {
       const wpm = calculateWordsPerMin(totalWords, duration);
       setWordPerMin(wpm);
 
+      console.log('This is WPM: ' + wpm);
       // To avoid duplication it needs to check if it was already stored 
       if (!hasStoredReport) {
-        storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
+        await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
+        console.log('Has stored?' + hasStoredReport);
       }
     }
     
     // WORD READING ANALYZATION AND DATABASE STORING
     else if (type === 'word' && isWords(readingMaterial)) {
+      console.log('This is a: ' + type);
+      console.log('This is the transcribed word: ' + transcription);
       const targetWord = getTargetText();
       const correct = isTextPerfect(transcription, targetWord);
+      console.log('This is: ' + correct);
 
       accuracyNum = correct ? 100 : 0;
       isWordAlphabetCorrect = correct;
@@ -476,6 +484,7 @@ export default function ReadingActivityScreenPage() {
     }
   };
 
+
   /**
    * Stores a miscue report (Firebase) if user attempt is valid (not already stored, not empty, etc).
    * Uses miscues, accuracy, reading speed, and time spent for tracking.
@@ -492,24 +501,8 @@ export default function ReadingActivityScreenPage() {
   ) => {
     try {
       // if this attempt is already stored, stop
-      if (hasStoredReport) return;
+      // if (hasStoredReport) return;
 
-      /**
-       * Check if spoken text is empty or just error messages
-       * Check if duration is too short (less than 1 second)
-       * Check if WPM is 0 or negative (no words spoken)
-       */
-
-      if (
-        !spokenText ||
-        spokenText.trim() === '' ||
-        spokenText === 'No Speech Detected!' ||
-        spokenText.toLowerCase().includes('no speech') ||
-        duration < 1 ||
-        wpm <= 0
-      ) {
-        return;
-      }
 
       const mins = Math.floor(duration / 60);
       const seconds = Math.floor(duration % 60);
@@ -580,24 +573,7 @@ export default function ReadingActivityScreenPage() {
     <SafeAreaView style={readingStyles.container}>
       <View style={readingStyles.insideContainer}>
         {/* Bubble Decorations */}
-        <View style={bubbles.bubblesContainer}>
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
+        <BubbleBackground />
 
         {/* Header */}
         <ReadingHeader

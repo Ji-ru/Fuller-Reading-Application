@@ -1,23 +1,12 @@
-import { useState, useEffect } from 'react';
+import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
 import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  updateDoc,
-  serverTimestamp,
-  arrayRemove,
-  arrayUnion,
-} from '@react-native-firebase/firestore';
-import { UserDocument, MiscueReportDocument } from '../Interfaces/dataInterfaces';
+  UserDocument,
+  MiscueReportDocument,
+} from '../Interfaces/dataInterfaces';
 import { getFacultyClasses_Student } from './use_FacultyClasses_Students';
 import { MiscueReportController } from '../Controller/MiscueReportController';
 import { ClassReadingHealth, StudentReadingStatus } from '../Interfaces/miscue';
-const db = getFirestore(); // Get firestore instance
+const db = getFirestore();
 
 // Default thresholds for Grades 1-3 only
 const defaultThresholds = {
@@ -93,7 +82,7 @@ const analyzeTrend = (
 
   // Sort reports by timestamp (oldest to newest)
   const sortedReports = [...reports].sort(
-    (a, b) => a.timestamp.toDate().getTime() - b.timestamp.toDate().getTime(),
+    (a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime(),
   );
 
   // Get last 3 reports for trend analysis (or all if less than 3)
@@ -217,7 +206,7 @@ const classifyStudent = (
     miscueDensity: parseFloat(averageMiscueDensity.toFixed(2)),
     trend,
     lastReportDate: new Date(
-      studentReports[studentReports.length - 1].timestamp.toDate(),
+      studentReports[studentReports.length - 1].createdAt.toDate(),
     ),
   };
 };
@@ -277,7 +266,7 @@ export const useClassReadingHealth = () => {
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
             const recentReports = reports.filter(report => {
-              const reportDate = new Date(report.timestamp.toDate());
+              const reportDate = new Date(report.createdAt.toDate());
               return reportDate >= thirtyDaysAgo;
             });
 

@@ -46,9 +46,9 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   // Function to get passage image
   const getPassageImage = (imageName: string) => {
     const images: { [key: string]: any } = {
-      Hickory: require('../../../assets/ReadingMaterial/PassageImages/Hickory.png'),
+      Hickory: require('../../../../assets/ReadingMaterial/PassageImages/Hickory.png'),
     };
-    return images[imageName] || require('../../../assets/icons/Empty-icon.png');
+    return images[imageName] || require('../../../../assets/icons/Empty-icon.png');
   };
 
   // Format passage text with line breaks

@@ -18,6 +18,7 @@ import bubbles from '../../UI_Designs/BubblesDesign';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { SignUpUserCredentials } from '../../Controller/AuthenticationController';
 import LottieView from 'lottie-react-native';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 export default function SignUpTwoScreen() {
   // Access the studentInfo passed from SignUpOne
   const route = useRoute<RouteProp<RootStackParamList, 'SignUpTwo'>>();
@@ -80,6 +81,15 @@ export default function SignUpTwoScreen() {
           profileImageUrl: personalInfo?.profileImageUrl,
           assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
         });  
+      } else if (personalInfo.role! === 'admin') {
+        await SignUpUserCredentials(email, password, {
+          role: personalInfo.role!,
+          firstName: personalInfo.firstName!,
+          middleName: personalInfo.middleName,
+          lastName: personalInfo.lastName!,
+          sex: personalInfo.sex!,
+          profileImageUrl: personalInfo?.profileImageUrl,
+        });  
       }
 
       // Switch to success modal
@@ -126,27 +136,8 @@ export default function SignUpTwoScreen() {
           style={signup.ciscLogo}
         />
         {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer} pointerEvents="none">
-          {/* Top Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
+        <BubbleBackground />
 
-          {/* Bottom Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
         {/* SCREEN TITLE */}
         <Text style={signup.label}>Register</Text>
         {/* STEPS INIDCATOR */}
@@ -203,7 +194,7 @@ export default function SignUpTwoScreen() {
         </View>
 
         {/* CONFIRM AND CANCEL BUTTONS */}
-        {/* NEXT PAGE */}
+        {/* REGISTER */}
         <TouchableOpacity
           style={[buttons.nextPageButton, modalVisible && { opacity: 0.7 }]}
           onPress={handleRegister}

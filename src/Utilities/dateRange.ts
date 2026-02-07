@@ -1,25 +1,35 @@
-export const getDateRangeForTimeFilter = (
-  timeRange: 'week' | 'month' | 'year',
-) => {
-    const now = new Date();
+export const getDateRangeForTimeFilter = (timeRange: 'week' | 'month' | 'year') => {
+  const end = new Date();
+  const start = new Date();
 
-    switch (timeRange) {
-        case 'week': {
-            const start = new Date();
-            start.setDate(now.getDate() - 6); // Last 7 days
-            start.setHours(0,0,0,0);
-            return {start, end: now};
-        }
-        case 'month': {
-            const start = new Date(now.getFullYear(),  now.getMonth(), 1);
-            return {start, end: now};
-        }
-        case 'year': {
-            // Academic year assumption: start June 1
-            const year = now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1;
-            const start = new Date(year, 5, 1);
-            return {start, end: now};
-        }
-    }
-
+  switch (timeRange) {
+    case 'week':
+      // Get current day of week (0 = Sunday, 6 = Saturday)
+      const currentDay = end.getDay();
+      
+      // Calculate days to subtract to get to Sunday
+      const daysToSubtract = currentDay;
+      
+      // Set start to Sunday at 00:00:00
+      start.setDate(end.getDate() - daysToSubtract);
+      start.setHours(0, 0, 0, 0);
+      
+      // Set end to today at 23:59:59
+      end.setHours(23, 59, 59, 999);
+      break;
+      
+    case 'month':
+      start.setMonth(end.getMonth() - 1);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      break;
+      
+    case 'year':
+      start.setFullYear(end.getFullYear() - 1);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      break;
+  }
+  
+  return { start, end };
 };

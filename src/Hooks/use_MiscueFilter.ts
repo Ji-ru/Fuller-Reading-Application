@@ -35,7 +35,7 @@ export const useMiscueFilter = (facultyId: string | null) => {
         const classesQuery = query(
           collection(db, 'classes'),
           where('facultyId', '==', facultyId),
-          where('isActive', '==', true)
+          where('status', '==', 'active')
         );
 
         const querySnapshot = await getDocs(classesQuery);

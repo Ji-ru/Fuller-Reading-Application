@@ -13,11 +13,11 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import myStudents from '../../UI_Designs/MyStudentsStyle';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 type MyStudentsRouteProp = RouteProp<RootStackParamList, 'MyStudents'>;
 
@@ -50,7 +50,7 @@ export default function MyStudents() {
     try {
       setLoading(true);
       const studentList = await getFacultyClasses_Student.getStudentsInClass(
-        classCode,
+        classCode
       );
       setStudents(studentList);
       setFilteredStudents(studentList);
@@ -181,24 +181,7 @@ export default function MyStudents() {
     <SafeAreaView style={myStudents.container}>
       <View style={myStudents.insideContainer}>
         {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer} pointerEvents="none">
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
+        <BubbleBackground />
 
         {/* HEADER */}
         <View style={upperNav.header}>
