@@ -4,7 +4,7 @@ import { MiscueReportController } from "../../Controller/MiscueReportController"
 import { MiscueReportDocument } from "../../Interfaces/dataInterfaces";
 import { convertDurationToHours } from "../../Utilities/convertDurationToHours";
 import { getDateRangeForTimeFilter } from "../../Utilities/dateRange";
-import { getLabelForDate, getPeriods } from "../../Utilities/activityGroupingDate";
+import { getLabelForDate, getPeriodLabels, getPeriods } from "../../Utilities/activityGroupingDate";
 /**
  * For fetching the specific students accuracy trends
  * 
@@ -345,9 +345,11 @@ export function useStudentActiveHours(
       buckets[label] = (buckets[label] || 0) + hours;
     });
 
-    return Object.entries(buckets).map(([day, hours]) => ({
-      day,
-      hours,
+    // Fill all periods (week/month/year) with 0 for empty data
+    const allLabels = getPeriodLabels(timeRange);
+    return allLabels.map(label => ({
+      day: label,
+      hours: buckets[label] ?? 0,
     }));
   }, [reports, timeRange]);
 

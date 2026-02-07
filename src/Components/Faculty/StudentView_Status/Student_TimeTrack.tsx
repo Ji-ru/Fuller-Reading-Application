@@ -40,19 +40,22 @@ const StudentActivityTrackingCard: React.FC<StudentActivityTrackingCardProps> = 
         ? 'down'
         : 'same';
 
-  const mostActive = chartData.reduce(
-    (max, current) => (current.hours > max.hours ? current : max),
-    chartData[0]
-  );
+  const mostActive = chartData.length > 0
+    ? chartData.reduce(
+        (max, current) => (current.hours > max.hours ? current : max),
+        chartData[0],
+      )
+    : null;
   const insightPrefix = {
     week: "on",
     month: "during",
     year: "in",
   };
 
-  const insightText = mostActive
-    ? `The student is most active ${insightPrefix[timeRange]} ${mostActive.day}.`
-    : 'none';
+  const insightText =
+    mostActive && mostActive.hours > 0
+      ? `The student is most active ${insightPrefix[timeRange]} ${mostActive.day}.`
+      : 'No activity recorded yet.';
 
 
   // Convert hours to display unit
@@ -77,17 +80,7 @@ const StudentActivityTrackingCard: React.FC<StudentActivityTrackingCardProps> = 
     );
   }
 
-  if (!chartData || chartData.length === 0) {
-    return (
-      <View style={[styles.card, styles.emptyCard]}>
-        <Text style={styles.emptyTitle}>No Activity Data</Text>
-        <Text style={styles.emptyText}>
-          No reading activity recorded for the selected time period.
-        </Text>
-      </View>
-    );
-  }
-
+  // chartData is always populated (all periods with 0 for empty)
   const maxBarValue =
     chartData.length > 0
       ? Math.max(...chartData.map(d => formatValue(d.hours)), 1)

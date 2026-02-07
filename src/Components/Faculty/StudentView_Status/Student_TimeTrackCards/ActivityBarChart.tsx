@@ -7,56 +7,58 @@ interface ActivityBarChartProps {
   unit: 'hr' | 'min';
 }
 
+/** Get a "nice" ceiling for chart scale so bars never overflow the Y-axis */
+function getNiceMax(value: number, unit: 'hr' | 'min'): number {
+  if (value <= 0) return unit === 'min' ? 60 : 1;
+  const step = unit === 'min' ? 15 : 0.5;
+  const raw = Math.ceil(value / step) * step;
+  return Math.max(raw, step);
+}
+
 export const ActivityBarChart: React.FC<ActivityBarChartProps> = ({
   data,
   maxValue,
   unit,
 }) => {
   const chartHeight = 180;
-  const minBarHeight = 4; // Minimum visible height for bars with data
-  
-  // Define a reasonable threshold based on the unit
-  // For minutes: cap at a reasonable max (e.g., 120 minutes = 2 hours)
-  // For hours: cap at a reasonable max (e.g., 8 hours)
-  const getThreshold = () => {
-    if (unit === 'min') {
-      return Math.min(maxValue, 120); // Cap at 120 minutes
-    } else {
-      return Math.min(maxValue, 8); // Cap at 8 hours
-    }
-  };
+  const minBarHeight = 4;
 
-  const threshold = getThreshold();
-  const displayMaxValue = threshold > 0 ? threshold : maxValue;
+  // Y-axis scale: always accommodate max value so bars never overflow
+  const displayMaxValue = getNiceMax(maxValue, unit);
 
   // Calculate if we need scrolling (for many data points)
   const needsScroll = data.length > 12;
 
-  // Generate Y-axis labels based on threshold
+  // Generate Y-axis labels (top to bottom: max to 0); use clean numbers
   const getYAxisLabels = () => {
-    const labels = [];
     const steps = 4;
+    const labels: number[] = [];
     for (let i = 0; i <= steps; i++) {
-      const value = (displayMaxValue / steps) * (steps - i);
-      labels.push(value);
+      labels.push((displayMaxValue / steps) * (steps - i));
     }
     return labels;
   };
+
+  const formatYLabel = (val: number) =>
+    Number.isInteger(val) ? String(val) : val.toFixed(0);
 
   const yAxisLabels = getYAxisLabels();
 
   const renderChart = () => (
     <View style={styles.chartArea}>
-      {/* Y-Axis */}
+      {/* Y-Axis – redesigned layout */}
       <View style={styles.yAxis}>
-        {yAxisLabels.map((label, index) => (
-          <View key={index} style={styles.yAxisLabelContainer}>
-            <Text style={styles.yAxisLabel}>
-              {label.toFixed(2)}
-              <Text style={styles.yAxisUnit}>{unit}</Text>
-            </Text>
-          </View>
-        ))}
+        <View style={styles.yAxisLabelsWrapper}>
+          {yAxisLabels.map((label, index) => (
+            <View key={index} style={styles.yAxisTickRow}>
+              <View style={styles.yAxisTick} />
+              <Text style={styles.yAxisLabel}>
+                {formatYLabel(label)}
+                <Text style={styles.yAxisUnit}> {unit}</Text>
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* Chart with bars */}
@@ -71,22 +73,14 @@ export const ActivityBarChart: React.FC<ActivityBarChartProps> = ({
         {/* Bars */}
         <View style={styles.barsContainer}>
           {data.map((item, index) => {
-            // Calculate height with threshold
-            let barHeight;
-            if (item.value === 0) {
-              barHeight = 0;
-            } else if (item.value >= displayMaxValue) {
-              // If value exceeds threshold, use full height
-              barHeight = chartHeight;
-            } else {
-              // Normal scaling within threshold
-              barHeight = Math.max(
-                (item.value / displayMaxValue) * chartHeight,
-                minBarHeight
-              );
-            }
-
-            const isOverThreshold = item.value > displayMaxValue;
+            // Scale bars to fit Y-axis; displayMaxValue is always >= max data value
+            const barHeight =
+              item.value === 0
+                ? 0
+                : Math.max(
+                    (item.value / displayMaxValue) * chartHeight,
+                    minBarHeight,
+                  );
 
             return (
               <View key={index} style={styles.barColumn}>
@@ -94,30 +88,20 @@ export const ActivityBarChart: React.FC<ActivityBarChartProps> = ({
                   {/* Value label on top of bar */}
                   {item.value > 0 && (
                     <View style={styles.valueContainer}>
-                      <Text style={[
-                        styles.valueText,
-                        isOverThreshold && styles.valueTextWarning
-                      ]}>
+                      <Text style={styles.valueText}>
                         {item.value.toFixed(2)}
-                        {isOverThreshold && '+'}
                       </Text>
                     </View>
                   )}
-                  
+
                   {/* Bar */}
                   <View
                     style={[
                       styles.bar,
                       { height: barHeight },
-                      isOverThreshold && styles.barOverThreshold,
                       item.value === 0 && styles.barEmpty,
                     ]}
-                  >
-                    {/* Gradient effect for over-threshold bars */}
-                    {isOverThreshold && (
-                      <View style={styles.barOverThresholdIndicator} />
-                    )}
-                  </View>
+                  />
                 </View>
 
                 {/* X-axis label */}
@@ -140,12 +124,6 @@ export const ActivityBarChart: React.FC<ActivityBarChartProps> = ({
           <View style={[styles.legendDot, styles.legendDotNormal]} />
           <Text style={styles.legendText}>Active {unit === 'hr' ? 'Hours' : 'Minutes'}</Text>
         </View>
-        {data.some(item => item.value > displayMaxValue) && (
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, styles.legendDotOverThreshold]} />
-            <Text style={styles.legendText}>Over {displayMaxValue}{unit}</Text>
-          </View>
-        )}
       </View>
 
       {/* Chart */}
@@ -160,16 +138,6 @@ export const ActivityBarChart: React.FC<ActivityBarChartProps> = ({
         </ScrollView>
       ) : (
         renderChart()
-      )}
-
-      {/* Info text for threshold */}
-      {data.some(item => item.value > displayMaxValue) && (
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoIcon}>ℹ️</Text>
-          <Text style={styles.infoText}>
-            Values above {displayMaxValue}{unit} are capped for display
-          </Text>
-        </View>
       )}
     </View>
   );
@@ -200,9 +168,6 @@ const styles = StyleSheet.create({
   legendDotNormal: {
     backgroundColor: '#4CAF50',
   },
-  legendDotOverThreshold: {
-    backgroundColor: '#F59E0B',
-  },
   legendText: {
     fontSize: 11,
     fontFamily: 'Satoshi-Medium',
@@ -223,28 +188,41 @@ const styles = StyleSheet.create({
     height: 220,
   },
 
-  // Y-AXIS
+  // Y-AXIS – redesigned layout
   yAxis: {
-    width: 40,
+    width: 52,
+    height: 180,
+    paddingRight: 12,
+    paddingBottom: 24,
+    borderRightWidth: 1,
+    borderRightColor: '#E5E7EB',
+  },
+  yAxisLabelsWrapper: {
+    flex: 1,
     height: 180,
     justifyContent: 'space-between',
-    paddingRight: 8,
-    paddingBottom: 24,
   },
-  yAxisLabelContainer: {
-    height: 20,
-    justifyContent: 'center',
+  yAxisTickRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  yAxisTick: {
+    width: 6,
+    height: 1,
+    backgroundColor: '#D1D5DB',
+    marginRight: 8,
   },
   yAxisLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: 'Satoshi-Bold',
-    color: '#6B7280',
+    color: '#374151',
     textAlign: 'right',
   },
   yAxisUnit: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: 'Satoshi-Medium',
     color: '#9CA3AF',
+    fontWeight: '500',
   },
 
   // CHART CONTENT
@@ -299,9 +277,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Bold',
     color: '#4CAF50',
   },
-  valueTextWarning: {
-    color: '#F59E0B',
-  },
 
   // BAR STYLES
   bar: {
@@ -322,18 +297,6 @@ const styles = StyleSheet.create({
     minHeight: 2,
     shadowOpacity: 0,
   },
-  barOverThreshold: {
-    backgroundColor: '#F59E0B',
-    shadowColor: '#F59E0B',
-  },
-  barOverThresholdIndicator: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#EF4444',
-  },
 
   // X-AXIS LABEL
   xAxisLabel: {
@@ -343,27 +306,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     maxWidth: 50,
-  },
-
-  // INFO CONTAINER
-  infoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 8,
-    gap: 6,
-  },
-  infoIcon: {
-    fontSize: 14,
-  },
-  infoText: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Medium',
-    color: '#92400E',
   },
 });
 
