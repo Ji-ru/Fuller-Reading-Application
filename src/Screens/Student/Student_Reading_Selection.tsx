@@ -7,15 +7,20 @@ import {
   Image,
   FlatList,
   SectionList,
+  ScrollView,
 } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import selection from '../../UI_Designs/PassageSelectionStyles';
 import { Alphabet, Contrasts, Passage, Word } from '../../Interfaces/passage';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import { useStudentCompletedAlphabet, useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
+import { getAuth } from '@react-native-firebase/auth';
+
+// Retrieve current user id 
+const currentStudentId = getAuth().currentUser?.uid ?? '';
 
 // Safe data access with fallback
 const alphabetData = readingMaterialData?.Alphabet || [];
@@ -33,15 +38,22 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 export default function PageSelectionScreen() {
   // HANDLE NAVIGATION
-  const { handleLogout, handleBackStep, handleReadingNext } =
-    useNavigationHelper();
+  const { handleLogout, handleBackStep, handleReadingNext } = useNavigationHelper();
+
+  const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
+  const isAlphabetCompleted = (letter: string) => completedAlphabets.some(a => a.letter === letter);
+
+  const completedWords = useStudentCompletedWord(currentStudentId);
+  const normalize = (value: string) => value.trim().toLowerCase();
+  const isWordCompleted = (word: string) => completedWords.some(a => normalize(a.word) === normalize(word));
 
   // HANDLE MENU
   const [menuVisible, setMenuVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<'alphabet' | 'passage' | 'word'>(
-    'alphabet',
-  );
+  const [activeTab, setActiveTab] = useState<'alphabet' | 'passage' | 'word'>('alphabet');
   const [logoutVisible, setLogoutVisible] = useState(false);
+  
+  // NEW: Word selection state - two-step process
+  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
 
   const handleLogoutPress = () => {
     setMenuVisible(false);
@@ -66,6 +78,7 @@ export default function PageSelectionScreen() {
     handleReadingNext(alphabet, 'alphabet');
   };
 
+  // Handle word selection
   const handleWordSelect = (wordText: string) => {
     const wordData = wordsData.find((word: Word) =>
       word.contrasts.some((contrast: Contrasts) =>
@@ -73,6 +86,7 @@ export default function PageSelectionScreen() {
       ),
     );
     if (!wordData) return;
+    
     // Keep Word interface, but FILTER contrasts to the selected word only
     const filteredWord: Word = {
       letter: wordData.letter,
@@ -89,31 +103,25 @@ export default function PageSelectionScreen() {
     handleReadingNext(filteredWord, 'word');
   };
 
-  /**
-   * Uses useMemo to shuffle only once when component mounts, ensuring
-   * consistent display during the session. Re-shuffles on component remount.
-   */
-  const prepareWordsData = useMemo(() => {
-    return wordsData.map((wordData: Word) => {
-      const allWords: string[] = [];
+  // NEW: Handle letter selection in word tab
+  const handleLetterSelect = (letter: string) => {
+    setSelectedLetter(letter);
+  };
 
-      // Loop through each contrast in the Word
-      wordData.contrasts.forEach((contrast: Contrasts) => {
-        // Take first 5 words from this contrast
-        const shuffledWords = shuffleArray(contrast.words);
-        const selectedWords = shuffledWords.slice(0, 5);
-        allWords.push(...selectedWords);
-      });
-      return {
-        letter: wordData.letter,
-        data: allWords,
-      };
-    });
-  }, []);
+  // NEW: Go back to letter selection
+  const handleBackToLetters = () => {
+    setSelectedLetter(null);
+  };
 
   // Handle passage selection
   const handlePassageSelect = (passage: Passage) => {
     handleReadingNext(passage, 'passage');
+  };
+
+  // Get word data for selected letter
+  const getSelectedLetterWords = () => {
+    if (!selectedLetter) return null;
+    return wordsData.find((word: Word) => word.letter === selectedLetter);
   };
 
   // Render alphabet item
@@ -124,37 +132,110 @@ export default function PageSelectionScreen() {
     >
       <View style={selection.alphabetContainer}>
         <Text style={selection.alphabetLetter}>{item.letter}</Text>
+        {isAlphabetCompleted(item.letter) && (
+          <View style={selection.completedBadge}>
+            <Text style={selection.completedCheckmark}>✓</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
 
-  // Render word item
-  const renderWordItem = ({ item }: { item: string }) => (
-    <View style={selection.itemWrapper}>
+  // NEW: Render letter card for word selection
+  const renderLetterCard = ({ item }: { item: Word }) => {
+    // Count total words for this letter
+    const totalWords = item.contrasts.reduce((sum, contrast) => sum + contrast.words.length, 0);
+    
+    // Count completed words for this letter
+    const completedCount = item.contrasts.reduce((sum, contrast) => {
+      return sum + contrast.words.filter(word => isWordCompleted(word)).length;
+    }, 0);
+
+    return (
       <TouchableOpacity
-        style={selection.item}
-        onPress={() => handleWordSelect(item)}
+        style={selection.letterCard}
+        onPress={() => handleLetterSelect(item.letter)}
+        activeOpacity={0.7}
       >
-        <View style={selection.insidePassageListContainer}>
-          <Text style={selection.word}>{item}</Text>
-          <View style={selection.arrowContainer}>
-            <Text style={selection.arrowButton}>→</Text>
+        <View style={selection.letterCardContent}>
+          {/* Letter Icon */}
+          <View style={selection.letterIconContainer}>
+            <Text style={selection.letterIconText}>{item.letter}</Text>
+          </View>
+
+          {/* Letter Info */}
+          <View style={selection.letterInfo}>
+            <Text style={selection.letterTitle}>Letter {item.letter}</Text>
+            <Text style={selection.letterSubtitle}>
+              {totalWords} words • {item.contrasts.length} categories
+            </Text>
+            {completedCount > 0 && (
+              <Text style={selection.letterProgress}>
+                {completedCount}/{totalWords} completed
+              </Text>
+            )}
+          </View>
+
+          {/* Arrow */}
+          <View style={selection.letterArrowContainer}>
+            <Text style={selection.letterArrow}>→</Text>
           </View>
         </View>
       </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
-  // Displays the letter header (A, B, C, etc.)
-  const renderSectionHeader = ({
-    section,
-  }: {
-    section: { letter: string; data: string[] };
-  }) => (
-    <View style={selection.wordSectionContainer}>
-      <Text style={selection.wordSection}>{section.letter}</Text>
-    </View>
-  );
+  // NEW: Render word item in phoneme category
+  const renderWordInCategory = (word: string, index: number) => {
+    const completed = isWordCompleted(word);
+    
+    return (
+      <TouchableOpacity
+        key={`${word}-${index}`}
+        style={[
+          selection.wordBubble,
+          completed && selection.wordBubbleCompleted,
+        ]}
+        onPress={() => handleWordSelect(word)}
+        activeOpacity={0.7}
+      >
+        <Text style={[
+          selection.wordBubbleText,
+          completed && selection.wordBubbleTextCompleted,
+        ]}>
+          {word}
+        </Text>
+        {completed && (
+          <View style={selection.wordCompletedBadge}>
+            <Text style={selection.wordCompletedCheck}>✓</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  // NEW: Render phoneme category section
+  const renderPhonemeCategory = (contrast: Contrasts, index: number) => {
+    return (
+      <View key={`${contrast.phoneme}-${index}`} style={selection.phonemeSection}>
+        <View style={selection.phonemHeader}>
+          <View style={selection.phonemeIconContainer}>
+            <Text style={selection.phonemeIcon}>🔤</Text>
+          </View>
+          <View style={selection.phonemeInfo}>
+            <Text style={selection.phonemeTitle}>
+              {contrast.phoneme.replace(/_/g, ' ').toUpperCase()}
+            </Text>
+            <Text style={selection.phonemeIPA}>{contrast.ipa}</Text>
+          </View>
+        </View>
+        
+        <View style={selection.wordsGrid}>
+          {contrast.words.map((word, idx) => renderWordInCategory(word, idx))}
+        </View>
+      </View>
+    );
+  };
 
   // Render passage item
   const renderPassageItem = ({ item }: { item: Passage }) => (
@@ -202,6 +283,7 @@ export default function PageSelectionScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
         {/* DROPDOWN MENU */}
         {menuVisible && (
           <View style={upperNav.dropdownMenu}>
@@ -217,6 +299,7 @@ export default function PageSelectionScreen() {
             </TouchableOpacity>
           </View>
         )}
+
         {/* OVERLAY TO CLOSE MENU */}
         {menuVisible && (
           <TouchableOpacity
@@ -225,8 +308,10 @@ export default function PageSelectionScreen() {
             activeOpacity={1}
           />
         )}
+
         {/* SCREEN TITLE */}
         <Text style={selection.label}>Reading Materials</Text>
+
         {/* IMAGE */}
         <View style={selection.image_text_container}>
           <Image
@@ -247,7 +332,10 @@ export default function PageSelectionScreen() {
               selection.tab,
               activeTab === 'alphabet' && selection.activeTab,
             ]}
-            onPress={() => setActiveTab('alphabet')}
+            onPress={() => {
+              setActiveTab('alphabet');
+              setSelectedLetter(null); // Reset word selection
+            }}
           >
             <Text
               style={[
@@ -262,7 +350,10 @@ export default function PageSelectionScreen() {
           {/* WORDS TAB */}
           <TouchableOpacity
             style={[selection.tab, activeTab === 'word' && selection.activeTab]}
-            onPress={() => setActiveTab('word')}
+            onPress={() => {
+              setActiveTab('word');
+              setSelectedLetter(null); // Reset to letter selection
+            }}
           >
             <Text
               style={[
@@ -280,7 +371,10 @@ export default function PageSelectionScreen() {
               selection.tab,
               activeTab === 'passage' && selection.activeTab,
             ]}
-            onPress={() => setActiveTab('passage')}
+            onPress={() => {
+              setActiveTab('passage');
+              setSelectedLetter(null); // Reset word selection
+            }}
           >
             <Text
               style={[
@@ -295,6 +389,7 @@ export default function PageSelectionScreen() {
 
         {/* CONTENT BASED ON ACTIVE TAB */}
         <View style={selection.contentContainer}>
+          {/* ALPHABET TAB */}
           {activeTab === 'alphabet' && (
             <>
               <Text style={selection.sublabel}>
@@ -311,25 +406,77 @@ export default function PageSelectionScreen() {
               />
             </>
           )}
-          {/* WORDS TAB */}
+
+          {/* WORDS TAB - TWO-STEP SELECTION */}
           {activeTab === 'word' && (
-            <View style={selection.passageListContainer}>
-              <Text style={selection.sublabel}>Select a word to practice:</Text>
-              {prepareWordsData.length > 0 ? (
-                <SectionList
-                  sections={prepareWordsData}
-                  renderItem={renderWordItem}
-                  renderSectionHeader={renderSectionHeader}
-                  keyExtractor={(item, index) => `${item}-${index}`}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ paddingBottom: 20 }}
-                  stickySectionHeadersEnabled={true}
-                />
-              ) : (
-                <Text>No words available</Text>
+            <View style={selection.wordSelectionContainer}>
+              {/* STEP 1: Letter Selection */}
+              {!selectedLetter && (
+                <>
+                  <Text style={selection.sublabel}>
+                    Choose a letter to see its words:
+                  </Text>
+                  <FlatList
+                    data={wordsData}
+                    renderItem={renderLetterCard}
+                    keyExtractor={item => item.letter}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={selection.letterListContainer}
+                  />
+                </>
               )}
+
+              {/* STEP 2: Word Selection by Phoneme */}
+              {selectedLetter && (() => {
+                const letterData = getSelectedLetterWords();
+                if (!letterData) return null;
+
+                return (
+                  <>
+                    {/* Back Button */}
+                    <TouchableOpacity
+                      style={selection.backToLettersButton}
+                      onPress={handleBackToLetters}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={selection.backArrow}>←</Text>
+                      <Text style={selection.backToLettersText}>
+                        Back to Letters
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Selected Letter Header */}
+                    <View style={selection.selectedLetterHeader}>
+                      <View style={selection.selectedLetterIcon}>
+                        <Text style={selection.selectedLetterIconText}>
+                          {selectedLetter}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text style={selection.selectedLetterTitle}>
+                          Letter {selectedLetter} Words
+                        </Text>
+                        <Text style={selection.selectedLetterSubtitle}>
+                          Choose a word to practice
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Phoneme Categories with Words */}
+                    <ScrollView 
+                      showsVerticalScrollIndicator={false}
+                      contentContainerStyle={selection.phonemeListContainer}
+                    >
+                      {letterData.contrasts.map((contrast, index) => 
+                        renderPhonemeCategory(contrast, index)
+                      )}
+                    </ScrollView>
+                  </>
+                );
+              })()}
             </View>
           )}
+
           {/* PASSAGES TAB */}
           {activeTab === 'passage' && (
             <View style={selection.passageListContainer}>

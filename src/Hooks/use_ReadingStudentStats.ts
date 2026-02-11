@@ -192,13 +192,12 @@ export const useOverallAverageWPMandAccuracy = (
 
 export const useFetchClassReadingHealth = (facultyId: string | null) => {
   const [loading, setLoading] = useState(true);
-  const [classHealthData, setClassHealthData] = useState<ClassReadingHealth[]>(
-    [],
-  );
+  const [classHealthData, setClassHealthData] = useState<ClassReadingHealth[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { getClassReadingHealth } = useClassReadingHealth();
 
   useEffect(() => {
+    // Always call useState hooks, but conditionally execute the fetch
     const fetchClassReadingHealth = async () => {
       if (!facultyId) {
         setError('No faculty ID provided');

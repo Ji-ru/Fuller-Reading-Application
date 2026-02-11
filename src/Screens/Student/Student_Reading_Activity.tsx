@@ -355,7 +355,7 @@ export default function ReadingActivityScreenPage() {
   const analyzeReading = async (transcription: string, duration: number) => {
     let accuracyNum = 0;
     let isWordAlphabetCorrect = false; // Track correct status locally
-    console.log("This is the passage type: " + type);
+    console.log("This is transcribed alphabet: " + transcription);
     // ALPHABET READING ANALYZATION
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
       const result = MiscueAnalysisService.checkAlphabetPhonemeAccuracy(
@@ -424,7 +424,6 @@ export default function ReadingActivityScreenPage() {
       // To avoid duplication it needs to check if it was already stored 
       if (!hasStoredReport) {
         await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
-        console.log('Has stored?' + hasStoredReport);
       }
     }
     
@@ -501,9 +500,7 @@ export default function ReadingActivityScreenPage() {
   ) => {
     try {
       // if this attempt is already stored, stop
-      // if (hasStoredReport) return;
-
-
+      
       const mins = Math.floor(duration / 60);
       const seconds = Math.floor(duration % 60);
       const formattedDuration = `${mins}:${seconds
@@ -528,7 +525,6 @@ export default function ReadingActivityScreenPage() {
         formattedDuration
       );
 
-      Alert.alert('Success', 'Successfully stored the miscues data');
       setHasStoredReport(true);
     } catch (error: any) {
       throw new Error('Failed to store miscue report: ' + error.message);

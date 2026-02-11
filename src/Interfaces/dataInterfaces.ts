@@ -136,3 +136,26 @@ export interface MiscueReportDocument {
   // Creation from Firestore Timestamp
   createdAt: Timestamp;
 }
+
+/**
+ * WORD COMPLETION DOCUMENT REPORT INTERFACE 
+ *  - used to store completed words
+ */
+export interface WordReportDocument {
+  wordId: string;
+  studentId: string;
+  word: string;
+  letter: string;
+  createdAt: Timestamp;
+}
+
+/**
+ * WORD COMPLETION DOCUMENT REPORT INTERFACE 
+ *  - used to store completed words
+ */
+export interface AlphabetReportDocument {
+  alphabetId: string;
+  studentId: string;
+  letter: string;
+  createdAt: Timestamp;
+}

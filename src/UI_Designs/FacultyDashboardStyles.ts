@@ -93,6 +93,77 @@ const facultyDashboard = StyleSheet.create({
       width: 32,
       height: 32,
     },
+
+    // Filter
+    filtersRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginBottom: 16,
+      zIndex: 1000,
+    },
+    filterItem: {
+      flex: 1,
+      zIndex: 1000,
+    },
+    filterLabel: {
+      fontSize: 12,
+      fontFamily: 'Satoshi-Medium',
+      color: '#7F8C8D',
+      marginBottom: 6,
+    },
+    filterButton: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: '#F8F9FA',
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderWidth: 1,
+      borderColor: '#E9ECEF',
+    },
+    filterButtonText: {
+      fontSize: 14,
+      color: '#2C3E50',
+      fontFamily: 'Satoshi-Medium',
+      flex: 1,
+      marginRight: 8,
+    },
+    filterDropdownMenu: {
+      position: 'absolute',
+      top: 62,
+      left: 0,
+      right: 0,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: '#E9ECEF',
+      maxHeight: 240,
+      elevation: 5,
+      zIndex: 2000,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+    },
+    filterDropdownOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      borderBottomWidth: 0.5,
+      borderBottomColor: '#F0F0F0',
+    },
+    filterDropdownOptionActive: {
+      backgroundColor: '#E8F8F7',
+    },
+    filterDropdownOptionText: {
+      fontSize: 14,
+      color: '#555',
+      fontFamily: 'Satoshi-Regular',
+    },
+    filterDropdownOptionTextActive: {
+      color: '#4ECDC4',
+      fontFamily: 'Satoshi-Medium',
+    },
   });
 
   export default facultyDashboard;

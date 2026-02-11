@@ -5,6 +5,7 @@ import { MiscueReportDocument } from "../../Interfaces/dataInterfaces";
 import { convertDurationToHours } from "../../Utilities/convertDurationToHours";
 import { getDateRangeForTimeFilter } from "../../Utilities/dateRange";
 import { getLabelForDate, getPeriodLabels, getPeriods } from "../../Utilities/activityGroupingDate";
+
 /**
  * For fetching the specific students accuracy trends
  * 
@@ -19,19 +20,75 @@ export const useStudentAccuracyTrends = (
   const [chartData, setChartData] = useState<ProgressData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reports, setReports] = useState<MiscueReportDocument[]>([]);
 
   useEffect(() => {
     if (!studentId) return;
 
-    setLoading(true);
-    setError(null);
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await MiscueReportController.getStudentReports(studentId);
+        setReports(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReports();
 
-    MiscueReportController
-      .getStudentProgressOverTime(studentId, timeRange)
-      .then(data => setChartData(data.timeline))
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [studentId, timeRange]);
+  }, [studentId]);
+
+  // Process reports with date range filtering
+  const processedChartData = useMemo(() => {
+    // Get the date range based on timeRange filter
+    const { start, end } = getDateRangeForTimeFilter(timeRange);
+
+    // Group accuracy data by period label
+    const buckets: Record<string, { totalAccuracy: number; totalWpm: number; count: number }> = {};
+
+    reports.forEach(report => {
+      if (!report.createdAt || report.accuracyRate == null) return;
+
+      const date = report.createdAt.toDate();
+
+      // Filter reports within the date range
+      if (date < start || date > end) return;
+
+      // Get the period label (e.g., "Mon", "Week 1", "Jan")
+      const label = getLabelForDate(date, timeRange);
+
+      // Initialize bucket if it doesn't exist
+      if (!buckets[label]) {
+        buckets[label] = { totalAccuracy: 0, totalWpm: 0, count: 0 };
+      }
+
+      // Accumulate accuracy, WPM, and count for averaging
+      buckets[label].totalAccuracy += report.accuracyRate;
+      buckets[label].totalWpm += report.wordPerMin ?? 0;
+      buckets[label].count += 1;
+    });
+
+    // Fill all periods with data (0 for periods with no data)
+    const allLabels = getPeriodLabels(timeRange);
+
+    return allLabels.map(label => ({
+      date: label,
+      accuracy: buckets[label]
+        ? buckets[label].totalAccuracy / buckets[label].count
+        : 0,
+      wpm: buckets[label]
+        ? buckets[label].totalWpm / buckets[label].count
+        : 0,
+    }));
+  }, [reports, timeRange]);
+
+  // Update chartData when processedChartData changes
+  useEffect(() => {
+    setChartData(processedChartData);
+  }, [processedChartData]);
 
   return { chartData, loading, error };
 };
@@ -384,4 +441,8 @@ export function useStudentActiveHours(
     averageHoursPerPeriod,
     trendComparison,
   };
+}
+
+export function CountStudentCompletedReading() {
+  
 }

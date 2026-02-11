@@ -2,7 +2,7 @@
 // React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used in this file.
 // Use hooks only inside React function components or hooks that start with 'use'.
 import { Miscue } from '../Interfaces/miscue';
-import { MiscueReportDocument } from '../Interfaces/dataInterfaces';
+import { MiscueReportDocument, WordReportDocument, AlphabetReportDocument } from '../Interfaces/dataInterfaces';
 import { getAuth } from '@react-native-firebase/auth';
 import firestore, {
   getFirestore,
@@ -10,10 +10,15 @@ import firestore, {
   getDocs,
   query,
   where,
+  doc,
+  serverTimestamp,
+  setDoc,
+  onSnapshot
 } from '@react-native-firebase/firestore';
 import { StudentProgressResult } from '../Interfaces/miscue';
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
 import { ProgressData } from '../Interfaces/miscue';
+import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 
 // Initialize instances
 const auth = getAuth();
@@ -38,7 +43,9 @@ export const MiscueReportController = {
       const { substitution, omission, insertion, repetition } =
         MiscueReportController.generateMiscueSummary(miscues);
 
-      const reportId = firestore().collection('miscueReports').doc().id;
+      const miscueReportRef = collection(db, 'wordCompeleted');
+      const miscueDocRef = doc(miscueReportRef);
+      const reportId = miscueDocRef.id;
 
       const reportData: Omit<MiscueReportDocument, 'createdAt'> & {
         createdAt: any;
@@ -78,16 +85,14 @@ export const MiscueReportController = {
         insertionCount: miscues.filter(m => m.type === 'insertion').length,
         repetitionCount: miscues.filter(m => m.type === 'repetition').length,
         // Firestore server timestamp
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       };
 
       // ======================================================================
       // STEP 6: Store in Firestore
       // ======================================================================
-      await firestore()
-        .collection('miscueReports')
-        .doc(reportId)
-        .set(reportData);
+      await setDoc(miscueDocRef, reportData);
+
 
       return reportId;
     } catch (error: any) {
@@ -151,7 +156,7 @@ export const MiscueReportController = {
 
     return { substitution, omission, insertion, repetition };
   },
-  // ==========================================================================================================================
+
   /**
    * ==========================================================================
    * STORE CORRECT WORD PRONUNCIATION
@@ -160,8 +165,20 @@ export const MiscueReportController = {
    * @param letter - Alphabet Letter of the word
    * @param word  - Selected word attempted to read
    * @returns stores the data into the firestore and returns the Word ID
+   * 
+   * @example
+   * Input = [
+   *  {letter: A ,spokenWord: cap,  targetWord: cap }
+   * ]
+   * 
+   * Output: {
+   *  wordId: kjahdka
+   *  studentId: asdklk (based on getAuth() - the current logged-in student in app);
+   *  word: cap
+   *  createdAt: 7 February 2026 at 14:00:03 UTC+8
+   * }
    */
-  async storeWordCorrectAttempt(letter: string, word: string): Promise<string> {
+  async storeWordCorrectAttempt(letter: string, word: string): Promise<WordReportDocument> {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -179,16 +196,20 @@ export const MiscueReportController = {
         console.log('The Word already completed, skipping storage');
         return existing;
       }
-      const wordId = firestore().collection('wordCompeleted').doc().id;
+      // Create document reference with auto-generated ID
+      const wordCompleteRef = collection(db, 'wordCompeleted');
+      const wordDocRef = doc(wordCompleteRef);
+      const wordId = wordDocRef.id;
       const wordData = {
         wordId,
         studentId: user.uid,
         letter,
         word,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       };
 
-      await firestore().collection('wordCompeleted').doc(wordId).set(wordData);
+      // Use setDoc with document reference
+      await setDoc(wordDocRef, wordData);
 
       return wordId;
     } catch (error: any) {
@@ -197,29 +218,40 @@ export const MiscueReportController = {
   },
 
   /**
-   * Checks if the selected and read word has been stored already
-   * @param studentId
-   * @param letter
-   * @param word
-   * @returns an empty or an existing data
+   * Check if a word has already been completed by the student
+   * @param studentId - Student's user ID
+   * @param letter - Alphabet letter
+   * @param word - Word to check
+   * @returns WordReportDocument if found, null otherwise
    */
   async hasWordBeenCompleted(
     studentId: string,
     letter: string,
-    word: string,
-  ): Promise<string | null> {
+    word: string
+  ): Promise<WordReportDocument | null> {
     try {
-      const snapshot = await firestore()
-        .collection('wordCompleted')
-        .where('studentId', '==', studentId)
-        .where('letter', '==', letter)
-        .where('word', '==', word)
-        .limit(1)
-        .get();
+      const wordCompleteRef = collection(db, 'wordCompleted');
+      const wordQuery = query(
+        wordCompleteRef,
+        where('studentId', '==', studentId),
+        where('letter', '==', letter),
+        where('word', '==', word),
+      );
 
-      return snapshot.empty ? null : snapshot.docs[0].id;
+      const querySnapshot = await getDocs(wordQuery);
+
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return {
+          wordId: doc.id,
+          ...doc.data(),
+        } as WordReportDocument;
+      }
+
+      return null;
     } catch (error: any) {
-      throw new Error('Failed to check word completed: ' + error.message);
+      console.error('Error checking if word completed:', error);
+      throw new Error('Failed to check word completion: ' + error.message);
     }
   },
 
@@ -231,7 +263,7 @@ export const MiscueReportController = {
    * @param letter - Selected alphabet that was read
    * @returns stores the data into the firestore and returns the Letter ID
    */
-  async storeAlphabetCorrectAttempt(letter: string): Promise<string> {
+  async storeAlphabetCorrectAttempt(letter: string): Promise<AlphabetReportDocument> {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -248,20 +280,21 @@ export const MiscueReportController = {
         console.log('The current alphabet already completed, skipping storage');
         return existing;
       }
-      const letterId = firestore().collection('alphabetCompeleted').doc().id;
-      const letterData = {
-        letterId,
+
+      const alphabetCompleteRef = collection(db, 'alphabetCompeleted');
+      const alphabetDocRef = doc(alphabetCompleteRef);
+      const alphabetId = alphabetDocRef.id;
+      const alphabetData = {
+        alphabetId,
         studentId: user.uid,
         letter,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       };
 
-      await firestore()
-        .collection('wordCompeleted')
-        .doc(letterId)
-        .set(letterData);
+      // Use setDoc with document reference
+      await setDoc(alphabetDocRef, alphabetData);
 
-      return letterId;
+      return alphabetId;
     } catch (error: any) {
       throw Error('Failed to store correct word attempt:' + error.message);
     }
@@ -276,15 +309,26 @@ export const MiscueReportController = {
   async hasAlphabetBeenCompleted(
     studentId: string,
     letter: string,
-  ): Promise<string | null> {
+  ): Promise<AlphabetReportDocument | null> {
     try {
-      const snapshot = await firestore()
-        .collection('alphabetCompeleted')
-        .where('studentId', '==', studentId)
-        .where('letter', '==', letter)
-        .limit(1)
-        .get();
-      return snapshot.empty ? null : snapshot.docs[0].id;
+      const alphabetCompleteRef = collection(db, 'wordCompleted');
+      const alphabetQuery = query(
+        alphabetCompleteRef,
+        where('studentId', '==', studentId),
+        where('letter', '==', letter),
+      );
+
+      const querySnapshot = await getDocs(alphabetQuery);
+
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return {
+          wordId: doc.id,
+          ...doc.data(),
+        } as AlphabetReportDocument;
+      }
+
+      return null;
     } catch (error: any) {
       throw new Error('Failed to check alphabet completed: ' + error.message);
     }
@@ -315,28 +359,6 @@ export const MiscueReportController = {
       }));
     } catch (error: any) {
       console.error('Failed to fetch completed words:', error);
-      return [];
-    }
-  },
-
-  /**
-   * ==========================================================================
-   * GET COMPLETED ALPHABETS BY STUDENT
-   * ==========================================================================
-   * Retrieves all completed alphabets for a specific student
-   * @param studentId - Firebase Auth UID of the student
-   * @returns Array of completed alphabet letters
-   */
-  async getCompletedAlphabets(studentId: string): Promise<string[]> {
-    try {
-      const snapshot = await firestore()
-        .collection('alphabetCompleted')
-        .where('studentId', '==', studentId)
-        .get();
-
-      return snapshot.docs.map(doc => doc.data().letter);
-    } catch (error: any) {
-      console.error('Failed to fetch completed alphabets:', error);
       return [];
     }
   },
@@ -409,6 +431,54 @@ export const MiscueReportController = {
       });
     } catch (error: any) {
       throw new Error('Failed to fetch duration: ' + error.message);
+    }
+  },
+
+  /**
+   * Retrieves all the completed alphabet made by the student
+   * The following are what this function will be used for:
+   *  - to be used to count how many alphabets are completed
+   *  - to identify which alphabets are completed and will be displayed for each alphabet
+   * @param studentId 
+   */
+  getStudentCompletedAlphabet(studentId: string, onUpdate: (alphabets: AlphabetReportDocument[]) => void) {
+    try {
+      const alphabetQuery = query(collection(db, 'alphabetCompeleted'), where('studentId', '==', studentId));
+      return onSnapshot(alphabetQuery, snapshot => {
+        const alphabets = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+          ...doc.data(),
+          alphabetId: doc.id
+        })) as AlphabetReportDocument[];
+        console.log('Alphebet objects retrieved: ' + alphabets);
+        onUpdate(alphabets);
+      });
+    } catch (error: any) {
+      console.log('Failed to retrieved alphabets data: ' + error.any)
+      throw new Error("Failed to retrieved alphabets data: " + error.any);
+    }
+  },
+
+  /**
+ * Retrieves all the completed word made by the student
+ * The following are what this function will be used for:
+ *  - to be used to count how many words are completed
+ *  - to identify which word are completed and will be displayed for each alphabet
+ * @param studentId 
+ */
+  getStudentCompletedWord(studentId: string, onUpdate: (word: WordReportDocument[]) => void) {
+    try {
+      const wordQuery = query(collection(db, 'wordCompleted'), where('studentId', '==', studentId));
+      return onSnapshot(wordQuery, snapshot => {
+        const words = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+          ...doc.data(),
+          alphabetId: doc.id
+        })) as WordReportDocument[];
+        console.log('Words objects retrieved: ' + words);
+        onUpdate(words);
+      });
+    } catch (error: any) {
+      console.log('Failed to retrieved words data: ' + error.any)
+      throw new Error("Failed to retrieved words data: " + error.any);
     }
   },
 
@@ -575,35 +645,35 @@ export const MiscueReportController = {
     try {
       // Step 1: Get all student reports
       const allReports = await MiscueReportController.getStudentReports(studentId);
-      
+
       // Step 2: Get date range for filtering
       const { start, end } = getDateRangeForTimeFilter(timeRange);
       console.log(
         `Date range for ${timeRange}: ${start.toDateString()} to ${end.toDateString()}`,
       );
-  
+
       // Step 3: Filter reports by time range
       const filteredReports = allReports.filter(report => {
         if (!report.createdAt) return false;
-        
+
         const reportDate = report.createdAt.toDate
           ? report.createdAt.toDate()
           : new Date(report.createdAt.toDate());
-        
+
         return reportDate >= start && reportDate <= end;
       });
-        
+
       // Step 4: Calculate overall averages
       const totalWPM = filteredReports.reduce((sum, report) => sum + report.wordPerMin, 0);
       const totalAccuracy = filteredReports.reduce((sum, report) => sum + report.accuracyRate, 0);
       const totalWords = filteredReports.reduce((sum, report) => sum + report.totalWords, 0);
-      
+
       const averageWPM = totalWPM / filteredReports.length;
       const averageAccuracy = totalAccuracy / filteredReports.length;
-  
+
       // Step 5: Generate timeline - USING THE CONSISTENT APPROACH
       const timeline = MiscueReportController.generateTimeline(filteredReports, timeRange, start, end);
-            
+
       // Step 6: Return result
       return {
         timeline,
@@ -616,33 +686,33 @@ export const MiscueReportController = {
       throw new Error(`Progress calculation failed: ${error.message}`);
     }
   },
-  
+
   /**
    * Generate timeline with all periods (including empty ones)
    */
   generateTimeline(
-    reports: MiscueReportDocument[], 
+    reports: MiscueReportDocument[],
     timeRange: 'week' | 'month' | 'year',
-    start: Date, 
+    start: Date,
     end: Date
   ): ProgressData[] {
     // Step 1: Generate all periods for this time range
     const allPeriods = MiscueReportController.getAllPeriods(timeRange, start, end);
-    
+
     // Step 2: Group reports by period
     const periodData = new Map<string, { accuracySum: number; wpmSum: number; count: number }>();
-    
+
     for (const report of reports) {
       if (!report.createdAt) continue;
-      
+
       const reportDate = report.createdAt.toDate
         ? report.createdAt.toDate()
         : new Date(report.createdAt.toDate());
-      
+
       const periodKey = MiscueReportController.getPeriodKey(reportDate, timeRange);
-      
+
       if (!periodKey) continue;
-      
+
       const existing = periodData.get(periodKey);
       if (existing) {
         existing.accuracySum += report.accuracyRate;
@@ -656,11 +726,11 @@ export const MiscueReportController = {
         });
       }
     }
-    
+
     // Step 3: Combine periods with data
     return allPeriods.map(period => {
       const data = periodData.get(period.key);
-      
+
       if (data && data.count > 0) {
         return {
           date: period.displayDate,
@@ -668,7 +738,7 @@ export const MiscueReportController = {
           wpm: data.wpmSum / data.count,
         };
       }
-      
+
       return {
         date: period.displayDate,
         accuracy: 0,
@@ -676,7 +746,7 @@ export const MiscueReportController = {
       };
     });
   },
-  
+
   /**
    * Get all periods for a time range (with keys and display dates)
    */
@@ -684,22 +754,22 @@ export const MiscueReportController = {
     timeRange: 'week' | 'month' | 'year',
     start: Date,
     end: Date
-  ): Array<{key: string; displayDate: string}> {
-    const periods: Array<{key: string; displayDate: string}> = [];
-    
+  ): Array<{ key: string; displayDate: string }> {
+    const periods: Array<{ key: string; displayDate: string }> = [];
+
     switch (timeRange) {
       case 'week':
         // Generate 7 days from Sunday to Saturday
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const weekStart = new Date(start); // Should be Sunday
-        
+
         for (let i = 0; i < 7; i++) {
           const currentDate = new Date(weekStart);
           currentDate.setDate(weekStart.getDate() + i);
-          
+
           const dayName = days[currentDate.getDay()];
           const dayNumber = currentDate.getDate();
-          
+
           // Key format: "Sun 24"
           const key = `${dayName} ${dayNumber}`;
           periods.push({
@@ -708,7 +778,7 @@ export const MiscueReportController = {
           });
         }
         break;
-        
+
       case 'month':
         // Always show 4 weeks for consistency
         for (let week = 1; week <= 4; week++) {
@@ -719,14 +789,14 @@ export const MiscueReportController = {
           });
         }
         break;
-        
+
       case 'year':
         // Show all 12 months
         const monthNames = [
           'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
         ];
-        
+
         for (let month = 0; month < 12; month++) {
           const key = monthNames[month];
           periods.push({
@@ -736,10 +806,10 @@ export const MiscueReportController = {
         }
         break;
     }
-    
+
     return periods;
   },
-  
+
   /**
    * Get period key for a date (MUST MATCH getAllPeriods format!)
    */
@@ -750,18 +820,18 @@ export const MiscueReportController = {
         const dayName = days[date.getDay()];
         const dayNumber = date.getDate();
         return `${dayName} ${dayNumber}`;
-        
+
       case 'month':
         // Calculate week of month (1-4)
         const dayOfMonth = date.getDate();
         const weekOfMonth = Math.min(Math.ceil(dayOfMonth / 7), 4);
         return `W${weekOfMonth}`;
-        
+
       case 'year':
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return monthNames[date.getMonth()];
-        
+
       default:
         return null;
     }

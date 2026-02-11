@@ -116,11 +116,24 @@ export interface StudentReadingStatus {
   studentId: string;
   name: string;
   gradeLevel: number;
-  status: 'fluent' | 'developing' | 'emerging' | 'atRisk';
+  status: 'fluent' | 'developing' | 'emerging' | 'atRisk' | 'insufficientData';
   averageAccuracy: number;
   averageWPM: number;
   miscueDensity: number; // miscues per 100 words
   trend: 'improving' | 'stable' | 'declining';
+  classificationScore?: number;
+  confidence?: 'high' | 'medium' | 'low';
+  hasSufficientData?: boolean;
+  passageLengthInfo: {
+    averageWords: number;
+    minWords: number;
+    maxWords: number;
+    adjustedThresholds?: {
+      fluent: number;
+      developing: number;
+      emerging: number;
+    };
+  }
   lastReportDate: Date;
 }
 
@@ -156,25 +169,36 @@ export interface ClassReadingHealth {
     fluent: {
       percentage: number;
       count: number;
-      students: string[];
+      students: StudentReadingStatus[];
     };
     developing: {
       percentage: number;
       count: number;
-      students: string[];
+      students: StudentReadingStatus[];
     };
     emerging: {
       percentage: number;
       count: number;
-      students: string[];
+      students: StudentReadingStatus[];
     };
     atRisk: {
       percentage: number;
       count: number;
-      students: string[];
+      students: StudentReadingStatus[];
+    };
+    insufficientData: {
+      percentage: number;
+      count: number;
+      students: StudentReadingStatus[];
     };
   };
   totalStudents: number;
+  participationRate: number;
+  dataQuality: {
+    confidence: 'high' | 'medium' | 'low';
+    recommendation: string;
+  };
+  requiredActions?:string;
   lastUpdated: Date;
 }
 

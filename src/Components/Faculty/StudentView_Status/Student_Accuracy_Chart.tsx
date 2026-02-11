@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import Svg, { Line, Circle, Polyline, Text as SvgText } from 'react-native-svg';
 import { useStudentAccuracyTrends } from '../../../Hooks/Faculty/use_StudentView_Progress';
@@ -26,137 +27,209 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
 }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
 
-  // Fetch real accuracy data
+  // Fetch real accuracy data - hook handles date filtering and returns all periods
   const {
     chartData: accuracyData,
     loading,
     error,
   } = useStudentAccuracyTrends(studentId, timeRange);
 
-  // Transform accuracy data for the chart (memoized)
+  // Transform data for chart
   const chartData = useMemo(
     () =>
       accuracyData.map(item => ({
-        label: item.date,
-        value: item.accuracy,
+        label: item.date,      // Already formatted label from hook
+        accuracy: item.accuracy,
+        wpm: item.wpm,
       })),
     [accuracyData],
   );
 
-  // Calculate values for scaling (memoized)
-  const values = useMemo(
-    () => chartData.map(d => d.value).filter(v => v > 0),
+  // Get values for calculations (filter out zeros)
+  const accuracyValues = useMemo(
+    () => chartData.map(d => d.accuracy).filter(v => v > 0),
     [chartData],
   );
 
-  const hasData = values.length > 0;
+  const wpmValues = useMemo(
+    () => chartData.map(d => d.wpm).filter(v => v > 0),
+    [chartData],
+  );
+
+  const hasData = accuracyValues.length > 0;
+
+  // Determine if scrolling is needed
+  // Year view always scrolls because it shows 15 months (Jun to Aug next year)
+  const needsScroll = timeRange === 'year';
 
   // Chart dimensions
-  const chartWidth = 320;
-  const chartHeight = 200;
-  const paddingLeft = 40;
+  const baseChartWidth = 320;
+  // For year: 50px per month ensures all labels fit nicely
+  const chartWidth = needsScroll 
+    ? Math.max(chartData.length * 50, 600) 
+    : baseChartWidth;
+  
+  const chartHeight = 240;
+  const paddingLeft = 60;
   const paddingRight = 20;
-  const paddingTop = 20;
+  const paddingTop = 30;
   const paddingBottom = 40;
   const plotWidth = chartWidth - paddingLeft - paddingRight;
   const plotHeight = chartHeight - paddingTop - paddingBottom;
 
-  // Calculate chart calculations only once, regardless of data state
+  // Generate Y-axis labels: 0%, 10%, 20%, ..., 100%
+  const generateYAxisLabels = useCallback(() => {
+    const labels = [];
+    for (let i = 100; i >= 0; i -= 10) {
+      labels.push(i);
+    }
+    return labels;
+  }, []);
+
+  // Calculate all chart metrics
   const chartCalculations = useMemo(() => {
     if (!hasData) {
       return {
-        minValue: 0,
-        maxValue: 0,
-        average: 0,
-        yAxisLabels: [0, 0, 0],
+        minAccuracy: 0,
+        maxAccuracy: 0,
+        averageAccuracy: 0,
+        averageWpm: 0,
+        yAxisLabels: generateYAxisLabels(),
         points: [],
-        polylinePoints: '',
-        trendDirection: '→' as const,
-        trendPercentage: '0.0',
-        trendColor: '#9CA3AF' as const,
+        accuracyPolylinePoints: '',
+        wpmPolylinePoints: '',
+        accuracyTrendDirection: '→' as const,
+        accuracyTrendPercentage: '0.0',
+        accuracyTrendColor: '#9CA3AF' as const,
+        wpmTrendDirection: '→' as const,
+        wpmTrendPercentage: '0.0',
+        wpmTrendColor: '#9CA3AF' as const,
       };
     }
 
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const yAxisMin = Math.floor(minValue / 10) * 10;
-    const yAxisMax = Math.ceil(maxValue / 10) * 10;
-    const yRange = yAxisMax - yAxisMin || 1;
+    const minAccuracy = Math.min(...accuracyValues);
+    const maxAccuracy = Math.max(...accuracyValues);
+    const maxWpm = Math.max(...wpmValues);
+    
+    // Y-axis always 0-100 for percentage
+    const yAxisMin = 0;
+    const yAxisMax = 100;
+    const yRange = yAxisMax - yAxisMin;
 
-    const average = values.reduce((sum, val) => sum + val, 0) / values.length;
+    const averageAccuracy = accuracyValues.reduce((sum, val) => sum + val, 0) / accuracyValues.length;
+    const averageWpm = wpmValues.length > 0 ? wpmValues.reduce((sum, val) => sum + val, 0) / wpmValues.length : 0;
 
-    const yAxisLabels = [yAxisMax, (yAxisMax + yAxisMin) / 2, yAxisMin];
+    const yAxisLabels = generateYAxisLabels();
 
-    // Convert data to points
+    // Convert data to chart points
     const points = chartData.map((item, index) => {
+      // X position: spread points evenly across plot width
       const x =
         chartData.length > 1
           ? paddingLeft + (index / (chartData.length - 1)) * plotWidth
           : paddingLeft + plotWidth / 2;
 
-      const y =
-        item.value > 0
-          ? paddingTop +
-            plotHeight -
-            ((item.value - yAxisMin) / yRange) * plotHeight
+      // Y position for accuracy (0-100 scale)
+      const accuracyY =
+        item.accuracy > 0
+          ? paddingTop + plotHeight - ((item.accuracy - yAxisMin) / yRange) * plotHeight
           : paddingTop + plotHeight;
 
-      return { x, y, value: item.value };
+      // Y position for WPM (normalized to same scale as accuracy)
+      const wpmY =
+        item.wpm > 0 && maxWpm > 0
+          ? paddingTop + plotHeight - ((item.wpm / maxWpm) * 100 / yRange) * plotHeight
+          : paddingTop + plotHeight;
+
+      return { 
+        x, 
+        accuracyY, 
+        wpmY,
+        accuracy: item.accuracy,
+        wpm: item.wpm,
+        label: item.label,
+      };
     });
 
-    // Create polyline path (only for points with value > 0)
-    const polylinePoints = points
-      .filter(p => p.value > 0)
-      .map(p => `${p.x},${p.y}`)
+    // Create line paths (only for points with data)
+    const accuracyPolylinePoints = points
+      .filter(p => p.accuracy > 0)
+      .map(p => `${p.x},${p.accuracyY}`)
       .join(' ');
 
-    // Calculate trend
-    const validPoints = chartData.filter(d => d.value > 0);
-    const firstValue = validPoints[0]?.value ?? 0;
-    const lastValue = validPoints[validPoints.length - 1]?.value ?? 0;
-    const trend = lastValue - firstValue;
-    const trendPercentage =
-      firstValue !== 0 ? ((trend / firstValue) * 100).toFixed(1) : '0.0';
-    const trendDirection = trend > 0 ? '↑' : trend < 0 ? '↓' : '→';
-    const trendColor =
-      trend > 0 ? '#4CAF50' : trend < 0 ? '#EF4444' : '#9CA3AF';
+    const wpmPolylinePoints = points
+      .filter(p => p.wpm > 0)
+      .map(p => `${p.x},${p.wpmY}`)
+      .join(' ');
+
+    // Calculate accuracy trend
+    const validAccuracyPoints = chartData.filter(d => d.accuracy > 0);
+    const firstAccuracy = validAccuracyPoints[0]?.accuracy ?? 0;
+    const lastAccuracy = validAccuracyPoints[validAccuracyPoints.length - 1]?.accuracy ?? 0;
+    const accuracyTrend = lastAccuracy - firstAccuracy;
+    const accuracyTrendPercentage =
+      firstAccuracy !== 0 ? ((accuracyTrend / firstAccuracy) * 100).toFixed(1) : '0.0';
+    const accuracyTrendDirection = accuracyTrend > 0 ? '↑' : accuracyTrend < 0 ? '↓' : '→';
+    const accuracyTrendColor =
+      accuracyTrend > 0 ? '#4CAF50' : accuracyTrend < 0 ? '#EF4444' : '#9CA3AF';
+
+    // Calculate WPM trend
+    const validWpmPoints = chartData.filter(d => d.wpm > 0);
+    const firstWpm = validWpmPoints[0]?.wpm ?? 0;
+    const lastWpm = validWpmPoints[validWpmPoints.length - 1]?.wpm ?? 0;
+    const wpmTrend = lastWpm - firstWpm;
+    const wpmTrendPercentage =
+      firstWpm !== 0 ? ((wpmTrend / firstWpm) * 100).toFixed(1) : '0.0';
+    const wpmTrendDirection = wpmTrend > 0 ? '↑' : wpmTrend < 0 ? '↓' : '→';
+    const wpmTrendColor =
+      wpmTrend > 0 ? '#4CAF50' : wpmTrend < 0 ? '#EF4444' : '#9CA3AF';
 
     return {
-      minValue,
-      maxValue,
-      average,
+      minAccuracy,
+      maxAccuracy,
+      averageAccuracy,
+      averageWpm,
       yAxisLabels,
       points,
-      polylinePoints,
-      trendDirection,
-      trendPercentage,
-      trendColor,
+      accuracyPolylinePoints,
+      wpmPolylinePoints,
+      accuracyTrendDirection,
+      accuracyTrendPercentage,
+      accuracyTrendColor,
+      wpmTrendDirection,
+      wpmTrendPercentage,
+      wpmTrendColor,
     };
   }, [
     chartData,
-    values,
+    accuracyValues,
+    wpmValues,
     hasData,
     paddingLeft,
     plotWidth,
     paddingTop,
     plotHeight,
+    generateYAxisLabels,
   ]);
 
   const {
-    minValue,
-    maxValue,
-    average,
+    averageAccuracy,
+    averageWpm,
     yAxisLabels,
     points,
-    polylinePoints,
-    trendDirection,
-    trendPercentage,
-    trendColor,
+    accuracyPolylinePoints,
+    wpmPolylinePoints,
+    accuracyTrendDirection,
+    accuracyTrendPercentage,
+    accuracyTrendColor,
+    wpmTrendDirection,
+    wpmTrendPercentage,
+    wpmTrendColor,
   } = chartCalculations;
 
-  // Get the appropriate style based on trend direction
+  // Insight container styling based on trend
   const insightContainerStyle = useMemo(() => {
-    switch (trendDirection) {
+    switch (accuracyTrendDirection) {
       case '↑':
         return [styles.insightContainer, styles.insightContainerImproving];
       case '↓':
@@ -164,11 +237,10 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
       default:
         return [styles.insightContainer, styles.insightContainerStable];
     }
-  }, [trendDirection]);
+  }, [accuracyTrendDirection]);
 
-  // You can also change the insight text color based on trend
   const insightTextStyle = useMemo(() => {
-    switch (trendDirection) {
+    switch (accuracyTrendDirection) {
       case '↑':
         return styles.insightTextImproving;
       case '↓':
@@ -176,351 +248,350 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
       default:
         return styles.insightTextStable;
     }
-  }, [trendDirection]);
+  }, [accuracyTrendDirection]);
+
+  // Generate insight message
   const insightMessage = useMemo(() => {
     if (!hasData) return '';
 
-    const change = Math.abs(parseFloat(trendPercentage));
+    const accuracyChange = Math.abs(parseFloat(accuracyTrendPercentage));
+    const wpmChange = Math.abs(parseFloat(wpmTrendPercentage));
 
-    switch (trendDirection) {
+    switch (accuracyTrendDirection) {
       case '↑':
-        return `Reading accuracy improved by ${change}%, indicating positive progress in students’ reading performance over the selected period.`;
+        return `Reading accuracy improved by ${accuracyChange}% and reading speed ${wpmTrendDirection === '↑' ? 'increased' : wpmTrendDirection === '↓' ? 'decreased' : 'remained stable'} by ${wpmChange}%, indicating ${wpmTrendDirection === '↑' ? 'excellent' : 'positive'} progress in reading performance.`;
 
       case '↓':
-        return `Reading accuracy declined by ${change}%, suggesting possible reading difficulties that may require targeted intervention.`;
+        return `Reading accuracy declined by ${accuracyChange}%, suggesting possible reading difficulties that may require targeted intervention.`;
 
       default:
         return 'Reading accuracy remained stable, indicating consistent reading performance over the selected period.';
     }
-  }, [trendDirection, trendPercentage, hasData]);
+  }, [accuracyTrendDirection, accuracyTrendPercentage, wpmTrendDirection, wpmTrendPercentage, hasData]);
 
-  // Handle loading state for accuracy data
+  // Render the chart SVG
+  const renderChart = () => (
+    <Svg width={chartWidth} height={chartHeight}>
+      {/* Grid lines at 10% intervals */}
+      {yAxisLabels.map((label, index) => {
+        const y = paddingTop + (index / (yAxisLabels.length - 1)) * plotHeight;
+        return (
+          <Line
+            key={`grid-${label}`}
+            x1={paddingLeft}
+            y1={y}
+            x2={paddingLeft + plotWidth}
+            y2={y}
+            stroke="#F3F4F6"
+            strokeWidth="1"
+          />
+        );
+      })}
+
+      {/* Y-axis labels */}
+      {yAxisLabels.map((label, index) => {
+        const y = paddingTop + (index / (yAxisLabels.length - 1)) * plotHeight;
+        return (
+          <SvgText
+            key={`y-label-${label}`}
+            x={paddingLeft - 35}
+            y={y + 4}
+            fontSize="10"
+            fill="#9CA3AF"
+            textAnchor="end"
+            fontFamily="Satoshi-Medium"
+          >
+            {label}%
+          </SvgText>
+        );
+      })}
+
+      {/* X-axis labels */}
+      {points.map((point, index) => {
+        // Show labels based on time range
+        let showLabel = false;
+        
+        if (timeRange === 'week') {
+          showLabel = true; // Show all days
+        } else if (timeRange === 'month') {
+          showLabel = index % 2 === 0 || index === points.length - 1; // Every other week
+        } else if (timeRange === 'year') {
+          showLabel = true; // Show all months (they're scrollable)
+        }
+
+        if (!showLabel) return null;
+
+        return (
+          <SvgText
+            key={`x-label-${index}`}
+            x={point.x}
+            y={paddingTop + plotHeight + 20}
+            fontSize="8"
+            fill="#6B7280"
+            textAnchor="middle"
+            fontFamily="Satoshi-Medium"
+          >
+            {point.label}
+          </SvgText>
+        );
+      })}
+
+      {/* WPM line (behind accuracy) */}
+      {wpmPolylinePoints && (
+        <Polyline
+          points={wpmPolylinePoints}
+          fill="none"
+          stroke="#FFA726"
+          strokeWidth="2"
+          strokeDasharray="5,5"
+        />
+      )}
+
+      {/* Accuracy line */}
+      {accuracyPolylinePoints && (
+        <Polyline
+          points={accuracyPolylinePoints}
+          fill="none"
+          stroke="#4CAF50"
+          strokeWidth="2.5"
+        />
+      )}
+
+      {/* WPM data points with value labels */}
+      {points.map((point, index) => (
+        point.wpm > 0 && (
+          <React.Fragment key={`wpm-point-${index}`}>
+            <SvgText
+              x={point.x}
+              y={point.wpmY - 10}
+              fontSize="9"
+              fill="#FFA726"
+              textAnchor="middle"
+              fontFamily="Satoshi-Bold"
+            >
+              {point.wpm.toFixed(0)}
+            </SvgText>
+            <Circle
+              cx={point.x}
+              cy={point.wpmY}
+              r="4"
+              fill="#FFA726"
+              stroke="#fff"
+              strokeWidth="2"
+            />
+          </React.Fragment>
+        )
+      ))}
+
+      {/* Accuracy data points with value labels */}
+      {points.map((point, index) => (
+        point.accuracy > 0 && (
+          <React.Fragment key={`accuracy-point-${index}`}>
+            <SvgText
+              x={point.x}
+              y={point.accuracyY - 10}
+              fontSize="9"
+              fill="#4CAF50"
+              textAnchor="middle"
+              fontFamily="Satoshi-Bold"
+            >
+              {point.accuracy.toFixed(1)}%
+            </SvgText>
+            <Circle
+              cx={point.x}
+              cy={point.accuracyY}
+              r="5"
+              fill="#4CAF50"
+              stroke="#fff"
+              strokeWidth="2"
+            />
+          </React.Fragment>
+        )
+      ))}
+    </Svg>
+  );
+
+  // Loading state
   if (loading) {
     return (
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={styles.titleRow}>
-              <View style={styles.iconWrapper}>
-                <Text style={styles.titleIcon}>📊</Text>
-              </View>
-              <View style={styles.titleContent}>
-                <Text style={styles.title}>
-                  Student Reading Performance Insights
-                </Text>
-                <Text style={styles.subtitle}>Loading data...</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4CAF50" />
-            <Text style={styles.loadingText}>Loading accuracy data...</Text>
-          </View>
-        </View>
-    );
-  }
-
-  if (error) {
-    return (
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={styles.titleRow}>
-              <View style={styles.iconWrapper}>
-                <Text style={styles.titleIcon}>📊</Text>
-              </View>
-              <View style={styles.titleContent}>
-                <Text style={styles.title}>
-                  Student Reading Performance Insights
-                </Text>
-                <Text style={styles.subtitle}>Error loading data</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Failed to load data</Text>
-            <Text style={styles.errorSubtext}>{error}</Text>
-          </View>
-        </View>
-    );
-  }
-
-  return (
-      <View>
-        {/* Header */}
+      <View style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.titleRow}>
             <View style={styles.iconWrapper}>
               <Text style={styles.titleIcon}>📊</Text>
             </View>
             <View style={styles.titleContent}>
-              <Text style={styles.title}>Accuracy Trends</Text>
-              <Text style={styles.subtitle}>
-                {timeRange === 'week'
-                  ? 'Last 7 days'
-                  : timeRange === 'month'
-                  ? 'Last 4 weeks'
-                  : 'Last 12 months'}
+              <Text style={styles.title}>
+                Student Reading Performance Insights
               </Text>
+              <Text style={styles.subtitle}>Loading data...</Text>
             </View>
           </View>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <Text style={styles.loadingText}>Loading accuracy data...</Text>
+        </View>
+      </View>
+    );
+  }
 
-          {/* Time Range Selector */}
-          <View style={styles.rangeSelector}>
-            {TIME_RANGES.map(range => (
-              <TouchableOpacity
-                key={range.value}
-                onPress={() => setTimeRange(range.value)}
-                style={[
-                  styles.rangeButton,
-                  timeRange === range.value && styles.rangeButtonActive,
-                ]}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.rangeButtonText,
-                    timeRange === range.value && styles.rangeButtonTextActive,
-                  ]}
-                >
-                  {range.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+  // Error state
+  if (error) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.titleRow}>
+            <View style={styles.iconWrapper}>
+              <Text style={styles.titleIcon}>📊</Text>
+            </View>
+            <View style={styles.titleContent}>
+              <Text style={styles.title}>
+                Student Reading Performance Insights
+              </Text>
+              <Text style={styles.subtitle}>Error loading data</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load data</Text>
+          <Text style={styles.errorSubtext}>{error}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      {/* Header */}
+      <View style={styles.cardHeader}>
+        <View style={styles.titleRow}>
+          <View style={styles.iconWrapper}>
+            <Text style={styles.titleIcon}>📊</Text>
+          </View>
+          <View style={styles.titleContent}>
+            <Text style={styles.title}>Accuracy & Speed Trends</Text>
+            <Text style={styles.subtitle}>
+              {timeRange === 'week'
+                ? 'Last 7 days'
+                : timeRange === 'month'
+                ? 'Last 4 weeks'
+                : 'School Year (Jun - Aug)'}
+            </Text>
           </View>
         </View>
 
-        {!hasData ? (
-          <View style={styles.noDataContainer}>
-            <Text style={styles.noDataIcon}>📊</Text>
-            <Text style={styles.noDataTitle}>No data of student yet</Text>
-          </View>
-        ) : (
-          <>
-            {/* Stats Summary */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>
-                  {average.toFixed(1)}
-                  <Text style={styles.statUnit}>%</Text>
-                </Text>
-                <Text style={styles.statLabel}>Average</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>
-                  {maxValue.toFixed(1)}
-                  <Text style={styles.statUnit}>%</Text>
-                </Text>
-                <Text style={styles.statLabel}>Highest</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: trendColor }]}>
-                  {trendDirection} {Math.abs(parseFloat(trendPercentage))}
-                  <Text style={styles.statUnit}>%</Text>
-                </Text>
-                <Text style={styles.statLabel}>Trend</Text>
-              </View>
-            </View>
-            {/* Performance Insights */}
-            <View style={insightContainerStyle}>
-              <Text style={insightTextStyle}>{insightMessage}</Text>
-            </View>
-
-            {/* Chart */}
-            <View style={styles.chartContainer}>
-              <Svg width={chartWidth} height={chartHeight}>
-                {/* Grid lines */}
-                {yAxisLabels.map((label, index) => {
-                  const y =
-                    paddingTop +
-                    (index / (yAxisLabels.length - 1)) * plotHeight;
-                  return (
-                    <Line
-                      key={`grid-${index}`}
-                      x1={paddingLeft}
-                      y1={y}
-                      x2={chartWidth - paddingRight}
-                      y2={y}
-                      stroke="#F3F4F6"
-                      strokeWidth="1"
-                    />
-                  );
-                })}
-
-                {/* Y-axis labels */}
-                {yAxisLabels.map((label, index) => {
-                  const y =
-                    paddingTop +
-                    (index / (yAxisLabels.length - 1)) * plotHeight;
-                  return (
-                    <SvgText
-                      key={`ylabel-${index}`}
-                      x={paddingLeft - 10}
-                      y={y + 5}
-                      fontSize="12"
-                      fill="#6B7280"
-                      textAnchor="end"
-                      fontFamily="Satoshi-Bold"
-                    >
-                      {label.toFixed(0)}%
-                    </SvgText>
-                  );
-                })}
-
-                {/* Line (only if we have at least 2 points with values) */}
-                {points.filter(p => p.value > 0).length >= 2 && (
-                  <Polyline
-                    points={polylinePoints}
-                    fill="none"
-                    stroke="#4CAF50"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                )}
-
-                {/* Data points (only for non-zero values) */}
-                {points
-                  .filter(point => point.value > 0)
-                  .map((point, index) => (
-                    <Circle
-                      key={`point-${index}`}
-                      cx={point.x}
-                      cy={point.y}
-                      r="5"
-                      fill="#4CAF50"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    />
-                  ))}
-
-                {/* X-axis labels */}
-                {chartData.map((item, index) => {
-                  const x =
-                    paddingLeft + (index / (chartData.length - 1)) * plotWidth;
-                  return (
-                    <SvgText
-                      key={`xlabel-${index}`}
-                      x={x}
-                      y={chartHeight - 10}
-                      fontSize="11"
-                      fill="#6B7280"
-                      textAnchor="middle"
-                      fontFamily="Satoshi-Bold"
-                    >
-                      {item.label}
-                    </SvgText>
-                  );
-                })}
-              </Svg>
-            </View>
-
-            {/* Legend */}
-            <View style={styles.legend}>
-              <View style={styles.legendItem}>
-                <View style={styles.legendDot} />
-                <Text style={styles.legendText}>Reading Accuracy</Text>
-              </View>
-            </View>
-          </>
-        )}
+        {/* Time Range Selector */}
+        <View style={styles.rangeSelector}>
+          {TIME_RANGES.map(range => (
+            <TouchableOpacity
+              key={range.value}
+              onPress={() => setTimeRange(range.value)}
+              style={[
+                styles.rangeButton,
+                timeRange === range.value && styles.rangeButtonActive,
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.rangeButtonText,
+                  timeRange === range.value && styles.rangeButtonTextActive,
+                ]}
+              >
+                {range.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
+
+      {!hasData ? (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataIcon}>📊</Text>
+          <Text style={styles.noDataTitle}>No data of student yet</Text>
+        </View>
+      ) : (
+        <>
+          {/* Stats Summary */}
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {averageAccuracy.toFixed(1)}
+                <Text style={styles.statUnit}>%</Text>
+              </Text>
+              <Text style={styles.statLabel}>Avg Accuracy</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {averageWpm.toFixed(0)}
+                <Text style={styles.statUnit}> WPM</Text>
+              </Text>
+              <Text style={styles.statLabel}>Avg Speed</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: accuracyTrendColor }]}>
+                {accuracyTrendDirection} {Math.abs(parseFloat(accuracyTrendPercentage))}
+                <Text style={styles.statUnit}>%</Text>
+              </Text>
+              <Text style={styles.statLabel}>Accuracy Trend</Text>
+            </View>
+          </View>
+
+          {/* Insights */}
+          <View style={insightContainerStyle}>
+            <Text style={insightTextStyle}>{insightMessage}</Text>
+          </View>
+
+          {/* Chart - with conditional scrolling for year view */}
+          <View style={styles.chartContainer}>
+            {needsScroll ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={true}
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+              >
+                {renderChart()}
+              </ScrollView>
+            ) : (
+              renderChart()
+            )}
+          </View>
+
+          {/* Legend */}
+          <View style={styles.legend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#4CAF50' }]} />
+              <Text style={styles.legendText}>Accuracy Rate</Text>
+            </View>
+            <View style={styles.legendDivider} />
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#FFA726' }]} />
+              <Text style={styles.legendText}>Reading Speed (WPM)</Text>
+            </View>
+          </View>
+        </>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  // FILTER SECTION
-  filterSection: {
-    marginBottom: 10,
-  },
-  filtersRow: {
-    flexDirection: 'row',
-    gap: 12,
-    zIndex: 1000,
-  },
-  filterItem: {
-    flex: 1,
-    position: 'relative',
-    zIndex: 1000,
-  },
-  filterLabel: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
-    marginBottom: 6,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  filterButtonText: {
-    fontSize: 14,
-    color: '#1F2937',
-    fontFamily: 'Satoshi-Medium',
-    flex: 1,
-    marginRight: 8,
-  },
-  filterArrow: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontFamily: 'Satoshi-Bold',
-  },
-  filterDropdownMenu: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginTop: 4,
-    maxHeight: 200,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    zIndex: 2000,
-  },
-  filterDropdownOption: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  filterDropdownOptionSelected: {
-    backgroundColor: '#E8F5E9',
-  },
-  filterDropdownOptionText: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
-    color: '#1F2937',
-  },
-  filterDropdownOptionTextSelected: {
-    color: '#4CAF50',
-    fontFamily: 'Satoshi-Bold',
-  },
-
-  // CARD
   card: {
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
-    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.05,
     shadowRadius: 8,
-    minHeight: 400,
+    elevation: 2,
   },
+
+  // HEADER
   cardHeader: {
     marginBottom: 20,
   },
@@ -530,10 +601,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: 12,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#F0FDF4',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -548,74 +619,77 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Satoshi-Bold',
     color: '#1F2937',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 13,
     fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
+    color: '#6B7280',
   },
 
   // TIME RANGE SELECTOR
   rangeSelector: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F9FAFB',
     borderRadius: 10,
     padding: 4,
-    alignSelf: 'flex-start',
   },
   rangeButton: {
-    paddingHorizontal: 16,
+    flex: 1,
     paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    minWidth: 70,
     alignItems: 'center',
   },
   rangeButtonActive: {
-    backgroundColor: '#4CAF50',
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   rangeButtonText: {
     fontSize: 13,
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },
   rangeButtonTextActive: {
-    color: '#fff',
+    color: '#1F2937',
+    fontFamily: 'Satoshi-Bold',
   },
 
-  // STATS ROW
+  // STATS
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 24,
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
-    fontFamily: 'Satoshi-Black',
-    color: '#4CAF50',
+    fontSize: 20,
+    fontFamily: 'Satoshi-Bold',
+    color: '#1F2937',
     marginBottom: 4,
   },
   statUnit: {
-    fontSize: 16,
-    fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
-  },
-  statLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontFamily: 'Satoshi-Medium',
+    color: '#6B7280',
+    textAlign: 'center',
   },
   statDivider: {
     width: 1,
@@ -670,14 +744,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  scrollView: {
+    maxHeight: 260,
+  },
+  scrollContent: {
+    paddingHorizontal: 8,
+  },
 
   // LEGEND
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
+    gap: 16,
   },
   legendItem: {
     flexDirection: 'row',
@@ -687,13 +769,17 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#4CAF50',
-    marginRight: 8,
+    marginRight: 6,
   },
   legendText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
+  },
+  legendDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: '#E5E7EB',
   },
 
   // LOADING STATES
@@ -705,17 +791,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
-  },
-  loadingContainerModal: {
-    padding: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingTextModal: {
-    marginTop: 12,
     fontSize: 14,
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
@@ -741,25 +816,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 20,
   },
-  errorContainerModal: {
-    padding: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorTextModal: {
-    fontSize: 16,
-    fontFamily: 'Satoshi-Bold',
-    color: '#EF4444',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  errorSubtextModal: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
 
   // NO DATA STATES
   noDataContainer: {
@@ -779,144 +835,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 8,
     textAlign: 'center',
-  },
-  noDataText: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  noClassesContainer: {
-    padding: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noClassesText: {
-    fontSize: 16,
-    fontFamily: 'Satoshi-Bold',
-    color: '#6B7280',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  noClassesSubtext: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-
-  // MODAL
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '70%',
-    paddingBottom: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  modalTitleWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  modalIcon: {
-    fontSize: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontFamily: 'Satoshi-Bold',
-    color: '#1F2937',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontSize: 18,
-    color: '#6B7280',
-    fontFamily: 'Satoshi-Bold',
-  },
-  classList: {
-    padding: 20,
-    paddingBottom: 10,
-  },
-  classItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
-  },
-  selectedClassItem: {
-    backgroundColor: '#E8F5E9',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-  },
-  classItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  classItemIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  classItemIconText: {
-    fontSize: 20,
-  },
-  classItemText: {
-    flex: 1,
-  },
-  className: {
-    fontSize: 16,
-    fontFamily: 'Satoshi-Bold',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  gradeLevel: {
-    fontSize: 13,
-    fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
-  },
-  checkmark: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkmarkText: {
-    fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Satoshi-Bold',
   },
 });
 
