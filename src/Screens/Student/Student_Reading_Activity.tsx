@@ -76,7 +76,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithHuggingFace } =
+  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI } =
     useSpeechToText();
 
   // Navigation

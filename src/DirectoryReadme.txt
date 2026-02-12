@@ -1,7 +1,7 @@
 CISC Capstone - src/ Directory Documentation
 ============================================
 
-This file describes the folder structure within the `src/` directory of the MiscueReading application, listing their main files, key functions (with signatures), data types, and the main purposes of each folder and file.
+This file describes the folder structure within the `src/` directory of the MarungkoReading application, listing their main files, key functions (with signatures), data types, and the main purposes of each folder and file.
 
 -------------------------------------------------------------------------------
 

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "MiscueReading.app"
-               BlueprintName = "MiscueReading"
-               ReferencedContainer = "container:MiscueReading.xcodeproj">
+               BuildableName = "MarungkoReading.app"
+               BlueprintName = "MarungkoReading"
+               ReferencedContainer = "container:MarungkoReading.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "MiscueReadingTests.xctest"
-               BlueprintName = "MiscueReadingTests"
-               ReferencedContainer = "container:MiscueReading.xcodeproj">
+               BuildableName = "MarungkoReadingTests.xctest"
+               BlueprintName = "MarungkoReadingTests"
+               ReferencedContainer = "container:MarungkoReading.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "MiscueReading.app"
-            BlueprintName = "MiscueReading"
-            ReferencedContainer = "container:MiscueReading.xcodeproj">
+            BuildableName = "MarungkoReading.app"
+            BlueprintName = "MarungkoReading"
+            ReferencedContainer = "container:MarungkoReading.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "MiscueReading.app"
-            BlueprintName = "MiscueReading"
-            ReferencedContainer = "container:MiscueReading.xcodeproj">
+            BuildableName = "MarungkoReading.app"
+            BlueprintName = "MarungkoReading"
+            ReferencedContainer = "container:MarungkoReading.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

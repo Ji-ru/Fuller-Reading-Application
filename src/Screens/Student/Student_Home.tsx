@@ -109,9 +109,9 @@ export default function UserHomeScreen() {
         />
 
         {/* INTRO */}
-        <Text style={user.text}>Welcome, Learner!</Text>
+        <Text style={user.text}>Maligayang pagdating, mag-aaral!</Text>
         <Text style={user.subtext}>
-          Adventure begins with every word you read!
+          Tara na! Magsanay tayong bumasa!
         </Text>
 
         {/* STUDY IMAGE */}
@@ -120,8 +120,7 @@ export default function UserHomeScreen() {
           source={require('../../../assets/images/Imagination-Reading.png')}
         />
         <Text style={user.statement}>
-          When you can read, you can make your own stories and use your big
-          imagination!
+          Sa bawat buklat, may bagong kwentong naghihintay!
         </Text>
 
         {/* BUTTONS */}
@@ -129,13 +128,13 @@ export default function UserHomeScreen() {
           style={buttons.startReadingButton}
           onPress={() => handleNextStep('PassageSelection')}
         >
-          <Text style={buttons.nextPageText}>Start Learning</Text>
+          <Text style={buttons.nextPageText}>Magsimulang Magbasa</Text>
         </TouchableOpacity>
         <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('ReadingHistory')}>
-          <Text style={buttons.nextPageText}>Reading History</Text>
+          <Text style={buttons.nextPageText}>Nakaraang Pagbabasa</Text> 
         </TouchableOpacity>
         <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('Profile')}>
-          <Text style={buttons.nextPageText}>My Profile</Text>
+          <Text style={buttons.nextPageText}>Aking Profile</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

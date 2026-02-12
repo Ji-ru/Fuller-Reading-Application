@@ -1,45 +1,36 @@
 {
   "project_info": {
-    "project_number": "274037817546",
-    "project_id": "cisckids-25",
-    "storage_bucket": "cisckids-25.firebasestorage.app"
+    "project_number": "756584928195",
+    "project_id": "marungko-reading",
+    "storage_bucket": "marungko-reading.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:274037817546:android:37cc2a2e7d0f478b04f433",
+        "mobilesdk_app_id": "1:756584928195:android:bfd2b50f99a80315b4e376",
         "android_client_info": {
-          "package_name": "com.example.cisc_kids_2"
+          "package_name": "com.marungkoreading"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "756584928195-anh7omsp782cnpg97v3ikag34td5nj0f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAMG5RvwLzp437kq73K3NlHGHhDQjvopIM"
+          "current_key": "AIzaSyBEKxFbUEhPZQpbfuEvIFOv2lQcSxRuNaU"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:274037817546:android:7387eefc6cd118a804f433",
-        "android_client_info": {
-          "package_name": "com.miscuereading"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAMG5RvwLzp437kq73K3NlHGHhDQjvopIM"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "756584928195-anh7omsp782cnpg97v3ikag34td5nj0f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

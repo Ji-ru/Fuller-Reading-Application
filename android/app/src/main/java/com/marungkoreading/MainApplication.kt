@@ -1,4 +1,4 @@
-package com.miscuereading
+package com.marungkoreading
 
 import android.app.Application
 import com.facebook.react.PackageList

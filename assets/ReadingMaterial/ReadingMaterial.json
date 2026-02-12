@@ -1,426 +1,465 @@
 {
   "Alphabet": [
-    {"letter": "A"}, {"letter": "B"}, {"letter": "C"}, {"letter": "D"}, {"letter": "E"},
-    {"letter": "F"}, {"letter": "G"}, {"letter": "H"}, {"letter": "I"}, {"letter": "J"},
-    {"letter": "K"}, {"letter": "L"}, {"letter": "M"}, {"letter": "N"}, {"letter": "O"},
-    {"letter": "P"}, {"letter": "Q"}, {"letter": "R"}, {"letter": "S"}, {"letter": "T"},
-    {"letter": "U"}, {"letter": "V"}, {"letter": "W"}, {"letter": "X"}, {"letter": "Y"},
-    {"letter": "Z"}
+    {"letter": "M"}, {"letter": "S"}, {"letter": "A"}, {"letter": "Ang"}, {"letter": "I"},
+    {"letter": "O"}, {"letter": "Ay"}, {"letter": "E"}, {"letter": "U"}, {"letter": "B"},
+    {"letter": "T"}, {"letter": "K"}, {"letter": "L"}, {"letter": "Y"}, {"letter": "Mga"},
+    {"letter": "N"}, {"letter": "G"}, {"letter": "R"}, {"letter": "P"}, {"letter": "Ng"}, 
+    {"letter": "D"}, {"letter": "H"}, {"letter": "W"}, {"letter": "-ng"}, {"letter": "ng-"}
   ],
 
   "Words": [
+    { 
+      "letter": "M",
+      "contrasts": [
+        {
+          "phoneme": "m_sound",
+          "ipa": "/m/",
+          "words": ["M", "m"]
+        }
+      ]
+    },
+    {
+      "letter": "S",
+      "contrasts": [
+        {
+          "phoneme": "s_sound",
+          "ipa": "/s/",
+          "words": ["S", "s"]
+        }
+      ]
+    },
     {
       "letter": "A",
       "contrasts": [
         {
-          "phoneme": "short_a",
-          "ipa": "/æ/",
-          "words": ["ant", "cat", "bat", "hat", "map", "pan", "rat", "jam", "fan", "cap"]
+          "phoneme": "a_sound",
+          "ipa": "/a/",
+          "words": ["A", "a"]
         },
         {
-          "phoneme": "long_a",
-          "ipa": "/eɪ/",
-          "words": ["ape", "cake", "face", "game", "lake", "name", "rain", "train", "day", "play"]
+          "phoneme": "a_combine_m",
+          "ipa": "/a/",
+          "words": ["Ma", "Am", "am", "ma", "ama", "mama"]
+        },
+        {
+          "phoneme": "a_combine_s",
+          "ipa": "/a/",
+          "words": ["Sa", "sa", "asa", "aasa"]
+        },
+        {
+          "phoneme": "asm_combine",
+          "ipa": "/a/",
+          "words": ["sama", "masa", "sasama", "sa ama", "sa masa", "sa mama", "masama", "masasama", "sama-sama"]
         }
       ]
     },
-
     {
-      "letter": "B",
+      "letter": "Ang",
       "contrasts": [
         {
-          "phoneme": "initial_b",
-          "ipa": "/b/",
-          "words": ["ball", "bat", "bed", "bus", "bug", "bag", "box", "boy", "bear", "bike"]
+          "phoneme": "ang_article",
+          "ipa": "/aŋ/",
+          "words": ["Ang", "ang"]
         },
         {
-          "phoneme": "final_b",
-          "ipa": "/b/",
-          "words": ["web", "tub", "crib", "grab", "crab", "blob", "bulb", "club", "robe", "cube"]
+          "phoneme": "ang_phrases",
+          "ipa": "/aŋ/",
+          "words": ["ang ama", "ang masa", "ang sasama", "ang mama", "ang aasa", "ang sama"]
         }
       ]
     },
-
-    {
-      "letter": "C",
-      "contrasts": [
-        {
-          "phoneme": "hard_c",
-          "ipa": "/k/",
-          "words": ["cat", "cap", "cup", "car", "cow", "cake", "corn", "crab", "cage", "candy"]
-        },
-        {
-          "phoneme": "soft_c",
-          "ipa": "/s/",
-          "words": ["cent", "city", "circle", "cement", "celery", "cider", "citrus", "civil", "celebrate", "cycle"]
-        }
-      ]
-    },
-
-    {
-      "letter": "D",
-      "contrasts": [
-        {
-          "phoneme": "initial_d",
-          "ipa": "/d/",
-          "words": ["dog", "duck", "dad", "door", "day", "doll", "dish", "desk", "dust", "dinner"]
-        },
-        {
-          "phoneme": "final_d",
-          "ipa": "/d/",
-          "words": ["bed", "red", "mad", "sad", "glad", "hand", "card", "bird", "cold", "wind"]
-        }
-      ]
-    },
-
-    {
-      "letter": "E",
-      "contrasts": [
-        {
-          "phoneme": "short_e",
-          "ipa": "/ɛ/",
-          "words": ["egg", "bed", "red", "pen", "ten", "net", "jet", "leg", "men", "pet"]
-        },
-        {
-          "phoneme": "long_e",
-          "ipa": "/iː/",
-          "words": ["bee", "tree", "see", "key", "tea", "me", "we", "she", "green", "feet"]
-        }
-      ]
-    },
-
-    {
-      "letter": "F",
-      "contrasts": [
-        {
-          "phoneme": "initial_f",
-          "ipa": "/f/",
-          "words": ["fish", "fan", "fox", "frog", "foot", "farm", "fire", "flag", "fun", "food"]
-        },
-        {
-          "phoneme": "final_f",
-          "ipa": "/f/",
-          "words": ["if", "off", "cuff", "puff", "cliff", "wolf", "leaf", "roof", "self", "staff"]
-        }
-      ]
-    },
-
-    {
-      "letter": "G",
-      "contrasts": [
-        {
-          "phoneme": "hard_g",
-          "ipa": "/g/",
-          "words": ["goat", "game", "gate", "gum", "gift", "gorilla", "grass", "gold", "garden", "goose"]
-        },
-        {
-          "phoneme": "soft_g",
-          "ipa": "/dʒ/",
-          "words": ["giant", "giraffe", "gym", "gem", "age", "cage", "page", "stage", "bridge", "edge"]
-        }
-      ]
-    },
-
-    {
-      "letter": "H",
-      "contrasts": [
-        {
-          "phoneme": "initial_h",
-          "ipa": "/h/",
-          "words": ["hat", "hand", "house", "horse", "hill", "honey", "hammer", "heart", "hot", "help"]
-        },
-        {
-          "phoneme": "silent_h",
-          "ipa": "∅",
-          "words": ["hour", "honor", "honest", "heir", "herb", "ghost", "what", "when", "where", "white"]
-        }
-      ]
-    },
-
     {
       "letter": "I",
       "contrasts": [
         {
-          "phoneme": "short_i",
+          "phoneme": "i_sound",
           "ipa": "/ɪ/",
-          "words": ["igloo", "ink", "insect", "inch", "ill", "in", "it", "is", "if", "its"]
+          "words": ["I","i"]
         },
         {
-          "phoneme": "long_i",
-          "ipa": "/aɪ/",
-          "words": ["ice", "idea", "iron", "island", "ivy", "eye", "five", "bike", "kite", "light"]
+          "phoneme": "i_syllables",
+          "ipa": "/ɪ/",
+          "words": ["Mi", "mi", "Si", "si"]
+        },
+        {
+          "phoneme": "i_syllables",
+          "ipa": "/ɪ/",
+          "words": ["isa", "misa", "mais", "sisi", "iisa", "isama", "sa misa", "ang mais", "Ami", "Mimi", "si Ami", "si Mimi"]
         }
       ]
     },
-
     {
-      "letter": "J",
+      "letter": "O",
       "contrasts": [
         {
-          "phoneme": "j_sound",
-          "ipa": "/dʒ/",
-          "words": ["jam", "jet", "jug", "jacket", "jelly", "jewel", "jump", "jungle", "juice", "joker"]
+          "phoneme": "o_sound",
+          "ipa": "/o/",
+          "words": ["O","o"]
         },
         {
-          "phoneme": "j_vowel_following",
-          "ipa": "/dʒ/",
-          "words": ["jay", "joy", "jeans", "jingle", "jolly", "jumbo", "jigsaw", "jukebox", "jamboree", "jog"]
+          "phoneme": "o_syllables",
+          "ipa": "/o/",
+          "words": ["Mo", "mo", "So", "so"]
+        },
+        {
+          "phoneme": "o_syllables",
+          "ipa": "/o/",
+          "words": ["oo", "aso", "oso", "amo", "Siso", "maso", "aamo", "miso", "ang aso", "ang oso", "maamo", "ang miso"]
         }
       ]
     },
-
+    { 
+      "letter": "Ay",
+      "contrasts": [
+        {
+          "phoneme": "ay_linking",
+          "ipa": "/aɪ/",
+          "words": ["Ay", "ay"]
+        },
+        {
+          "phoneme": "ay_phrases",
+          "ipa": "/aɪ/",
+          "words": ["ay aso", "ay sasama", "ang oso ay", "ang amo ay", "si Mimi ay"]
+        }
+      ]
+    },
+    {
+      "letter": "E",
+      "contrasts": [
+        {
+          "phoneme": "e_sound",
+          "ipa": "/ɛ/",
+          "words": ["E", "e"]
+        },
+        {
+          "phoneme": "e_syllables",
+          "ipa": "/ɛ/",
+          "words": ["Me", "me", "Se", "se"]
+        },
+        {
+          "phoneme": "e_syllables",
+          "ipa": "/ɛ/",
+          "words": ["mesa", "Ema", "Emi", "memo", "ang mesa", "si Emi ay"]
+        }
+      ]
+    },
+    {
+      "letter": "U",
+      "contrasts": [
+        {
+          "phoneme": "u_sound",
+          "ipa": "/u/",
+          "words": ["U","u"]
+        },
+        {
+          "phoneme": "u_syllables",
+          "ipa": "/u/",
+          "words": ["Mu", "mu", "Su", "su"]
+        },
+        {
+          "phoneme": "u_syllables",
+          "ipa": "/u/",
+          "words": ["usa", "uso", "musa", "susi", "umasa", "usisa", "ang susi", "sumama", "mausisa"]
+        }
+      ]
+    },
+    {
+      "letter": "B",
+      "contrasts": [
+        {
+          "phoneme": "b_sound",
+          "ipa": "/b/",
+          "words": ["B", "b"]
+        },
+        {
+          "phoneme": "b_vowels",
+          "ipa": "/b/",
+          "words": ["ba", "be", "bi", "bo", "bu"]
+        },
+        {
+          "phoneme": "b_syllables",
+          "ipa": "/b/",
+          "words": ["aba", "iba", "babae", "bibo", "baso", "saba", "ang bao", "sa ibaba", "mababa"]
+        }
+      ]
+    },
+    {
+      "letter": "T",
+      "contrasts": [
+        {
+          "phoneme": "t_sound",
+          "ipa": "/t/",
+          "words": ["T","t"]
+        },
+        {
+          "phoneme": "t_vowels",
+          "ipa": "/t/",
+          "words": ["ta", "te", "ti", "to", "tu"]
+        },
+        {
+          "phoneme": "t_syllables",
+          "ipa": "/t/",
+          "words": ["tao", "tasa", "tama", "tabo", "tabi", "tito", "tutubi", "mataba", "ang tuta", "sa itaas", "sa tabi", "si tita"]
+        }
+      ]
+    },
     {
       "letter": "K",
       "contrasts": [
         {
           "phoneme": "k_sound",
           "ipa": "/k/",
-          "words": ["kite", "king", "key", "kitten", "kitchen", "kettle", "kangaroo", "ketchup", "kiwi", "kick"]
+          "words": ["K","k"]
         },
         {
-          "phoneme": "silent_k",
-          "ipa": "∅",
-          "words": ["knee", "knife", "knock", "know", "knit", "knob", "kneel", "knockout", "known", "knelt"]
+          "phoneme": "k_vowels",
+          "ipa": "/k/",
+          "words": ["ka", "ke", "ki", "ko", "ku"]
+        },
+        {
+          "phoneme": "k_syllables",
+          "ipa": "/k/",
+          "words": ["ka", "ko", "ako", "sako", "kama", "kami", "kasi", "kasama", "kabibe", "bituka", "butiki", "may keso"]
         }
       ]
     },
-
     {
       "letter": "L",
       "contrasts": [
         {
-          "phoneme": "initial_l",
+          "phoneme": "l_sound",
           "ipa": "/l/",
-          "words": ["lion", "lamp", "leg", "leaf", "lake", "lock", "ladder", "lemon", "lady", "laugh"]
+          "words": ["L", "l"]
         },
         {
-          "phoneme": "final_l",
+          "phoneme": "l_vowels",
           "ipa": "/l/",
-          "words": ["ball", "bell", "fall", "wall", "doll", "call", "tail", "pool", "school", "mail"]
-        }
-      ]
-    },
-
-    {
-      "letter": "M",
-      "contrasts": [
-        {
-          "phoneme": "initial_m",
-          "ipa": "/m/",
-          "words": ["moon", "map", "mug", "mom", "man", "milk", "monkey", "mouse", "mitten", "mop"]
+          "words": ["la", "le", "li", "lo", "lu"]
         },
         {
-          "phoneme": "final_m",
-          "ipa": "/m/",
-          "words": ["ham", "jam", "dam", "gum", "drum", "plum", "room", "team", "arm", "farm"]
+          "phoneme": "l_syllables",
+          "ipa": "/l/",
+          "words": ["lola", "lata", "laso", "lobo", "ulo", "luma", "lalaki", "lamesa", "ulila", "alila", "malakas", "balita"]
         }
       ]
     },
-
-    {
-      "letter": "N",
-      "contrasts": [
-        {
-          "phoneme": "initial_n",
-          "ipa": "/n/",
-          "words": ["nest", "net", "nut", "nose", "neck", "nail", "nurse", "night", "name", "new"]
-        },
-        {
-          "phoneme": "final_n",
-          "ipa": "/n/",
-          "words": ["can", "fan", "man", "pen", "ten", "sun", "moon", "rain", "train", "brain"]
-        }
-      ]
-    },
-
-    {
-      "letter": "O",
-      "contrasts": [
-        {
-          "phoneme": "short_o",
-          "ipa": "/ɒ/",
-          "words": ["octopus", "on", "off", "ox", "odd", "olive", "otter", "orange", "ocean", "open"]
-        },
-        {
-          "phoneme": "long_o",
-          "ipa": "/oʊ/",
-          "words": ["over", "oval", "own", "old", "only", "oak", "bone", "rose", "home", "rope"]
-        }
-      ]
-    },
-
-    {
-      "letter": "P",
-      "contrasts": [
-        {
-          "phoneme": "initial_p",
-          "ipa": "/p/",
-          "words": ["pig", "pen", "pan", "pot", "pet", "park", "peach", "pizza", "pumpkin", "pin"]
-        },
-        {
-          "phoneme": "final_p",
-          "ipa": "/p/",
-          "words": ["cap", "map", "lap", "tap", "hop", "top", "mop", "pop", "stop", "cup"]
-        }
-      ]
-    },
-
-    {
-      "letter": "Q",
-      "contrasts": [
-        {
-          "phoneme": "qu_sound",
-          "ipa": "/kw/",
-          "words": ["queen", "quilt", "quick", "quiet", "quack", "question", "quarter", "quiz", "quail", "quote"]
-        },
-        {
-          "phoneme": "squ_sound",
-          "ipa": "/skw/",
-          "words": ["square", "squeeze", "squirrel", "squat", "squeak", "squad", "squeal", "squash", "squawk", "squire"]
-        }
-      ]
-    },
-
-    {
-      "letter": "R",
-      "contrasts": [
-        {
-          "phoneme": "initial_r",
-          "ipa": "/r/",
-          "words": ["rabbit", "rat", "rug", "run", "rain", "robot", "rocket", "rose", "ring", "river"]
-        },
-        {
-          "phoneme": "final_r",
-          "ipa": "/r/",
-          "words": ["car", "star", "far", "jar", "door", "bear", "ear", "four", "your", "chair"]
-        }
-      ]
-    },
-
-    {
-      "letter": "S",
-      "contrasts": [
-        {
-          "phoneme": "initial_s",
-          "ipa": "/s/",
-          "words": ["sun", "sock", "seal", "soup", "soap", "sand", "salt", "sink", "seven", "six"]
-        },
-        {
-          "phoneme": "final_s",
-          "ipa": "/s/",
-          "words": ["has", "is", "was", "his", "as", "these", "those", "please", "cheese", "boys"]
-        }
-      ]
-    },
-
-    {
-      "letter": "T",
-      "contrasts": [
-        {
-          "phoneme": "initial_t",
-          "ipa": "/t/",
-          "words": ["tree", "top", "ten", "tap", "tub", "tag", "truck", "turtle", "tiger", "tooth"]
-        },
-        {
-          "phoneme": "final_t",
-          "ipa": "/t/",
-          "words": ["cat", "hat", "bat", "rat", "sit", "hit", "pot", "hot", "cut", "nut"]
-        }
-      ]
-    },
-
-    {
-      "letter": "U",
-      "contrasts": [
-        {
-          "phoneme": "short_u",
-          "ipa": "/ʌ/",
-          "words": ["umbrella", "up", "under", "ugly", "umpire", "uncle", "until", "us", "utter", "bug"]
-        },
-        {
-          "phoneme": "long_u",
-          "ipa": "/juː/",
-          "words": ["unicorn", "uniform", "use", "useful", "user", "unite", "unit", "ukulele", "music", "cube"]
-        }
-      ]
-    },
-
-    {
-      "letter": "V",
-      "contrasts": [
-        {
-          "phoneme": "initial_v",
-          "ipa": "/v/",
-          "words": ["van", "vet", "vest", "vine", "vote", "vowel", "volcano", "violin", "vegetable", "valley"]
-        },
-        {
-          "phoneme": "final_v",
-          "ipa": "/v/",
-          "words": ["have", "give", "live", "love", "move", "above", "dove", "glove", "shove", "stove"]
-        }
-      ]
-    },
-
-    {
-      "letter": "W",
-      "contrasts": [
-        {
-          "phoneme": "initial_w",
-          "ipa": "/w/",
-          "words": ["whale", "web", "wig", "wind", "window", "wolf", "worm", "wagon", "water", "winter"]
-        },
-        {
-          "phoneme": "silent_w",
-          "ipa": "∅",
-          "words": ["write", "wrong", "wrap", "wrist", "answer", "saw", "draw", "law", "paw", "raw"]
-        }
-      ]
-    },
-
-    {
-      "letter": "X",
-      "contrasts": [
-        {
-          "phoneme": "x_final",
-          "ipa": "/ks/",
-          "words": ["box", "fox", "mix", "six", "ax", "ox", "fix", "wax", "tax", "relax"]
-        },
-        {
-          "phoneme": "x_initial",
-          "ipa": "/z/",
-          "words": ["xylophone", "x-ray", "xenon", "xerox", "xenops", "xenia", "xeric", "xylan", "xyster", "xenial"]
-        }
-      ]
-    },
-
     {
       "letter": "Y",
       "contrasts": [
         {
-          "phoneme": "initial_y",
+          "phoneme": "y_sound",
           "ipa": "/j/",
-          "words": ["yoyo", "yarn", "yell", "yes", "yellow", "yard", "year", "young", "yogurt", "yam"]
+          "words": ["Y", "y"]
         },
         {
-          "phoneme": "final_y",
-          "ipa": "/aɪ/",
-          "words": ["my", "by", "fly", "sky", "dry", "try", "cry", "why", "shy", "buy"]
+          "phoneme": "y_vowels",
+          "ipa": "/j/",
+          "words": ["ya", "ye", "yi", "yo", "yu"]
+        },
+        {
+          "phoneme": "y_syllables",
+          "ipa": "/j/",
+          "words": ["yaya", "iyo", "kayo", "yoyo", "tayo", "kuya", "saya", "kaya", "malayo", "biyaya", "may yoyo", "kay kuya"]
         }
       ]
     },
-
     {
-      "letter": "Z",
+      "letter": "Mga",
       "contrasts": [
         {
-          "phoneme": "initial_z",
-          "ipa": "/z/",
-          "words": ["zebra", "zoo", "zero", "zap", "zigzag", "zombie", "zipper", "zest", "zone", "zoom"]
+          "phoneme": "mga_plural",
+          "ipa": "/maŋa/",
+          "words": ["Mga", "mga"]
         },
         {
-          "phoneme": "final_z",
-          "ipa": "/z/",
-          "words": ["buzz", "fizz", "jazz", "fuzz", "whiz", "quiz", "topaz", "blitz", "waltz", "spritz"]
+          "phoneme": "mga_phrases",
+          "ipa": "/maŋa/",
+          "words": ["ang mga susi", "ang mga kasama", "may mga yoyo", "ang mga kamay mo", "ang mga laso at lobo"]
+        }
+      ]
+    },
+    {
+      "letter": "N",
+      "contrasts": [
+        {
+          "phoneme": "n_sound",
+          "ipa": "/n/",
+          "words": ["N", "n"]
+        },
+        {
+          "phoneme": "n_vowels",
+          "ipa": "/n/",
+          "words": ["na", "ne", "ni", "no", "nu"]
+        },
+        {
+          "phoneme": "n_syllables",
+          "ipa": "/n/",
+          "words": ["ina", "una", "sana", "sino", "noo", "nanalo", "nasaan", "kanin", "anim", "ang unan", "ang nanay", "bintana"]
+        }
+      ]
+    },
+    {
+      "letter": "G",
+      "contrasts": [
+        {
+          "phoneme": "g_sound",
+          "ipa": "/g/",
+          "words": ["G", "g"]
+        },
+        {
+          "phoneme": "g_syllables",
+          "ipa": "/g/",
+          "words": ["ga", "ge", "gi", "go", "gu"]
+        },
+        {
+          "phoneme": "g_syllable",
+          "ipa": "/g/",
+          "words": ["gugo", "gabi", "gaya", "gasa", "goto", "gusali", "gamot", "gatas", "kagabi", "gansa", "ilog", "malusog"]
+        }
+      ]
+    },
+    {
+      "letter": "R",
+      "contrasts": [
+        {
+          "phoneme": "r_sound",
+          "ipa": "/r/",
+          "words": ["R", "r"]
+        },
+        {
+          "phoneme": "r_vowels",
+          "ipa": "/r/",
+          "words": ["ra", "re", "ri", "ro", "ru"]
+        },
+        {
+          "phoneme": "r_syllables",
+          "ipa": "/r/",
+          "words": ["relo", "Rosa", "tara", "bara", "laro", "regalo", "raketa", "robot", "guro", "marami", "si Remi", "ang oras"]
+        }
+      ]
+    },
+    {
+      "letter": "P",
+      "contrasts": [
+        {
+          "phoneme": "p_sound",
+          "ipa": "/p/",
+          "words": ["P", "p"]
+        },
+        {
+          "phoneme": "p_syllables",
+          "ipa": "/p/",
+          "words": ["pa", "pe", "pi", "po", "pu"]
+        },
+        {
+          "phoneme": "p_syllables",
+          "ipa": "/p/",
+          "words": ["apa", "paa", "pusa", "piso", "pito", "pera", "piso", "papaya", "pipino", "paborito", "usap", "si Pepito"]
+        }
+      ]
+    },
+    {
+      "letter": "Ng",
+      "contrasts": [
+        {
+          "phoneme": "ng_sound",
+          "ipa": "/ŋ/",
+          "words": ["Ng", "ng"]
+        },
+        {
+          "phoneme": "ng_phrases",
+          "ipa": "/ŋ/",
+          "words": ["ng nanay", "ng aso", "ng maya", "amo ng aso", "ulo ng usa"]
+        }
+      ]
+    },
+    {
+      "letter": "D",
+      "contrasts": [
+        {
+          "phoneme": "d_sound",
+          "ipa": "/d/",
+          "words": ["D", "d"]
+        },
+        {
+          "phoneme": "d_vowels",
+          "ipa": "/d/",
+          "words": ["da", "de", "di", "do", "du"]
+        },
+        {
+          "phoneme": "d_syllables",
+          "ipa": "/d/",
+          "words": ["daga", "damo", "dala", "dila", "dapa", "dako", "dito", "dalaga", "dampa", "ang dagat", "sa dulo", "may daan"]
+        } 
+      ]
+    },
+    {
+      "letter": "H",
+      "contrasts": [
+        {
+          "phoneme": "h_sound",
+          "ipa": "/h/",
+          "words": ["H", "h"]
+        },
+        {
+          "phoneme": "h_vowels",
+          "ipa": "/h/",
+          "words": ["ha", "he", "hi", "ho", "hu"]
+        },
+        {
+          "phoneme": "h_syllables",
+          "ipa": "/h/",
+          "words": ["haba", "halo", "heto", "hita", "baha", "kaha", "haligi", "husay", "hipon", "harap", "ang holen", "ni Helen"]
+        }
+      ]
+    },
+    {
+      "letter": "W",
+      "contrasts": [
+        {
+          "phoneme": "w_sound",
+          "ipa": "/w/",
+          "words": ["W", "w"]
+        },
+        {
+          "phoneme": "w_vowels",
+          "ipa": "/w/",
+          "words": ["wa", "we", "wi", "wo", "wu"]
+        },
+        {
+          "phoneme": "wa_syllable",
+          "ipa": "/wa/",
+          "words": ["wala", "wika", "walo", "kawa", "kawali", "sawali", "uuwi", "kawawa", "naawa", "sa wakas", "si Wowi", "may walis"]
+        }
+      ]
+    },
+    {
+      "letter": "-ng",
+      "contrasts": [
+        {
+          "phoneme": "-ng_vowels",
+          "ipa": "/ŋ/",
+          "words": ["ang", "eng", "ing", "ong", "ung"]
+        },
+        {
+          "phoneme": "-ng_syllables",
+          "ipa": "/ŋ/",
+          "words": ["isang", "lamang", "tapang", "singsing", "saging", "bangka", "langka", "sungka", "lungga", "kangkong"]
+        }
+      ]
+    },
+    {
+      "letter": "ng-",
+      "contrasts": [
+        {
+          "phoneme": "ng-_vowels",
+          "ipa": "/ŋ/",
+          "words": ["nga", "nge", "ngi", "ngo", "ngu"]
+        },
+        {
+          "phoneme": "ng-_syllables",
+          "ipa": "/ŋ/",
+          "words": ["nganga", "nguso", "ngongo", "ngayon", "ngipin", "banga", "sanga", "bungi", "pango", "tainga"]
         }
       ]
     }
@@ -428,74 +467,148 @@
 
   "Passages": [
     {
-      "title": "Hickory Dickory Dock",
-      "author": "Mother Goose",
-      "category": "nursery rhyme",
-      "image": "Hickory",
-      "text": "Hickory dickory dock.\n The mouse ran up the clock.\n The clock struck one,\n The mouse ran down,\n Hickory dickory dock."
+      "title": "Ang Ama",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "Ang",
+      "aralin": 4,
+      "image": "",
+      "text": "Ang ama, aasa.\nSasama sa masa.\nSasama sa masa ang ama.\nSasama sa masa ang mama."
     },
     {
-      "title": "The Itsy Bitsy Spider",
-      "author": "Traditional Nursery Rhyme",
-      "category": "nursery rhyme",
+      "title": "Sa Misa",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "I",
+      "aralin": 5,
       "image": "",
-      "text": "The itsy bitsy spider climbed up the waterspout.\n Down came the rain and washed the spider out.\n Out came the sun and dried up all the rain,\n and the itsy bitsy spider climbed up the spout again."
+      "text": "Iisa ang misa.\nSasama sa misa si Sisa.\nSi Mimi, sasama sa misa.\nIsama sa misa si Ami."
     },
     {
-      "title": "Twinkle, Twinkle, Little Star",
-      "author": "Jane Taylor",
-      "category": "nursery rhyme",
+      "title": "Ang Amo",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "O",
+      "aralin": 6,
       "image": "",
-      "text": "Twinkle, twinkle, little star,\n How I wonder what you are!\n Up above the world so high,\n Like a diamond in the sky."
+      "text": "Maamo ang aso.\nSi Siso ang amo.\n\"Siso, isama mo ang aso.\"\nMaamo ang aso sa amo."
     },
     {
-      "title": "Humpty Dumpty",
-      "author": "Mother Goose",
-      "category": "nursery rhyme",
+      "title": "Maamo",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "Ay",
+      "aralin": 7,
       "image": "",
-      "text": "Humpty Dumpty sat on a wall,\n Humpty Dumpty had a great fall.\n All the king's horses and all the king's men\n Couldn't put Humpty together again."
+      "text": "Si Ami ay may aso.\nSi Mimi ay may oso.\nAng aso ay maamo.\nAng oso ay maamo.\nMaamo ang aso sa oso."
     },
     {
-      "title": "The Caterpillar",
-      "author": "Christina Rossetti",
-      "category": "poet",
+      "title": "Mais sa Mesa",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "E",
+      "aralin": 8,
       "image": "",
-      "text": "Brown and furry\n Caterpillar in a hurry,\n Take your walk\n To the shady leaf, or stalk,\n Or what not,\n Which may be the chosen spot.\n No toad spy you,\n Hovering bird of prey pass by you;"
+      "text": "Mama, mama\nMay mais sa mesa.\nAng mais ay isa.\nMay mais si Emi sa mesa."
     },
     {
-      "title": "Hey Diddle Diddle",
-      "author": "Mother Goose",
-      "category": "nursery rhyme",
+      "title": "Usa",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "U",
+      "aralin": 9,
       "image": "",
-      "text": "Hey diddle diddle,\n The cat and the fiddle,\n The cow jumped over the moon.\n The little dog laughed to see such sport,\n And the dish ran away with the spoon."
+      "text": "May usa si ama.\nIisa ang usa.\nAng usa ay umaasa.\nAng usa ay sumasama sa ama."
     },
     {
-      "title": "At the Zoo",
-      "author": "William Makepeace Thackeray",
-      "category": "poet",
+      "title": "Bibo ang Bibe",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "B",
+      "aralin": 10,
       "image": "",
-      "text": "First I saw the white bear, then I saw the black;\n Then I saw the camel with a hump upon his back;\n Then I saw the grey wolf, with mutton in his maw;\n Then I saw the wombat waddle in the straw;\n Then I saw the elephant a-waving of his trunk;\n Then I saw the monkeys—mercy, how unpleasantly they smelt!"
+      "text": "Emi, ang bibe mo ay babae.\nBibo ang bibe mo.\nIsasama mo ba ang bibe mo sa ibaba?"
     },
     {
-      "title": "Jack and Jill",
-      "author": "Mother Goose",
-      "category": "nursery rhyme",
+      "title": "Tutubi at Tuta",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "T",
+      "aralin": 11,
       "image": "",
-      "text": "Jack and Jill went up the hill\n To fetch a pail of water.\n Jack fell down and broke his crown,\n And Jill came tumbling after."
+      "text": "May tutubi sa mesa.\nSa ibaba, may tuta.\n\"Tito at tita,\ntumabi ang tutubi sa tuta.\""
     },
     {
-      "title": "The Rainbow",
-      "author": "Christina Rossetti",
-      "category": "poet",
+      "title": "Ako ay May Keso",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "K",
+      "aralin": 12,
       "image": "",
-      "text": "Boats sail on the rivers,\n And ships sail on the seas;\n But clouds that sail across the sky\n Are prettier far than these."
+      "text": "Kiko, may keso ako sa mesa.\nKika, may keso ako sa kama.\nTotoo, may keso ako sa mesa\nat kama. Kay Koko ang isa."
     },
     {
-      "title": "Baa, Baa, Black Sheep",
-      "author": "Mother Goose",
-      "category": "nursery rhyme",
+      "title": "Si Lili",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "L",
+      "aralin": 13,
       "image": "",
-      "text": "Baa, baa, black sheep,\n Have you any wool?\n Yes, sir, yes, sir,\n Three bags full;\n One for the master,\n And one for the dame,\n And one for the little boy\n Who lives down the lane."
+      "text": "Si Lili ay may laso.\nAng laso ay lila.\nAng laso ay luma.\nBaka kay lola ang laso ni Lili."
+    },
+    {
+      "title": "Si Kuya",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "Y",
+      "aralin": 14,
+      "image": "",
+      "text": "Si kuya ay masaya.\nSiya ay may yoyo.\nIto ay biyaya.\nSumama si kuya kay yaya.\nSila ay masaya."
+    },
+    {
+      "title": "May Mga Susi",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "Mga",
+      "aralin": 15,
+      "image": "",
+      "text": "May mga susi sa mesa.\nKay Lito ang mga susi sa mesa.\nAng mga susi sa kama ay kay\nYeye. Ang mga kuya ko ay may\nmga susi."
+    },
+    {
+      "title": "Nasaan ang Unan?",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "N",
+      "aralin": 16,
+      "image": "",
+      "text": "Nina, nasaan ang unan?\nAng anim na unan, nasaan?\nNina, ibalik ang mga unan sa\nkama."
+    },
+    {
+      "title": "Ang Gansa si Gibo",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "G",
+      "aralin": 17,
+      "image": "",
+      "text": "Si Gibo ay may gansa. Ang\ngansa ay si Gali. Sa ilog naliligo\nsi Gali. Si Gali ay malusog.\nKasama ni Gibo si Gali."
+    },
+    {
+      "title": "Si Rosa R. Romero",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "R",
+      "aralin": 18,
+      "image": "",
+      "text": "Si Rosa ay guro.\nGuro siya nina Remi.\nNag-aaral sila sa umaga.\nMasaya sina Remi sa guro nila."
+    },
+    {
+      "title": "Pusa ni Pepito",
+      "author": "Filipino Reading Material",
+      "category": "beginner",
+      "letter": "P",
+      "aralin": 19,
+      "image": "",
+      "text": "Si Pepito ay may pusa. Apat\nang mga pusa niya. Paborito ni\nPepito ang pusa na puti.\nPinakakain niya ito ng tinapay."
     }
   ]
 }

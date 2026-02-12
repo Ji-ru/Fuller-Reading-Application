@@ -77,7 +77,8 @@ export const SignUpUserCredentials = async (
     
     let readableDOB: string = '';
     if (userData.dateOfBirth) {
-      readableDOB = formatDateToReadable(userData.dateOfBirth);
+      const dob = new Date(userData.dateOfBirth); 
+      readableDOB = formatDateToReadable(dob);
     }
     
     // 3. Role-specific data

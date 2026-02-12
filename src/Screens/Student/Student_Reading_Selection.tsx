@@ -244,7 +244,7 @@ export default function PageSelectionScreen() {
           />
         )}
         {/* SCREEN TITLE */}
-        <Text style={selection.label}>Reading Materials</Text>
+        <Text style={selection.label}>Babasahin</Text>
         {/* IMAGE */}
         <View style={selection.image_text_container}>
           <Image
@@ -252,8 +252,8 @@ export default function PageSelectionScreen() {
             source={require('../../../assets/images/Abc-Reading.png')}
           />
           <View style={selection.textContainer}>
-            <Text style={selection.text}>Let the reading</Text>
-            <Text style={selection.beginText}>BEGIN!</Text>
+            <Text style={selection.text}>Tara na at</Text>
+            <Text style={selection.beginText}>MAGBASA!</Text>
           </View>
         </View>
 
@@ -273,7 +273,7 @@ export default function PageSelectionScreen() {
                 activeTab === 'alphabet' && selection.activeTabText,
               ]}
             >
-              Alphabet
+              Alpabeto
             </Text>
           </TouchableOpacity>
 
@@ -288,7 +288,7 @@ export default function PageSelectionScreen() {
                 activeTab === 'word' && selection.activeTabText,
               ]}
             >
-              Words
+              Mga Salita
             </Text>
           </TouchableOpacity>
 
@@ -306,7 +306,7 @@ export default function PageSelectionScreen() {
                 activeTab === 'passage' && selection.activeTabText,
               ]}
             >
-              Passages
+              Mga Talata
             </Text>
           </TouchableOpacity>
         </View>
@@ -316,7 +316,7 @@ export default function PageSelectionScreen() {
           {activeTab === 'alphabet' && (
             <>
               <Text style={selection.sublabel}>
-                Select a letter to practice:
+                Pumili ng letra na pagsasanayan:
               </Text>
               <FlatList
                 data={alphabetData}
@@ -332,7 +332,7 @@ export default function PageSelectionScreen() {
           {/* WORDS TAB */}
           {activeTab === 'word' && (
             <View style={selection.passageListContainer}>
-              <Text style={selection.sublabel}>Select a word to practice:</Text>
+              <Text style={selection.sublabel}>Pumili ng salita na pagsasanayan:</Text>
               {prepareWordsData.length > 0 ? (
                 <SectionList
                   sections={prepareWordsData}
@@ -344,14 +344,14 @@ export default function PageSelectionScreen() {
                   stickySectionHeadersEnabled={true}
                 />
               ) : (
-                <Text>No words available</Text>
+                <Text>Walang salita ang nahanap</Text>
               )}
             </View>
           )}
           {/* PASSAGES TAB */}
           {activeTab === 'passage' && (
             <View style={selection.passageListContainer}>
-              <Text style={selection.sublabel}>Select a passage:</Text>
+              <Text style={selection.sublabel}>Pumili ng talata na pagsasanayan:</Text>
               {passages.length > 0 ? (
                 <FlatList
                   data={passages}
@@ -361,7 +361,7 @@ export default function PageSelectionScreen() {
                   contentContainerStyle={{ paddingBottom: 20 }}
                 />
               ) : (
-                <Text>No passages available</Text>
+                <Text>Walang talata ang nahanap</Text>
               )}
             </View>
           )}
