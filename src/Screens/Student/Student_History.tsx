@@ -327,10 +327,10 @@ export default function ReadingHistoryScreen() {
           style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
         >
           <Text style={{ fontSize: 18, color: '#666' }}>
-            No reading history yet
+            Walang nakaraang pagbabasa...
           </Text>
           <Text style={{ marginTop: 10, color: '#999' }}>
-            Start reading passages to see your progress!
+            Simulan ang pagbasa para makita ang iyong pag-unlad!
           </Text>
         </View>
       </SafeAreaView>
@@ -415,7 +415,7 @@ export default function ReadingHistoryScreen() {
         {/* Header */}
         <View style={{ padding: 16 }}>
           <Text style={{ fontSize: 24, fontWeight: 'bold' }}>
-            Reading History
+            Nakaraang Pagbabasa
           </Text>
         </View>
 
@@ -491,28 +491,28 @@ export default function ReadingHistoryScreen() {
                           <View style={{ marginBottom: 8 }}>
                             <Text style={{ fontSize: 14, marginBottom: 2 }}>
                               <Text style={{ fontWeight: '500' }}>
-                                Accuracy:
+                                Katumpakan:
                               </Text>{' '}
                               {report.accuracyRate.toFixed(1)}%
                             </Text>
 
                             <Text style={{ fontSize: 14, marginBottom: 2 }}>
                               <Text style={{ fontWeight: '500' }}>
-                                Reading Speed:
+                                Bilis ng pagbasa:
                               </Text>{' '}
                               {report.wordPerMin} WPM
                             </Text>
 
                             <Text style={{ fontSize: 14, marginBottom: 2 }}>
                               <Text style={{ fontWeight: '500' }}>
-                                Duration:
+                                Tagal:
                               </Text>{' '}
                               {formatDuration(report.recordingDuration)}
                             </Text>
 
                             <Text style={{ fontSize: 14, marginBottom: 2 }}>
                               <Text style={{ fontWeight: '500' }}>
-                                Total Miscues:
+                                Kabuuang Mali:
                               </Text>{' '}
                               {totalMiscues}
                             </Text>
@@ -531,14 +531,14 @@ export default function ReadingHistoryScreen() {
                               <Text
                                 style={{ fontWeight: '600', marginBottom: 4 }}
                               >
-                                Miscue Details:
+                                Detalye:
                               </Text>
 
                               {/* Substitution */}
                               {report.substitution !== 'None' && (
                                 <View style={{ marginBottom: 4 }}>
                                   <Text style={{ fontWeight: '500' }}>
-                                    Substitution (
+                                    Pagpapalit (
                                     {getMiscueCount(report, 'substitution')}):
                                   </Text>
                                   <Text
@@ -553,7 +553,7 @@ export default function ReadingHistoryScreen() {
                               {report.omission !== 'None' && (
                                 <View style={{ marginBottom: 4 }}>
                                   <Text style={{ fontWeight: '500' }}>
-                                    Omission (
+                                    Kaligtaan (
                                     {getMiscueCount(report, 'omission')}):
                                   </Text>
                                   <Text
@@ -568,7 +568,7 @@ export default function ReadingHistoryScreen() {
                               {report.insertion !== 'None' && (
                                 <View style={{ marginBottom: 4 }}>
                                   <Text style={{ fontWeight: '500' }}>
-                                    Insertion (
+                                    Pagsingit (
                                     {getMiscueCount(report, 'insertion')}):
                                   </Text>
                                   <Text
@@ -583,7 +583,7 @@ export default function ReadingHistoryScreen() {
                               {report.repetition !== 'None' && (
                                 <View style={{ marginBottom: 4 }}>
                                   <Text style={{ fontWeight: '500' }}>
-                                    Repetition (
+                                    Pag-uulit (
                                     {getMiscueCount(report, 'repetition')}):
                                   </Text>
                                   <Text
@@ -605,7 +605,7 @@ export default function ReadingHistoryScreen() {
                                   fontStyle: 'italic',
                                 }}
                               >
-                                Perfect reading! No miscues detected.
+                                Mahusay! Walang natukoy na pagkakamali.
                               </Text>
                             </View>
                           )}
@@ -623,7 +623,7 @@ export default function ReadingHistoryScreen() {
                         marginTop: 8,
                       }}
                     >
-                      -- View more --
+                      -- Higit pa --
                     </Text>
                   )}
                 </View>
