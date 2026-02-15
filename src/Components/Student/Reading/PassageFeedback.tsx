@@ -48,22 +48,22 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           ]}
         >
           <Text style={readingStyles.calculationText}>
-            {isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+            {isCorrect ? '✓ Tama!' : '✗ Mali'}
           </Text>
         </View>
 
-        <Text style={readingStyles.feedbackLabel}>Result</Text>
+        <Text style={readingStyles.feedbackLabel}>Kalabasan</Text>
         <View style={readingStyles.feedbackContainer}>
           <Text style={readingStyles.feedbackText}>
-            Expected:{' '}
+            Inaasahan:{' '}
             <Text style={readingStyles.boldText}>
               {targetText.toUpperCase()}
             </Text>
           </Text>
           <Text style={readingStyles.feedbackText}>
-            You said:{' '}
+            Iyong bigkas:{' '}
             <Text style={readingStyles.boldText}>
-              {spokenText || '(nothing detected)'}
+              {spokenText || '(walang natukoy)'}
             </Text>
           </Text>
           <Text
@@ -80,7 +80,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           style={readingStyles.tryAgainButton}
           onPress={onTryAgain}
         >
-          <Text style={readingStyles.tryAgainText}>Try Again</Text>
+          <Text style={readingStyles.tryAgainText}>Ulitin</Text>
         </TouchableOpacity>
       </View>
     );
@@ -91,8 +91,8 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           {/* Message */}
           <Text style={readingStyles.waFeedbackMessage}>
             {isTextCorrect
-              ? 'You pronounced the it correctly!'
-              : 'Try again! Keep practicing.'}
+              ? 'Tama ang iyong pag bigkas!'
+              : 'Subukan muli!.'}
           </Text>
         </View>
 
@@ -101,7 +101,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           style={readingStyles.tryAgainButton}
           onPress={onTryAgain}
         >
-          <Text style={readingStyles.tryAgainText}>Try Again</Text>
+          <Text style={readingStyles.tryAgainText}>Subukan Muli</Text>
         </TouchableOpacity>
       </View>
     );
@@ -129,22 +129,22 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
         </Text>
       </View>
 
-      <Text style={readingStyles.feedbackLabel}>Feedback Report</Text>
+      <Text style={readingStyles.feedbackLabel}>Paguulat ng Katugunan</Text>
       <View style={readingStyles.feedbackContainer}>
         <Text
           style={[readingStyles.feedbackText, readingStyles.substitutionText]}
         >
-          Substitution:{' '}
+          Pagpapalit:{' '}
           {MiscueAnalysisService.formatMiscueWords(
             categorizedMiscues.substitution,
           )}
         </Text>
         <Text style={[readingStyles.feedbackText, readingStyles.omissionText]}>
-          Omission:{' '}
+          Kaligtaan:{' '}
           {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.omission)}
         </Text>
         <Text style={[readingStyles.feedbackText, readingStyles.insertionText]}>
-          Insertion:{' '}
+          Pagsingit:{' '}
           {MiscueAnalysisService.formatMiscueWords(
             categorizedMiscues.insertion,
           )}
@@ -152,7 +152,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
         <Text
           style={[readingStyles.feedbackText, readingStyles.repetitionText]}
         >
-          Repetition:{' '}
+          Pag-uulit:{' '}
           {MiscueAnalysisService.formatMiscueWords(
             categorizedMiscues.repetition,
           )}
@@ -163,7 +163,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
         style={readingStyles.tryAgainButton}
         onPress={onTryAgain}
       >
-        <Text style={readingStyles.tryAgainText}>Try Again</Text>
+        <Text style={readingStyles.tryAgainText}>Subukan Muli</Text>
       </TouchableOpacity>
     </View>
   );
