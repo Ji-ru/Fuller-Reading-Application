@@ -85,24 +85,24 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     switch (type) {
       case 'congratulations':
         return {
-          title: 'Congratulations!',
-          message: 'You got the alphabet correct! Great job! 🎉',
+          title: 'Napakahusay!',
+          message: 'Tumpak ang iyong pagbasa! 🎉',
         };
       case 'passageSuccess':
         return {
-          title: 'Excellent Reading!',
-          message: 'You read with 90%+ accuracy! Amazing work! 🎉',
+          title: 'Magaling!',
+          message: 'Maayos ang pagkabasa! Higit sa 90% ang pagkatumpak!🎉',
         };
         case 'goodJob':
           return {
-            title: "Good Job!",
-            message: 'Keep it up. You can do it better!',
+            title: "Panalo!",
+            message: 'Ipagpatuloy mo lang! Gagaling ka pa!',
           };
         default:
       case 'tryAgain':
         return {
-          title: "Let's Try Again!",
-          message: 'Practice makes perfect! Give it another try.',
+          title: "Subukan ulit.",
+          message: 'Sanayan lang yan. Isa pa!',
         };
     }
   };
