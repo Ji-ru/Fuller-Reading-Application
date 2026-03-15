@@ -30,6 +30,7 @@ import StudentMyClass from './src/Screens/Student/Student_MyClass';
 
 // FACULTY PAGES
 import FacultyTabNavigator from './src/Components/Faculty/NavigationBar/FacultyTabNavigator';
+import StudentTabNavigator from './src/Components/Student/NavigationBar/StudentTabNavigator';
 import MyStudents from './src/Screens/Faculty/Faculty_MyStudents';
 import StudentViewProfile from './src/Screens/Faculty/Faculty_Student_View_Profile';
 
@@ -60,6 +61,7 @@ function App() {
               <Stack.Screen name="SignUpCompleted" component={SignUpCompletedScreen} />
 
               {/* USER PAGES (STUDENT DASHBOARD WITH BACKGROUND MUSIC) */}
+              <Stack.Screen name="StudentTabs" component={StudentTabNavigator} />
               <Stack.Screen name="UserHome" component={withBackgroundMusic(UserHomeScreen)} />
               <Stack.Screen name="PassageSelection" component={withBackgroundMusic(PageSelectionScreen)} />
               <Stack.Screen name="ReadingActivity" component={withBackgroundMusic(ReadingActivityScreenPage)} />

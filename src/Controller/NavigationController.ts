@@ -65,6 +65,7 @@ export type RootStackParamList = {
   }
 
   FacultyTabs: undefined;
+  StudentTabs: undefined;
 };
 
 // A list of all the screens within RootStackParamList
@@ -192,7 +193,7 @@ export const useNavigationHelper = () => {
 
   const handleDesignatedUserPage = (role: string) => {
     if (role === 'student') {
-      navigation.replace('UserHome');
+      navigation.replace('StudentTabs');
     } else if (role === 'faculty') {
       navigation.replace('FacultyTabs');
     } else if (role === 'admin') {
