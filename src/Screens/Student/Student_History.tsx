@@ -9,14 +9,14 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import auth from '@react-native-firebase/auth';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-
+import { getAuth } from '@react-native-firebase/auth';
+const auth = getAuth();
 /**
  * Interface for grouped report data by passage
  * Each passage contains multiple reading attempts with their reports
@@ -105,7 +105,7 @@ export default function ReadingHistoryScreen() {
   const fetchReports = async () => {
     try {
       setIsLoading(true);
-      const user = auth().currentUser;
+      const user = auth.currentUser;
 
       if (!user) {
         Alert.alert('Error', 'No authenticated user found');
@@ -351,6 +351,7 @@ export default function ReadingHistoryScreen() {
           <View style={upperNav.header}>
             <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
               <Image
+                style={upperNav.backButtonIcon}
                 source={require('../../../assets/icons/BackButton-icon.png')}
               />
             </TouchableOpacity>

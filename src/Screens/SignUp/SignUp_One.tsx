@@ -191,6 +191,7 @@ export default function SignUpOneScreen() {
           <TextInput
             style={signup.textInputForm}
             placeholder="e.g Juan "
+            placeholderTextColor="#A9A9A9"
             value={firstName}
             onChangeText={setFirstName}
           />
@@ -199,6 +200,7 @@ export default function SignUpOneScreen() {
           <TextInput
             style={signup.textInputForm}
             placeholder="e.g Marasigan"
+            placeholderTextColor="#A9A9A9"
             value={middleName}
             onChangeText={setMiddleName}
           />
@@ -208,6 +210,7 @@ export default function SignUpOneScreen() {
           <TextInput
             style={signup.textInputForm}
             placeholder="e.g Campus"
+            placeholderTextColor="#A9A9A9"
             value={lastName}
             onChangeText={setLastName}
           />

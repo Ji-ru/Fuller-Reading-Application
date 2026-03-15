@@ -2,23 +2,29 @@
 // React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used in this file.
 // Use hooks only inside React function components or hooks that start with 'use'.
 import { Miscue } from '../Interfaces/miscue';
-import { MiscueReportDocument, WordReportDocument, AlphabetReportDocument } from '../Interfaces/dataInterfaces';
+import { MiscueReportDocument, WordReportDocument, AlphabetReportDocument, AlphabetAttemptUpdate, WordAttemptUpdate } from '../Interfaces/dataInterfaces';
 import { getAuth } from '@react-native-firebase/auth';
-import firestore, {
+import {
   getFirestore,
   collection,
   getDocs,
+  getDoc,
   query,
   where,
   doc,
   serverTimestamp,
   setDoc,
-  onSnapshot
+  onSnapshot,
+  increment,
+  arrayUnion,
+  arrayRemove,
+  updateDoc
 } from '@react-native-firebase/firestore';
 import { StudentProgressResult } from '../Interfaces/miscue';
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
 import { ProgressData } from '../Interfaces/miscue';
 import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import { makeTodayKey } from '../Utilities/currentDateUtils';
 
 // Initialize instances
 const auth = getAuth();
@@ -43,7 +49,7 @@ export const MiscueReportController = {
       const { substitution, omission, insertion, repetition } =
         MiscueReportController.generateMiscueSummary(miscues);
 
-      const miscueReportRef = collection(db, 'wordCompeleted');
+      const miscueReportRef = collection(db, 'miscueReports');
       const miscueDocRef = doc(miscueReportRef);
       const reportId = miscueDocRef.id;
 
@@ -93,6 +99,7 @@ export const MiscueReportController = {
       // ======================================================================
       await setDoc(miscueDocRef, reportData);
 
+      console.log('Storing Complete!: ' + reportData.passageTitle)
 
       return reportId;
     } catch (error: any) {
@@ -157,10 +164,12 @@ export const MiscueReportController = {
     return { substitution, omission, insertion, repetition };
   },
 
+  // ==========================================================================
+  // WORD DOCUMENT STORING AND RETRIEVING
+  // ==========================================================================
   /**
-   * ==========================================================================
    * STORE CORRECT WORD PRONUNCIATION
-   * ==========================================================================
+   * 
    * Stores a word that has attempted to read by the student
    * @param letter - Alphabet Letter of the word
    * @param word  - Selected word attempted to read
@@ -178,7 +187,7 @@ export const MiscueReportController = {
    *  createdAt: 7 February 2026 at 14:00:03 UTC+8
    * }
    */
-  async storeWordCorrectAttempt(letter: string, word: string): Promise<WordReportDocument> {
+  async storeWordCorrectAttempt(chapter: number, chapterTitle: string, lesson: number, lessonTitle: string, word: string): Promise<WordReportDocument> {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -189,7 +198,10 @@ export const MiscueReportController = {
       // Check if this word has already been completed by this student
       const existing = await MiscueReportController.hasWordBeenCompleted(
         user.uid,
-        letter,
+        chapter,
+        chapterTitle,
+        lesson,
+        lessonTitle,
         word,
       );
       if (existing) {
@@ -197,13 +209,16 @@ export const MiscueReportController = {
         return existing;
       }
       // Create document reference with auto-generated ID
-      const wordCompleteRef = collection(db, 'wordCompeleted');
+      const wordCompleteRef = collection(db, 'wordCompleted');
       const wordDocRef = doc(wordCompleteRef);
       const wordId = wordDocRef.id;
       const wordData = {
         wordId,
         studentId: user.uid,
-        letter,
+        chapter,
+        chapterTitle,
+        lesson,
+        lessonTitle,
         word,
         createdAt: serverTimestamp(),
       };
@@ -211,7 +226,13 @@ export const MiscueReportController = {
       // Use setDoc with document reference
       await setDoc(wordDocRef, wordData);
 
-      return wordId;
+      // Read back the document to get the actual Timestamp (and ensure full data)
+      const newWordSnap = await getDoc(wordDocRef);
+      if (!newWordSnap.exists()) {
+        throw new Error('Document was created but could not be retrieved.');
+      }
+
+      return newWordSnap.data() as WordReportDocument;
     } catch (error: any) {
       throw Error('Failed to store correct word attempt:' + error.message);
     }
@@ -226,7 +247,10 @@ export const MiscueReportController = {
    */
   async hasWordBeenCompleted(
     studentId: string,
-    letter: string,
+    chapter: number,
+    chapterTitle: string,
+    lesson: number,
+    lessonTitle: string,
     word: string
   ): Promise<WordReportDocument | null> {
     try {
@@ -234,7 +258,7 @@ export const MiscueReportController = {
       const wordQuery = query(
         wordCompleteRef,
         where('studentId', '==', studentId),
-        where('letter', '==', letter),
+        where('chapter', '==', chapter),
         where('word', '==', word),
       );
 
@@ -256,9 +280,141 @@ export const MiscueReportController = {
   },
 
   /**
+ * Starts the session for word every time the student read the selected cahpter, lesson, and then the word
+ * 
+ * @returns initialization of the current alphabet reading session 
+ */
+  async startWordSession(): Promise<string> {
+    const user = auth.currentUser; // RN Firebase style
+    if (!user) throw new Error('No authenticated user.');
+
+    const todayKey = makeTodayKey();
+    const sessionId = `${user.uid}_${todayKey}`;
+
+    const sessionRef = doc(db, 'wordSessions', sessionId);
+
+    const snap = await getDoc(sessionRef);
+    if (snap.exists()) return sessionId;
+
+    await setDoc(sessionRef, {
+      wordSessionId: sessionId,
+      studentId: user.uid,
+      dateKey: todayKey,
+      startedAt: serverTimestamp(),
+      totals: { attempted: 0, correct: 0 },
+      chapters: {},
+    });
+
+    return sessionId;
+  },
+  async recordWordAttempt(
+    sessionId: string,
+    chapters: {
+      chapterId: number;
+      chapterTitle: string;
+      lessonId: number;
+      lessonTitle: string;
+      targetWord: string;
+    },
+    update: WordAttemptUpdate,
+  ): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No authenticated user.');
+  
+    const chapterKey = `ch_${chapters.chapterId}`;
+    const lessonKey = `ls_${chapters.lessonId}`;
+  
+    const sessionRef = doc(db, 'wordSessions', sessionId);
+    const updates: Record<string, any> = {};
+  
+    // --- totals
+    if (update.incAttempted) updates['totals.attempted'] = increment(1);
+    if (update.incCorrect) updates['totals.correct'] = increment(1);
+  
+    // --- chapter aggregates
+    if (update.incAttempted) updates[`chapters.${chapterKey}.attempted`] = increment(1);
+    if (update.incCorrect) updates[`chapters.${chapterKey}.correct`] = increment(1);
+  
+    // --- chapter metadata
+    updates[`chapters.${chapterKey}.chapterId`] = chapters.chapterId;
+    updates[`chapters.${chapterKey}.chapterTitle`] = chapters.chapterTitle;
+  
+    // --- lesson aggregates
+    if (update.incAttempted)
+      updates[`chapters.${chapterKey}.lessons.${lessonKey}.attempted`] = increment(1);
+    if (update.incCorrect)
+      updates[`chapters.${chapterKey}.lessons.${lessonKey}.correct`] = increment(1);
+  
+    // --- lesson metadata
+    updates[`chapters.${chapterKey}.lessons.${lessonKey}.lessonId`] = chapters.lessonId;
+    updates[`chapters.${chapterKey}.lessons.${lessonKey}.lessonTitle`] = chapters.lessonTitle;
+  
+    // --- word lists
+    const basePath = `chapters.${chapterKey}.lessons.${lessonKey}`;
+    const word = chapters.targetWord;
+  
+    if (update.addTargetWord) {
+      updates[`${basePath}.targetWords`] = arrayUnion(word);
+    }
+  
+    if (update.addCorrectWord) {
+      updates[`${basePath}.correctWords`] = arrayUnion(word);
+    }
+  
+    if (update.addIncorrectWord) {
+      updates[`${basePath}.incorrectWords`] = arrayUnion(word);
+    }
+  
+    if (update.removeIncorrectWord) {
+      updates[`${basePath}.incorrectWords`] = arrayRemove(word);
+    }
+  
+    if (Object.keys(updates).length === 0) return;
+    await updateDoc(sessionRef, updates);
+  },
+
+  /**
    * ==========================================================================
+   * GET COMPLETED WORDS BY STUDENT
+   * ==========================================================================
+   * Retrieves all completed words for a specific student
+   * @param studentId - Firebase Auth UID of the student
+   * @returns Array of completed word objects
+   */
+  async getCompletedWords(
+    studentId: string,
+  ): Promise<Array<{ word: string; chapter: string; createdAt: any }>> {
+    try {
+      // Build query using modular functions
+      const wordCompletedRef = collection(db, 'wordCompleted');
+      const q = query(
+        wordCompletedRef,
+        where('studentId', '==', studentId),
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      return querySnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
+        const data = doc.data();
+        return {
+          word: data.word,
+          chapter: data.chapter,
+          createdAt: data.createdAt?.toDate(),
+        };
+      });
+    } catch (error: any) {
+      console.error('Failed to fetch completed words:', error);
+      return [];
+    }
+  },
+
+  // ==========================================================================
+  // ALPHABET LETTERS DOCUMENT STORING AND RETRIEVING
+  // ==========================================================================
+
+  /**
    * STORE CORRECT ALPHABET PHONEME
-   * ==========================================================================
+   * 
    * Stores a word that has attempted to read by the student
    * @param letter - Selected alphabet that was read
    * @returns stores the data into the firestore and returns the Letter ID
@@ -281,9 +437,10 @@ export const MiscueReportController = {
         return existing;
       }
 
-      const alphabetCompleteRef = collection(db, 'alphabetCompeleted');
+      const alphabetCompleteRef = collection(db, 'alphabetCompleted');
       const alphabetDocRef = doc(alphabetCompleteRef);
       const alphabetId = alphabetDocRef.id;
+
       const alphabetData = {
         alphabetId,
         studentId: user.uid,
@@ -294,9 +451,15 @@ export const MiscueReportController = {
       // Use setDoc with document reference
       await setDoc(alphabetDocRef, alphabetData);
 
-      return alphabetId;
+      // Read back the document to get the actual Timestamp (and ensure full data)
+      const newAlphabetSnap = await getDoc(alphabetDocRef);
+      if (!newAlphabetSnap.exists()) {
+        throw new Error('Document was created but could not be retrieved.');
+      }
+
+      return newAlphabetSnap.data() as AlphabetReportDocument;
     } catch (error: any) {
-      throw Error('Failed to store correct word attempt:' + error.message);
+      throw Error('Failed to store correct alphabet attempt:' + error.message);
     }
   },
 
@@ -311,7 +474,7 @@ export const MiscueReportController = {
     letter: string,
   ): Promise<AlphabetReportDocument | null> {
     try {
-      const alphabetCompleteRef = collection(db, 'wordCompleted');
+      const alphabetCompleteRef = collection(db, 'alphabetCompleted');
       const alphabetQuery = query(
         alphabetCompleteRef,
         where('studentId', '==', studentId),
@@ -335,35 +498,67 @@ export const MiscueReportController = {
   },
 
   /**
-   * ==========================================================================
-   * GET COMPLETED WORDS BY STUDENT
-   * ==========================================================================
-   * Retrieves all completed words for a specific student
-   * @param studentId - Firebase Auth UID of the student
-   * @returns Array of completed word objects
+   * Starts the session for alphabet every time the student read the selected letter
+   * 
+   * @returns initialization of the current alphabet reading session 
    */
-  async getCompletedWords(
-    studentId: string,
-  ): Promise<Array<{ word: string; letter: string; createdAt: any }>> {
-    try {
-      const snapshot = await firestore()
-        .collection('wordCompleted')
-        .where('studentId', '==', studentId)
-        .orderBy('createdAt', 'desc')
-        .get();
+  async startAlphabetSession(): Promise<string> {
+    const user = auth.currentUser; // RN Firebase style
+    if (!user) throw new Error('No authenticated user.');
 
-      return snapshot.docs.map(doc => ({
-        word: doc.data().word,
-        letter: doc.data().letter,
-        createdAt: doc.data().createdAt,
-      }));
-    } catch (error: any) {
-      console.error('Failed to fetch completed words:', error);
-      return [];
-    }
+    const todayKey = makeTodayKey();
+    const sessionId = `${user.uid}_${todayKey}`;
+
+    const sessionRef = doc(db, 'alphabetSessions', sessionId);
+
+    const snap = await getDoc(sessionRef);
+    if (snap.exists()) return sessionId;
+
+    await setDoc(sessionRef, {
+      alphabetSessionId: sessionId,
+      studentId: user.uid,
+      dateKey: todayKey, // <-- IMPORTANT for range queries
+      sessionDateAt: serverTimestamp(), // Considered as startAt
+      correctCount: 0,
+      attemptedCount: 0,
+      correctLetters: [],
+      incorrectLetters: [],
+    });
+
+    return sessionId;
   },
 
-  // ==========================================================================================================================
+  async recordAlphabetAttempt(
+    sessionId: string,
+    letter: string,
+    update: AlphabetAttemptUpdate,
+  ): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No authenticated user.');
+
+    const cleanLetter = letter.replace(/[^A-Za-z]/g, '').toUpperCase();
+    if (!cleanLetter) return;
+
+    const sessionRef = doc(db, 'alphabetSessions', sessionId);
+
+    const updates: any = {};
+
+    if (update.incAttempted) updates.attemptedCount = increment(1);
+    if (update.incCorrect) updates.correctCount = increment(1);
+
+    if (update.addCorrect) updates.correctLetters = arrayUnion(cleanLetter);
+    if (update.addIncorrect) updates.incorrectLetters = arrayUnion(cleanLetter);
+    if (update.removeIncorrect) updates.incorrectLetters = arrayRemove(cleanLetter);
+
+    if (Object.keys(updates).length === 0) return;
+
+    await updateDoc(sessionRef, updates);
+  },
+
+
+  // ==========================================================================
+  // STUDENT PASSAGE DOCUMENT RETRIEVING
+  // ==========================================================================
 
   /**
    * UPDATED TO React Native Firebase v22
@@ -443,13 +638,13 @@ export const MiscueReportController = {
    */
   getStudentCompletedAlphabet(studentId: string, onUpdate: (alphabets: AlphabetReportDocument[]) => void) {
     try {
-      const alphabetQuery = query(collection(db, 'alphabetCompeleted'), where('studentId', '==', studentId));
+      const alphabetQuery = query(collection(db, 'alphabetCompleted'), where('studentId', '==', studentId));
       return onSnapshot(alphabetQuery, snapshot => {
         const alphabets = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
           ...doc.data(),
           alphabetId: doc.id
         })) as AlphabetReportDocument[];
-        console.log('Alphebet objects retrieved: ' + alphabets);
+        console.log('Alphebet objects retrieved: ' + JSON.stringify(alphabets));
         onUpdate(alphabets);
       });
     } catch (error: any) {

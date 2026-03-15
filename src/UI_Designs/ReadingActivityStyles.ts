@@ -5,12 +5,16 @@ const readingStyles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     backgroundColor: '#ECFBFF',
-    padding: 10,
     position: 'relative',
+  },
+  screenScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
   },
   insideContainer: {
     justifyContent: 'flex-start',
     position: 'relative',
+    padding: 10,
     zIndex: 1,
   },
   item: {
@@ -31,12 +35,6 @@ const readingStyles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
-  category: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
-    fontStyle: 'italic',
-  },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -53,22 +51,28 @@ const readingStyles = StyleSheet.create({
 
   // FEEDBACK
   passageContainer: {
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 12,
+    backgroundColor: '#E8F4FF',
+    borderColor: '#38B6FF',
+    borderWidth: 4,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 30,
     elevation: 5,
     marginBottom: 10,
     alignSelf: 'center',
     flexShrink: 1,
   },
   passageContainerFeedback: {
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 12,
+    backgroundColor: '#E8F4FF',
+    borderColor: '#38B6FF',
+    borderWidth: 4,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 30,
     elevation: 5,
     alignSelf: 'center',
     flexShrink: 1,
-    marginBottom: 10,
+    marginBottom: 15,
   },
   passageTitle: {
     fontSize: 25,
@@ -82,55 +86,75 @@ const readingStyles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
   },
-  textContainer: {
-    marginTop: 10,
-    fontSize: 25,
-  },
+
   textLine: {
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 23,
+    lineHeight: 30,
     textAlign: 'center',
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Comfortaa-Regular',
   },
   readingImage: {
     width: 230,
     height: 230,
     maxHeight: 250,
     maxWidth: 250,
+    marginTop: 15,
+    marginBottom: 15,
+    borderRadius: 20,
+    borderWidth: 10,
+    borderColor: 'white',
     alignSelf: 'center',
   },
-  substitutionText: {
+  substitutionBgColor: {
     color: '#FF2726',
+    backgroundColor: '#FF9E9C4D',
   },
-  omissionText: {
+  omissionBgColor: {
     color: '#FF941A',
+    backgroundColor: '#FEC97A4D',
   },
-  insertionText: {
+  insertionBgColor: {
     color: '#1A81FF',
+    backgroundColor: '#38B6FF4D',
   },
-  repetitionText: {
+  repetitionBgColor: {
     color: '#BF00DD',
+    backgroundColor: '#7D44EE4D',
   },
+  miscueRow: {
+    borderRadius: 5,
+    padding: 5,
+    marginBottom: 5
+  },
+
   // MICROPHONE
   microphoneContainer: {
-    marginTop: 50,
     alignItems: 'center',
   },
   microphone: {
     backgroundColor: '#84D6F2',
-    borderRadius: 50,
+    borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
-    height: 100,
+    width: 150,
+    height: 150,
+    elevation: 5
   },
   microphoneRecording: {
     backgroundColor: '#FF9E9C',
-    borderRadius: 50,
+    borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
-    height: 100,
+    width: 150,
+    height: 150,
+    elevation: 5
+  },
+  microphoneIcon: {
+    width: 150,
+    height: 150,
+    maxWidth: 150,
+    maxHeight: 150,
+    elevation: 5
   },
 
   // TESTING
@@ -244,18 +268,48 @@ const readingStyles = StyleSheet.create({
   // FEEDBACK REPORT
   feedbackContainer: {
     backgroundColor: '#ffff',
-    padding: 10,
-    borderRadius: 5,
+    borderColor: '#38B6FF',
+    borderWidth: 4,
+    borderRadius: 30,
     elevation: 5,
+    position: 'relative',
+    overflow: 'visible'
   },
-  feedbackText: {
-    fontSize: 15,
-    fontFamily: 'Satoshi-Medium',
+  feedbackTitleWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3B7FC9',
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    marginBottom: 5
   },
   feedbackLabel: {
     fontSize: 15,
     padding: 5,
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'DynaPuff-Bold',
+    color: '#3B7FC9'
+  },
+  feedbackBookicon: {
+    position: 'absolute',
+    top: -45,
+    left: -30,
+    width: 130,
+    height: 130,
+    zIndex: 2,
+  },
+  miscueRowsWrapper: {
+    paddingHorizontal: 5,
+    paddingVertical: 10
+  },
+
+  feedbackLabelText: {
+    fontSize: 18,
+    fontFamily: 'Comforta-VariableFont_wght',
+    fontWeight: 'bold'
+  },
+  feedbackValueText: {
+    fontSize: 18,
+    fontFamily: 'Comfortaa-Medium',
   },
   boldText: {
     fontWeight: 'bold',
@@ -275,18 +329,33 @@ const readingStyles = StyleSheet.create({
   // TRY AGAIN BUTTON
   tryAgainButton: {
     backgroundColor: '#FFDB58',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 24,
-    borderRadius: 10,
-    marginTop: 20,
+    borderRadius: 30,
+    marginTop: 10,
+    justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
   },
-
   tryAgainText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  tryAgainIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    alignContent: 'center',
+    verticalAlign: 'middle',
+    // alignSelf: 'center'
+  },
+  tryAgainContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // ALPHABET DISPLAY STYLE
@@ -357,7 +426,7 @@ const readingStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-    marginBottom: 120
+    marginBottom: 120,
   },
 
   wordCard: {
@@ -368,7 +437,7 @@ const readingStyles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#1a73e8',
     elevation: 6,
-    marginBottom: 100
+    marginBottom: 100,
   },
 
   wordCardText: {
@@ -385,7 +454,7 @@ const readingStyles = StyleSheet.create({
     textAlign: 'center',
   },
 
-    // =====================================
+  // =====================================
   // WORD & ALPHABET FEEDBACK CARD STYLES
   // =====================================
 
@@ -451,6 +520,97 @@ const readingStyles = StyleSheet.create({
     fontFamily: 'Satoshi-Medium',
   },
 
+  // For backgound image
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+    transform: [{ scale: 1.1 }],
+  },
+  backgroundResultImage: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.8,
+    transform: [{ scale: 1.0001 }],
+  },
+  bgImage: {
+    flex: 1,
+  },
+  starRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    zIndex: 1
+  },
+  starWrapper: {
+    marginHorizontal: -14,
+  },
+  starIcon: {
+    width: 155,
+    height: 155,
+  },
+  starSection: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  
+  starConfetti: {
+    position: 'absolute',
+    top: -40,
+    left: 0,
+    right: 0,
+    height: 180,
+    zIndex: 0,
+  },
+
+  passageGreetingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 5,
+    marginBottom: 5,
+  },
+
+  passageGreetingTitle: {
+    fontSize: 30,
+    textAlign: 'center',
+    fontFamily: 'DynaPuff-Bold',
+    color: '#7A5A2B',
+  },
+  passageScrollView: {
+    maxHeight: 170,
+    width: '100%',
+
+  },
+  passageScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  passageTextWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    width: '100%',
+  },
+
+  // Scroll View Hint
+  scrollHintOverlay: {
+    position: 'absolute',
+    bottom: 18,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(59, 127, 201, 0.9)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    elevation: 6,
+  },
+  scrollHintText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'Comfortaa-Bold',
+    textAlign: 'center',
+  },
+  
 });
 
 export default readingStyles;

@@ -16,7 +16,8 @@ import StudentMiscueAnalytics from '../../Components/Faculty/StudentView_Status/
 import StudentTopMiscuePassageAndWords from '../../Components/Faculty/StudentView_Status/Student_TopPassage&TopWords';
 import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-
+import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
+import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
 /**
  * BASIC INFORMATION
  *  - First Name
@@ -265,9 +266,8 @@ export default function StudentViewProfile() {
           <View style={styles.wpmChartContainer}>
             {chartData.map((item, index) => {
               const height = (item.wpm / maxWPM) * maxHeight;
-              const barColor = `hsl(${
-                160 + (item.wpm / maxWPM) * 40
-              }, 70%, 50%)`;
+              const barColor = `hsl(${160 + (item.wpm / maxWPM) * 40
+                }, 70%, 50%)`;
 
               return (
                 <View key={index} style={styles.wpmBarWrapper}>
@@ -323,11 +323,21 @@ export default function StudentViewProfile() {
             </Text>
           </View>
 
+          {/* ALPHABET MASTERY AND ACCURACY */}
+          <View style={styles.section}>
+            <StudentAlphabetMastery studentId={studentId} />
+          </View>
+
+          {/* WORD MASTERY AND ACCURACY */}
+          <View style={styles.section}>
+            <StudentWordMastery studentId={studentId} />
+          </View>
+
           {/* READING STATISTICS */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Reading Statistics</Text>
-            <StudentMiscueAnalytics studentId={studentId}/>          
-            <StudentTopMiscuePassageAndWords studentId={studentId}/>
+            <StudentMiscueAnalytics studentId={studentId} />
+            <StudentTopMiscuePassageAndWords studentId={studentId} />
           </View>
 
           {/* PROGRESS */}
@@ -338,7 +348,7 @@ export default function StudentViewProfile() {
             <PerformanceSummary data={progress} /> */}
           </View>
 
-          <StudentActivityTrackingCard studentId={studentId}/>
+          <StudentActivityTrackingCard studentId={studentId} />
 
           {/* REFRESH */}
           {/* <TouchableOpacity style={styles.refreshButton} onPress={refresh}>
@@ -607,7 +617,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 2,
     opacity: 0.4,
-  },  
+  },
   chartLabel: {
     fontSize: 10,
     color: '#64748b',

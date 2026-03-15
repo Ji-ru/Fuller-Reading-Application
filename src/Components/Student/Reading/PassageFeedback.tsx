@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Miscue } from '../../../Interfaces/miscue';
 import { MiscueAnalysisService } from '../../../Controller/MiscueAnalysisServiceController';
 import readingStyles from '../../../UI_Designs/ReadingActivityStyles';
+import Svg, { Text as SvgText } from 'react-native-svg';
 
 interface ReadingFeedbackProps {
   targetText: string;
@@ -54,13 +55,13 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
 
         <Text style={readingStyles.feedbackLabel}>Result</Text>
         <View style={readingStyles.feedbackContainer}>
-          <Text style={readingStyles.feedbackText}>
+          <Text style={readingStyles.feedbackLabelText}>
             Expected:{' '}
             <Text style={readingStyles.boldText}>
               {targetText.toUpperCase()}
             </Text>
           </Text>
-          <Text style={readingStyles.feedbackText}>
+          <Text style={readingStyles.feedbackLabelText}>
             You said:{' '}
             <Text style={readingStyles.boldText}>
               {spokenText || '(nothing detected)'}
@@ -68,7 +69,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           </Text>
           <Text
             style={[
-              readingStyles.feedbackText,
+              readingStyles.feedbackLabelText,
               isCorrect ? readingStyles.successText : readingStyles.errorText,
             ]}
           >
@@ -123,47 +124,117 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
 
   return (
     <View>
-      <View style={readingStyles.calculationContainer}>
+      {/* <View style={readingStyles.calculationContainer}>
         <Text style={readingStyles.calculationText}>
           {feedback} - {accuracy}%
         </Text>
-      </View>
-
-      <Text style={readingStyles.feedbackLabel}>Feedback Report</Text>
+      </View> */}
       <View style={readingStyles.feedbackContainer}>
-        <Text
-          style={[readingStyles.feedbackText, readingStyles.substitutionText]}
-        >
-          Substitution:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.substitution,
-          )}
-        </Text>
-        <Text style={[readingStyles.feedbackText, readingStyles.omissionText]}>
-          Omission:{' '}
-          {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.omission)}
-        </Text>
-        <Text style={[readingStyles.feedbackText, readingStyles.insertionText]}>
-          Insertion:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.insertion,
-          )}
-        </Text>
-        <Text
-          style={[readingStyles.feedbackText, readingStyles.repetitionText]}
-        >
-          Repetition:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.repetition,
-          )}
-        </Text>
+        <Image style={readingStyles.feedbackBookicon} source={require('../../../../assets/icons/Book-icon.png')} />
+        <View style={readingStyles.feedbackTitleWrapper}>
+          {/* <Text style={readingStyles.feedbackLabel}>Reading Result</Text> */}
+          <Svg height={50} width={350}>
+            <SvgText
+              x={215}                 // center X
+              y={35}                  // baseline Y
+              fontSize={20}
+              fontFamily="DynaPuff-Bold"
+              textAnchor="middle"     // center align
+              fill="none"          // inside color
+              stroke="#FFFFFF"        // outline color
+              strokeWidth={4}         // outline thickness
+              strokeLinejoin='round'
+            >
+              Reading Summary Result
+            </SvgText>
+            <SvgText
+              x={215}
+              y={35}
+              fontSize={20}
+              fontFamily="DynaPuff-Bold"
+              textAnchor="middle"
+              fill="#3B7FC9"
+            >
+              Reading Summary Result
+            </SvgText>
+          </Svg>
+        </View>
+        <View style={readingStyles.miscueRowsWrapper}>
+          {/* SUBSTITUTION */}
+          <Text style={[readingStyles.substitutionBgColor, readingStyles.miscueRow]}>
+            <Text style={readingStyles.feedbackLabelText}>
+              Substitution:{' '}
+            </Text>
+            <Text style={readingStyles.feedbackValueText}>
+              {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.substitution)}
+            </Text>
+          </Text>
+
+          {/* OMISSION */}
+          <Text style={[readingStyles.omissionBgColor, readingStyles.miscueRow]}>
+            <Text style={readingStyles.feedbackLabelText}>
+              Omission:{' '}
+            </Text>
+            <Text style={readingStyles.feedbackValueText}>
+              {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.omission)}
+            </Text>
+          </Text>
+
+          {/* INSERTION */}
+          <Text style={[readingStyles.insertionBgColor, readingStyles.miscueRow]}>
+            <Text style={readingStyles.feedbackLabelText}>
+              Insertion:{' '}
+            </Text>
+            <Text style={readingStyles.feedbackValueText}>
+              {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.insertion)}
+            </Text>
+          </Text>
+
+          {/* REPETITION */}
+          <Text style={[readingStyles.repetitionBgColor, readingStyles.miscueRow]}>
+            <Text style={readingStyles.feedbackLabelText}>
+              Repetition:{' '}
+            </Text>
+            <Text style={readingStyles.feedbackValueText}>
+              {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.repetition)}
+            </Text>
+          </Text>
+        </View>
       </View>
 
       <TouchableOpacity
         style={readingStyles.tryAgainButton}
         onPress={onTryAgain}
       >
-        <Text style={readingStyles.tryAgainText}>Try Again</Text>
+        {/* <Text style={readingStyles.tryAgainText}>Try Again</Text> */}
+        <View style={readingStyles.tryAgainContent}>
+          <Image style={readingStyles.tryAgainIcon} source={require('../../../../assets/icons/Retry-icon.png')} />
+          <Svg height={35} width={200}>
+            <SvgText
+              x={100}                 // center X
+              y={26}                  // baseline Y
+              fontSize={30}
+              fontFamily="DynaPuff-Bold"
+              textAnchor="middle"     // center align
+              fill="none"          // inside color
+              stroke="#3B7FC9"        // outline color
+              strokeWidth={6}         // outline thickness
+              strokeLinejoin='round'
+            >
+              Try Again?
+            </SvgText>
+            <SvgText
+              x={100}
+              y={26}
+              fontSize={30}
+              fontFamily="DynaPuff-Bold"
+              textAnchor="middle"
+              fill="#D7E9FF"
+            >
+              Try Again?
+            </SvgText>
+          </Svg>
+        </View>
       </TouchableOpacity>
     </View>
   );

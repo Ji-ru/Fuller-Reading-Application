@@ -7,6 +7,7 @@ interface UseAccuracyTrendsOptions {
   timeRange: 'week' | 'month' | 'year';
   filterType: 'overall' | 'class';
   classId?: string;
+  academicYear?: string;
 }
 
 export const useAccuracyTrends = (
@@ -26,8 +27,9 @@ export const useAccuracyTrends = (
       timeRange: options.timeRange,
       filterType: options.filterType,
       classId: options.classId,
+      academicYear: options.academicYear,
     }),
-    [options.timeRange, options.filterType, options.classId],
+    [options.timeRange, options.filterType, options.classId, options.academicYear],
   );
 
   useEffect(() => {
@@ -46,8 +48,8 @@ export const useAccuracyTrends = (
 
         const filter =
           normalizedOptions.filterType === 'class' && normalizedOptions.classId
-            ? { type: 'class' as const, classId: normalizedOptions.classId }
-            : { type: 'overall' as const };
+            ? { type: 'class' as const, classId: normalizedOptions.classId, acadYear: normalizedOptions.academicYear }
+            : { type: 'overall' as const, acadYear: normalizedOptions.academicYear };
 
         const data = await getStudentsAccuracy(
           facultyId,
@@ -71,6 +73,7 @@ export const useAccuracyTrends = (
     normalizedOptions.timeRange,
     normalizedOptions.filterType,
     normalizedOptions.classId,
+    normalizedOptions.academicYear,
   ]);
 
   return { chartData, loading, error };

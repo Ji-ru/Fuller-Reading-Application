@@ -3,7 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ApplicationProvider } from '@ui-kitten/components';
+import { withBackgroundMusic } from './src/Components/GlobalUse/Background/Student_Bq_Music';
 import * as eva from '@eva-design/eva';
+import { GlobalMusicProvider } from './src/Components/GlobalUse/Background/GlobalMusicContext';
 
 // ========================================================================
 // PAGES
@@ -24,7 +26,7 @@ import PageSelectionScreen from './src/Screens/Student/Student_Reading_Selection
 import ReadingActivityScreenPage from './src/Screens/Student/Student_Reading_Activity';
 import ReadingHistoryScreen from './src/Screens/Student/Student_History';
 import StudentProfile from './src/Screens/Student/Student_Profile';
-// import FacultyStack from './FacultyStack';
+import StudentMyClass from './src/Screens/Student/Student_MyClass';
 
 // FACULTY PAGES
 import FacultyTabNavigator from './src/Components/Faculty/NavigationBar/FacultyTabNavigator';
@@ -42,39 +44,42 @@ function App() {
   return (
     <ApplicationProvider {...eva} theme={eva.light}>
       <SafeAreaProvider>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+        <GlobalMusicProvider>
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
 
-            {/* SIGN IN PAGES */}
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Loading" component={LoadingScreen} />
-            <Stack.Screen name="Profile" component={StudentProfile} />
+              {/* SIGN IN PAGES */}
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Loading" component={LoadingScreen} />
+              <Stack.Screen name="Profile" component={withBackgroundMusic(StudentProfile)} />
 
-            {/* SIGNUP PAGES */}
-            <Stack.Screen name="ChooseRole" component={ChooseRole} />
-            <Stack.Screen name="SignUpOne" component={SignUpOneScreen} />
-            <Stack.Screen name="SignUpTwo" component={SignUpTwoScreen} />
-            <Stack.Screen name="SignUpCompleted" component={SignUpCompletedScreen} />
+              {/* SIGNUP PAGES */}
+              <Stack.Screen name="ChooseRole" component={ChooseRole} />
+              <Stack.Screen name="SignUpOne" component={SignUpOneScreen} />
+              <Stack.Screen name="SignUpTwo" component={SignUpTwoScreen} />
+              <Stack.Screen name="SignUpCompleted" component={SignUpCompletedScreen} />
 
-            {/* USER PAGES */}
-            <Stack.Screen name="UserHome" component={UserHomeScreen} />
-            <Stack.Screen name="PassageSelection" component={PageSelectionScreen} />
-            <Stack.Screen name="ReadingActivity" component={ReadingActivityScreenPage} />
-            <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
+              {/* USER PAGES (STUDENT DASHBOARD WITH BACKGROUND MUSIC) */}
+              <Stack.Screen name="UserHome" component={withBackgroundMusic(UserHomeScreen)} />
+              <Stack.Screen name="PassageSelection" component={withBackgroundMusic(PageSelectionScreen)} />
+              <Stack.Screen name="ReadingActivity" component={withBackgroundMusic(ReadingActivityScreenPage)} />
+              <Stack.Screen name="ReadingHistory" component={withBackgroundMusic(ReadingHistoryScreen)} />
+              <Stack.Screen name="StudentMyClass" component={withBackgroundMusic(StudentMyClass)} />
 
-            {/* FACULTY PAGES */}
-            <Stack.Screen name="FacultyTabs" component={FacultyTabNavigator} />
-            <Stack.Screen name="MyStudents" component={MyStudents} />
-            <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
+              {/* FACULTY PAGES */}
+              <Stack.Screen name="FacultyTabs" component={FacultyTabNavigator} />
+              <Stack.Screen name="MyStudents" component={MyStudents} />
+              <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
 
-            {/* ADMIN PAGES */}
-            <Stack.Screen name='AdminDashboard' component={AdminDashboard} />
-            <Stack.Screen name='AdminUserManagement' component={AdminUserManagement} />
-            <Stack.Screen name='AdminViewFacultyData' component={AdminViewFacultyData} />
+              {/* ADMIN PAGES */}
+              <Stack.Screen name='AdminDashboard' component={AdminDashboard} />
+              <Stack.Screen name='AdminUserManagement' component={AdminUserManagement} />
+              <Stack.Screen name='AdminViewFacultyData' component={AdminViewFacultyData} />
 
 
-          </Stack.Navigator>
-        </NavigationContainer>
+            </Stack.Navigator>
+          </NavigationContainer>
+        </GlobalMusicProvider>
       </SafeAreaProvider>
     </ApplicationProvider>
   );

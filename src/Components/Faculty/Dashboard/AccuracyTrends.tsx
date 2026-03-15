@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+// AccuracyTrends.tsx
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +13,6 @@ import {
 import Svg, { Line, Circle, Polyline, Text as SvgText } from 'react-native-svg';
 
 type TimeRange = 'week' | 'month' | 'year';
-type FilterType = 'overall' | 'class';
 
 interface ClassOption {
   classId: string;
@@ -22,6 +22,15 @@ interface ClassOption {
 
 interface AccuracyTrendsChartProps {
   facultyId?: string | null;
+  filter: {
+    academicYear: string;
+    selectedView: string;
+  };
+  onFilterChange?: (filter: {
+    academicYear: string;
+    selectedView: string;
+  }) => void;
+  academicYears?: string[];
 }
 
 // Import your hooks
@@ -36,67 +45,76 @@ const TIME_RANGES: { label: string; value: TimeRange }[] = [
 
 const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
   facultyId = null,
+  filter,
+  onFilterChange,
+  academicYears = [],
 }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
-  const [filterType, setFilterType] = useState<FilterType>('overall');
-  const [selectedClass, setSelectedClass] = useState<ClassOption | null>(null);
   const [showClassModal, setShowClassModal] = useState(false);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  // Fetch real accuracy data
-  const {
-    chartData: accuracyData,
-    loading,
-    error,
-  } = useAccuracyTrends(facultyId, {
-    timeRange,
-    filterType,
-    classId: selectedClass?.classId,
-  });
+  const { academicYear, selectedView } = filter;
+  const isOverall = selectedView === 'overall';
 
-  // Fetch faculty classes for the dropdown using your existing hook
+  // Fetch faculty classes for the modal using your existing hook
   const {
     classes: facultyClasses,
     loading: classesLoading,
     error: classesError,
   } = useFacultyClassesFilter(facultyId);
 
-  const handleClassSelect = useCallback((classItem: ClassOption) => {
-    setSelectedClass(classItem);
+  // Find selected class name for display
+  const selectedClassName = useMemo(() => {
+    if (isOverall) return 'Overall Reading Health';
+    const selectedClass = facultyClasses.find(c => c.classId === selectedView);
+    return selectedClass?.className || 'Select Class';
+  }, [isOverall, selectedView, facultyClasses]);
+
+  // Determine if scrolling is needed for year view
+  const needsScroll = timeRange === 'year';
+
+  // Fetch real accuracy data based on parent filter
+  const {
+    chartData: accuracyData,
+    loading,
+    error,
+  } = useAccuracyTrends(facultyId, {
+    timeRange,
+    filterType: isOverall ? 'overall' : 'class',
+    classId: isOverall ? undefined : selectedView,
+    academicYear,
+  });
+
+  const handleClassSelect = (classItem: ClassOption) => {
     setShowClassModal(false);
-  }, []);
+    onFilterChange?.({
+      academicYear,
+      selectedView: classItem.classId,
+    });
+  };
 
-  const handleFilterChange = useCallback(
-    (type: FilterType) => {
-      setFilterType(type);
-      if (type === 'class') {
-        // If we have classes, auto-select first one
-        if (!selectedClass && facultyClasses.length > 0) {
-          setSelectedClass(facultyClasses[0]);
-        }
-        // Show modal if no classes available
-        if (facultyClasses.length === 0) {
-          setShowClassModal(true);
-        }
-      } else if (type === 'overall') {
-        setSelectedClass(null);
-      }
-    },
-    [facultyClasses, selectedClass],
-  );
+  const handleFilterTypeChange = (type: 'overall' | 'class') => {
+    onFilterChange?.({
+      academicYear,
+      selectedView: type === 'overall' ? 'overall' : selectedView,
+    });
+    setShowFilterDropdown(false);
+  };
 
-  useEffect(() => {
-    // Auto-select first class when switching to class view
-    if (filterType === 'class' && !selectedClass && facultyClasses.length > 0) {
-      setSelectedClass(facultyClasses[0]);
-    }
-  }, [filterType, facultyClasses, selectedClass]);
+  const handleAcademicYearChange = (year: string) => {
+    onFilterChange?.({
+      academicYear: year,
+      selectedView: 'overall', // Reset to overall when changing year
+    });
+    setShowYearDropdown(false);
+  };
 
   // Transform accuracy data for the chart (memoized)
   const chartData = useMemo(
     () =>
       accuracyData.map(item => ({
-        label: item.date,
+        label: item.date, // Already formatted label from hook
         value: item.accuracy,
       })),
     [accuracyData],
@@ -111,7 +129,12 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
   const hasData = values.length > 0;
 
   // Chart dimensions
-  const chartWidth = 320;
+  const baseChartWidth = 320;
+  // For year: 50px per month ensures all labels fit nicely
+  const chartWidth = needsScroll 
+    ? Math.max(chartData.length * 50, 600) 
+    : baseChartWidth;
+  
   const chartHeight = 200;
   const paddingLeft = 40;
   const paddingRight = 20;
@@ -120,6 +143,15 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
   const plotWidth = chartWidth - paddingLeft - paddingRight;
   const plotHeight = chartHeight - paddingTop - paddingBottom;
 
+  // Generate Y-axis labels: 0%, 20%, 40%, 60%, 80%, 100%
+  const generateYAxisLabels = useCallback(() => {
+    const labels = [];
+    for (let i = 100; i >= 0; i -= 20) {
+      labels.push(i);
+    }
+    return labels;
+  }, []);
+
   // Calculate chart calculations only once, regardless of data state
   const chartCalculations = useMemo(() => {
     if (!hasData) {
@@ -127,7 +159,7 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
         minValue: 0,
         maxValue: 0,
         average: 0,
-        yAxisLabels: [0, 0, 0],
+        yAxisLabels: generateYAxisLabels(),
         points: [],
         polylinePoints: '',
         trendDirection: '→' as const,
@@ -138,13 +170,13 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
 
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
-    const yAxisMin = Math.floor(minValue / 10) * 10;
-    const yAxisMax = Math.ceil(maxValue / 10) * 10;
+    const yAxisMin = 0; // Always start at 0 for accuracy percentage
+    const yAxisMax = 100; // Always end at 100 for accuracy percentage
     const yRange = yAxisMax - yAxisMin || 1;
 
     const average = values.reduce((sum, val) => sum + val, 0) / values.length;
 
-    const yAxisLabels = [yAxisMax, (yAxisMax + yAxisMin) / 2, yAxisMin];
+    const yAxisLabels = generateYAxisLabels();
 
     // Convert data to points
     const points = chartData.map((item, index) => {
@@ -160,7 +192,7 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
             ((item.value - yAxisMin) / yRange) * plotHeight
           : paddingTop + plotHeight;
 
-      return { x, y, value: item.value };
+      return { x, y, value: item.value, label: item.label };
     });
 
     // Create polyline path (only for points with value > 0)
@@ -191,19 +223,9 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
       trendPercentage,
       trendColor,
     };
-  }, [
-    chartData,
-    values,
-    hasData,
-    paddingLeft,
-    plotWidth,
-    paddingTop,
-    plotHeight,
-  ]);
+  }, [chartData, values, hasData, generateYAxisLabels]);
 
   const {
-    minValue,
-    maxValue,
     average,
     yAxisLabels,
     points,
@@ -225,7 +247,6 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
     }
   }, [trendDirection]);
 
-  // You can also change the insight text color based on trend
   const insightTextStyle = useMemo(() => {
     switch (trendDirection) {
       case '↑':
@@ -236,6 +257,7 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
         return styles.insightTextStable;
     }
   }, [trendDirection]);
+
   const insightMessage = useMemo(() => {
     if (!hasData) return '';
 
@@ -244,37 +266,138 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
     switch (trendDirection) {
       case '↑':
         return `Reading accuracy improved by ${change}%, indicating positive progress in students’ reading performance over the selected period.`;
-
       case '↓':
         return `Reading accuracy declined by ${change}%, suggesting possible reading difficulties that may require targeted intervention.`;
-
       default:
         return 'Reading accuracy remained stable, indicating consistent reading performance over the selected period.';
     }
   }, [trendDirection, trendPercentage, hasData]);
 
+  // Render the chart SVG
+  const renderChart = () => (
+    <Svg width={chartWidth} height={chartHeight}>
+      {/* Grid lines */}
+      {yAxisLabels.map((label, index) => {
+        const y = paddingTop + (index / (yAxisLabels.length - 1)) * plotHeight;
+        return (
+          <Line
+            key={`grid-${label}`}
+            x1={paddingLeft}
+            y1={y}
+            x2={paddingLeft + plotWidth}
+            y2={y}
+            stroke="#F3F4F6"
+            strokeWidth="1"
+          />
+        );
+      })}
+
+      {/* Y-axis labels */}
+      {yAxisLabels.map((label, index) => {
+        const y = paddingTop + (index / (yAxisLabels.length - 1)) * plotHeight;
+        return (
+          <SvgText
+            key={`ylabel-${label}`}
+            x={paddingLeft - 10}
+            y={y + 5}
+            fontSize="10"
+            fill="#6B7280"
+            textAnchor="end"
+            fontFamily="Satoshi-Bold"
+          >
+            {label}%
+          </SvgText>
+        );
+      })}
+
+      {/* Line (only if we have at least 2 points with values) */}
+      {points.filter(p => p.value > 0).length >= 2 && (
+        <Polyline
+          points={polylinePoints}
+          fill="none"
+          stroke="#4CAF50"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
+
+      {/* Data points with value labels */}
+      {points
+        .filter(point => point.value > 0)
+        .map((point, index) => (
+          <React.Fragment key={`point-${index}`}>
+            <SvgText
+              x={point.x}
+              y={point.y - 12}
+              fontSize="9"
+              fill="#4CAF50"
+              textAnchor="middle"
+              fontFamily="Satoshi-Bold"
+            >
+              {point.value.toFixed(1)}%
+            </SvgText>
+            <Circle
+              cx={point.x}
+              cy={point.y}
+              r="5"
+              fill="#4CAF50"
+              stroke="#fff"
+              strokeWidth="2"
+            />
+          </React.Fragment>
+        ))}
+
+      {/* X-axis labels */}
+      {points.map((point, index) => {
+        // Show labels based on time range to avoid overcrowding
+        let showLabel = false;
+        
+        if (timeRange === 'week') {
+          showLabel = true; // Show all days
+        } else if (timeRange === 'month') {
+          showLabel = true // Every week
+        } else if (timeRange === 'year') {
+          showLabel = true; // Show all months (they're scrollable)
+        }
+
+        if (!showLabel) return null;
+
+        return (
+          <SvgText
+            key={`xlabel-${index}`}
+            x={point.x}
+            y={chartHeight - 10}
+            fontSize="9"
+            fill="#6B7280"
+            textAnchor="middle"
+            fontFamily="Satoshi-Bold"
+          >
+            {point.label}
+          </SvgText>
+        );
+      })}
+    </Svg>
+  );
+
   // Handle loading state for accuracy data
   if (loading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={styles.titleRow}>
-              <View style={styles.iconWrapper}>
-                <Text style={styles.titleIcon}>📊</Text>
-              </View>
-              <View style={styles.titleContent}>
-                <Text style={styles.title}>
-                  Student Reading Performance Insights
-                </Text>
-                <Text style={styles.subtitle}>Loading data...</Text>
-              </View>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.titleRow}>
+            <View style={styles.iconWrapper}>
+              <Text style={styles.titleIcon}>📊</Text>
+            </View>
+            <View style={styles.titleContent}>
+              <Text style={styles.title}>Accuracy Trends</Text>
+              <Text style={styles.subtitle}>Loading data...</Text>
             </View>
           </View>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4CAF50" />
-            <Text style={styles.loadingText}>Loading accuracy data...</Text>
-          </View>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <Text style={styles.loadingText}>Loading accuracy data...</Text>
         </View>
       </View>
     );
@@ -282,44 +405,40 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
 
   if (error) {
     return (
-      <View style={styles.container}>
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={styles.titleRow}>
-              <View style={styles.iconWrapper}>
-                <Text style={styles.titleIcon}>📊</Text>
-              </View>
-              <View style={styles.titleContent}>
-                <Text style={styles.title}>
-                  Student Reading Performance Insights
-                </Text>
-                <Text style={styles.subtitle}>Error loading data</Text>
-              </View>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.titleRow}>
+            <View style={styles.iconWrapper}>
+              <Text style={styles.titleIcon}>📊</Text>
+            </View>
+            <View style={styles.titleContent}>
+              <Text style={styles.title}>Accuracy Trends</Text>
+              <Text style={styles.subtitle}>Error loading data</Text>
             </View>
           </View>
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Failed to load data</Text>
-            <Text style={styles.errorSubtext}>{error}</Text>
-          </View>
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load data</Text>
+          <Text style={styles.errorSubtext}>{error}</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View>
       {/* FILTER SECTION */}
-      <View style={styles.filterSection}>
-        <View style={styles.filtersRow}>
-          {/* Filter Type Dropdown */}
-          <View style={styles.filterItem}>
+      {/* <View style={styles.filterSection}>
+        <View style={styles.filtersRow}> */}
+          {/* Filter Type (Overall/Class) */}
+          {/* <View style={styles.filterItem}>
             <TouchableOpacity
               style={styles.filterButton}
               onPress={() => setShowFilterDropdown(!showFilterDropdown)}
               activeOpacity={0.7}
             >
-              <Text style={styles.filterButtonText}>
-                {filterType === 'overall' ? '📊 Overall' : '📚 By Class'}
+              <Text style={styles.filterButtonText} numberOfLines={1}>
+                {isOverall ? '📊 Overall' : `📚 ${selectedClassName}`}
               </Text>
               <Text style={styles.filterArrow}>
                 {showFilterDropdown ? '▲' : '▼'}
@@ -331,66 +450,107 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
                 <TouchableOpacity
                   style={[
                     styles.filterDropdownOption,
-                    filterType === 'overall' &&
-                      styles.filterDropdownOptionSelected,
+                    isOverall && styles.filterDropdownOptionSelected,
                   ]}
-                  onPress={() => {
-                    handleFilterChange('overall');
-                    setShowFilterDropdown(false);
-                  }}
+                  onPress={() => handleFilterTypeChange('overall')}
                 >
                   <Text
                     style={[
                       styles.filterDropdownOptionText,
-                      filterType === 'overall' &&
-                        styles.filterDropdownOptionTextSelected,
+                      isOverall && styles.filterDropdownOptionTextSelected,
                     ]}
                   >
                     📊 Overall
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterDropdownOption,
-                    filterType === 'class' &&
-                      styles.filterDropdownOptionSelected,
-                  ]}
-                  onPress={() => {
-                    handleFilterChange('class');
-                    setShowFilterDropdown(false);
-                  }}
-                >
-                  <Text
+                
+                {facultyClasses.length > 0 && (
+                  <TouchableOpacity
                     style={[
-                      styles.filterDropdownOptionText,
-                      filterType === 'class' &&
-                        styles.filterDropdownOptionTextSelected,
+                      styles.filterDropdownOption,
+                      !isOverall && styles.filterDropdownOptionSelected,
                     ]}
+                    onPress={() => {
+                      setShowClassModal(true);
+                      setShowFilterDropdown(false);
+                    }}
                   >
-                    📚 By Class
-                  </Text>
-                </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.filterDropdownOptionText,
+                        !isOverall && styles.filterDropdownOptionTextSelected,
+                      ]}
+                    >
+                      📚 Select Class...
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
-          </View>
+          </View> */}
 
-          {/* Class Selector (only shows when filterType is 'class') */}
-          {filterType === 'class' && (
+          {/* Academic Year Filter */}
+          {/* {academicYears.length > 0 && (
             <View style={styles.filterItem}>
               <TouchableOpacity
                 style={styles.filterButton}
-                onPress={() => setShowClassModal(true)}
+                onPress={() => setShowYearDropdown(!showYearDropdown)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.filterButtonText} numberOfLines={1}>
-                  {selectedClass?.className || 'Choose class'}
+                <Text style={styles.filterButtonText}>
+                  {academicYear || 'All Years'}
                 </Text>
-                <Text style={styles.filterArrow}>▼</Text>
+                <Text style={styles.filterArrow}>
+                  {showYearDropdown ? '▲' : '▼'}
+                </Text>
               </TouchableOpacity>
+
+              {showYearDropdown && (
+                <View style={styles.filterDropdownMenu}>
+                  <ScrollView>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterDropdownOption,
+                        !academicYear && styles.filterDropdownOptionSelected,
+                      ]}
+                      onPress={() => handleAcademicYearChange('')}
+                    >
+                      <Text
+                        style={[
+                          styles.filterDropdownOptionText,
+                          !academicYear && styles.filterDropdownOptionTextSelected,
+                        ]}
+                      >
+                        All Years
+                      </Text>
+                    </TouchableOpacity>
+
+                    {academicYears.map((year: string) => (
+                      <TouchableOpacity
+                        key={year}
+                        style={[
+                          styles.filterDropdownOption,
+                          academicYear === year && styles.filterDropdownOptionSelected,
+                        ]}
+                        onPress={() => handleAcademicYearChange(year)}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownOptionText,
+                            academicYear === year && styles.filterDropdownOptionTextSelected,
+                          ]}
+                        >
+                          {year}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
             </View>
-          )}
-        </View>
-      </View>
+          )} */}
+        {/* </View>
+      </View> */}
 
       {/* CHART CARD */}
       <View style={styles.card}>
@@ -403,11 +563,12 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
             <View style={styles.titleContent}>
               <Text style={styles.title}>Accuracy Trends</Text>
               <Text style={styles.subtitle}>
+                {!isOverall && `Class: ${selectedClassName} • `}
                 {timeRange === 'week'
                   ? 'Last 7 days'
                   : timeRange === 'month'
                   ? 'Last 4 weeks'
-                  : 'Last 12 months'}
+                  : 'School Year (Jun - Aug)'}
               </Text>
             </View>
           </View>
@@ -442,8 +603,8 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
             <Text style={styles.noDataIcon}>📊</Text>
             <Text style={styles.noDataTitle}>No data of student yet</Text>
             <Text style={styles.noDataText}>
-              {filterType === 'class' && selectedClass
-                ? `No reading reports found for ${selectedClass.className}`
+              {!isOverall
+                ? `No reading reports found for ${selectedClassName}`
                 : 'No reading reports found for the selected period'}
             </Text>
           </View>
@@ -460,14 +621,6 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>
-                  {maxValue.toFixed(1)}
-                  <Text style={styles.statUnit}>%</Text>
-                </Text>
-                <Text style={styles.statLabel}>Highest</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: trendColor }]}>
                   {trendDirection} {Math.abs(parseFloat(trendPercentage))}
                   <Text style={styles.statUnit}>%</Text>
@@ -475,98 +628,26 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
                 <Text style={styles.statLabel}>Trend</Text>
               </View>
             </View>
+
             {/* Performance Insights */}
             <View style={insightContainerStyle}>
               <Text style={insightTextStyle}>{insightMessage}</Text>
             </View>
 
-            {/* Chart */}
+            {/* Chart - with conditional scrolling for year view */}
             <View style={styles.chartContainer}>
-              <Svg width={chartWidth} height={chartHeight}>
-                {/* Grid lines */}
-                {yAxisLabels.map((label, index) => {
-                  const y =
-                    paddingTop +
-                    (index / (yAxisLabels.length - 1)) * plotHeight;
-                  return (
-                    <Line
-                      key={`grid-${index}`}
-                      x1={paddingLeft}
-                      y1={y}
-                      x2={chartWidth - paddingRight}
-                      y2={y}
-                      stroke="#F3F4F6"
-                      strokeWidth="1"
-                    />
-                  );
-                })}
-
-                {/* Y-axis labels */}
-                {yAxisLabels.map((label, index) => {
-                  const y =
-                    paddingTop +
-                    (index / (yAxisLabels.length - 1)) * plotHeight;
-                  return (
-                    <SvgText
-                      key={`ylabel-${index}`}
-                      x={paddingLeft - 10}
-                      y={y + 5}
-                      fontSize="12"
-                      fill="#6B7280"
-                      textAnchor="end"
-                      fontFamily="Satoshi-Bold"
-                    >
-                      {label.toFixed(0)}%
-                    </SvgText>
-                  );
-                })}
-
-                {/* Line (only if we have at least 2 points with values) */}
-                {points.filter(p => p.value > 0).length >= 2 && (
-                  <Polyline
-                    points={polylinePoints}
-                    fill="none"
-                    stroke="#4CAF50"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                )}
-
-                {/* Data points (only for non-zero values) */}
-                {points
-                  .filter(point => point.value > 0)
-                  .map((point, index) => (
-                    <Circle
-                      key={`point-${index}`}
-                      cx={point.x}
-                      cy={point.y}
-                      r="5"
-                      fill="#4CAF50"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    />
-                  ))}
-
-                {/* X-axis labels */}
-                {chartData.map((item, index) => {
-                  const x =
-                    paddingLeft + (index / (chartData.length - 1)) * plotWidth;
-                  return (
-                    <SvgText
-                      key={`xlabel-${index}`}
-                      x={x}
-                      y={chartHeight - 10}
-                      fontSize="11"
-                      fill="#6B7280"
-                      textAnchor="middle"
-                      fontFamily="Satoshi-Bold"
-                    >
-                      {item.label}
-                    </SvgText>
-                  );
-                })}
-              </Svg>
+              {needsScroll ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={true}
+                  style={styles.scrollView}
+                  contentContainerStyle={styles.scrollContent}
+                >
+                  {renderChart()}
+                </ScrollView>
+              ) : (
+                renderChart()
+              )}
             </View>
 
             {/* Legend */}
@@ -629,8 +710,7 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
                   <TouchableOpacity
                     style={[
                       styles.classItem,
-                      selectedClass?.classId === item.classId &&
-                        styles.selectedClassItem,
+                      selectedView === item.classId && styles.selectedClassItem,
                     ]}
                     onPress={() => handleClassSelect(item)}
                     activeOpacity={0.7}
@@ -646,7 +726,7 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
                         </Text>
                       </View>
                     </View>
-                    {selectedClass?.classId === item.classId && (
+                    {selectedView === item.classId && (
                       <View style={styles.checkmark}>
                         <Text style={styles.checkmarkText}>✓</Text>
                       </View>
@@ -660,18 +740,14 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFB',
-  },
   // FILTER SECTION
   filterSection: {
-    marginBottom: 10,
+    marginBottom: 16,
   },
   filtersRow: {
     flexDirection: 'row',
@@ -683,17 +759,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 1000,
   },
-  filterLabel: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
-    marginBottom: 6,
-  },
   filterButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 14,
@@ -751,7 +821,7 @@ const styles = StyleSheet.create({
   // CARD
   card: {
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     elevation: 2,
@@ -759,7 +829,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
-    minHeight: 400,
   },
   cardHeader: {
     marginBottom: 20,
@@ -770,8 +839,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     backgroundColor: '#E8F5E9',
     justifyContent: 'center',
@@ -788,72 +857,74 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Satoshi-Bold',
     color: '#1F2937',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 13,
     fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
+    color: '#6B7280',
   },
 
   // TIME RANGE SELECTOR
   rangeSelector: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F9FAFB',
     borderRadius: 10,
     padding: 4,
-    alignSelf: 'flex-start',
   },
   rangeButton: {
-    paddingHorizontal: 16,
+    flex: 1,
     paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    minWidth: 70,
     alignItems: 'center',
   },
   rangeButtonActive: {
-    backgroundColor: '#4CAF50',
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   rangeButtonText: {
     fontSize: 13,
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },
   rangeButtonTextActive: {
-    color: '#fff',
+    color: '#1F2937',
+    fontFamily: 'Satoshi-Bold',
   },
 
   // STATS ROW
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 24,
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
-    fontFamily: 'Satoshi-Black',
-    color: '#4CAF50',
+    fontSize: 20,
+    fontFamily: 'Satoshi-Bold',
+    color: '#1F2937',
     marginBottom: 4,
   },
   statUnit: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
+    color: '#6B7280',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },
@@ -866,13 +937,11 @@ const styles = StyleSheet.create({
 
   // INSIGHTS
   insightContainer: {
-    backgroundColor: '#F0FDF4',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
   },
   insightTextImproving: {
     fontSize: 13,
@@ -910,6 +979,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  scrollView: {
+    maxHeight: 220,
+  },
+  scrollContent: {
+    paddingHorizontal: 8,
+  },
 
   // LEGEND
   legend: {
@@ -928,10 +1003,10 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: '#4CAF50',
-    marginRight: 8,
+    marginRight: 6,
   },
   legendText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },

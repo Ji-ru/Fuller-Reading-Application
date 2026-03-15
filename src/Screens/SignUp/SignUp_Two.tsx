@@ -170,6 +170,7 @@ export default function SignUpTwoScreen() {
           <TextInput
             style={signup.textInputForm}
             placeholder="example@gmail.com"
+            placeholderTextColor="#A9A9A9"
             value={email}
             onChangeText={setEmail}
           />
@@ -179,6 +180,7 @@ export default function SignUpTwoScreen() {
             style={signup.textInputForm}
             secureTextEntry
             placeholder="*********"
+            placeholderTextColor="#A9A9A9"
             value={password}
             onChangeText={setPassword}
           />
@@ -188,6 +190,7 @@ export default function SignUpTwoScreen() {
             style={signup.textInputForm}
             secureTextEntry
             placeholder="*********"
+            placeholderTextColor="#A9A9A9"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
           />

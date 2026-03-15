@@ -23,9 +23,9 @@ import {
   MiscueReportDocument,
   ClassDocument,
   UserRole,
+  PassageDocument,
 } from '../Interfaces/dataInterfaces';
 import { getCurrentAcademicYear } from '../Utilities/acadYearUtils';
-import { queryRef } from 'firebase/data-connect';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
 
 // Initialize Firebase instances once
@@ -203,7 +203,7 @@ export const createCustomClass = async (
     await updateDoc(facultyRef, {
       'facultyData.assignedClassIds': arrayUnion(classId),
       'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp() as Timestamp,
     });
 
     return classCode;
@@ -211,6 +211,37 @@ export const createCustomClass = async (
     throw new Error(`Automatic Class Registration Failed: ${error.message}`);
   }
 };
+
+/**
+ * Adds a new passage with a pre-generated passage ID
+ * 
+ * Process: 
+ *  1. Create a new reference to new document in the 'passages' collection (leaving ID blank)
+ *  2. Extract generated ID
+ *  3. Prepare final data (including ID in the document body)
+ *  4. Save final data to Firestore
+ *  
+ * @param passageData - all the data needed for adding the passage
+ * @returns - true if storing is a success, else false
+ */
+export const AddPassage = async (passageData: Omit<PassageDocument, 'pid' | 'createdAt'>) => {
+  try {
+    const passageRef = doc(collection(db, 'passages'));
+    const pid = passageRef.id;
+    const finalData: PassageDocument = {
+      ...passageData,
+      pid: pid,
+      createdAt: serverTimestamp() as Timestamp
+    };
+
+    await setDoc(passageRef, finalData);
+    
+    return { success: true, id: pid };
+  } catch (error: any) {
+    console.error("Adding Passage Error:", error.message);
+    return {success: false, error: error.message};
+  }
+}
 
 
 /* -------------------------------------------------------------
@@ -330,7 +361,6 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     const classQuery = query(
       classesRef,
       where('classCode', '==', joinClassCode),
-      where('status', '==', 'active'),
       limit(1)
     );
 
@@ -394,23 +424,38 @@ export const createMiscueReport = async (
 ------------------------------------------------------------- */
 export const getStudentClass = async (studentId: string) => {
   try {
+    console.log('This is studentId: ' + studentId)
+
+    // 1. Get student’s document to retrieve the stored classCode
     const studentRef = doc(db, 'users', studentId);
     const studentSnap = await getDoc(studentRef);
     const studentData = studentSnap.data() as UserDocument;
+    const classCode = studentData?.studentData?.classCode;
+    console.log('This is class code: ' + classCode)
 
-    if (!studentData?.studentData?.classCode) return null;
+    // No class enrolled
+    if (!classCode) return null;
 
-    const classRef = doc(db, 'classes', studentData.studentData.classCode);
-    const classSnap = await getDoc(classRef);
+    // 2. Query the classes collection for a document with this classCode
+    const classesRef = collection(db, 'classes');
+    const q = query(
+      classesRef,
+      where('classCode', '==', classCode),
+      where('status', '==', 'active'),
+      limit(1)
+    );
+    const querySnapshot = await getDocs(q);
 
-    if (!classSnap.exists()) return null;
+    // No active class with that code
+    if (querySnapshot.empty) return null;
 
-    return classSnap.data() as ClassDocument;
+    // 3. Return the class data
+    const classDoc = querySnapshot.docs[0];
+    return { id: classDoc.id, ...classDoc.data() } as ClassDocument & { id: string };
   } catch (error: any) {
     throw new Error('Failed to get student class: ' + error.message);
   }
 };
-
 /* -------------------------------------------------------------
    LOGIN USER
 ------------------------------------------------------------- */

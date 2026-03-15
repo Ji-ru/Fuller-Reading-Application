@@ -1,20 +1,25 @@
 // ActiveHoursChart.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { useActiveHours } from '../../../Hooks/use_ActiveHours';
+import { useFacultyClassesFilter } from '../../../Hooks/use_ReadingStudentStats';
+import { FilterOptions } from '../../../Interfaces/miscue';
 
 type TimeRange = 'week' | 'month' | 'year';
 
 interface ActiveHoursChartProps {
   facultyId?: string | null;
-  data?: { day: string; hours: number }[];
-  
+  filter: {
+    academicYear: string;
+    selectedView: string;
+  };
 }
 
 const TIME_RANGES: { label: string; value: TimeRange }[] = [
@@ -23,62 +28,48 @@ const TIME_RANGES: { label: string; value: TimeRange }[] = [
   { label: 'Year', value: 'year' },
 ];
 
-const X_AXIS_LABELS: Record<TimeRange, string[]> = {
-  week: ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'],
-  month: ['W1', 'W2', 'W3', 'W4', 'W5'],
-  year: [
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-  ],
-};
-
 const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
   facultyId = null,
-  data,
+  filter,
 }) => {
-  const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const [timeRange, setTimeRange] = useState<TimeRange>('week');
+  const { selectedView, academicYear } = filter;
+  const isOverall = selectedView === 'overall';
 
+  // Fetch classes to get class name from ID
+  const { classes: facultyClasses } = useFacultyClassesFilter(facultyId);
+  const selectedClassName = useMemo(() => {
+    if (isOverall) return 'Overall';
+    const cls = facultyClasses.find(c => c.classId === selectedView);
+    return cls?.className || selectedView;
+  }, [isOverall, selectedView, facultyClasses]);
+
+  // Build filter options for the hook – explicitly typed as FilterOptions
+  const filterOptions: FilterOptions = {
+    type: isOverall ? 'overall' : 'class',
+    ...(!isOverall && selectedView && { classId: selectedView }),
+    ...(academicYear && { academicYear }),
+  };
+
+  // Fetch data
   const {
     chartData: hookData,
     loading,
     error,
   } = useActiveHours(facultyId, {
     timeRange,
+    filter: filterOptions,
   });
 
-  const labels = X_AXIS_LABELS[timeRange];
+  // Use the data directly – labels are already the correct period strings
+  const chartData = hookData && hookData.length > 0 ? hookData : [];
 
-  let chartData =
-    hookData && hookData.length > 0
-      ? labels.map(label => {
-          const match = hookData.find(d => d.day === label);
-          return {
-            day: label,
-            hours: match ? match.hours : 0,
-          };
-        })
-      : labels.map(label => ({ day: label, hours: 0 }));
-
-  let displayInMinutes = false;
-
+  // Auto‑switch between hours and minutes
   const maxValue = Math.max(...chartData.map(d => d.hours), 0);
-  displayInMinutes = maxValue < 1;
+  const displayInMinutes = maxValue < 1;
 
   const displayData = displayInMinutes
-    ? chartData.map(item => ({
-        ...item,
-        hours: item.hours * 60,
-      }))
+    ? chartData.map(item => ({ ...item, hours: item.hours * 60 }))
     : chartData;
 
   const maxDisplayValue = displayInMinutes
@@ -87,9 +78,35 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
 
   const chartHeight = 200;
 
+  // Y-axis labels
+  const yAxisLabels = displayInMinutes
+    ? Array.from({ length: 5 }, (_, i) =>
+        Math.round((maxDisplayValue / 4) * (4 - i)),
+      )
+    : [8, 6, 4, 2, 0];
+
+  // Range title for subtitle
+  const rangeTitle =
+    timeRange === 'week'
+      ? 'This Week'
+      : timeRange === 'month'
+      ? 'Last 30 Days'
+      : 'Academic Year';
+
+  // Totals & average
+  const totalValue = displayData.reduce((sum, item) => sum + item.hours, 0);
+  const avgValue = displayData.length > 0 ? totalValue / displayData.length : 0;
+
+  // Loading & Error states
   if (loading) {
     return (
       <View style={styles.container}>
+        {/* <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {isOverall ? '📊 Overall Activity' : `📚 Class: ${selectedClassName}`}
+            {academicYear && ` • ${academicYear}`}
+          </Text>
+        </View> */}
         <View style={styles.loadingCard}>
           <ActivityIndicator size="large" color="#4CAF50" />
           <Text style={styles.loadingText}>Loading activity data...</Text>
@@ -101,6 +118,12 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
   if (error) {
     return (
       <View style={styles.container}>
+        <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {isOverall ? '📊 Overall Activity' : `📚 Class: ${selectedClassName}`}
+            {academicYear && ` • ${academicYear}`}
+          </Text>
+        </View>
         <View style={styles.errorCard}>
           <Text style={styles.errorIcon}>📊</Text>
           <Text style={styles.errorTitle}>Unable to Load Chart</Text>
@@ -110,25 +133,16 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
     );
   }
 
-  const yAxisLabels = displayInMinutes
-    ? Array.from({ length: 5 }, (_, i) =>
-        Math.round((maxDisplayValue / 4) * (4 - i)),
-      )
-    : [8, 6, 4, 2, 0];
-
-  const rangeTitle =
-    timeRange === 'week'
-      ? 'This Week'
-      : timeRange === 'month'
-      ? 'This Month'
-      : 'This Academic Year';
-
-  // Calculate total hours/minutes
-  const totalValue = displayData.reduce((sum, item) => sum + item.hours, 0);
-  const avgValue = displayData.length > 0 ? totalValue / displayData.length : 0;
-
   return (
     <View style={styles.container}>
+      {/* Filter context header */}
+      {/* <View style={styles.filterIndicator}>
+        <Text style={styles.filterIndicatorText}>
+          {isOverall ? '📊 Overall Activity' : `📚 Class: ${selectedClassName}`}
+          {academicYear && ` • ${academicYear}`}
+        </Text>
+      </View> */}
+
       {/* Header Section */}
       <View style={styles.headerSection}>
         <View style={styles.titleRow}>
@@ -214,38 +228,44 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
             ))}
           </View>
 
-          {/* Bars */}
-          <View style={styles.barsContainer}>
-            {displayData.slice(0, labels.length).map((item, index) => {
-              const barHeight = Math.max(
-                (item.hours / maxDisplayValue) * chartHeight,
-                2,
-              );
-              const isHighest =
-                item.hours === Math.max(...displayData.map(d => d.hours));
+          {/* Bars – using dynamic labels from the data */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={timeRange === 'year' || displayData.length > 8}
+            style={styles.barsScrollView}
+          >
+            <View style={styles.barsContainer}>
+              {displayData.map((item, index) => {
+                const barHeight = Math.max(
+                  (item.hours / maxDisplayValue) * chartHeight,
+                  2,
+                );
+                const isHighest =
+                  item.hours === Math.max(...displayData.map(d => d.hours));
 
-              return (
-                <View key={index} style={styles.barColumn}>
-                  <View style={styles.barWrapper}>
-                    {/* Value on top of bar for highest */}
-                    {item.hours > 0 && (
-                      <Text style={styles.barTopValue}>
-                        {item.hours.toFixed(2)}
-                      </Text>
-                    )}
-                    <View
-                      style={[
-                        styles.bar,
-                        { height: barHeight },
-                        isHighest && styles.barHighest,
-                      ]}
-                    />
+                return (
+                  <View key={index} style={styles.barColumn}>
+                    <View style={styles.barWrapper}>
+                      {item.hours > 0 && (
+                        <Text style={styles.barTopValue}>
+                          {item.hours.toFixed(2)}
+                        </Text>
+                      )}
+                      <View
+                        style={[
+                          styles.bar,
+                          { height: barHeight },
+                          isHighest && styles.barHighest,
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.xAxisLabel}>{item.day}</Text>
                   </View>
-                  <Text style={styles.xAxisLabel}>{item.day}</Text>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+            </View>
+          </ScrollView>
         </View>
       </View>
 
@@ -274,8 +294,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
   },
-
-  // HEADER
+  filterIndicator: {
+    backgroundColor: '#F0F9FF',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#5B5FED',
+  },
+  filterIndicatorText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Medium',
+    color: '#1F2937',
+  },
   headerSection: {
     marginBottom: 20,
   },
@@ -310,8 +341,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Medium',
     color: '#9CA3AF',
   },
-
-  // TIME RANGE SELECTOR
   rangeSelector: {
     flexDirection: 'row',
     backgroundColor: '#F3F4F6',
@@ -342,8 +371,6 @@ const styles = StyleSheet.create({
   rangeButtonTextActive: {
     color: '#fff',
   },
-
-  // STATS ROW
   statsRow: {
     flexDirection: 'row',
     backgroundColor: '#F9FAFB',
@@ -378,8 +405,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     marginHorizontal: 16,
   },
-
-  // CHART
   chartContainer: {
     flexDirection: 'row',
     height: 240,
@@ -425,6 +450,9 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F3F4F6',
   },
+  barsScrollView: {
+    flex: 1,
+  },
   barsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -456,6 +484,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
+    marginLeft: 20
   },
   barHighest: {
     backgroundColor: '#2E7D32',
@@ -467,9 +496,8 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     marginTop: 8,
+    marginLeft: 20
   },
-
-  // LEGEND
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -493,8 +521,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },
-
-  // LOADING & ERROR
   loadingCard: {
     padding: 40,
     alignItems: 'center',

@@ -1,5 +1,6 @@
 import { Timestamp } from "@react-native-firebase/firestore";
 import { MiscueType } from "./miscue";
+import { Interaction } from "@ui-kitten/components";
 export interface MiscueReport {
   studentId: string;
   substitution: string;
@@ -46,7 +47,7 @@ export interface UserDocument {
     assignedGradeLevels: number[];
     assignedClassIds: string[];
   };
-  
+
   // Admin specific data 
   // adminData?: {
   //   permissions?: string[];
@@ -132,20 +133,23 @@ export interface MiscueReportDocument {
   omissionCount: number,
   insertionCount: number,
   repetitionCount: number,
-  
+
   // Creation from Firestore Timestamp
   createdAt: Timestamp;
 }
 
 /**
- * WORD COMPLETION DOCUMENT REPORT INTERFACE 
- *  - used to store completed words
+ * Blueprint for creating a passage
  */
-export interface WordReportDocument {
-  wordId: string;
-  studentId: string;
-  word: string;
-  letter: string;
+export interface PassageDocument {
+  pid: string;
+  creatorId: string; // Faculty who added the Passage
+  creatorName: string; // Denormalized name for quick UI display (avoids extra fetching)
+  facultyIds: string[]; // Faculties who will add this passage 
+  classId: string[]; // Classes that can view this passage
+  title: string;
+  author: string | null;
+  passageText: string;
   createdAt: Timestamp;
 }
 
@@ -158,4 +162,213 @@ export interface AlphabetReportDocument {
   studentId: string;
   letter: string;
   createdAt: Timestamp;
+}
+
+// Session summary document (fastest to query)
+export interface AlphabetSessionReport {
+  alphabetSessionId: string;
+  studentId: string;
+  dateKey: string;
+  sessionDateAt: Timestamp;
+
+  // totalLetters: number; // 26
+  correctCount: number; // e.g. 18
+  attemptedCount: number; // usually 26 for alphabet test
+
+  correctLetters: string[]; // ["A","B","D"...]
+  incorrectLetters: string[]; // optional but very useful
+}
+
+export type AlphabetAttemptUpdate = {
+  incAttempted?: boolean;
+  incCorrect?: boolean;
+  addCorrect?: boolean;
+  addIncorrect?: boolean;
+  removeIncorrect?: boolean;
+};
+
+/**
+ * Used for creating a session based data for data visualization of students progress
+ */
+export interface AlphabetSessionData {
+  alphabetSessionId: string; // "${uid}_${YYYYMMDD}"
+  studentId: string;
+  date: string;              // "YYYYMMDD"
+  displayDate: string;       // "Feb 19"
+  attemptedCount: number;
+  correctCount: number;
+  correctLetters: string[];
+  incorrectLetters: string[];
+}
+
+// WORD SESSION
+
+/**
+ * WORD COMPLETION DOCUMENT REPORT INTERFACE 
+ *  - used to store completed words
+ */
+export interface WordReportDocument {
+  wordId: string;
+  studentId: string;
+  word: string;
+  chapter: string;
+  createdAt: Timestamp;
+}
+
+/**
+ * A Firebase Document
+ * These are the data used to compute the Word reading mastery and accuracy
+ * Which are then used for data visualization of their reading progress
+ */
+export interface WordSessionReport {
+  wordSessionId: string
+  studentId: string
+  dateKey: string              // YYYYMMDD (for range queries)
+  startedAt: Timestamp
+
+  totals: {
+    attempted: number
+    correct: number
+  }
+
+  chapters: Record<
+    string, // "ch_1"
+    {
+      chapterId: number;
+      chapterTitle: string;
+      attempted: number; // optional but recommended
+      correct: number;   // optional but recommended
+
+      lessons: Record<
+        string, // "ls_1"
+        {
+          lessonId: number;
+          lessonTitle: string;
+          attempted: number;
+          correct: number;
+          targetWords: string[];
+          correctWords: string[];    
+          incorrectWords: string[];  
+        }
+      >;
+    }
+  >;
+}
+
+/**
+ * Not a firebase document
+ * A blueprint for updating the Word Session of a student
+ */
+export type WordAttemptUpdate = {
+  incAttempted?: boolean;
+  incCorrect?: boolean;
+  addTargetWord?: boolean;     // usually true on firstAttempt
+  addCorrectWord?: boolean;    // true when word becomes correct (firstCorrect)
+  addIncorrectWord?: boolean;  // true when firstAttempt is incorrect and not yet correct
+  removeIncorrectWord?: boolean; // true when it becomes correct
+};
+
+// For navigation
+/**
+ * Not a firebase document
+ * A blueprint for passing the data from Reading Selection to Reading Activity Sceen
+ */
+export type WordContext = {
+  chapterId: number;
+  chapterTitle: string;
+  lessonId: number;
+  lessonTitle: string;
+  targetWord: string;
+};
+
+/**
+ * Similar to Word Session Report interface
+ * 
+ * A blueprint for storing data after reading attempt
+ * 
+ * WILL DELETE LATER and use the Word Session Report interface 
+ *  - to avoid redanduncy
+ */
+export interface WordSessionData {
+  wordSessionId: string;
+  studentId: string;
+
+  dateKey: string;       // YYYYMMDD
+  displayDate: string;   // "Feb 19"
+
+  attemptedCount: number;
+  correctCount: number;
+
+  // aggregated structure saved in Firestore (Option A)
+  chapters: Record<
+    string,
+    {
+      chapterId: number;
+      chapterTitle: string;
+      attempted?: number;
+      correct?: number;
+
+      lessons: Record<
+        string,
+        {
+          lessonId: number;
+          lessonTitle: string;
+          attempted: number;
+          correct: number;
+        }
+      >;
+    }
+  >;
+}
+
+/**
+ * Similar to Word Session Report interface
+ * 
+ * A blueprint for storing data after reading attempt
+ * 
+ * MIGHT DELETE LATER and use the Word Session Report interface
+ */
+export interface WordPeriodSlot {
+  label: string;
+  sessions: WordSessionData[];
+
+  // performance
+  accuracy: number | null; // weighted: sum(correct)/sum(attempted)*100
+
+  // aggregates
+  attemptedCount: number;
+  correctCount: number;
+
+  // optional breakdowns for UI
+  lessonAgg: Record<
+    string, // "ch_1::ls_2"
+    {
+      chapterId: number;
+      chapterTitle: string;
+      lessonId: number;
+      lessonTitle: string;
+      attempted: number;
+      correct: number;
+      accuracy: number | null;
+    }
+  >;
+}
+
+/**
+ * Not a Firebase Document
+ * 
+ * A blueprint for accuracy computations for every session created by the user (student)   
+ */
+export interface WordAccuracySummary {
+  totalSessions: number;
+  avgAccuracy: number | null;
+}
+
+export type LessonKey = `ch_${number}::ls_${number}`;
+export type ChapterKey = `ch_${number}`;
+
+export interface WordMasterySummary {
+  totalCompleted: number;     // total unique completed words
+  masteryPercent: number | null; // totalCompleted / totalWordsInCurriculum * 100
+  perLessonCompleted: Record<string, number>; // "ch_1::ls_2" -> count
 }

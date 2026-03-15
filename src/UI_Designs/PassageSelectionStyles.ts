@@ -11,10 +11,10 @@ const selection = StyleSheet.create({
   },
   insideContainer: {
     flex: 1,
-    position: 'relative', 
+    position: 'relative',
     paddingTop: 10,
     padding: 5,
-    zIndex: 1, 
+    zIndex: 1,
   },
   contentContainer: {
     flex: 1,
@@ -27,15 +27,16 @@ const selection = StyleSheet.create({
   // ==========================================
   label: {
     fontSize: 35,
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'DynaPuff-Bold',
+    color: '#3B7FC9',
     elevation: 5,
     textAlign: 'center',
   },
   sublabel: {
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Comfortaa-Bold',
     fontSize: 20,
+    color: '#3B7FC9',
     alignSelf: 'flex-start',
-    marginVertical: 5,
   },
 
   // ==========================================
@@ -46,13 +47,13 @@ const selection = StyleSheet.create({
     height: 150,
   },
   text: {
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
     fontSize: 20,
   },
   beginText: {
-    fontFamily: 'Satoshi-Black',
+    fontFamily: 'DynaPuff-Bold',
     fontSize: 20,
-    color: '#2CA96A',
+    color: '#3B7FC9',
   },
   textContainer: {
     flexDirection: 'column',
@@ -62,9 +63,15 @@ const selection = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginVertical: 10,
-    marginTop: 20,
+    marginVertical: 5,
+  },
+  readingImage: {
+    width: 100,
+    height: 100,
+    maxHeight: 100,
+    maxWidth: 100,
+    borderRadius: 5,
+    marginRight: 10
   },
 
   // ==========================================
@@ -85,17 +92,20 @@ const selection = StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#3B7FC9',
     shadowColor: '#4F46E5',
     elevation: 3,
   },
   tabText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'black',
+    fontSize: 18,
+    color: '#3B7FC9',
+    elevation: 5,
+    fontFamily: 'DynaPuff-Bold',
   },
   activeTabText: {
-    color: 'white',
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontFamily: 'DynaPuff-Bold',
   },
 
   // ==========================================
@@ -126,15 +136,9 @@ const selection = StyleSheet.create({
     position: 'relative',
   },
   alphabetLetter: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2CA96A',
-  },
-  alphabetWord: {
-    fontSize: 10,
-    color: '#666',
-    marginTop: 4,
-    textAlign: 'center',
+    fontSize: 40,
+    fontFamily: 'Comfortaa-Bold',
+    color: '#3B7FC9',
   },
   // Completed badge for alphabet
   completedBadge: {
@@ -418,20 +422,39 @@ const selection = StyleSheet.create({
     width: 'auto',
     height: 'auto',
     backgroundColor: '#ffff',
-    borderRadius: 10,
+    borderRadius: 20,
+    borderColor:'#38B6FF',
+    borderWidth: 4,
+    borderBottomColor: '#38B6FF',
     elevation: 4,
   },
   itemWrapper: {
     margin: 5,
+    width:'auto',
+    maxWidth: 400,
+    height: 'auto',
+    maxHeight: 130,
+  },
+  insidePassageListContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    alignContent: 'center',
+    padding: 5,
+  },
+  titleAuthorWrapper:{
+    width: 250,
+    maxWidth: 400,
   },
   title: {
-    fontSize: 25,
-    fontWeight: '600',
-    fontFamily: 'Satoshi-MediumItalic',
+    fontSize: 20,
+    color: '#163F6C',
+    fontFamily: 'DynaPuff-Medium',
   },
   author: {
-    color: '#666',
-    fontSize: 10,
+    color: '#537EAE',
+    fontFamily: 'DynaPuff-Regular',
+    fontSize: 15,
   },
   arrowContainer: {
     width: 25,
@@ -445,13 +468,6 @@ const selection = StyleSheet.create({
     fontSize: 15,
     color: '#69C1AE',
     fontFamily: 'Satoshi-Medium',
-  },
-  insidePassageListContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    alignContent: 'center',
-    padding: 5,
   },
 });
 

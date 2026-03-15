@@ -42,7 +42,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
               ? require('../../../../assets/icons/MicrophoneSlash-icon.png')
               : require('../../../../assets/icons/Microphone-icon.png')
           }
-          style={isLoading ? { opacity: 1 } : {}}
+          style={readingStyles.microphoneIcon }
         />
       </TouchableOpacity>
 

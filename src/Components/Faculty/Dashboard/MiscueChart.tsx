@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// MiscueAnalytics.tsx
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,11 +12,8 @@ import {
   useMiscueAnalystics,
   useOverallAverageWPMandAccuracy,
   useTopMiscueIdentifier,
-  useFacultyClassesFilter,
 } from '../../../Hooks/use_ReadingStudentStats';
-import { AverageWPMandAccuracy } from '../../../Interfaces/miscue';
 import { FilterOptions } from '../../../Interfaces/miscue';
-import FilterSelector from './FilterSelector';
 
 // Update these interfaces to match the actual data structure
 interface MiscueData {
@@ -41,55 +39,65 @@ interface TopMiscuedPassage {
 
 interface MiscueAnalyticsProps {
   facultyId?: string | null;
-  miscueData?: MiscueData[];
-  topPassage?: TopMiscuedPassage;
-  commonWords?: CommonWord[];
-  averages?: AverageWPMandAccuracy;
+  filter: {
+    academicYear: string;
+    selectedView: string;
+  };
 }
 
 const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   facultyId = null,
-  miscueData: propMiscueData,
-  topPassage: propTopPassage,
-  commonWords: propCommonWords,
-  averages: propAverages,
+  filter,
 }) => {
-  // State for filter
-  const [filter, setFilter] = useState<FilterOptions>({ type: 'overall' });
+  const { selectedView, academicYear } = filter;
+  const isOverall = selectedView === 'overall';
 
-  // Hook for classes filter dropdown
-  const { classes, loading: classesLoading } =
-    useFacultyClassesFilter(facultyId);
+  // Build filter options for hooks based on parent filter
+  const filterOptions = useMemo<FilterOptions>(() => {
+    const options: FilterOptions = {
+      type: isOverall ? 'overall' : 'class',
+    };
+    
+    if (!isOverall && selectedView) {
+      options.className = selectedView;
+    }
+    
+    if (academicYear) {
+      options.acadYear = academicYear;
+    }
+    
+    return options;
+  }, [isOverall, selectedView, academicYear]);
 
   // Hook for common miscue type
   const {
     miscueData: hookMiscueData,
     loading: miscueLoading,
     error: miscueError,
-  } = useMiscueAnalystics(facultyId, filter);
+  } = useMiscueAnalystics(facultyId, filterOptions);
 
   // Hook for Top 5 Miscue Data
   const {
     topMiscue,
     loading: topMiscueLoading,
     error: topMiscueError,
-  } = useTopMiscueIdentifier(facultyId, filter);
+  } = useTopMiscueIdentifier(facultyId, filterOptions);
 
   // Hook for getting the average of WPM and Accuracy
   const {
     averages: hookAverages,
     loading: averagesLoading,
     error: averagesError,
-  } = useOverallAverageWPMandAccuracy(facultyId, filter);
+  } = useOverallAverageWPMandAccuracy(facultyId, filterOptions);
 
   // Debug: Log the data from hooks
   useEffect(() => {
-    console.log('🔍 HOOK DATA DEBUG:');
-    console.log('Filter:', filter);
+    console.log('🔍 MISCCUE ANALYTICS DATA:');
+    console.log('Filter:', filterOptions);
     console.log('hookMiscueData:', hookMiscueData);
     console.log('topMiscue:', topMiscue);
     console.log('hookAverages:', hookAverages);
-  }, [filter, hookMiscueData, topMiscue, hookAverages]);
+  }, [filterOptions, hookMiscueData, topMiscue, hookAverages]);
 
   // Default data for fallback (empty/zero data)
   const defaultMiscueData: MiscueData[] = [
@@ -126,10 +134,10 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   // 1. Miscue Data (Pie Chart) - ALWAYS use hook data when available
   const miscueData = hookMiscueData && hookMiscueData.length > 0 
     ? hookMiscueData 
-    : propMiscueData || defaultMiscueData;
+    : defaultMiscueData;
 
   // 2. Averages - ALWAYS use hook data when available
-  const averages = hookAverages || propAverages || defaultAverages;
+  const averages = hookAverages || defaultAverages;
 
   // 3. Top Passage and Common Words - Extract from topMiscue hook
   let passage = defaultTopPassage;
@@ -161,10 +169,6 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
         }));
       }
     }
-  } else if (propTopPassage || propCommonWords) {
-    // Fallback to props if provided
-    if (propTopPassage) passage = propTopPassage;
-    if (propCommonWords) words = propCommonWords;
   }
 
   // ==================== LOADING & ERROR STATES ====================
@@ -175,13 +179,15 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <FilterSelector
-          facultyId={facultyId}
-          currentFilter={filter}
-          onFilterChange={setFilter}
-          classes={classes}
-          loading={classesLoading}
-        />
+        {/* Filter Indicator - Shows current filter context */}
+        {/* <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {isOverall 
+              ? '📊 Overall Reading Statistics' 
+              : `📚 Class: ${selectedView}`}
+            {academicYear && ` • ${academicYear}`}
+          </Text>
+        </View> */}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#5B5FED" />
           <Text style={styles.loadingText}>Loading statistics...</Text>
@@ -193,13 +199,15 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   if (hasError) {
     return (
       <View style={styles.container}>
-        <FilterSelector
-          facultyId={facultyId}
-          currentFilter={filter}
-          onFilterChange={setFilter}
-          classes={classes}
-          loading={classesLoading}
-        />
+        {/* Filter Indicator - Shows current filter context */}
+        <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {isOverall 
+              ? '📊 Overall Reading Statistics' 
+              : `📚 Class: ${selectedView}`}
+            {academicYear && ` • ${academicYear}`}
+          </Text>
+        </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error loading data</Text>
           <Text style={styles.errorSubtext}>
@@ -226,15 +234,21 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   const hasNoData = total === 0;
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Filter Component */}
-      <FilterSelector
-        facultyId={facultyId}
-        currentFilter={filter}
-        onFilterChange={setFilter}
-        classes={classes}
-        loading={classesLoading}
-      />
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Filter Indicator - Shows current filter context */}
+      {/* <View style={styles.filterIndicator}>
+        <Text style={styles.filterIndicatorText}>
+          {isOverall 
+            ? '📊 Overall Reading Statistics' 
+            : '📚 Class Reading Statistics'}
+          {!isOverall && (
+            <Text style={styles.filterBold}> {selectedView}</Text>
+          )}
+          {academicYear && (
+            <Text style={styles.filterYear}> • {academicYear}</Text>
+          )}
+        </Text>
+      </View> */}
 
       {/* Pie Chart Card */}
       <View style={styles.card}>
@@ -257,7 +271,7 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
                     cx={center}
                     cy={center}
                     r={radius}
-                    stroke="#CCCCCC" // Gray color
+                    stroke="#CCCCCC"
                     strokeWidth={strokeWidth}
                     fill="transparent"
                     strokeDasharray={circumference}
@@ -339,7 +353,7 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
       {/* Average Stats Card */}
       <View style={[styles.card, styles.averagesCard]}>
         <Text style={styles.averagesTitle}>
-          {filter.type === 'overall' ? 'Overall' : 'Class'} Reading Statistics
+          {isOverall ? 'Overall' : 'Class'} Reading Statistics
         </Text>
         <View style={styles.averagesGrid}>
           <View style={styles.statBox}>
@@ -355,11 +369,6 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{averages.totalStudents}</Text>
             <Text style={styles.statLabel}>Students</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{averages.totalReports}</Text>
-            <Text style={styles.statLabel}>Reports</Text>
           </View>
         </View>
       </View>
@@ -481,11 +490,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Bold',
     color: '#333',
   },
-  menuDots: {
-    fontSize: 20,
-    color: '#999',
-    fontFamily: 'Satoshi-Bold',
-  },
   pieChartContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -555,9 +559,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Bold',
     color: '#333',
   },
-  passageStatRight: {
-    alignItems: 'flex-end',
-  },
   wordsCard: {
     backgroundColor: '#FFF5F5',
     borderLeftWidth: 4,
@@ -569,21 +570,6 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
     marginBottom: 16,
   },
-  wordRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FFE5E5',
-  },
-
-  wordCount: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Bold',
-    color: '#999',
-  },
-  // Add these styles
   loadingContainer: {
     height: 200,
     justifyContent: 'center',
@@ -633,37 +619,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  topMiscueTypeBadge: {
-    backgroundColor: '#5B5FED',
-    color: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    fontSize: 12,
-    fontFamily: 'Satoshi-Bold',
-  },
-  wordInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  wordDetails: {
-    alignItems: 'flex-end',
-  },
-  wordExample: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'Satoshi-Regular',
-    marginBottom: 2,
-  },
   passageStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
-  },
-  passageStatColumn: {
-    flex: 1,
-    minWidth: 100,
   },
   // Table styles
   tableHeader: {
@@ -745,7 +704,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 12,
-    padding: 16,
+    padding: 10,
   },
   statBox: {
     flex: 1,
@@ -769,16 +728,24 @@ const styles = StyleSheet.create({
   },
   filterIndicator: {
     backgroundColor: '#F0F9FF',
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#5B5FED',
   },
   filterIndicatorText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Satoshi-Medium',
+    color: '#1F2937',
+  },
+  filterBold: {
+    fontFamily: 'Satoshi-Bold',
     color: '#5B5FED',
+  },
+  filterYear: {
+    fontFamily: 'Satoshi-Medium',
+    color: '#6B7280',
   },
   noDataContainer: {
     paddingVertical: 20,

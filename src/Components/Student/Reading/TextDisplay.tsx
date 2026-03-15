@@ -1,5 +1,5 @@
 import React, { JSX } from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, ScrollView } from 'react-native';
 import {
   Passage,
   Alphabet,
@@ -10,14 +10,52 @@ import {
 } from '../../../Interfaces/passage';
 import { Miscue } from '../../../Interfaces/miscue';
 import readingStyles from '../../../UI_Designs/ReadingActivityStyles';
+import { getPassageImage } from '../../../Utilities/ReadingAssets';
+import { StarRatingDisplay } from './StarRatingDisplay';
+import Svg, { Text as SvgText } from 'react-native-svg';
+
+type PassagePerformanceType = 'passageSuccess' | 'goodJob' | 'tryAgain';
+
+interface PassageGreetingContent {
+  type: PassagePerformanceType;
+  title: string;
+  message: string;
+}
+
+export const getPassageGreetingContent = (
+  accuracy: number,
+): PassageGreetingContent => {
+  if (accuracy >= 90) {
+    return {
+      type: 'passageSuccess',
+      title: 'Excellent Reading!',
+      message: 'You read with 90%+ accuracy! Amazing work! 🎉',
+    };
+  }
+
+  if (accuracy >= 50) {
+    return {
+      type: 'goodJob',
+      title: 'Good Job!',
+      message: 'Keep it up. You can do it better!',
+    };
+  }
+
+  return {
+    type: 'tryAgain',
+    title: "Let's Try Again!",
+    message: 'Practice makes perfect! Give it another try.',
+  };
+};
 
 interface PassageDisplayProps {
   material: Passage | Alphabet | Word;
   type: 'alphabet' | 'passage' | 'word';
   spokenText: string;
   isRecording: boolean;
-  // ADDED: miscues prop to access detected miscues for coloring
+  accuracy?: number;
   miscues?: Miscue[];
+  isReadingCompleted: boolean;
 }
 
 export const PassageDisplay: React.FC<PassageDisplayProps> = ({
@@ -25,31 +63,10 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   type,
   spokenText,
   isRecording,
-  miscues = [], // ADDED: default to empty array
+  miscues = [],
+  accuracy = 0,
+  isReadingCompleted = false
 }) => {
-  // Function to highlight letter in text
-  const highlightLetterInText = (text: string, letter: string) => {
-    const parts = text.split(new RegExp(`(${letter})`, 'gi'));
-
-    return parts.map((part, index) => {
-      if (part.toUpperCase() === letter.toUpperCase()) {
-        return (
-          <Text key={index} style={readingStyles.highlightedLetter}>
-            {part}
-          </Text>
-        );
-      }
-      return <Text key={index}>{part}</Text>;
-    });
-  };
-
-  // Function to get passage image
-  const getPassageImage = (imageName: string) => {
-    const images: { [key: string]: any } = {
-      Hickory: require('../../../../assets/ReadingMaterial/PassageImages/Hickory.png'),
-    };
-    return images[imageName] || require('../../../../assets/icons/Empty-icon.png');
-  };
 
   // Format passage text with line breaks
   const formatText = (text: string) => {
@@ -80,6 +97,11 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     }
     return { word, punctuation: '' };
   };
+
+  const passageGreeting =
+    type === 'passage' && isReadingCompleted
+      ? getPassageGreetingContent(accuracy)
+      : null;
 
   /**
    * Renders text with colored miscues, preserving punctuation
@@ -187,7 +209,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         posData.insertions.forEach(insertion => {
           renderedWords.push(
             <Text key={`insertion-${keyCounter++}`}>
-              <Text style={{ color: '#1A81FF', fontWeight: 'bold' }}>
+              <Text style={{ color: '#1A81FF', fontFamily: 'Comfortaa-VariableFont_wght', fontWeight: 'bold' }}>
                 {insertion.spoken}
               </Text>
             </Text>,
@@ -214,7 +236,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         // Repetition: Show the repeated SPOKEN word in purple, with punctuation
         renderedWords.push(
           <Text key={`word-${index}`}>
-            <Text style={{ color: '#BF00DD', fontWeight: 'bold' }}>
+            <Text style={{ color: '#BF00DD', fontFamily: 'Comfortaa-VariableFont_wght', fontWeight: 'bold' }}>
               {posData.repetition.spoken}
             </Text>
             {punctuation && <Text>{punctuation}</Text>}
@@ -224,7 +246,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         // Substitution: Color the TARGET word red, with punctuation
         renderedWords.push(
           <Text key={`word-${index}`}>
-            <Text style={{ color: '#FF2726', fontWeight: 'bold' }}>
+            <Text style={{ color: '#FF2726', fontFamily: 'Comfortaa-VariableFont_wght', fontWeight: 'bold' }}>
               {cleanWord}
             </Text>
             {punctuation && <Text>{punctuation}</Text>}
@@ -234,7 +256,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         // Omission: Color the TARGET word yellow, with punctuation
         renderedWords.push(
           <Text key={`word-${index}`}>
-            <Text style={{ color: '#FF941A', fontWeight: 'bold' }}>
+            <Text style={{ color: '#FF941A', fontFamily: 'Comfortaa-VariableFont_wght', fontWeight: 'bold' }}>
               {cleanWord}
             </Text>
             {punctuation && <Text>{punctuation}</Text>}
@@ -253,6 +275,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
     return <Text style={readingStyles.textLine}>{renderedWords}</Text>;
   };
+
   /**
    * MODIFIED: Updated to use colored miscue rendering when not recording
    * - During recording: shows target text (original passage)
@@ -285,7 +308,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   // WORD DISPLAY
   if (type === 'word' && isWords(material)) {
     const allWords = material.contrasts.flatMap(c => c.words);
-  
+
     return (
       <View style={readingStyles.wordCardContainer}>
         <View style={readingStyles.wordCard}>
@@ -295,28 +318,86 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       </View>
     );
   }
-  
 
   // PASSAGE DISPLAY
   return (
     <View style={readingStyles.insideContainer}>
-      <Image
-        style={readingStyles.readingImage}
-        source={getPassageImage(material.image)}
-      />
+      {!isRecording && isReadingCompleted && type === 'passage' && (
+        <StarRatingDisplay
+          accuracy={accuracy}
+          visible={isReadingCompleted}
+        />
+      )}
+      {!isRecording && isReadingCompleted && type === 'passage' && passageGreeting && (
+        <Svg height={35} width={350} >
+          <SvgText
+            x={180}                 // center X
+            y={25}                  // baseline Y
+            fontSize={30}
+            fontFamily="DynaPuff-Bold"
+            textAnchor="middle"     // center align
+            fill="none"          // inside color
+            stroke="#FFFFFF"        // outline color
+            strokeWidth={6}         // outline thickness
+            strokeLinejoin='round'
+          >
+            {passageGreeting.title}
+          </SvgText>
+          <SvgText
+            x={180}
+            y={25}
+            fontSize={30}
+            fontFamily="DynaPuff-Bold"
+            textAnchor="middle"
+            fill="#7A5A2B"
+          >
+            {passageGreeting.title}
+          </SvgText>
+        </Svg>)}
+
+      {/* {!isRecording && isReadingCompleted && type === 'passage' && passageGreeting && (
+        <View
+          style={readingStyles.passageGreetingContainer}
+        >
+          <Text style={readingStyles.passageGreetingTitle}>
+            {passageGreeting.title}
+          </Text>
+        </View>
+      )} */}
+
+      {!isReadingCompleted ? (
+        <Image
+          style={readingStyles.readingImage}
+          source={getPassageImage(material.image)}
+        />
+      ) : null
+      }
+
       <View
         style={
           !isRecording
-            ? readingStyles.passageContainerFeedback
-            : readingStyles.passageContainer
+            ? readingStyles.passageContainer
+            : readingStyles.passageContainerFeedback
         }
       >
-        <Text style={readingStyles.passageTitle}>{material.title}</Text>
-        <Text style={readingStyles.passageAuthor}>By {material.author}</Text>
-        <View style={readingStyles.textContainer}>
-          {/* MODIFIED: Now uses renderTextContent which shows colored miscues */}
-          <Text style={readingStyles.textLine}>{renderTextContent()}</Text>
-        </View>
+        {/* <Text style={readingStyles.passageTitle}>{material.title}</Text>
+        <Text style={readingStyles.passageAuthor}>By {material.author}</Text> */}
+        {isReadingCompleted ? (
+          <ScrollView
+            style={readingStyles.passageScrollView}
+            contentContainerStyle={readingStyles.passageScrollContent}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+          >
+            <View style={readingStyles.passageTextWrapper}>
+              {renderTextContent()}
+            </View>
+          </ScrollView>
+        ) : (
+          <View style={readingStyles.passageTextWrapper}>
+            {renderTextContent()}
+          </View>
+        )}
       </View>
     </View>
   );

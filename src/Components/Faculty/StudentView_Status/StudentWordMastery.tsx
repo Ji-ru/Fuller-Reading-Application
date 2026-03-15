@@ -7,35 +7,28 @@ import {
   TouchableOpacity,
   Animated,
 } from 'react-native';
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-} from '@react-native-firebase/firestore';
-import readingMaterialData from '../../../../assets/ReadingMaterial/ReadingMaterial.json';
+import { TimeRange, WordChapterProgress, WordLessonProgress } from '../../../Controller/SessionReportContoller';
+import { useStudentWordMastery } from '../../../Hooks/Student/useStudentWordMastery';
 
 // ============================================================================
 // DESIGN TOKENS  (same light system as AlphabetMastery)
 // ============================================================================
 
 const T = {
-  bg:       '#ffffff',
-  surface:  '#f8fafc',
+  bg: '#ffffff',
+  surface: '#f8fafc',
   surface2: '#f1f5f9',
-  border:   'rgba(0,0,0,0.07)',
-  text:     '#0f172a',
-  muted:    '#64748b',
-  dim:      '#e2e8f0',
+  border: 'rgba(0,0,0,0.07)',
+  text: '#0f172a',
+  muted: '#64748b',
+  dim: '#e2e8f0',
 
-  green:    '#34d399',  greenDim:  'rgba(52,211,153,0.12)',  greenBd:  'rgba(52,211,153,0.30)',
-  amber:    '#fbbf24',  amberDim:  'rgba(251,191,36,0.12)',  amberBd:  'rgba(251,191,36,0.30)',
-  red:      '#f87171',  redDim:    'rgba(248,113,113,0.12)', redBd:    'rgba(248,113,113,0.30)',
-  violet:   '#a78bfa',  violetDim: 'rgba(167,139,250,0.12)', violetBd: 'rgba(167,139,250,0.30)',
-  blue:     '#60a5fa',  blueDim:   'rgba(96,165,250,0.12)',  blueBd:   'rgba(96,165,250,0.30)',
-  indigo:   '#818cf8',  indigoDim: 'rgba(129,140,248,0.12)', indigoBd: 'rgba(129,140,248,0.30)',
+  green: '#34d399', greenDim: 'rgba(52,211,153,0.12)', greenBd: 'rgba(52,211,153,0.30)',
+  amber: '#fbbf24', amberDim: 'rgba(251,191,36,0.12)', amberBd: 'rgba(251,191,36,0.30)',
+  red: '#f87171', redDim: 'rgba(248,113,113,0.12)', redBd: 'rgba(248,113,113,0.30)',
+  violet: '#a78bfa', violetDim: 'rgba(167,139,250,0.12)', violetBd: 'rgba(167,139,250,0.30)',
+  blue: '#60a5fa', blueDim: 'rgba(96,165,250,0.12)', blueBd: 'rgba(96,165,250,0.30)',
+  indigo: '#818cf8', indigoDim: 'rgba(129,140,248,0.12)', indigoBd: 'rgba(129,140,248,0.30)',
 
   radius: 16,
 };
@@ -45,121 +38,33 @@ const T = {
 // ============================================================================
 
 const F = {
-  black:     { fontFamily: 'Satoshi-Black',     fontWeight: '900' as const },
-  bold:      { fontFamily: 'Satoshi-Bold',       fontWeight: '700' as const },
-  medium:    { fontFamily: 'Satoshi-Medium',     fontWeight: '500' as const },
-  regular:   { fontFamily: 'Satoshi-Regular',    fontWeight: '400' as const },
-  light:     { fontFamily: 'Satoshi-Light',      fontWeight: '300' as const },
-  italic:    { fontFamily: 'Satoshi-Italic',     fontStyle: 'italic' as const, fontWeight: '400' as const },
-  boldItalic:{ fontFamily: 'Satoshi-BoldItalic', fontStyle: 'italic' as const, fontWeight: '700' as const },
+  black: { fontFamily: 'Satoshi-Black', fontWeight: '900' as const },
+  bold: { fontFamily: 'Satoshi-Bold', fontWeight: '700' as const },
+  medium: { fontFamily: 'Satoshi-Medium', fontWeight: '500' as const },
+  regular: { fontFamily: 'Satoshi-Regular', fontWeight: '400' as const },
+  light: { fontFamily: 'Satoshi-Light', fontWeight: '300' as const },
+  italic: { fontFamily: 'Satoshi-Italic', fontStyle: 'italic' as const, fontWeight: '400' as const },
+  boldItalic: { fontFamily: 'Satoshi-BoldItalic', fontStyle: 'italic' as const, fontWeight: '700' as const },
 };
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
-/**
- * One word attempt in a word reading session (UI aggregation model).
- */
-export interface WordAttempt {
-  word: string;
-  correct: boolean;
-}
-
-/**
- * A single word session document from Firestore.
- *
- * In this UI component we don't expose the raw Firestore shape directly.
- * Instead, we aggregate per lesson across all sessions and then derive
- * `LessonProgress` and `ChapterProgress` from that.
- */
-interface LessonProgress {
-  chapter: string;
-  lesson: string;
-  lessonIpa: string;
-  lessonDisplayName: string;
-  totalWords: number;
-
-  masteredWords: string[];   // correct in ≥1 session
-  missedWords: string[];     // attempted but never correct
-  untriedWords: string[];    // never attempted
-
-  latestAccuracy: number | null;  // accuracy of most-recent session
-  sessionCount: number;           // how many sessions for this lesson
-  lastPlayedDate: string;         // displayDate of most-recent session
-}
-
-/**
- * Aggregated progress for one chapter (letter) across all its lessons.
- */
-interface ChapterProgress {
-  chapter: string;
-  lessons: LessonProgress[];
-  totalWords: number;
-  masteredWords: number;
-  completedLessons: number;
-  overallAccuracy: number | null;
-}
+type LessonProgress = WordLessonProgress;
+type ChapterProgress = WordChapterProgress;
 
 interface Props {
   studentId: string;
 }
 
 // ============================================================================
-// DATA HELPERS
-// ============================================================================
-
-type TimeRange = 'week' | 'month' | 'year';
-
-// Matches the "school year" semantics used elsewhere in the app
-function getDateRangeForTimeFilter(
-  timeRange: TimeRange,
-): { start: Date; end: Date } {
-  const end = new Date();
-  const start = new Date();
-
-  if (timeRange === 'week') {
-    const currentDay = end.getDay();
-    const daysSinceMonday = currentDay === 0 ? 6 : currentDay - 1;
-    start.setDate(end.getDate() - daysSinceMonday);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-  } else if (timeRange === 'month') {
-    start.setMonth(end.getMonth() - 1);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-  } else {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    if (month >= 5) {
-      start.setFullYear(year);
-      start.setMonth(5);
-      start.setDate(1);
-      end.setFullYear(year + 1);
-      end.setMonth(7);
-      end.setDate(31);
-    } else {
-      start.setFullYear(year - 1);
-      start.setMonth(5);
-      start.setDate(1);
-      end.setFullYear(year);
-      end.setMonth(7);
-      end.setDate(31);
-    }
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-  }
-  return { start, end };
-}
-
-// ============================================================================
 // HELPERS
 // ============================================================================
 
-const accentColor  = (acc: number | null) =>
+const accentColor = (acc: number | null) =>
   acc === null ? T.dim : acc >= 85 ? T.green : acc >= 60 ? T.amber : T.red;
-const accentDim    = (acc: number | null) =>
+const accentDim = (acc: number | null) =>
   acc === null ? 'rgba(0,0,0,0.04)' : acc >= 85 ? T.greenDim : acc >= 60 ? T.amberDim : T.redDim;
 const accentBorder = (acc: number | null) =>
   acc === null ? T.dim : acc >= 85 ? T.greenBd : acc >= 60 ? T.amberBd : T.redBd;
@@ -167,277 +72,41 @@ const accentBorder = (acc: number | null) =>
 const isLessonComplete = (l: LessonProgress) =>
   l.totalWords > 0 && l.masteredWords.length >= l.totalWords;
 
-// Normalize words to a canonical form for set membership
-function normWord(w: string) {
-  return String(w).trim().toLowerCase();
-}
+// ============================================================================
+// RANGE TAB (Week / Month / Year — same as StudentAlphabetMastery)
+// ============================================================================
 
-interface LessonAggregate {
-  chapterId: number;
-  chapterTitle: string;
-  lessonId: number;
-  lessonTitle: string;
-  letter?: string;
-  words: string[];
+const RANGES: { key: TimeRange; label: string }[] = [
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
+];
 
-  mastered: Set<string>;
-  attempted: Set<string>;
-  incorrect: Set<string>;
-
-  sessionCount: number;
-  latestAccuracy: number | null;
-  lastDateKey: string | null;
-  lastDisplayDate: string | null;
-}
-
-type RawWordSession = {
-  id: string;
-  dateKey?: string;
-  chapters?: Record<string, any>;
-};
-
-/**
- * Merge raw `wordSessions` Firestore documents with the curriculum
- * in `ReadingMaterial.json` to produce ChapterProgress → LessonProgress
- * for visualization.
- */
-function buildChapterProgressFromFirestore(
-  rawSessions: RawWordSession[],
-): ChapterProgress[] {
-  const container = (readingMaterialData as any)?.Words?.[0];
-  const jsonChapters: any[] = Array.isArray(container?.chapters)
-    ? container.chapters
-    : [];
-
-  // Map of `${chapterId}::${lessonId}` → metadata + canonical word list
-  const lessonMeta = new Map<
-    string,
-    {
-      chapterId: number;
-      chapterTitle: string;
-      lessonId: number;
-      lessonTitle: string;
-      letter?: string;
-      words: string[];
-    }
-  >();
-
-  for (const ch of jsonChapters) {
-    const chapterId = Number(ch.chapter_id ?? 0);
-    const chapterTitle = String(ch.title ?? '');
-
-    for (const ls of ch.lessons ?? []) {
-      const lessonId = Number(ls.lesson_id ?? 0);
-      const lessonTitle = String(ls.title ?? '');
-      const key = `${chapterId}::${lessonId}`;
-
-      lessonMeta.set(key, {
-        chapterId,
-        chapterTitle,
-        lessonId,
-        lessonTitle,
-        letter: typeof ls.letter === 'string' ? ls.letter : undefined,
-        words: Array.isArray(ls.words) ? ls.words.map(String) : [],
-      });
-    }
-  }
-
-  // Aggregate per-lesson stats across all sessions
-  const agg = new Map<string, LessonAggregate>();
-
-  for (const sess of rawSessions) {
-    const dataChapters = sess.chapters ?? {};
-    const dateKey = typeof sess.dateKey === 'string' ? sess.dateKey : null;
-
-    let displayDate: string | null = null;
-    if (dateKey && /^\d{8}$/.test(dateKey)) {
-      const y = Number(dateKey.slice(0, 4));
-      const m = Number(dateKey.slice(4, 6)) - 1;
-      const d = Number(dateKey.slice(6, 8));
-      const dt = new Date(y, m, d);
-      displayDate = dt.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-    }
-
-    for (const chKey of Object.keys(dataChapters)) {
-      const ch = dataChapters[chKey];
-      if (!ch?.lessons) continue;
-
-      const chapterId = Number(ch.chapterId ?? 0);
-      const chapterTitle = String(ch.chapterTitle ?? '');
-
-      for (const lsKey of Object.keys(ch.lessons)) {
-        const ls = ch.lessons[lsKey];
-        if (!ls) continue;
-
-        const lessonId = Number(ls.lessonId ?? 0);
-        const lessonTitle = String(ls.lessonTitle ?? '');
-        const metaKey = `${chapterId}::${lessonId}`;
-        const meta = lessonMeta.get(metaKey);
-
-        // Skip lessons that are not defined in the curriculum JSON
-        if (!meta) continue;
-
-        let entry = agg.get(metaKey);
-        if (!entry) {
-          entry = {
-            chapterId: meta.chapterId,
-            chapterTitle: meta.chapterTitle,
-            lessonId: meta.lessonId,
-            lessonTitle: meta.lessonTitle,
-            letter: meta.letter,
-            words: meta.words,
-            mastered: new Set<string>(),
-            attempted: new Set<string>(),
-            incorrect: new Set<string>(),
-            sessionCount: 0,
-            latestAccuracy: null,
-            lastDateKey: null,
-            lastDisplayDate: null,
-          };
-          agg.set(metaKey, entry);
-        }
-
-        entry.sessionCount += 1;
-
-        const targetWords: string[] = Array.isArray((ls as any).targetWords)
-          ? (ls as any).targetWords
-          : [];
-        const correctWordsArr: string[] = Array.isArray((ls as any).correctWords)
-          ? (ls as any).correctWords
-          : [];
-        const incorrectWordsArr: string[] = Array.isArray(
-          (ls as any).incorrectWords,
-        )
-          ? (ls as any).incorrectWords
-          : [];
-
-        for (const w of targetWords) {
-          const nw = normWord(w);
-          if (!nw) continue;
-          entry.attempted.add(nw);
-        }
-
-        for (const w of correctWordsArr) {
-          const nw = normWord(w);
-          if (!nw) continue;
-          entry.mastered.add(nw);
-          entry.attempted.add(nw);
-          entry.incorrect.delete(nw);
-        }
-
-        for (const w of incorrectWordsArr) {
-          const nw = normWord(w);
-          if (!nw || entry.mastered.has(nw)) continue;
-          entry.incorrect.add(nw);
-          entry.attempted.add(nw);
-        }
-
-        const attempted = Number(ls.attempted ?? 0);
-        const correct = Number(ls.correct ?? 0);
-        const lessonAcc =
-          attempted > 0 ? Math.round((correct / attempted) * 100) : null;
-
-        if (dateKey && lessonAcc !== null) {
-          if (!entry.lastDateKey || dateKey > entry.lastDateKey) {
-            entry.lastDateKey = dateKey;
-            entry.lastDisplayDate = displayDate;
-            entry.latestAccuracy = lessonAcc;
-          }
-        }
-      }
-    }
-  }
-
-  // Turn aggregates into LessonProgress[] grouped by chapter
-  const chapterMap = new Map<
-    number,
-    { chapterId: number; lessons: LessonProgress[] }
-  >();
-
-  for (const entry of agg.values()) {
-    const normalizedList = entry.words.map(w => ({
-      original: w,
-      normalized: normWord(w),
-    }));
-
-    const masteredWords = normalizedList
-      .filter(w => entry.mastered.has(w.normalized))
-      .map(w => w.original);
-
-    const missedWords = normalizedList
-      .filter(
-        w =>
-          entry.attempted.has(w.normalized) &&
-          !entry.mastered.has(w.normalized),
-      )
-      .map(w => w.original);
-
-    const untriedWords = normalizedList
-      .filter(w => !entry.attempted.has(w.normalized))
-      .map(w => w.original);
-
-    const lesson: LessonProgress = {
-      chapter: String(entry.chapterId),
-      lesson: `${entry.chapterId}-${entry.lessonId}`,
-      lessonIpa: entry.letter ? `/${entry.letter.toLowerCase()}/` : '',
-      lessonDisplayName: entry.lessonTitle,
-      totalWords: entry.words.length,
-      masteredWords,
-      missedWords,
-      untriedWords,
-      latestAccuracy: entry.latestAccuracy,
-      sessionCount: entry.sessionCount,
-      lastPlayedDate: entry.lastDisplayDate ?? '',
-    };
-
-    const chapterId = entry.chapterId;
-    if (!chapterMap.has(chapterId)) {
-      chapterMap.set(chapterId, { chapterId, lessons: [] });
-    }
-    chapterMap.get(chapterId)!.lessons.push(lesson);
-  }
-
-  // Build ChapterProgress[]
-  return Array.from(chapterMap.values())
-    .map(({ chapterId, lessons }) => {
-      // sort lessons by lessonId inferred from key for stable ordering
-      lessons.sort((a, b) => {
-        const aId = Number(a.lesson.split('-')[1] ?? 0);
-        const bId = Number(b.lesson.split('-')[1] ?? 0);
-        return aId - bId;
-      });
-
-      const totalWords = lessons.reduce((s, l) => s + l.totalWords, 0);
-      const masteredWords = lessons.reduce(
-        (s, l) => s + l.masteredWords.length,
-        0,
+const RangeTab = ({
+  active,
+  onPress,
+}: {
+  active: TimeRange;
+  onPress: (r: TimeRange) => void;
+}) => (
+  <View style={styles.rangeRow}>
+    {RANGES.map(r => {
+      const isActive = r.key === active;
+      return (
+        <TouchableOpacity
+          key={r.key}
+          onPress={() => onPress(r.key)}
+          style={[styles.rangeTab, isActive && styles.rangeTabActive]}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.rangeTabText, isActive && styles.rangeTabTextActive]}>
+            {r.label}
+          </Text>
+        </TouchableOpacity>
       );
-      const completedLessons = lessons.filter(isLessonComplete).length;
-      const withAcc = lessons.filter(l => l.latestAccuracy !== null);
-      const overallAccuracy =
-        withAcc.length > 0
-          ? Math.round(
-              withAcc.reduce(
-                (s, l) => s + (l.latestAccuracy ?? 0),
-                0,
-              ) / withAcc.length,
-            )
-          : null;
-
-      return {
-        chapter: String(chapterId),
-        lessons,
-        totalWords,
-        masteredWords,
-        completedLessons,
-        overallAccuracy,
-      };
-    })
-    .sort((a, b) => Number(a.chapter) - Number(b.chapter));
-}
+    })}
+  </View>
+);
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -470,7 +139,7 @@ const WordDotStrip = ({ lesson, baseDelay }: { lesson: LessonProgress; baseDelay
     <View style={styles.dotStrip}>
       {Array.from({ length: totalSlots }, (_, i) => {
         const mastered = i < lesson.masteredWords.length;
-        const missed   = !mastered && i < lesson.masteredWords.length + lesson.missedWords.length;
+        const missed = !mastered && i < lesson.masteredWords.length + lesson.missedWords.length;
         const bg = mastered ? T.green : missed ? T.red : T.dim;
 
         // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -494,29 +163,42 @@ const WordDotStrip = ({ lesson, baseDelay }: { lesson: LessonProgress; baseDelay
   );
 };
 
-/** Chapter letter pill in the horizontal selector strip */
+/** Chapter pill in the horizontal selector strip — shows chapter title */
 const ChapterPill = ({
-  chapter, isActive, isComplete, hasData, onPress,
+  chapterId,
+  chapterTitle,
+  isActive,
+  isComplete,
+  hasData,
+  onPress,
 }: {
-  chapter: string; isActive: boolean; isComplete: boolean; hasData: boolean; onPress: () => void;
+  chapterId: string;
+  chapterTitle: string;
+  isActive: boolean;
+  isComplete: boolean;
+  hasData: boolean;
+  onPress: () => void;
 }) => (
   <TouchableOpacity
     onPress={onPress}
     activeOpacity={0.75}
     style={[
       styles.chapterPill,
-      isActive     && styles.chapterPillActive,
-      !hasData     && styles.chapterPillEmpty,
+      isActive && styles.chapterPillActive,
+      !hasData && styles.chapterPillEmpty,
     ]}
   >
-    <Text style={[
-      styles.chapterPillLetter,
-      isActive  && styles.chapterPillLetterActive,
-      !hasData  && styles.chapterPillLetterEmpty,
-    ]}>
-      {chapter}
+    <Text
+      numberOfLines={1}
+      ellipsizeMode="tail"
+      style={[
+        styles.chapterPillLetter,
+        isActive && styles.chapterPillLetterActive,
+        !hasData && styles.chapterPillLetterEmpty,
+      ]}
+    >
+      {chapterTitle || `Ch ${chapterId}`}
     </Text>
-    {/* Small green dot if lesson is fully complete */}
     {isComplete && <View style={styles.chapterCompleteDot} />}
   </TouchableOpacity>
 );
@@ -527,15 +209,15 @@ const LessonCard = ({
 }: {
   lesson: LessonProgress; index: number; isSelected: boolean; onPress: () => void;
 }) => {
-  const acc      = lesson.latestAccuracy;
-  const color    = accentColor(acc);
+  const acc = lesson.latestAccuracy;
+  const color = accentColor(acc);
   const complete = isLessonComplete(lesson);
-  const pct      = Math.round((lesson.masteredWords.length / Math.max(lesson.totalWords, 1)) * 100);
+  const pct = Math.round((lesson.masteredWords.length / Math.max(lesson.totalWords, 1)) * 100);
   const barColor = complete ? T.green : acc !== null ? color : T.dim;
 
   // Slide-in animation on first render
   const slideAnim = useRef(new Animated.Value(14)).current;
-  const opacAnim  = useRef(new Animated.Value(0)).current;
+  const opacAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.parallel([
       Animated.spring(slideAnim, { toValue: 0, delay: index * 55, useNativeDriver: true, tension: 100, friction: 10 }),
@@ -628,12 +310,12 @@ const WordGrid = ({ lesson }: { lesson: LessonProgress }) => {
     <View style={styles.wordGrid}>
       {allWords.map((word, i) => {
         const mastered = lesson.masteredWords.includes(word);
-        const missed   = lesson.missedWords.includes(word);
+        const missed = lesson.missedWords.includes(word);
 
-        const bg   = mastered ? T.greenDim : missed ? T.redDim   : T.surface2;
-        const bd   = mastered ? T.greenBd  : missed ? T.redBd    : T.dim;
-        const tc   = mastered ? T.green    : missed ? T.red      : T.muted;
-        const mark = mastered ? '✓'        : missed ? '✗'        : '';
+        const bg = mastered ? T.greenDim : missed ? T.redDim : T.surface2;
+        const bd = mastered ? T.greenBd : missed ? T.redBd : T.dim;
+        const tc = mastered ? T.green : missed ? T.red : T.muted;
+        const mark = mastered ? '✓' : missed ? '✗' : '';
 
         // eslint-disable-next-line react-hooks/rules-of-hooks
         const scaleAnim = useRef(new Animated.Value(0.5)).current;
@@ -665,68 +347,8 @@ const WordGrid = ({ lesson }: { lesson: LessonProgress }) => {
 // ============================================================================
 
 export default function StudentWordMastery({ studentId }: Props) {
-  const [chapters, setChapters] = useState<ChapterProgress[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [timeRange] = useState<TimeRange>('year');
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      if (!studentId) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const db = getFirestore();
-        const { start, end } = getDateRangeForTimeFilter(timeRange);
-        const startKey = `${start.getFullYear()}${String(
-          start.getMonth() + 1,
-        ).padStart(2, '0')}${String(start.getDate()).padStart(2, '0')}`;
-        const endKey = `${end.getFullYear()}${String(end.getMonth() + 1).padStart(
-          2,
-          '0',
-        )}${String(end.getDate()).padStart(2, '0')}`;
-
-        const q = query(
-          collection(db, 'wordSessions'),
-          where('studentId', '==', studentId),
-          where('dateKey', '>=', startKey),
-          where('dateKey', '<=', endKey),
-          orderBy('dateKey', 'asc'),
-        );
-
-        const snap = await getDocs(q);
-        const rawSessions: RawWordSession[] = [];
-        snap.forEach((docSnap: any) => {
-          const data = docSnap.data() as any;
-          rawSessions.push({
-            id: docSnap.id,
-            dateKey: data?.dateKey,
-            chapters: data?.chapters,
-          });
-        });
-
-        const built = buildChapterProgressFromFirestore(rawSessions);
-        if (!cancelled) {
-          setChapters(built);
-        }
-      } catch (e: any) {
-        if (!cancelled) {
-          setError(e?.message ?? 'Failed to load word mastery data.');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [studentId, timeRange]);
+  const [timeRange, setTimeRange] = useState<TimeRange>('week');
+  const { chapters, loading, error } = useStudentWordMastery(studentId, timeRange);
 
   const [selChapter, setSelChapter] = useState<string | null>(
     chapters.length > 0 ? chapters[0].chapter : null,
@@ -738,35 +360,45 @@ export default function StudentWordMastery({ studentId }: Props) {
   // Reset lesson selection when chapter changes
   useEffect(() => { setSelLesson(null); }, [selChapter]);
 
-  // Auto-scroll chapter strip to keep selected pill visible
+  // Auto-scroll chapter strip to keep selected pill visible (pills are variable width)
   useEffect(() => {
     const idx = chapters.findIndex(c => c.chapter === selChapter);
     if (idx >= 0) {
       setTimeout(() => {
-        chapterStripRef.current?.scrollTo({ x: idx * 52, animated: true });
+        chapterStripRef.current?.scrollTo({ x: idx * 100, animated: true });
       }, 80);
     }
-  }, [selChapter]);
+  }, [selChapter, chapters]);
 
   const currentChapter = chapters.find(c => c.chapter === selChapter) ?? null;
-  const currentLesson  = currentChapter?.lessons.find(l => l.lesson === selLesson) ?? null;
+  const currentLesson = currentChapter?.lessons.find(l => l.lesson === selLesson) ?? null;
 
   // ── Global rollup stats ──
-  const totalLessons   = chapters.reduce((s, c) => s + c.lessons.length, 0);
-  const masteredTotal  = chapters.reduce((s, c) => s + c.masteredWords, 0);
+  const totalLessons = chapters.reduce((s, c) => s + c.lessons.length, 0);
+  const masteredTotal = chapters.reduce((s, c) => s + c.masteredWords, 0);
   const totalWordSlots = chapters.reduce((s, c) => s + c.totalWords, 0);
-  const overallPct     = totalWordSlots > 0
+  const overallPct = totalWordSlots > 0
     ? Math.round((masteredTotal / totalWordSlots) * 100) : 0;
-  const allAccuracies  = chapters
-    .flatMap(c => c.lessons.map(l => l.latestAccuracy))
-    .filter((a): a is number => a !== null);
-  const avgAccuracy    = allAccuracies.length > 0
-    ? Math.round(allAccuracies.reduce((a, b) => a + b, 0) / allAccuracies.length)
-    : null;
 
+  // Global accuracy weighted by total attempts across all lessons (sum(correct) / sum(attempted))
+  const { totalAttemptedAll, totalCorrectAll } = chapters.reduce(
+    (acc, ch) => {
+      for (const l of ch.lessons) {
+        acc.totalAttemptedAll += l.attempted;
+        acc.totalCorrectAll += l.correct;
+      }
+      return acc;
+    },
+    { totalAttemptedAll: 0, totalCorrectAll: 0 },
+  );
+
+  const avgAccuracy =
+    totalAttemptedAll > 0
+      ? Math.round((totalCorrectAll / totalAttemptedAll) * 100)
+      : null;
   // ── Chapter-level stats ──
   const chapterColor = accentColor(currentChapter?.overallAccuracy ?? null);
-  const chapterPct   = currentChapter
+  const chapterPct = currentChapter
     ? Math.round((currentChapter.masteredWords / Math.max(currentChapter.totalWords, 1)) * 100)
     : 0;
 
@@ -794,7 +426,7 @@ export default function StudentWordMastery({ studentId }: Props) {
         {/* Global status chip */}
         <View style={[styles.statusChip, {
           backgroundColor: accentDim(avgAccuracy),
-          borderColor:     accentBorder(avgAccuracy),
+          borderColor: accentBorder(avgAccuracy),
         }]}>
           <View style={[styles.statusDot, { backgroundColor: accentColor(avgAccuracy) }]} />
           <Text style={[styles.statusText, { color: accentColor(avgAccuracy) }]}>
@@ -802,6 +434,11 @@ export default function StudentWordMastery({ studentId }: Props) {
           </Text>
         </View>
       </View>
+
+      {/* ──────────────────────────────────────────────
+          RANGE FILTER  (Week / Month / Year)
+      ────────────────────────────────────────────── */}
+      <RangeTab active={timeRange} onPress={setTimeRange} />
 
       {/* ──────────────────────────────────────────────
           GLOBAL SUMMARY STRIP  (4 metrics)
@@ -864,7 +501,8 @@ export default function StudentWordMastery({ studentId }: Props) {
           {chapters.map(c => (
             <ChapterPill
               key={c.chapter}
-              chapter={c.chapter}
+              chapterId={c.chapter}
+              chapterTitle={c.chapterTitle}
               isActive={c.chapter === selChapter}
               isComplete={c.completedLessons === c.lessons.length && c.lessons.length > 0}
               hasData={c.lessons.length > 0}
@@ -916,7 +554,7 @@ export default function StudentWordMastery({ studentId }: Props) {
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Lessons</Text>
           <Text style={styles.cardTitle}>
-            Chapter {currentChapter.chapter} · {currentChapter.lessons.length} lesson{currentChapter.lessons.length !== 1 ? 's' : ''}
+            {currentChapter.chapterTitle} · {currentChapter.lessons.length} lesson{currentChapter.lessons.length !== 1 ? 's' : ''}
           </Text>
 
           {currentChapter.lessons.map((lesson, i) => (
@@ -1049,6 +687,38 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
+  // ── Range filter (Week / Month / Year) ────────────────────────────────────
+  rangeRow: {
+    flexDirection: 'row',
+    backgroundColor: T.surface2,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 16,
+  },
+  rangeTab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  rangeTabActive: {
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  rangeTabText: {
+    ...F.medium,
+    fontSize: 13,
+    color: T.muted,
+  },
+  rangeTabTextActive: {
+    ...F.bold,
+    color: T.text,
+  },
+
   // ── Summary strip ────────────────────────────────────────────────────────
   summaryStrip: {
     flexDirection: 'row',
@@ -1137,11 +807,13 @@ const styles = StyleSheet.create({
   },
   fillBar: { borderRadius: 999 },
 
-  // ── Chapter pill strip ────────────────────────────────────────────────────
+  // ── Chapter pill strip (shows chapter title) ──────────────────────────────
   chapterStripContent: { gap: 8, paddingVertical: 4, paddingHorizontal: 2 },
   chapterPill: {
-    width: 42,
+    minWidth: 72,
+    maxWidth: 180,
     height: 42,
+    paddingHorizontal: 12,
     borderRadius: 12,
     backgroundColor: T.surface2,
     alignItems: 'center',
@@ -1151,14 +823,15 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   chapterPillActive: { backgroundColor: T.text, borderColor: T.text },
-  chapterPillEmpty:  { opacity: 0.35 },
+  chapterPillEmpty: { opacity: 0.35 },
   chapterPillLetter: {
-    ...F.black,             // Satoshi-Black: large letter glyph
-    fontSize: 16,
+    ...F.black,
+    fontSize: 13,
     color: T.muted,
+    textAlign: 'center',
   },
   chapterPillLetterActive: { color: '#fff' },
-  chapterPillLetterEmpty:  { color: T.dim },
+  chapterPillLetterEmpty: { color: T.dim },
   chapterCompleteDot: {
     position: 'absolute',
     top: 4, right: 4,
@@ -1208,26 +881,26 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   lessonAccentBar: { width: 4 },
-  lessonCardBody:  { flex: 1, padding: 14, gap: 8 },
-  lessonTopRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  lessonName:      { ...F.bold,    fontSize: 14, color: T.text },   // Satoshi-Bold
-  lessonIpa:       { ...F.regular, fontSize: 12, color: T.blue, marginTop: 1 }, // Satoshi-Regular
-  lessonBadgeCol:  { alignItems: 'flex-end', gap: 3 },
+  lessonCardBody: { flex: 1, padding: 14, gap: 8 },
+  lessonTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  lessonName: { ...F.bold, fontSize: 14, color: T.text },   // Satoshi-Bold
+  lessonIpa: { ...F.regular, fontSize: 12, color: T.blue, marginTop: 1 }, // Satoshi-Regular
+  lessonBadgeCol: { alignItems: 'flex-end', gap: 3 },
   lessonBadge: {
     paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 999, borderWidth: 1,
   },
-  lessonBadgeText:   { ...F.bold,  fontSize: 10 },     // Satoshi-Bold: badge label
-  lessonSessionCount:{ ...F.light, fontSize: 9, color: T.muted }, // Satoshi-Light: de-emphasized
-  lessonBottomRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  lessonFractionText:{ fontSize: 12 },
-  lessonFractionNum: { ...F.black,   fontSize: 13 },   // Satoshi-Black: mastered count
+  lessonBadgeText: { ...F.bold, fontSize: 10 },     // Satoshi-Bold: badge label
+  lessonSessionCount: { ...F.light, fontSize: 9, color: T.muted }, // Satoshi-Light: de-emphasized
+  lessonBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  lessonFractionText: { fontSize: 12 },
+  lessonFractionNum: { ...F.black, fontSize: 13 },   // Satoshi-Black: mastered count
   lessonFractionDen: { ...F.regular, fontSize: 12, color: T.muted }, // Satoshi-Regular
-  lessonDate:        { ...F.light,   fontSize: 10, color: T.muted }, // Satoshi-Light
+  lessonDate: { ...F.light, fontSize: 10, color: T.muted }, // Satoshi-Light
 
   // ── Word dot strip ───────────────────────────────────────────────────────
-  dotStrip:  { flexDirection: 'row', gap: 5, alignItems: 'center' },
-  wordDot:   { width: 10, height: 10, borderRadius: 99 },
+  dotStrip: { flexDirection: 'row', gap: 5, alignItems: 'center' },
+  wordDot: { width: 10, height: 10, borderRadius: 99 },
 
   // ── Word tile grid ───────────────────────────────────────────────────────
   wordGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 4 },
@@ -1293,7 +966,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     gap: 8,
   },
-  emptyIcon:  { fontSize: 32, marginBottom: 4 },
-  emptyTitle: { ...F.bold,    fontSize: 15, color: T.text,  textAlign: 'center' },
-  emptyBody:  { ...F.regular, fontSize: 12, color: T.muted, textAlign: 'center', lineHeight: 18 },
+  emptyIcon: { fontSize: 32, marginBottom: 4 },
+  emptyTitle: { ...F.bold, fontSize: 15, color: T.text, textAlign: 'center' },
+  emptyBody: { ...F.regular, fontSize: 12, color: T.muted, textAlign: 'center', lineHeight: 18 },
 });

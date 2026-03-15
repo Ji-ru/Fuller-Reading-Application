@@ -8,91 +8,73 @@ import {
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
 import { FilterOptions } from '../Interfaces/miscue';
 import { convertDurationToHours } from '../Utilities/convertDurationToHours';
+import { getLabelForDate, getPeriodLabels } from '../Utilities/activityGroupingDate';
 
 export const getForStudentsMiscueStats = () => {
   const { getStudentReports, formatMiscueType, getRecordingDuration } =
     MiscueReportController;
   const { getFacultyClasses, getFilteredStudentIds } = getFacultyClasses_Student;
 
-  const getActiveHours = async (
-    facultyId: string,
-    timeRange: 'week' | 'month' | 'year',
-  ): Promise<{ day: string; hours: number }[]> => {
-    try {
-      const classes = await getFacultyClasses(facultyId);
-      const { start, end } = getDateRangeForTimeFilter(timeRange);
+const getActiveHours = async (
+  facultyId: string,
+  timeRange: 'week' | 'month' | 'year',
+  filter?: FilterOptions,
+): Promise<{ day: string; hours: number }[]> => {
+  try {
+    // Get filtered student IDs based on filter (class, academic year)
+    const { studentIds } = await getFilteredStudentIds(
+      facultyId,
+      filter || { type: 'overall' },
+    );
 
-      let buckets: string[] = [];
-      let totals: Record<string, number> = {};
+    // Get date range and period labels from utilities
+    const { start, end } = getDateRangeForTimeFilter(timeRange);
+    const periodLabels = getPeriodLabels(timeRange);
 
-      if (timeRange === 'week') {
-        buckets = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'];
-      } else if (timeRange === 'month') {
-        buckets = ['W1', 'W2', 'W3', 'W4', 'W5'];
-      } else {
-        // Based on starting academic year of DepEd
-        buckets = [
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dec',
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-        ];
-      }
+    // Initialize totals for each period
+    const totals: Record<string, number> = {};
+    periodLabels.forEach(label => { totals[label] = 0; });
 
-      buckets.forEach(b => (totals[b] = 0));
+    // Process each student
+    for (const studentId of studentIds) {
+      const reports = await getRecordingDuration(studentId); // or getStudentReports? Use appropriate method
+      for (const report of reports) {
+        let reportDate: Date | null = null;
 
-      for (const classItem of classes) {
-        const studentIds = classItem.studentIds || [];
-
-        for (const studentId of studentIds) {
-          const reports = await getRecordingDuration(studentId);
-
-          for (const report of reports) {
-            const reportDate = report.createdAt.toDate();
-            if (reportDate < start || reportDate > end) continue;
-
-            const hours = convertDurationToHours(
-              report.recordingDuration || '0:00',
-            );
-
-            let bucket: string | null = null;
-
-            if (timeRange === 'week') {
-              bucket = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'][
-                reportDate.getDay()
-              ];
-            } else if (timeRange === 'month') {
-              const weekOfMonth = Math.ceil(reportDate.getDate() / 7);
-              bucket = `W${weekOfMonth}`;
-            } else {
-              bucket = reportDate.toLocaleString('en-US', { month: 'short' });
-            }
-
-            if (bucket && totals[bucket] !== undefined) {
-              totals[bucket] += hours;
-            }
+        try {
+          if (report.createdAt?.toDate) {
+            reportDate = report.createdAt.toDate();
+          } else if (report.createdAt?.seconds) {
+            reportDate = new Date(report.createdAt.seconds * 1000);
+          } else if (typeof report.createdAt === 'string') {
+            reportDate = new Date(report.createdAt);
+          } else if (report.createdAt instanceof Date) {
+            reportDate = report.createdAt;
           }
+        } catch (e) {
+          continue;
+        }
+
+        if (!reportDate) continue;
+        if (reportDate < start || reportDate > end) continue;
+
+        const hours = convertDurationToHours(report.recordingDuration || '0:00');
+        const bucket = getLabelForDate(reportDate, timeRange);
+        if (bucket && totals[bucket] !== undefined) {
+          totals[bucket] += hours;
         }
       }
-
-      console.log('This is the output of the active hours: ' + totals);
-      return buckets.map(b => ({
-        day: b,
-        hours: totals[b],
-      }));
-    } catch (error: any) {
-      throw new Error('Failed to get active hours: ' + error.message);
     }
-  };
 
+    // Return array in the order of periodLabels
+    return periodLabels.map(day => ({
+      day,
+      hours: totals[day],
+    }));
+  } catch (error: any) {
+    throw new Error('Failed to get active hours: ' + error.message);
+  }
+};
   /**
    * Get class count
    *
@@ -272,216 +254,232 @@ export const getForStudentsMiscueStats = () => {
    * Return:
    * - Top Miscue Type, Most Common Miscued Words with Example error and its total attempts (or error count)
    */
-  const getOverallTopMiscueType = async (
-    facultyId: string,
-    filter?: FilterOptions,
-  ): Promise<OverAllStudentTopMiscue[]> => {
-    try {
-      // Get filtered student IDs
-      const { studentIds } = await getFilteredStudentIds(
-        facultyId,
-        filter || { type: 'overall' },
-      );
+/**
+ * Process:
+ * - Find all the class of the faculty using facultyId
+ * - Find all the students of each of the class
+ * - Get students reading stats (Top Miscue Type, Most Common Miscued Words with Example error and its total attempts (or error count))
+ * Return:
+ * - Top Miscue Type, Most Common Miscued Words with Example error and its total attempts (or error count)
+ */
+const getOverallTopMiscueType = async (
+  facultyId: string,
+  filter?: FilterOptions,
+): Promise<OverAllStudentTopMiscue[]> => {
+  try {
+    // Get filtered student IDs
+    const { studentIds } = await getFilteredStudentIds(
+      facultyId,
+      filter || { type: 'overall' },
+    );
 
-      // Initialize data structure for aggregation
-      const allMiscues: Array<{
-        type: string;
-        expectedWord: string;
-        spokenWord: string;
-        passageTitle: string;
-        accuracyRate: number;
-      }> = [];
+    if (!studentIds?.length) {
+      return [getEmptyOverallResponse()];
+    }
 
-      // Track passage data for top miscued passage
-      const passageMap: Record<
-        string,
-        {
-          miscueCount: number;
-          accuracySum: number;
-          attemptCount: number;
+    // Initialize aggregation structures
+    const miscueTypeTotals = {
+      substitution: 0,
+      omission: 0,
+      insertion: 0,
+      repetition: 0,
+    };
+
+    // Track word-level miscue data
+    const wordMap: Record<
+      string,
+      {
+        errorExamples: Set<string>;
+        count: number;
+        miscueTypes: Record<string, number>;
+      }
+    > = {};
+
+    // Track passage data
+    const passageMap: Record<
+      string,
+      {
+        miscueCount: number;
+        accuracySum: number;
+        attemptCount: number;
+      }
+    > = {};
+
+    // For each student, get their miscue reports
+    for (const studentId of studentIds) {
+      const reports = await getStudentReports(studentId);
+
+      for (const report of reports) {
+        // ============ FIXED: Count miscue types from report totals ============
+        miscueTypeTotals.substitution += report.substitutionCount ?? 0;
+        miscueTypeTotals.omission += report.omissionCount ?? 0;
+        miscueTypeTotals.insertion += report.insertionCount ?? 0;
+        miscueTypeTotals.repetition += report.repetitionCount ?? 0;
+
+        // Track passage data
+        if (report.passageTitle) {
+          const passageTitle = report.passageTitle;
+          if (!passageMap[passageTitle]) {
+            passageMap[passageTitle] = {
+              miscueCount: 0,
+              accuracySum: 0,
+              attemptCount: 0,
+            };
+          }
+          
+          passageMap[passageTitle].attemptCount++;
+          passageMap[passageTitle].accuracySum += report.accuracyRate || 0;
+          
+          // Add total miscues from this report to passage count
+          const totalReportMiscues = calculateTotalMiscues(report);
+          passageMap[passageTitle].miscueCount += totalReportMiscues;
         }
-      > = {};
 
-      // For each student, get their miscue reports
-      for (const studentId of studentIds) {
-        const reports = await getStudentReports(studentId);
+        // ============ Process individual miscues for word-level analysis ============
+        if (report.miscues?.length) {
+          report.miscues.forEach(miscue => {
+            const expectedWord = miscue.expectedWord?.toLowerCase().trim();
+            if (!expectedWord) return;
 
-        // Collect all miscues from all reports
-        for (const report of reports) {
-          // Track passage data
-          if (report.passageTitle) {
-            const passageTitle = report.passageTitle;
-            if (!passageMap[passageTitle]) {
-              passageMap[passageTitle] = {
-                miscueCount: 0,
-                accuracySum: 0,
-                attemptCount: 0,
+            // Initialize word entry if needed
+            if (!wordMap[expectedWord]) {
+              wordMap[expectedWord] = {
+                errorExamples: new Set<string>(),
+                count: 0,
+                miscueTypes: {
+                  substitution: 0,
+                  omission: 0,
+                  insertion: 0,
+                  repetition: 0,
+                },
               };
             }
-            passageMap[passageTitle].attemptCount++;
-            passageMap[passageTitle].accuracySum += report.accuracyRate || 0;
-          }
 
-          if (report.miscues && Array.isArray(report.miscues)) {
-            report.miscues.forEach(miscue => {
-              if (report.passageTitle) {
-                passageMap[report.passageTitle].miscueCount++;
-              }
+            // Increment word count (each miscue instance counts as 1)
+            wordMap[expectedWord].count++;
 
-              allMiscues.push({
-                type: miscue.type,
-                expectedWord: miscue.expectedWord,
-                spokenWord: miscue.spokenWord || '',
-                passageTitle: report.passageTitle || 'Unknown Passage',
-                accuracyRate: report.accuracyRate || 0,
-              });
-            });
-          }
+            // Track miscue type for this word
+            if (isValidMiscueType(miscue.type)) {
+              wordMap[expectedWord].miscueTypes[miscue.type] =
+                (wordMap[expectedWord].miscueTypes[miscue.type] || 0) + 1;
+            }
+
+            // Track error example
+            if (miscue.spokenWord) {
+              wordMap[expectedWord].errorExamples.add(
+                miscue.spokenWord.toLowerCase().trim(),
+              );
+            }
+          });
         }
       }
+    }
 
-      if (allMiscues.length === 0) {
-        console.log('No miscues found');
-        return [
-          {
-            topMiscueType: 'No data',
-            commonMiscueWords: [],
-            topMiscuedPassage: [],
-          },
-        ];
-      }
+    // Check if we have any data
+    const totalAllMiscues = Object.values(miscueTypeTotals).reduce((a, b) => a + b, 0);
+    
+    if (totalAllMiscues === 0) {
+      return [getEmptyOverallResponse()];
+    }
 
-      // Calculate top miscue type
-      const miscueTypeCount = {
-        substitution: 0,
-        omission: 0,
-        insertion: 0,
-        repetition: 0,
-      };
+    // ============ Calculate top miscue type ============
+    const topMiscueEntry = Object.entries(miscueTypeTotals).sort(
+      ([, a], [, b]) => b - a,
+    )[0];
 
-      allMiscues.forEach(miscue => {
-        if (miscue.type === 'substitution') miscueTypeCount.substitution++;
-        else if (miscue.type === 'omission') miscueTypeCount.omission++;
-        else if (miscue.type === 'insertion') miscueTypeCount.insertion++;
-        else if (miscue.type === 'repetition') miscueTypeCount.repetition++;
-      });
+    const topMiscueType = formatMiscueType(topMiscueEntry[0]);
 
-      const topMiscueEntry = Object.entries(miscueTypeCount).sort(
-        ([, a], [, b]) => b - a,
-      )[0];
+    // ============ Calculate common miscue words ============
+    const commonMiscueWords = Object.entries(wordMap)
+      .map(([word, data]) => {
+        const dominantMiscueTypeEntry = Object.entries(data.miscueTypes).sort(
+          ([, a], [, b]) => b - a,
+        )[0];
 
-      const topMiscueType = formatMiscueType(topMiscueEntry[0]);
+        const dominantMiscueType = dominantMiscueTypeEntry
+          ? formatMiscueType(dominantMiscueTypeEntry[0])
+          : 'N/A';
 
-      // Calculate common words
-      const wordMap: Record<
-        string,
+        return {
+          word: capitalizeFirstLetter(word),
+          errorExample: Array.from(data.errorExamples)[0] || '—',
+          errorCount: data.count,
+          dominantMiscueType,
+          miscueTypes: data.miscueTypes,
+        };
+      })
+      .sort((a, b) => b.errorCount - a.errorCount)
+      .slice(0, 5);
+
+    // ============ Calculate top miscued passage ============
+    let topMiscuedPassage: Array<{
+      title: string;
+      averageAccuracy: number;
+      attempts: number;
+      totalMiscues: number;
+    }> = [];
+
+    if (Object.keys(passageMap).length > 0) {
+      const sortedPassages = Object.entries(passageMap).sort(
+        ([, a], [, b]) => b.miscueCount - a.miscueCount,
+      );
+
+      const [topPassageTitle, topPassageData] = sortedPassages[0];
+
+      topMiscuedPassage = [
         {
-          errorExamples: Set<string>;
-          count: number;
-          miscueTypes: Record<string, number>; // Track miscue types for each word
-        }
-      > = {};
-
-      allMiscues.forEach(miscue => {
-        const expectedWord = miscue.expectedWord.toLowerCase().trim();
-        // Initialize wordMap entry if it doesn't exist
-        if (!wordMap[expectedWord]) {
-          wordMap[expectedWord] = {
-            errorExamples: new Set<string>(),
-            count: 0,
-            miscueTypes: {
-              substitution: 0,
-              omission: 0,
-              insertion: 0,
-              repetition: 0,
-            },
-          };
-        }
-
-        wordMap[expectedWord].count++;
-
-        // Track miscue type for this word
-        wordMap[expectedWord].miscueTypes[miscue.type] =
-          (wordMap[expectedWord].miscueTypes[miscue.type] || 0) + 1;
-
-        if (miscue.spokenWord) {
-          wordMap[expectedWord].errorExamples.add(
-            miscue.spokenWord.toLowerCase().trim(),
-          );
-        }
-      });
-
-      // Find dominant miscue type for each word
-      const commonMiscueWords = Object.entries(wordMap)
-        .map(([word, data]) => {
-          // Find the most common miscue type for this word
-          const dominantMiscueTypeEntry = Object.entries(data.miscueTypes).sort(
-            ([, a], [, b]) => b - a,
-          )[0];
-
-          const dominantMiscueType = dominantMiscueTypeEntry
-            ? formatMiscueType(dominantMiscueTypeEntry[0])
-            : 'N/A';
-
-          return {
-            word: word.charAt(0).toUpperCase() + word.slice(1),
-            errorExample: Array.from(data.errorExamples)[0] || 'N/A',
-            errorCount: data.count,
-            dominantMiscueType: dominantMiscueType,
-            miscueTypes: data.miscueTypes, // Include full breakdown if needed
-          };
-        })
-        .sort((a, b) => b.errorCount - a.errorCount)
-        .slice(0, 5);
-
-      // Find top miscued passage
-      let topMiscuedPassage: Array<{
-        title: string;
-        averageAccuracy: number;
-        attempts: number;
-        totalMiscues: number;
-      }> = [];
-
-      if (Object.keys(passageMap).length > 0) {
-        const passageEntries = Object.entries(passageMap);
-
-        // Sort by miscue count (most miscues first)
-        const sortedPassages = passageEntries.sort(
-          ([, a], [, b]) => b.miscueCount - a.miscueCount,
-        );
-
-        const [topPassageTitle, topPassageData] = sortedPassages[0];
-
-        // Wrap in array to match interface
-        topMiscuedPassage = [
-          {
-            title: topPassageTitle,
-            averageAccuracy:
-              topPassageData.attemptCount > 0
-                ? parseFloat(
-                    (
-                      topPassageData.accuracySum / topPassageData.attemptCount
-                    ).toFixed(2),
-                  )
-                : 0,
-            attempts: topPassageData.attemptCount,
-            totalMiscues: topPassageData.miscueCount,
-          },
-        ];
-      }
-
-      return [
-        {
-          topMiscueType,
-          commonMiscueWords,
-          topMiscuedPassage,
+          title: topPassageTitle,
+          averageAccuracy: calculateAverageAccuracy(
+            topPassageData.accuracySum,
+            topPassageData.attemptCount,
+          ),
+          attempts: topPassageData.attemptCount,
+          totalMiscues: topPassageData.miscueCount,
         },
       ];
-    } catch (error: any) {
-      throw new Error('Failed to get top miscue type: ' + error.message);
     }
-  };
 
+    return [
+      {
+        topMiscueType,
+        commonMiscueWords,
+        topMiscuedPassage,
+      },
+    ];
+  } catch (error: any) {
+    console.error('Failed to get top miscue type:', error);
+    throw new Error(`Failed to get top miscue type: ${error.message}`);
+  }
+};
+
+// ==================== UTILITY FUNCTIONS ====================
+
+const calculateTotalMiscues = (report: any): number => {
+  return (
+    (report.substitutionCount ?? 0) +
+    (report.omissionCount ?? 0) +
+    (report.insertionCount ?? 0) +
+    (report.repetitionCount ?? 0)
+  );
+};
+
+const calculateAverageAccuracy = (sum: number, count: number): number => {
+  return count > 0 ? Number((sum / count).toFixed(2)) : 0;
+};
+
+const capitalizeFirstLetter = (word: string): string => {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+};
+
+const isValidMiscueType = (type: string): boolean => {
+  return ['substitution', 'omission', 'insertion', 'repetition'].includes(type);
+};
+
+const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
+  topMiscueType: 'No data',
+  commonMiscueWords: [],
+  topMiscuedPassage: [],
+});
   const getOverallAverageWPMandAccuracy = async (
     facultyId: string,
     filter?: FilterOptions,

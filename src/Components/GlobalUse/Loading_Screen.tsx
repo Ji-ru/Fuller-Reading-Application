@@ -31,7 +31,7 @@ export default function LoadingScreen() {
           console.log('LoadingScreen: No user found, going to Login');
           setStatusMessage('No user found. Redirecting...');
           setTimeout(() => {
-            handleReplaceStep('Login');
+            handleReplaceStep('Login', { authError: 'Session expired. Please sign in again.' });
           }, 1000);
           return;
         }
@@ -47,7 +47,7 @@ export default function LoadingScreen() {
           setStatusMessage('Profile not found. Redirecting...');
           setTimeout(async () => {
             await signOut(auth);
-            handleReplaceStep('Login');
+            handleReplaceStep('Login', { authError: 'Account profile not found. Please contact an administrator.' });
           }, 1000);
           return;
         }
@@ -65,17 +65,17 @@ export default function LoadingScreen() {
         }, 500);
 
       } catch (error) {
-        setStatusMessage('Error. Redirecting...');
+        setStatusMessage('Error verifying. Redirecting...');
         setTimeout(() => {
-          handleReplaceStep('Login');
+          handleReplaceStep('Login', { authError: 'Failed to verify account. Please check your internet connection.' });
         }, 1000);
       }
     };
 
     // Set a timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
-      handleReplaceStep('Login');
-    }, 3500);
+      handleReplaceStep('Login', { authError: 'Connection timed out. Please try signing in again.' });
+    }, 5000);
 
     // Start verification after a short delay
     const verifyTimer = setTimeout(() => {

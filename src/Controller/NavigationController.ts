@@ -2,7 +2,7 @@
 // For example: useState for local state, useCallback for memoized navigation handlers, useEffect for side effects, useRef to hold persistent values, useMemo for memoized values.
 // Only call hooks at the top level of a function component or custom hook (never in regular JS functions or classes).
 // Navigation Dependencies
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // React-native Built-in Components
@@ -14,6 +14,7 @@ import { ReadingMaterial } from '../Interfaces/passage';
 // Interfaces of Students
 import { UserDocument, UserRole } from '../Interfaces/dataInterfaces';
 import { logoutUser } from './AuthenticationController';
+import { WordContext } from '../Interfaces/dataInterfaces';
 
 // Specifies what parameters (data) each screen in your navigation stack can receive.
 export type RootStackParamList = {
@@ -21,7 +22,7 @@ export type RootStackParamList = {
   SignUpCompleted: { role: UserRole };
   SignUpTwo: { userInfo: Partial<UserDocument> };
   SignUpOne: { role: UserRole };
-  Login: undefined;
+  Login: { authError?: string } | undefined;
 
   // STUDENT NAVIGATION
   UserHome: undefined;
@@ -29,11 +30,14 @@ export type RootStackParamList = {
   ReadingActivity: {
     readingMaterial: ReadingMaterial;
     type: 'alphabet' | 'passage' | 'word';
+    wordContext?: WordContext;
   };
-
+  StudentMyClass:undefined;
   ReadingHistory: undefined;
-  ChooseRole: undefined;
   Profile: undefined;
+
+  
+  ChooseRole: undefined;
 
   // FACULTY NAVIGATION
   FacultyDashboard: undefined;
@@ -72,6 +76,7 @@ type ScreenNames = keyof RootStackParamList;
  */
 export const useNavigationHelper = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const route = useRoute<any>();
 
   /**
    * Handles the simple next navigation
@@ -86,8 +91,11 @@ export const useNavigationHelper = () => {
    * A destination based on the RootStackParamList, which only navigate back to login
    * Better handling for Loading back to login
    */
-  const handleReplaceStep = (destination: ScreenNames) => {
-    navigation.replace(destination as any);
+  const handleReplaceStep = <RouteName extends ScreenNames>(
+    destination: RouteName,
+    params?: RootStackParamList[RouteName]
+  ) => {
+    navigation.replace(destination as any, params as any);
   };
 
   // Handle navigation for SignUpOne to SignUpTwo conatining the necessary data for registration
@@ -234,13 +242,13 @@ export const useNavigationHelper = () => {
     }
   };
 
-
   // Handles only the Reading Activity Page due to having data passed to the next page.
   const handleReadingNext = (
     readingMaterial: ReadingMaterial,
     type: 'alphabet' | 'passage' | 'word',
+    wordContext?: WordContext,
   ) => {
-    navigation.navigate('ReadingActivity', { readingMaterial, type });
+    navigation.navigate('ReadingActivity', { readingMaterial, type, wordContext });
   };
 
   const handleHistoryNext = () => {
@@ -315,6 +323,7 @@ export const useNavigationHelper = () => {
     );
   };
   return {
+    routeParams: route.params,
     handleNavigateToUserDetail,
     handleNextStep,
     handleReplaceStep,

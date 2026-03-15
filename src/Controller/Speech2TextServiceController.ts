@@ -6,49 +6,49 @@ import { readFile } from 'react-native-fs';
 import { API_KEY } from '@env';
 import { Buffer } from 'buffer';
 
-// const SPACE_URL = '';
 const ASSEMBLYAI_API_KEY = API_KEY;
 const BASE_URL = 'https://api.assemblyai.com/v2';
+const SPACE_URL = '';
 export const useSpeechToText = () => {
   const [isLoading, setIsLoading] = useState(false);
-//   const processAudioWithHuggingFace = async (audioFile: string): Promise<string> => {
-//     try {
-//       setIsLoading(true);
-  
-//       // Read WAV as base64
-//       const base64Audio = await readFile(audioFile, 'base64');
-      
-//       // Gradio expects a specific data format
-//       const response = await fetch(SPACE_URL, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//           data: [
-//             `data:audio/wav;base64,${base64Audio}` // Gradio Audio format
-//           ]
-//         }),
-//       });
-  
-//       const result = await response.json();
-      
-//       // Gradio returns results in a 'data' array
-//       if (result?.data && result.data.length > 0) {
-//         return result.data[0]; 
-//       }
-//       return 'No transcription found';
-//     } catch (error: any) {
-//       console.error('Space API Error:', error);
-//       throw error;
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
+  // const processAudioWithHuggingFace = async (audioFile: string): Promise<string> => {
+  //   try {
+  //     setIsLoading(true);
+
+  //     // Read WAV as base64
+  //     const base64Audio = await readFile(audioFile, 'base64');
+
+  //     // Gradio expects a specific data format
+  //     const response = await fetch(SPACE_URL, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         data: [
+  //           `data:audio/wav;base64,${base64Audio}` // Gradio Audio format
+  //         ]
+  //       }),
+  //     });
+
+  //     const result = await response.json();
+
+  //     // Gradio returns results in a 'data' array
+  //     if (result?.data && result.data.length > 0) {
+  //       return result.data[0]; 
+  //     }
+  //     return 'No transcription found';
+  //   } catch (error: any) {
+  //     console.error('Space API Error:', error);
+  //     throw error;
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
 
 
-// DO NOT REMOVE
+  // DO NOT REMOVE
   // const processAudioWithGoogle = async (audioFile: string): Promise<string> => {
   //   try {
   //     setIsLoading(true);
@@ -104,38 +104,38 @@ export const useSpeechToText = () => {
 
   // ASSEMBLY AI STT IMPLEMENTATION
 
-    /**
-   * Upload audio file to AssemblyAI
-   */
-    const uploadAudio = async (audioFile: string): Promise<string> => {
-      // Read file as base64
-      const base64Audio = await readFile(audioFile, 'base64');
-    
-      // Convert base64 → binary
-      const binaryAudio = Buffer.from(base64Audio, 'base64');
-    
-      const uploadResponse = await fetch(`${BASE_URL}/upload`, {
-        method: 'POST',
-        headers: {
-          authorization: ASSEMBLYAI_API_KEY,
-          'content-type': 'application/octet-stream',
-        },
-        body: binaryAudio,
-      });
-    
-      if (!uploadResponse.ok) {
-        const errText = await uploadResponse.text();
-        throw new Error(`Upload failed: ${errText}`);
-      }
-    
-      const data = await uploadResponse.json();
-      return data.upload_url;
-    };
-    
+  /**
+ * Upload audio file to AssemblyAI
+ */
+  const uploadAudio = async (audioFile: string): Promise<string> => {
+    // Read file as base64
+    const base64Audio = await readFile(audioFile, 'base64');
 
-      /**
-   * Request transcription
-   */
+    // Convert base64 → binary
+    const binaryAudio = Buffer.from(base64Audio, 'base64');
+
+    const uploadResponse = await fetch(`${BASE_URL}/upload`, {
+      method: 'POST',
+      headers: {
+        authorization: ASSEMBLYAI_API_KEY,
+        'content-type': 'application/octet-stream',
+      },
+      body: binaryAudio,
+    });
+
+    if (!uploadResponse.ok) {
+      const errText = await uploadResponse.text();
+      throw new Error(`Upload failed: ${errText}`);
+    }
+
+    const data = await uploadResponse.json();
+    return data.upload_url;
+  };
+
+
+/**
+* Request transcription
+*/
   const requestTranscription = async (audioUrl: string): Promise<string> => {
     const response = await fetch(`${BASE_URL}/transcript`, {
       method: 'POST',
@@ -180,37 +180,37 @@ export const useSpeechToText = () => {
     }
   };
 
-    /**
-   * MAIN FUNCTION — DROP-IN REPLACEMENT
-   */
-    const processAudioWithAssemblyAI = useCallback(
-      async (audioFile: string): Promise<string> => {
-        try {
-          setIsLoading(true);
-  
-          const uploadUrl = await uploadAudio(audioFile);
-          const transcriptId = await requestTranscription(uploadUrl);
-          const transcriptText = await pollTranscription(transcriptId);
-  
-          return transcriptText || 'No speech detected';
-        } catch (error:any) {
-          Alert.alert(
-            'Transcription Error',
-            'Failed to transcribe audio using AssemblyAI.',
-          );
-          console.log('Error: ' + error.message)
-          throw error;
-        } finally {
-          setIsLoading(false);
-        }
-      },
-      [],
-    );
-  
-    const getSimulatedResponse = (targetText: string) => {
-      return targetText; // your existing fallback logic
-    };
-  
+  /**
+ * MAIN FUNCTION — DROP-IN REPLACEMENT
+ */
+  const processAudioWithAssemblyAI = useCallback(
+    async (audioFile: string): Promise<string> => {
+      try {
+        setIsLoading(true);
+
+        const uploadUrl = await uploadAudio(audioFile);
+        const transcriptId = await requestTranscription(uploadUrl);
+        const transcriptText = await pollTranscription(transcriptId);
+
+        return transcriptText || 'No speech detected';
+      } catch (error: any) {
+        Alert.alert(
+          'Transcription Error',
+          'Failed to transcribe audio using AssemblyAI.',
+        );
+        console.log('Error: ' + error.message)
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  const getSimulatedResponse = (targetText: string) => {
+    return targetText; // your existing fallback logic
+  };
+
   /**
    * 
    * @param passageText 

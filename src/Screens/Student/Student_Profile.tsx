@@ -25,6 +25,9 @@ import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Sta
 import StudentMiscueAnalytics from '../../Components/Faculty/StudentView_Status/Student_MiscueChart';
 import StudentTopMiscuePassageAndWords from '../../Components/Faculty/StudentView_Status/Student_TopPassage&TopWords';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
+import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
+
 /**
  * ==========================================================================
  * STUDENT PROFILE COMPONENT
@@ -367,6 +370,16 @@ export default function Profile() {
             </View>
           </View>
 
+          <View style={styles.section}>
+            {/* ALPHABET AND ACCURACY */}
+            <StudentAlphabetMastery studentId={auth.currentUser?.uid || ''} />
+          </View>
+
+          <View style={styles.section}>
+            {/* WORD AND ACCURACY */}
+            <StudentWordMastery studentId={auth.currentUser?.uid || ''} />
+          </View>
+
           {/* READING STATISTICS */}
           <View style={styles.section}>
 
@@ -386,7 +399,7 @@ export default function Profile() {
           </View>
 
           <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Activity Tracking</Text>
+            <Text style={styles.sectionTitle}>Activity Tracking</Text>
 
             {/* ACTIVITY TRACKING */}
             <StudentActivityTrackingCard studentId={auth.currentUser?.uid || ''} />

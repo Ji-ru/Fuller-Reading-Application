@@ -105,10 +105,7 @@ export default function UserHomeScreen() {
         </Text>
 
         {/* BUTTONS */}
-        <TouchableOpacity
-          style={buttons.startReadingButton}
-          onPress={() => handleNextStep('PassageSelection')}
-        >
+        <TouchableOpacity style={buttons.startReadingButton} onPress={() => handleNextStep('PassageSelection')}>
           <Text style={buttons.nextPageText}>Start Learning</Text>
         </TouchableOpacity>
         <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('ReadingHistory')}>
@@ -116,6 +113,9 @@ export default function UserHomeScreen() {
         </TouchableOpacity>
         <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('Profile')}>
           <Text style={buttons.nextPageText}>My Profile</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('StudentMyClass')}>
+          <Text style={buttons.nextPageText}>My Class</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

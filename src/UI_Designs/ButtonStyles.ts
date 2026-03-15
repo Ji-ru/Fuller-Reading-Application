@@ -17,8 +17,8 @@ const buttons = StyleSheet.create({
   },
   nextPageText: {
     color: '#FFFF',
-    fontSize: 16,
-    fontFamily: 'Satoshi-Black'
+    fontSize: 25,
+    fontFamily: 'DynaPuff-Bold'
   },
   // CANCEL BUTTON
   cancelButton: {
@@ -37,40 +37,40 @@ const buttons = StyleSheet.create({
   },
   cancelText: {
     color: '#FE5A59',
-    fontSize: 16,
-    fontFamily: 'Satoshi-Black'
+    fontSize: 25,
+    fontFamily: 'DynaPuff-Bold'
   },
   // START READING BUTTON
   startReadingButton: {
-    backgroundColor: '#2CA96A',
-    borderRadius: 5,
-    width: 320,
-    height: 40,
+    backgroundColor: '#3D71D9',
+    borderRadius: 50,
+    width: 367,
+    height: 50,
     elevation: 5,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    maxWidth: 350,
-    maxHeight: 40,
-    marginTop: 100,
+    maxWidth: 367,
+    maxHeight: 50,
+    marginTop: 50,
   },
     // READING HISTORY BUTTON
     readingHistoryButton: {
-    backgroundColor: '#2CA96A',
-    borderRadius: 5,
-    width: 320,
-    height: 40,
+    backgroundColor: '#3D71D9',
+    borderRadius: 50,
+    width: 367,
+    height: 50,
     elevation: 5,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    maxWidth: 350,
-    maxHeight: 40,
+    maxWidth: 367,
+    maxHeight: 50,
     marginTop: 15,
   },
   // CHOOSE ROLE BUTTON
   studentButton: {
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#3D71D9',
     borderRadius: 5,
     width: 320,
     height: 40,
@@ -83,7 +83,7 @@ const buttons = StyleSheet.create({
     marginTop: 15,
   },
   teacherButton: {
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#3D71D9',
     borderRadius: 5,
     width: 320,
     height: 40,

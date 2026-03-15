@@ -1,24 +1,227 @@
 import { StyleSheet } from 'react-native';
 
 const login = StyleSheet.create({
+  // ========== CONTAINER ==========
   safeAreaContainer: {
-    backgroundColor: '#ECFBFF',
+    flex: 1,
+    backgroundColor: '#f2f6ff',
   },
+  
+  scrollContent: {
+    flexGrow: 1,
+    paddingVertical: 40,
+  },
+
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
-  },
-  video: {
-    width: 300,
-    height: 300,
-    marginBottom: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
   },
 
-  // INPUT ACCOUNT CREDENTIALS
+  // ========== LOGO SECTION ==========
+  logoSection: {
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  video: {
+    width: 280,
+    height: 280,
+  },
+
+  // ========== ERROR CONTAINER ==========
+  errorContainer: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    borderLeftWidth: 0,
+    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    elevation: 3,
+  },
+  errorIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  errorIcon: {
+    fontSize: 18,
+    fontFamily: 'Satoshi-Bold',
+    color: '#DC2626',
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'Satoshi-Medium',
+    color: '#991B1B',
+    lineHeight: 18,
+  },
+
+  // ========== INPUT FIELDS ==========
+  inputWrapper: {
+    width: '100%',
+    maxWidth: 340,
+    marginBottom: 10,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: 'Satoshi-Medium',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  iconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  inputIcon: {
+    fontSize: 16,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: 'Satoshi-Medium',
+    color: '#111827',
+  },
+
+  // ========== LOGIN BUTTON ==========
+  loginButton: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#5B9BD5',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+    shadowColor: '#5B9BD5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  loginButtonDisabled: {
+    backgroundColor: '#CBD5E1',
+    shadowOpacity: 0,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontFamily: 'Satoshi-Bold',
+    color: '#FFFFFF',
+  },
+
+  // ========== DIVIDER ==========
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 340,
+    marginBottom: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#CBD5E1',
+  },
+  dividerText: {
+    fontSize: 12,
+    fontFamily: 'Satoshi-Medium',
+    color: '#64748B',
+    marginHorizontal: 16,
+  },
+
+  // ========== REGISTER SECTION ==========
+  registerSection: {
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+  },
+  registerPrompt: {
+    fontSize: 14,
+    fontFamily: 'Satoshi-Medium',
+    color: '#475569',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  registerLink: {
+    fontSize: 13,
+    fontFamily: 'Satoshi-Bold',
+    color: '#5B9BD5',
+    textDecorationLine: 'underline',
+  },
+  registerButtonsContainer: {
+    width: '100%',
+  },
+
+  // ========== SIGNUP BUTTONS ==========
+  signupwithgooglebutton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  signupwithemailbutton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  googleimage: {
+    width: 24,
+    height: 24,
+    marginRight: 12,
+  },
+  registerText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Medium',
+    color: '#374151',
+  },
+
+  // ========== LEGACY STYLES (for backward compatibility) ==========
   label: {
     marginTop: 5,
     alignSelf: 'flex-start',
@@ -32,9 +235,8 @@ const login = StyleSheet.create({
     marginBottom: 10,
     fontSize: 13,
     fontFamily: 'Satoshi-Regular',
-
     textDecorationLine: 'underline',
-    color: '#007AFF',
+    color: '#5B9BD5',
   },
   textInputContainer: {
     flexDirection: 'row',
@@ -52,10 +254,8 @@ const login = StyleSheet.create({
     maxHeight: 40,
     color: 'black'
   },
-
-  // LOGIN BUTTON
   button: {
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#5B9BD5',
     borderRadius: 5,
     width: 320,
     height: 40,
@@ -70,10 +270,8 @@ const login = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Satoshi-Black',
   },
-
-  // NOT REGISTERED DESIGN
   notRegisteredContainer: {
-    backgroundColor: '#ECFBFF',
+    backgroundColor: '#f2f6ff',
     alignItems: 'center',
     paddingBottom: 40,
     paddingTop: 20,
@@ -88,12 +286,12 @@ const login = StyleSheet.create({
   leftLine: {
     flex: 2,
     height: 1,
-    backgroundColor: '#C7C7CC',
+    backgroundColor: '#CBD5E1',
     opacity: 0.6,
   },
   notRegisteredText: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: '#64748B',
     fontWeight: '400',
     letterSpacing: 0.2,
     textAlign: 'center',
@@ -103,105 +301,30 @@ const login = StyleSheet.create({
   rightLine: {
     flex: 2,
     height: 1,
-    backgroundColor: '#C7C7CC',
+    backgroundColor: '#CBD5E1',
     opacity: 0.6,
   },
-
-  // GOOGLE REGISTRATION
-  signupwithgooglebutton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    paddingEnd: 10,
-    borderRadius: 10,
-    elevation: 5,
-    marginTop: 20,
-    width: 320,
-    marginBottom: 10,
-    maxWidth: 350,
-    maxHeight: 40,
-  },
-  signupwithemailbutton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    paddingEnd: 10,
-    borderRadius: 10,
-    elevation: 5,
-    width: 320,
-    height: 40,
-    marginBottom: 10,
-    maxWidth: 350,
-    maxHeight: 40,
-  },
-  googleimage: {
-    width: 42,
-    height: 42,
-  },
-  registerText: {
-    fontFamily: 'Satoshi-Medium',
-  },
-
-   // Input field error state
-   textInputError: {
-    borderColor: '#FF3B30',
+  textInputError: {
+    borderColor: '#EF4444',
     backgroundColor: '#FFF5F5',
     borderWidth: 2,
   },
-  
-  // Input field valid state
   textInputValid: {
-    borderColor: '#34C759',
+    borderColor: '#10B981',
     borderWidth: 1.5,
   },
-  
-  // Error message text
-  errorText: {
-    fontSize: 12,
-    color: '#FF3B30',
-    marginBottom: 10,
-    marginLeft: 10,
-    fontFamily: 'Satoshi-Regular',
-  },
-  
-  // Required field asterisk
   requiredStar: {
-    color: '#FF3B30',
+    color: '#EF4444',
     fontSize: 16,
   },
-  
-  // Disabled button state
   buttonDisabled: {
-    backgroundColor: '#C7C7CC',
+    backgroundColor: '#CBD5E1',
     opacity: 0.7,
   },
-  
-  // Forgot password as a button wrapper
   forgotPassButton: {
     alignSelf: 'flex-end',
     marginEnd: 25,
     marginBottom: 10,
-  },
-  
-  // Simple divider for OR (if you want to add it)
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-    width: '100%',
-    maxWidth: 350,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#C7C7CC',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#8E8E93',
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
   },
 });
 

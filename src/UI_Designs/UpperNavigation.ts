@@ -2,16 +2,17 @@ import { StyleSheet } from 'react-native';
 
 const upperNav = StyleSheet.create({
   ciscLogo: {
-    width: 90,
-    height: 33,
-    maxWidth: 90,
-    maxHeight: 33,
+    marginTop: 10,
+    width: 120,
+    height: 30,
+    maxWidth: 120,
+    maxHeight: 30,
   },
   menuIcon: {
-    width: 20,
-    height: 20,
-    maxWidth: 20,
-    maxHeight: 20,
+    width: 50,
+    height: 35,
+    maxWidth: 50,
+    maxHeight: 35,
   },
   touchable: {
     padding: 5,
@@ -20,7 +21,13 @@ const upperNav = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
+  },
+  backButtonIcon: {
+    width: 60,
+    height: 40,
+    maxWidth: 60,
+    maxHeight: 40,
   },
   logoutButton: {
     flexDirection: 'row',

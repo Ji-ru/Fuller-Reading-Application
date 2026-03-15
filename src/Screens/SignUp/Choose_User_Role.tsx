@@ -8,7 +8,7 @@ import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 export default function ChooseRole() {
-  const { handleRoleSelection } = useNavigationHelper();
+  const { handleRoleSelection, handleBackStep } = useNavigationHelper();
 
   return (
     <SafeAreaView style={chooseRole.container}>
@@ -19,6 +19,11 @@ export default function ChooseRole() {
         {/* HEADER (LOGO + MENU ICON) */}
         <View>
           <View style={upperNav.header}>
+            <TouchableOpacity onPress={() => handleBackStep()}>
+              <Image
+                source={require('../../../assets/icons/BackButton-icon.png')}
+                style={upperNav.backButtonIcon} />
+            </TouchableOpacity>
             <Image
               style={upperNav.ciscLogo}
               source={require('../../../assets/images/cisckids.png')}
@@ -37,15 +42,15 @@ export default function ChooseRole() {
         </View>
 
         <View>
-            <TouchableOpacity style={buttons.studentButton} onPress={() => handleRoleSelection('student')}>
-                <Text style={buttons.nextPageText}>I am a Student</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('faculty')}>
-                <Text style={buttons.nextPageText}>I am a Teacher</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('admin')}>
-                <Text style={buttons.nextPageText}>Admin</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={buttons.studentButton} onPress={() => handleRoleSelection('student')}>
+            <Text style={buttons.nextPageText}>I am a Student</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('faculty')}>
+            <Text style={buttons.nextPageText}>I am a Teacher</Text>
+          </TouchableOpacity>
+          {/* <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('admin')}>
+            <Text style={buttons.nextPageText}>Admin</Text>
+          </TouchableOpacity> */}
         </View>
       </View>
     </SafeAreaView>

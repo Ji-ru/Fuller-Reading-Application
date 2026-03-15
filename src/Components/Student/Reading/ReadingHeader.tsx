@@ -39,6 +39,7 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
       <View style={upperNav.header}>
         <TouchableOpacity style={upperNav.touchable} onPress={onBack}>
           <Image
+            style={upperNav.backButtonIcon}
             source={require('../../../../assets/icons/BackButton-icon.png')}
           />
         </TouchableOpacity>

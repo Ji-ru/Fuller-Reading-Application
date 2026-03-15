@@ -1,12 +1,6 @@
 // FacultyDashboard.tsx (Updated with TypeScript)
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity
-} from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import upperNav from '../../UI_Designs/UpperNavigation';
@@ -29,7 +23,6 @@ export interface ReadingStatusFilter {
   selectedView: ClassViewFilter;
 }
 
-
 export default function FacultyDashboard() {
   // ========================================================================
   // STATE MANAGEMENT
@@ -39,10 +32,11 @@ export default function FacultyDashboard() {
     classCount: number;
     studentCount: number;
   }>({ classCount: 0, studentCount: 0 });
-  const [readingStatusFilter, setReadingStatusFilter] = useState<ReadingStatusFilter>({
-    academicYear: '',
-    selectedView: 'overall',
-  });
+  const [readingStatusFilter, setReadingStatusFilter] =
+    useState<ReadingStatusFilter>({
+      academicYear: '',
+      selectedView: 'overall',
+    });
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
 
@@ -59,7 +53,9 @@ export default function FacultyDashboard() {
     },
     [],
   );
-  const { classHealthData } = useFetchClassReadingHealth(auth.currentUser?.uid || '');
+  const { classHealthData } = useFetchClassReadingHealth(
+    auth.currentUser?.uid || '',
+  );
   // ========================================================================
   // DATA FETCHING
   // ========================================================================
@@ -96,7 +92,7 @@ export default function FacultyDashboard() {
 
   // ========================================================================
   // EVENT HANDLER
-  // ========================================================================  
+  // ========================================================================
 
   const academicYears = React.useMemo(() => {
     return Array.from(
@@ -109,7 +105,9 @@ export default function FacultyDashboard() {
     if (!readingStatusFilter.academicYear) {
       return classHealthData;
     }
-    return classHealthData.filter(c => c.acadYear === readingStatusFilter.academicYear);
+    return classHealthData.filter(
+      c => c.acadYear === readingStatusFilter.academicYear,
+    );
   }, [classHealthData, readingStatusFilter.academicYear]);
 
   const classOptions = React.useMemo(() => {
@@ -121,8 +119,6 @@ export default function FacultyDashboard() {
       })),
     ];
   }, [filteredClassData]);
-
-
 
   return (
     <SafeAreaView style={facultyDashboard.safeArea}>
@@ -142,11 +138,12 @@ export default function FacultyDashboard() {
 
           {/* MAIN CONTENT */}
           <View style={facultyDashboard.content}>
-            <Text style={facultyDashboard.dashboardTitle}>Faculty Dashboard</Text>
+            <Text style={facultyDashboard.dashboardTitle}>
+              Faculty Dashboard
+            </Text>
             <Text style={facultyDashboard.dashboardSubtitle}>
               Reading Analytics Overview
             </Text>
-            
             {/* READING STATUS FILTERS */}
             <View style={facultyDashboard.filtersRow}>
               {/* Academic Year */}
@@ -174,7 +171,9 @@ export default function FacultyDashboard() {
                           paddingHorizontal: 14,
                           borderBottomWidth: 0.5,
                           borderBottomColor: '#F0F0F0',
-                          backgroundColor: !readingStatusFilter.academicYear ? '#E8F8F7' : 'white',
+                          backgroundColor: !readingStatusFilter.academicYear
+                            ? '#E8F8F7'
+                            : 'white',
                         }}
                         onPress={() => {
                           setReadingStatusFilter({
@@ -187,8 +186,12 @@ export default function FacultyDashboard() {
                         <Text
                           style={{
                             fontSize: 14,
-                            color: !readingStatusFilter.academicYear ? '#4ECDC4' : '#555',
-                            fontFamily: !readingStatusFilter.academicYear ? 'Satoshi-Medium' : 'Satoshi-Regular',
+                            color: !readingStatusFilter.academicYear
+                              ? '#4ECDC4'
+                              : '#555',
+                            fontFamily: !readingStatusFilter.academicYear
+                              ? 'Satoshi-Medium'
+                              : 'Satoshi-Regular',
                           }}
                         >
                           All Years
@@ -203,7 +206,10 @@ export default function FacultyDashboard() {
                             paddingHorizontal: 14,
                             borderBottomWidth: 0.5,
                             borderBottomColor: '#F0F0F0',
-                            backgroundColor: readingStatusFilter.academicYear === year ? '#E8F8F7' : 'white',
+                            backgroundColor:
+                              readingStatusFilter.academicYear === year
+                                ? '#E8F8F7'
+                                : 'white',
                           }}
                           onPress={() => {
                             setReadingStatusFilter({
@@ -216,8 +222,14 @@ export default function FacultyDashboard() {
                           <Text
                             style={{
                               fontSize: 14,
-                              color: readingStatusFilter.academicYear === year ? '#4ECDC4' : '#555',
-                              fontFamily: readingStatusFilter.academicYear === year ? 'Satoshi-Medium' : 'Satoshi-Regular',
+                              color:
+                                readingStatusFilter.academicYear === year
+                                  ? '#4ECDC4'
+                                  : '#555',
+                              fontFamily:
+                                readingStatusFilter.academicYear === year
+                                  ? 'Satoshi-Medium'
+                                  : 'Satoshi-Regular',
                             }}
                           >
                             {year}
@@ -261,7 +273,10 @@ export default function FacultyDashboard() {
                             paddingHorizontal: 14,
                             borderBottomWidth: 0.5,
                             borderBottomColor: '#F0F0F0',
-                            backgroundColor: readingStatusFilter.selectedView === opt.value ? '#E8F8F7' : 'white',
+                            backgroundColor:
+                              readingStatusFilter.selectedView === opt.value
+                                ? '#E8F8F7'
+                                : 'white',
                           }}
                           onPress={() => {
                             setReadingStatusFilter(prev => ({
@@ -274,8 +289,14 @@ export default function FacultyDashboard() {
                           <Text
                             style={{
                               fontSize: 14,
-                              color: readingStatusFilter.selectedView === opt.value ? '#4ECDC4' : '#555',
-                              fontFamily: readingStatusFilter.selectedView === opt.value ? 'Satoshi-Medium' : 'Satoshi-Regular',
+                              color:
+                                readingStatusFilter.selectedView === opt.value
+                                  ? '#4ECDC4'
+                                  : '#555',
+                              fontFamily:
+                                readingStatusFilter.selectedView === opt.value
+                                  ? 'Satoshi-Medium'
+                                  : 'Satoshi-Regular',
                             }}
                           >
                             {opt.label}
@@ -287,32 +308,34 @@ export default function FacultyDashboard() {
                 )}
               </View>
             </View>
-
-
-
             {/* STATS SUMMARY */}
             <NumberOfClassesAndStudents
               loading={loading}
               classCount={stats.classCount}
               studentCount={stats.studentCount}
             />
-
             <ClassReadingStatus
               facultyId={auth.currentUser?.uid || ''}
               filter={readingStatusFilter}
               onFilterChange={handleReadingFilterChange}
             />
-
-            <AccuracyTrendsChart facultyId={auth.currentUser?.uid} />
-
-            <ActiveHoursChart facultyId={auth.currentUser?.uid} />
-
-            <MiscueAnalytics facultyId={auth.currentUser?.uid} />
-
+            <AccuracyTrendsChart
+              facultyId={auth.currentUser?.uid}
+              filter={readingStatusFilter}
+              onFilterChange={handleReadingFilterChange}
+              academicYears={academicYears}
+            />
+            <ActiveHoursChart
+              facultyId={auth.currentUser?.uid}
+              filter={readingStatusFilter}
+            />
+            <MiscueAnalytics
+              facultyId={auth.currentUser?.uid}
+              filter={readingStatusFilter}
+            />
           </View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
