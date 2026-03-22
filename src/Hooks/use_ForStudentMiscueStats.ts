@@ -8,7 +8,7 @@ import {
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
 import { FilterOptions } from '../Interfaces/miscue';
 import { convertDurationToHours } from '../Utilities/convertDurationToHours';
-import { getLabelForDate, getPeriodLabels } from '../Utilities/activityGroupingDate';
+import { getLabelForDate, getPeriodLabels, resolveDateRange, filterReportsByDateRange, getDateRangeForAcadYear } from '../Utilities/activityGroupingDate';
 
 export const getForStudentsMiscueStats = () => {
   const { getStudentReports, formatMiscueType, getRecordingDuration } =
@@ -153,13 +153,16 @@ const getActiveHours = async (
         repetition: 0,
       };
 
-      let totalStudents = 0;
       let totalReports = 0;
       let totalMiscues = 0;
 
+      const dateRange = resolveDateRange(filter);
+
       // For each students, get all their reports using getStudentReports function
       for (const studentId of studentIds) {
-        const reports = await getStudentReports(studentId);
+        const allReports = await getStudentReports(studentId)
+        const reports    = filterReportsByDateRange(allReports, dateRange); 
+
         totalReports += reports.length;
 
         // Aggregate miscue counts from each report
@@ -304,10 +307,12 @@ const getOverallTopMiscueType = async (
         attemptCount: number;
       }
     > = {};
+    const dateRange = resolveDateRange(filter);
 
     // For each student, get their miscue reports
     for (const studentId of studentIds) {
-      const reports = await getStudentReports(studentId);
+      const allReports = await getStudentReports(studentId);
+      const reports    = filterReportsByDateRange(allReports, dateRange);
 
       for (const report of reports) {
         // ============ FIXED: Count miscue types from report totals ============
@@ -497,6 +502,7 @@ const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
       let totalReports = 0;
 
       const processedStudents = new Set<string>();
+      const dateRange  = resolveDateRange(filter);   // ← ADD (compute once outside the loop)
 
       for (const studentId of studentIds) {
         if (processedStudents.has(studentId)) continue;
@@ -504,7 +510,8 @@ const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
         processedStudents.add(studentId);
         totalStudents++;
 
-        const reports = await getStudentReports(studentId);
+        const allReports = await getStudentReports(studentId);
+        const reports    = filterReportsByDateRange(allReports, dateRange); 
         const studentReportsCount = reports.length;
 
         if (studentReportsCount > 0) {

@@ -156,8 +156,8 @@ export default function AdminUserManagement() {
                         style={adminUserManagment.userAvatar}
                         source={
                             item.profileImageUrl
-                                ? { uri: item.profileImageUrl }
-                                : require('../../../assets/images/defaultProfile.png')
+                                ? { uri: item.profileImageUrl } : item.sex === 'male' ?
+                                require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png') 
                         }
                     />
                     <View style={adminUserManagment.roleIconBadge}>

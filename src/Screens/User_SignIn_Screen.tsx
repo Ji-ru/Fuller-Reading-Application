@@ -23,12 +23,15 @@ import login from '../UI_Designs/LoginStyles';
 // Controllers (Hooks)
 import { useNavigationHelper } from '../Controller/NavigationController';
 import { loginUser } from '../Controller/AuthenticationController';
+import { initiateGoogleSignUp } from '../Utilities/googleAuthUtils';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError]     = useState('');
 
   const { handleNextStep, handleReplaceStep, routeParams } = useNavigationHelper();
 
@@ -48,53 +51,73 @@ export default function LoginScreen() {
    */
   const handleLogin = async () => {
     dismissKeyboard();
-
-    // Clear previous errors
     setAuthError('');
-
-    // Basic validation
+ 
     if (!email.trim() || !password.trim()) {
       setAuthError('Please enter both email and password');
       return;
     }
-
+ 
     try {
       setLoading(true);
-
       const result = await loginUser(email.trim(), password);
-
       if (result.success) {
         handleReplaceStep('Loading');
       }
     } catch (error: any) {
       let errorMessage = 'Login failed. Please try again.';
-
-      if (error.message.includes('user-not-found')) {
-        errorMessage = 'No account found with this email.';
-      } else if (error.message.includes('wrong-password')) {
-        errorMessage = 'Incorrect password. Please try again.';
-      } else if (error.message.includes('too-many-requests')) {
-        errorMessage = 'Too many failed attempts. Please try again later.';
-      } else if (error.message.includes('user-disabled')) {
-        errorMessage = 'This account has been disabled.';
-      } else if (error.message.includes('invalid-email')) {
-        errorMessage = 'Invalid email address.';
-      } else if (error.message.includes('network-request-failed')) {
-        errorMessage = 'Network error. Please check your internet connection.';
-      } else if (error.message.includes('invalid-credential')) {
-        errorMessage = 'Invalid email or password. Please try again.';
-      } else {
-        errorMessage = error.message || 'Invalid email or password.';
-      }
-
+ 
+      if (error.message.includes('user-not-found'))         errorMessage = 'No account found with this email.';
+      else if (error.message.includes('wrong-password'))    errorMessage = 'Incorrect password. Please try again.';
+      else if (error.message.includes('too-many-requests')) errorMessage = 'Too many failed attempts. Please try again later.';
+      else if (error.message.includes('user-disabled'))     errorMessage = 'This account has been disabled.';
+      else if (error.message.includes('invalid-email'))     errorMessage = 'Invalid email address.';
+      else if (error.message.includes('network-request-failed')) errorMessage = 'Network error. Please check your internet connection.';
+      else if (error.message.includes('invalid-credential')) errorMessage = 'Invalid email or password. Please try again.';
+      else errorMessage = error.message || 'Invalid email or password.';
+ 
       setAuthError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+   // ── Google Sign-Up ──────────────────────────────────────────────────────────
+  /**
+   * Launches the Google account picker.
+   * On success, navigates to ChooseRole and carries the email + idToken as
+   * route params so they can travel through the sign-up flow without the user
+   * having to type their email on SignUpTwo.
+   */
+  const handleGoogleSignUp = async () => {
+    dismissKeyboard();
+    setGoogleError('');
+ 
+    try {
+      setGoogleLoading(true);
+      const { email: googleEmail } = await initiateGoogleSignUp();
+ 
+      // Navigate to ChooseRole, passing the Google credentials as params.
+      // ChooseRole will forward them to SignUpOne → SignUpTwo.
+      handleNextStep('ChooseRole', {
+        googleEmail,
+      });
+    } catch (error: any) {
+      // User deliberately dismissed the picker — show nothing
+      if (error.message === 'CANCELLED') return;
+ 
+      setGoogleError(
+        error.message.includes('already exists')
+          ? error.message
+          : 'Google Sign-In failed. Please try again.',
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
-    <SafeAreaProvider style={login.safeAreaContainer}>      
+    <SafeAreaProvider style={login.safeAreaContainer}>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -107,7 +130,7 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={login.container}>
-              
+
               {/* Logo Section - Using Video */}
               <View style={login.logoSection}>
                 <Video
@@ -137,7 +160,7 @@ export default function LoginScreen() {
                   </View>
                   <TextInput
                     style={login.input}
-                    placeholder=""
+                    placeholder="example@gmail.com"
                     placeholderTextColor="#D1D5DB"
                     value={email}
                     onChangeText={(text) => {
@@ -163,7 +186,7 @@ export default function LoginScreen() {
                   <TextInput
                     style={login.input}
                     secureTextEntry
-                    placeholder=""
+                    placeholder="••••••••"
                     placeholderTextColor="#D1D5DB"
                     value={password}
                     onChangeText={(text) => {
@@ -206,13 +229,13 @@ export default function LoginScreen() {
                 <Text style={login.registerPrompt}>
                   Ready to begin your reading adventure?
                 </Text>
-                
+
                 <View style={login.registerButtonsContainer}>
                   <TouchableOpacity
                     style={login.signupwithgooglebutton}
                     onPress={() => {
                       dismissKeyboard();
-                      handleNextStep('SignUpOne');
+                      handleGoogleSignUp()
                     }}
                     activeOpacity={0.7}
                     disabled={loading}
@@ -223,7 +246,7 @@ export default function LoginScreen() {
                     />
                     <Text style={login.registerText}>Sign Up with Google</Text>
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity
                     style={login.signupwithemailbutton}
                     onPress={() => {

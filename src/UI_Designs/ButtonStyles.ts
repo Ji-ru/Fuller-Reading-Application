@@ -1,8 +1,46 @@
 import { StyleSheet } from 'react-native';
 
 const buttons = StyleSheet.create({
+  nextPageSignUpButton: {
+    backgroundColor: '#3D71D9',
+    borderRadius: 5,
+    width: 350,
+    height: 40,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 350,
+    maxHeight: 40,
+    marginBottom: 10,
+    marginTop: 35,
+  },
+  nextPageSignUpText: {
+    color: '#FFFF',
+    fontSize: 20,
+    fontFamily: 'Satoshi-Black',
+  },
+  cancelSignUpButton: {
+    backgroundColor: '#ffff',
+    borderWidth: 0.5,
+    borderColor: '#FE5A59',
+    borderRadius: 5,
+    width: 350,
+    height: 40,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 350,
+    maxHeight: 40,
+  },
+  cancelSignUpText: {
+    color: '#FE5A59',
+    fontSize: 20,
+    fontFamily: 'Satoshi-Bold',
+  },
   nextPageButton: {
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#3D71D9',
     borderRadius: 5,
     width: 320,
     height: 40,
@@ -18,7 +56,7 @@ const buttons = StyleSheet.create({
   nextPageText: {
     color: '#FFFF',
     fontSize: 25,
-    fontFamily: 'DynaPuff-Bold'
+    fontFamily: 'DynaPuff-Bold',
   },
   // CANCEL BUTTON
   cancelButton: {
@@ -38,7 +76,7 @@ const buttons = StyleSheet.create({
   cancelText: {
     color: '#FE5A59',
     fontSize: 25,
-    fontFamily: 'DynaPuff-Bold'
+    fontFamily: 'DynaPuff-Bold',
   },
   // START READING BUTTON
   startReadingButton: {
@@ -54,8 +92,8 @@ const buttons = StyleSheet.create({
     maxHeight: 50,
     marginTop: 50,
   },
-    // READING HISTORY BUTTON
-    readingHistoryButton: {
+  // READING HISTORY BUTTON
+  readingHistoryButton: {
     backgroundColor: '#3D71D9',
     borderRadius: 50,
     width: 367,
@@ -110,7 +148,7 @@ const buttons = StyleSheet.create({
     alignSelf: 'center',
     marginVertical: 2,
     fontFamily: 'Satoshi-Medium',
-  }
+  },
 });
 
 export default buttons;

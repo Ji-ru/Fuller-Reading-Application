@@ -7,7 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
-  Dimensions,
+  ImageSourcePropType
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -89,12 +89,12 @@ export default function Profile() {
   /** Error message for display if data fetching fails */
   const [error, setError] = useState<string | null>(null);
 
+  /** Profile image set */
   // ========================================================================
   // HOOKS
   // ========================================================================
 
   const { handleLogout, handleBackStep } = useNavigationHelper();
-  const screenWidth = Dimensions.get('window').width;
 
   // ========================================================================
   // LIFECYCLE
@@ -256,6 +256,7 @@ export default function Profile() {
                 onPress={() => handleBackStep()}
               >
                 <Image
+                  style={upperNav.backButtonIcon}
                   source={require('../../../assets/icons/BackButton-icon.png')}
                 />
               </TouchableOpacity>
@@ -304,8 +305,8 @@ export default function Profile() {
               <Image
                 source={
                   profileData?.profileImageUrl
-                    ? { uri: profileData.profileImageUrl }
-                    : require('../../../assets/images/defaultProfile.png')
+                    ? { uri: profileData.profileImageUrl } : profileData?.sex === 'male' ?
+                      require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png')
                 }
                 style={styles.profileImage}
               />

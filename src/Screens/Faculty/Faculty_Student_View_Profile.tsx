@@ -306,6 +306,7 @@ export default function StudentViewProfile() {
               onPress={handleBackStep}
             >
               <Image
+                style={upperNav.backButtonIcon}
                 source={require('../../../assets/icons/BackButton-icon.png')}
               />
             </TouchableOpacity>

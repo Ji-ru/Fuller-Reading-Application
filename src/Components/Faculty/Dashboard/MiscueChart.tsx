@@ -59,7 +59,7 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
     };
     
     if (!isOverall && selectedView) {
-      options.className = selectedView;
+      options.classId = selectedView;
     }
     
     if (academicYear) {
@@ -92,11 +92,11 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
 
   // Debug: Log the data from hooks
   useEffect(() => {
-    console.log('🔍 MISCCUE ANALYTICS DATA:');
-    console.log('Filter:', filterOptions);
-    console.log('hookMiscueData:', hookMiscueData);
-    console.log('topMiscue:', topMiscue);
-    console.log('hookAverages:', hookAverages);
+    // console.log('🔍 MISCCUE ANALYTICS DATA:');
+    // console.log('Filter:', filterOptions);
+    // console.log('hookMiscueData:', hookMiscueData);
+    // console.log('topMiscue:', topMiscue);
+    // console.log('hookAverages:', hookAverages);
   }, [filterOptions, hookMiscueData, topMiscue, hookAverages]);
 
   // Default data for fallback (empty/zero data)
@@ -200,14 +200,14 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
     return (
       <View style={styles.container}>
         {/* Filter Indicator - Shows current filter context */}
-        <View style={styles.filterIndicator}>
+        {/* <View style={styles.filterIndicator}>
           <Text style={styles.filterIndicatorText}>
             {isOverall 
               ? '📊 Overall Reading Statistics' 
               : `📚 Class: ${selectedView}`}
             {academicYear && ` • ${academicYear}`}
           </Text>
-        </View>
+        </View> */}
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error loading data</Text>
           <Text style={styles.errorSubtext}>

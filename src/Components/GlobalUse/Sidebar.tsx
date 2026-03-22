@@ -33,74 +33,78 @@ export default function Sidebar({
 }: SidebarProps) {
     return (
         <Modal
-            visible={visible}
-            transparent
-            animationType="fade"
-            onRequestClose={onClose}
+          visible={visible}
+          transparent
+          animationType="fade"
+          onRequestClose={onClose}
         >
-            {/* Overlay */}
+          <View style={styles.overlay}>
+      
+            {/* Background overlay (click to close) */}
             <TouchableOpacity
-                style={styles.overlay}
-                activeOpacity={1}
-                onPress={onClose}
-            >
-                {/* Sidebar Container */}
-                <View style={styles.sidebarContainer}>
-                    <TouchableOpacity activeOpacity={1}>
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            {/* Header */}
-                            <View style={styles.header}>
-                                <Image
-                                    style={styles.logo}
-                                    source={require('../../../assets/images/cisckids.png')}
-                                />
-                                <Text style={styles.headerText}>Admin Panel</Text>
-                            </View>
-
-                            {/* Menu Items */}
-                            <View style={styles.menuSection}>
-                                {menuItems.map((item) => (
-                                    <TouchableOpacity
-                                        key={item.id}
-                                        style={[
-                                            styles.menuItem,
-                                            currentRoute === item.id && styles.menuItemActive,
-                                        ]}
-                                        onPress={() => {
-                                            item.onPress();
-                                            onClose();
-                                        }}
-                                    >
-                                        <Image source={item.icon} style={styles.menuIcon} />
-                                        <Text
-                                            style={[
-                                                styles.menuText,
-                                                currentRoute === item.id && styles.menuTextActive,
-                                            ]}
-                                        >
-                                            {item.label}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-
-                            {/* Divider */}
-                            <View style={styles.divider} />
-
-                            {/* Logout Button */}
-                            <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-                                <Image
-                                    source={require('../../../assets/icons/Logout-icon.png')}
-                                    style={styles.logoutIcon}
-                                />
-                                <Text style={styles.logoutText}>Logout</Text>
-                            </TouchableOpacity>
-                        </ScrollView>
-                    </TouchableOpacity>
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={onClose}
+            />
+      
+            {/* Sidebar */}
+            <View style={styles.sidebarContainer}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+      
+                {/* Header */}
+                <View style={styles.header}>
+                  <Image
+                    style={styles.logo}
+                    source={require('../../../assets/images/cisckids.png')}
+                  />
+                  <Text style={styles.headerText}>Admin Panel</Text>
                 </View>
-            </TouchableOpacity>
+      
+                {/* Menu Items */}
+                <View style={styles.menuSection}>
+                  {menuItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[
+                        styles.menuItem,
+                        currentRoute === item.id && styles.menuItemActive,
+                      ]}
+                      onPress={() => {
+                        item.onPress();
+                        onClose();
+                      }}
+                    >
+                      <Image source={item.icon} style={styles.menuIcon} />
+                      <Text
+                        style={[
+                          styles.menuText,
+                          currentRoute === item.id && styles.menuTextActive,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+      
+                {/* Divider */}
+                <View style={styles.divider} />
+      
+                {/* Logout Button */}
+                <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+                  <Image
+                    source={require('../../../assets/icons/Logout-icon.png')}
+                    style={styles.logoutIcon}
+                  />
+                  <Text style={styles.logoutText}>Logout</Text>
+                </TouchableOpacity>
+      
+              </ScrollView>
+            </View>
+      
+          </View>
         </Modal>
-    );
+      );
 }
 
 const styles = StyleSheet.create({

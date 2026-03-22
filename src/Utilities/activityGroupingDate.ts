@@ -1,4 +1,5 @@
 import { getDateRangeForTimeFilter } from './dateRange';
+import { FilterOptions } from '../Interfaces/miscue';
 
 export function getLabelForDate(
   date: Date,
@@ -56,4 +57,64 @@ export function getPeriodLabels(timeRange: 'week' | 'month' | 'year'): string[] 
   }
   return labels;
 }
+
+/**
+ * Converts an acadYear string like "2025-2026" into a Date range.
+ * School year runs June 1 (start year) → May 31 (end year).
+ * Returns null if the string is missing or malformed.
+ */
+export const getDateRangeForAcadYear = (
+  acadYear?: string,
+): { start: Date; end: Date } | null => {
+  if (!acadYear) return null;
+
+  const match = acadYear.match(/^(\d{4})-(\d{4})$/);
+  if (!match) return null;
+
+  const startYear = parseInt(match[1], 10);
+  const endYear   = parseInt(match[2], 10);
+
+  return {
+    start: new Date(startYear, 5, 1, 0, 0, 0, 0),          // June 1
+    end:   new Date(endYear,   4, 31, 23, 59, 59, 999),     // May 31
+  };
+};
+
+/**
+ * Resolves the effective date range from a FilterOptions object.
+ * Explicit startDate/endDate take priority over acadYear.
+ */
+export const resolveDateRange = (
+  filter?: FilterOptions,
+): { start: Date; end: Date } | null => {
+  if (filter?.startDate && filter?.endDate) {
+    return { start: filter.startDate, end: filter.endDate };
+  }
+  return getDateRangeForAcadYear(filter?.acadYear);
+};
+
+/**
+ * Filters an array of reports to those whose createdAt falls within the range.
+ * If no range is provided every report passes through.
+ */
+export const filterReportsByDateRange = <T extends { createdAt: any }>(
+  reports: T[],
+  range: { start: Date; end: Date } | null,
+): T[] => {
+  if (!range) return reports;
+
+  return reports.filter(report => {
+    try {
+      let date: Date;
+      if (report.createdAt?.toDate)            date = report.createdAt.toDate();
+      else if (report.createdAt?.seconds)      date = new Date(report.createdAt.seconds * 1000);
+      else if (report.createdAt instanceof Date) date = report.createdAt;
+      else                                     return false;
+
+      return date >= range.start && date <= range.end;
+    } catch {
+      return false;
+    }
+  });
+};
   

@@ -12,6 +12,8 @@ import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
 import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
 import AccuracyTrendsChart from '../../Components/Faculty/Dashboard/AccuracyTrends';
 import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/NumberOFClassesAndStudents';
+import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
+import ClassWordMastery from '../../Components/Faculty/Dashboard/ClassWordMastery';
 import { HeaderMenu } from '../../Components/GlobalUse/HeaderMenu';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { useFetchClassReadingHealth } from '../../Hooks/use_ReadingStudentStats';
@@ -94,7 +96,7 @@ export default function FacultyDashboard() {
   // EVENT HANDLER
   // ========================================================================
 
-  const academicYears = React.useMemo(() => {
+const academicYears = React.useMemo(() => {
     return Array.from(
       new Set(classHealthData.map(item => item.acadYear).filter(Boolean)),
     );
@@ -112,7 +114,7 @@ export default function FacultyDashboard() {
 
   const classOptions = React.useMemo(() => {
     return [
-      { label: 'Overall Reading Health', value: 'overall' },
+      { label: 'All Class', value: 'overall' },
       ...filteredClassData.map(c => ({
         label: c.className,
         value: c.classId,
@@ -144,8 +146,14 @@ export default function FacultyDashboard() {
             <Text style={facultyDashboard.dashboardSubtitle}>
               Reading Analytics Overview
             </Text>
+            <NumberOfClassesAndStudents
+              loading={loading}
+              classCount={stats.classCount}
+              studentCount={stats.studentCount}
+            />
             {/* READING STATUS FILTERS */}
             <View style={facultyDashboard.filtersRow}>
+              
               {/* Academic Year */}
               <View style={facultyDashboard.filterItem}>
                 <Text style={facultyDashboard.filterLabel}>Academic Year</Text>
@@ -309,15 +317,18 @@ export default function FacultyDashboard() {
               </View>
             </View>
             {/* STATS SUMMARY */}
-            <NumberOfClassesAndStudents
-              loading={loading}
-              classCount={stats.classCount}
-              studentCount={stats.studentCount}
-            />
             <ClassReadingStatus
               facultyId={auth.currentUser?.uid || ''}
               filter={readingStatusFilter}
               onFilterChange={handleReadingFilterChange}
+            />
+            <ClassAlphabetMastery
+              facultyId={auth.currentUser?.uid || ''}
+              filter={readingStatusFilter}
+            />
+            <ClassWordMastery
+              facultyId={auth.currentUser?.uid || ''}
+              filter={readingStatusFilter}
             />
             <AccuracyTrendsChart
               facultyId={auth.currentUser?.uid}

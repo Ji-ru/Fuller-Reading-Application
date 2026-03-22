@@ -1,6 +1,6 @@
 import { Timestamp } from "@react-native-firebase/firestore";
 import { MiscueType } from "./miscue";
-import { Interaction } from "@ui-kitten/components";
+
 export interface MiscueReport {
   studentId: string;
   substitution: string;

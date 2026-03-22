@@ -1,9 +1,9 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet } from 'react-native';
 
 const loading = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ECFBFF',
+    backgroundColor: '#f2f6ff',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -15,7 +15,7 @@ const loading = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
   },
-  
+
   // Progress Container Styles
   progressContainer: {
     position: 'absolute',
@@ -24,7 +24,7 @@ const loading = StyleSheet.create({
     right: 20,
     alignItems: 'center',
   },
-  
+
   // Progress Bar Background
   progressBarBackground: {
     width: '100%',
@@ -36,22 +36,22 @@ const loading = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
-  
+
   // Progress Bar Fill
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#3d71d9',
     borderRadius: 6,
   },
-  
+
   // Progress Percentage Text
   progressText: {
     fontSize: 18,
-    color: '#2CA96A',
+    color: '#3d71d9',
     fontFamily: 'Satoshi-Bold',
     marginBottom: 8,
   },
-  
+
   // Status Message Text
   statusText: {
     fontSize: 14,
@@ -64,7 +64,7 @@ const loading = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 15,
   },
-  
+
   // Loading Spinner
   loadingSpinner: {
     marginTop: 4,

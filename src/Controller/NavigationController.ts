@@ -21,7 +21,7 @@ export type RootStackParamList = {
   Loading: undefined;
   SignUpCompleted: { role: UserRole };
   SignUpTwo: { userInfo: Partial<UserDocument> };
-  SignUpOne: { role: UserRole };
+  SignUpOne: { role: UserRole, googleEmail?: string };
   Login: { authError?: string } | undefined;
 
   // STUDENT NAVIGATION
@@ -32,12 +32,12 @@ export type RootStackParamList = {
     type: 'alphabet' | 'passage' | 'word';
     wordContext?: WordContext;
   };
-  StudentMyClass:undefined;
+  StudentMyClass: undefined;
   ReadingHistory: undefined;
   Profile: undefined;
 
-  
-  ChooseRole: undefined;
+
+  ChooseRole: { googleEmail?: string } | undefined;
 
   // FACULTY NAVIGATION
   FacultyDashboard: undefined;
@@ -82,9 +82,14 @@ export const useNavigationHelper = () => {
   /**
    * Handles the simple next navigation
    * @param destination  a destination based on the RootStackParamList going to any page based on the roles
+   * 
+   * Updated: added an optional params argument
    */
-  const handleNextStep = (destination: ScreenNames) => {
-    navigation.navigate(destination as any);
+  const handleNextStep = <RouteName extends ScreenNames>(
+    destination: RouteName,
+    params?: RootStackParamList[RouteName],
+  ) => {
+    navigation.navigate(destination as any, params as any);
   };
 
   /**
@@ -111,6 +116,7 @@ export const useNavigationHelper = () => {
     gradeLevel,
     dateOfBirth,
     assignedGradeLevels,
+    googleEmail
   }: {
     profileImageUrl?: string;
     firstName: string;
@@ -122,6 +128,7 @@ export const useNavigationHelper = () => {
     gradeLevel?: number;
     dateOfBirth?: string;
     assignedGradeLevels?: number[];
+    googleEmail?: string;
   }) => {
     // Basic validation
     if (!firstName || !lastName) {
@@ -149,7 +156,7 @@ export const useNavigationHelper = () => {
     }
 
     // Build StudentInformation object
-    const userInfo: Partial<UserDocument> = {
+    const userInfo: Partial<UserDocument> & { googleEmail?: string } = {
       profileImageUrl: profileImageUrl || '',
       firstName,
       middleName,
@@ -157,6 +164,7 @@ export const useNavigationHelper = () => {
       email: '',
       role,
       sex,
+      googleEmail
     };
     // Add role-specific data
     if (role === 'student') {

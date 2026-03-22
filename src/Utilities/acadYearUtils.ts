@@ -40,24 +40,18 @@ export const getCurrentAcademicYear = (): string => {
    */
   export const getAcademicYearOptions = (): string[] => {
     const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-    const options: string[] = [];
-    
-    // Generate years
-    for (let i = 1; i >= 0; i--) {
-      const startYear = currentYear - i - (currentMonth < 6 ? 0 : 1);
-      const endYear = startYear + 1;
-      options.push(`${startYear}-${endYear}`);
-    }
-    
-    // Future years
-    for (let i = 1; i <= 1; i++) {
-      const startYear = currentYear + i - (currentMonth < 6 ? 1 : 0);
-      const endYear = startYear + 1;
-      options.push(`${startYear}-${endYear}`);
-    }
-    
-    return options.reverse(); // Most recent first
+    const currentMonth = new Date().getMonth() + 1; // 1–12
+  
+    // Determine the start year of the current academic year
+    const startYear = currentMonth >= 6 ? currentYear : currentYear - 1;
+  
+    const optionsSet = new Set<string>();
+    optionsSet.add(`${startYear}-${startYear + 1}`);          // current
+    optionsSet.add(`${startYear - 1}-${startYear}`);         // previous
+    optionsSet.add(`${startYear + 1}-${startYear + 2}`);     // next
+  
+    // Convert to array and sort descending (most recent first)
+    return Array.from(optionsSet).sort().reverse();
   };
   
   /**
@@ -90,3 +84,5 @@ export const getCurrentAcademicYear = (): string => {
     // Check if end year is exactly start year + 1
     return endYear === startYear + 1;
   };
+
+  

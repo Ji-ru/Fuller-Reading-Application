@@ -39,6 +39,13 @@ export default function AdminViewFacultyData() {
         classCount: number;
         studentCount: number;
     }>({ classCount: 0, studentCount: 0 });
+    const [filter, setFilter] = useState({
+        academicYear: '2023-2024', // Set a default
+        selectedView: 'overall'
+    });
+    const handleFilterChange = (newFilter: { academicYear: string; selectedView: string }) => {
+        setFilter(newFilter);
+    };
     // HOOKS
     const { handleLogout, handleBackStep, handleReplaceStep } = useNavigationHelper();
     const { getNumberOfClasses, getNumbersOfAllStudents } = getForStudentsMiscueStats();
@@ -198,15 +205,15 @@ export default function AdminViewFacultyData() {
                             studentCount={stats.studentCount}
                         />
 
-                        <ClassReadingStatus facultyId={facultyId} />
+                        <ClassReadingStatus facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
 
-                        <AccuracyTrendsChart facultyId={facultyId} />
+                        <AccuracyTrendsChart facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
 
-                        <ActiveHoursChart facultyId={facultyId} />
+                        <ActiveHoursChart facultyId={facultyId} filter={filter} />
 
-                        <MiscueAnalytics facultyId={facultyId} />
+                        <MiscueAnalytics facultyId={facultyId} filter={filter} />
                     </View>
-                </View> 
+                </View>
             </ScrollView>
         </SafeAreaView>
     );

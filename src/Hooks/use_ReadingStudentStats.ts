@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { MiscueReportController } from '../Controller/MiscueReportController';
 import {
   MiscuePercentage,
   OverAllStudentTopMiscue,

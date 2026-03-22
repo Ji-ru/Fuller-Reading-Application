@@ -23,11 +23,9 @@ const signup = StyleSheet.create({
   },
   subLabel: {
     fontSize: 20,
-    fontFamily: 'Satoshi-Bold',
-    textShadowColor: '#0000004D',
-    textShadowOffset: { width: 4, height: 0 },
-    textShadowRadius: 10,
+    fontFamily: 'Satoshi-Black',
     textAlign: 'center',
+    color: '#3B7FC9'
   },
   defaultProfile: {
     width: 100,
@@ -79,11 +77,11 @@ const signup = StyleSheet.create({
     marginHorizontal: 5,
   },
   activateStep: {
-    backgroundColor: '#9EEBCB',
+    backgroundColor: '#3B7FC9',
     borderRadius: 17.5,
   },
   inactivateStep: {
-    backgroundColor: '#D9D9D9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 17.5,
   },
 
@@ -137,10 +135,15 @@ const signup = StyleSheet.create({
     alignItems: 'flex-end',
     marginRight: 15,
   },
-  number: {
-    fontWeight: 'bold',
+  activenumber: {
     fontSize: 12,
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Satoshi-Black',
+    color: '#FFFF'
+  },
+  inactivenumber: {
+    fontSize: 12,
+    fontFamily: 'Satoshi-Black',
+    color: '#0000'
   },
 
   // Select component (Dropdown)

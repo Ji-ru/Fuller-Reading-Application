@@ -92,12 +92,6 @@ export interface AverageWPMandAccuracy {
   totalStudents: number;
 }
 
-export interface FilterOptions {
-  acadYear?: string;
-  classId?: string;
-  startDate?: Date;
-  endDate?: Date;
-}
 
 export interface ClassMiscueStats {
   classId: string;
@@ -204,9 +198,16 @@ export interface ClassReadingHealth {
 
 // FOR COMMON MISCUE TYPE / WORDS / PASSAGE
 export interface FilterOptions {
+  /** 'overall' = all classes, 'class' = one specific class */
   type: 'overall' | 'class';
+  /** Required when type === 'class' */
   classId?: string;
   className?: string;
+  /** Academic year string e.g. "2025-2026" — filters reports by createdAt */
+  acadYear?: string;
+  /** Optional explicit date bounds (takes priority over acadYear if both supplied) */
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export interface ClassFilterData {

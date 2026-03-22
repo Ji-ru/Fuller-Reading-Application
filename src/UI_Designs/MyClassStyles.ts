@@ -33,7 +33,7 @@ const myClass = StyleSheet.create({
 
   // CREATE BUTTON
   createButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#3D71D9',
     borderRadius: 12,
     marginBottom: 20,
     elevation: 3,

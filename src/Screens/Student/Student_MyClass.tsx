@@ -92,7 +92,9 @@ export default function StudentMyClass() {
     };
 
     // ========== MENU & LOGOUT HANDLERS ==========
-    const toggleMenu = () => setMenuVisible(!menuVisible);
+    const toggleMenu = () => {
+        setMenuVisible(!menuVisible);
+    };
     const handleLogoutPress = () => {
         setMenuVisible(false);
         setLogoutVisible(true);
@@ -111,7 +113,9 @@ export default function StudentMyClass() {
             {/* HEADER */}
             <View style={upperNav.header}>
                 <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
-                    <Image source={require('../../../assets/icons/BackButton-icon.png')} />
+                    <Image
+                        style={upperNav.backButtonIcon}
+                        source={require('../../../assets/icons/BackButton-icon.png')} />
                 </TouchableOpacity>
                 <Image
                     style={upperNav.ciscLogo}
@@ -124,6 +128,22 @@ export default function StudentMyClass() {
                     />
                 </TouchableOpacity>
             </View>
+
+            {/* DROPDOWN MENU */}
+            {menuVisible && (
+                <View style={upperNav.dropdownMenu}>
+                    <TouchableOpacity
+                        onPress={handleLogoutPress}
+                        style={upperNav.logoutButton}
+                    >
+                        <Image
+                            source={require('../../../assets/icons/Logout-icon.png')}
+                            style={upperNav.logoutIcon}
+                        />
+                        <Text style={upperNav.logoutText}>Logout</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* OVERLAY MENU CLOSE */}
             {menuVisible && (

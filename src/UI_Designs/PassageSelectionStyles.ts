@@ -190,7 +190,7 @@ const selection = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#D4F1E8',
+    backgroundColor: '#bcdcff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -205,33 +205,36 @@ const selection = StyleSheet.create({
   },
   letterTitle: {
     fontSize: 18,
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Comfortaa-Bold',
     color: '#1F2937',
     marginBottom: 4,
   },
   letterSubtitle: {
     fontSize: 13,
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Comfortaa-Medium',
     color: '#6B7280',
     marginBottom: 4,
   },
   letterProgress: {
     fontSize: 12,
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Comfortaa-Bold',
     color: '#2CA96A',
   },
   letterArrowContainer: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#D4F1E8',
+    backgroundColor: '#bcdcff',
     justifyContent: 'center',
     alignItems: 'center',
+    alignContent: 'center',
+
     marginLeft: 12,
   },
   letterArrow: {
     fontSize: 20,
-    color: '#69C1AE',
+    paddingBottom: 10,
+    color: '#3B7FC9',
     fontFamily: 'Satoshi-Bold',
   },
 
@@ -239,7 +242,7 @@ const selection = StyleSheet.create({
   backToLettersButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D4F1E8',
+    backgroundColor: '#c0e8f2',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -250,21 +253,21 @@ const selection = StyleSheet.create({
   },
   backArrow: {
     fontSize: 20,
-    color: '#2CA96A',
+    color: '#3B7FC9',
     marginRight: 8,
     fontFamily: 'Satoshi-Bold',
   },
   backToLettersText: {
     fontSize: 15,
     fontFamily: 'Satoshi-Bold',
-    color: '#2CA96A',
+    color: '#3B7FC9',
   },
 
   // SELECTED LETTER HEADER
   selectedLetterHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D4F1E8',
+    backgroundColor: '#c0e8f2',
     padding: 16,
     borderRadius: 16,
     marginBottom: 20,
@@ -275,7 +278,7 @@ const selection = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#6db4ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -369,8 +372,8 @@ const selection = StyleSheet.create({
     borderColor: '#2CA96A',
   },
   wordBubbleText: {
-    fontSize: 16,
-    fontFamily: 'Satoshi-Bold',
+    fontSize: 20,
+    fontFamily: 'Comfortaa-Bold',
     color: '#374151',
   },
   wordBubbleTextCompleted: {

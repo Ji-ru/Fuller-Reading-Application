@@ -191,6 +191,7 @@ export default function MyStudents() {
           >
             <Image
               source={require('../../../assets/icons/BackButton-icon.png')}
+              style={upperNav.backButtonIcon}
             />
           </TouchableOpacity>
           <Image

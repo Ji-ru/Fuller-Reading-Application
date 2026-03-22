@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import user from '../../UI_Designs/UserStyle';
 import buttons from '../../UI_Designs/ButtonStyles';
@@ -7,8 +7,9 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+
 export default function UserHomeScreen() {
-  
+
   // HANDLE MENU
   const [menuVisible, setMenuVisible] = useState(false);
   // HANDLE LOGOUT
@@ -99,6 +100,7 @@ export default function UserHomeScreen() {
           style={user.imaginationReadingImage}
           source={require('../../../assets/images/Imagination-Reading.png')}
         />
+
         <Text style={user.statement}>
           When you can read, you can make your own stories and use your big
           imagination!
@@ -108,14 +110,8 @@ export default function UserHomeScreen() {
         <TouchableOpacity style={buttons.startReadingButton} onPress={() => handleNextStep('PassageSelection')}>
           <Text style={buttons.nextPageText}>Start Learning</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('ReadingHistory')}>
+        <TouchableOpacity style={buttons.readingHistoryButton} onPress={() => handleNextStep('ReadingHistory')}>
           <Text style={buttons.nextPageText}>Reading History</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('Profile')}>
-          <Text style={buttons.nextPageText}>My Profile</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('StudentMyClass')}>
-          <Text style={buttons.nextPageText}>My Class</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -7,9 +7,10 @@ const chooseRole = StyleSheet.create({
     padding: 10,
   },
   title: {
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'DynaPuff-Bold',
     fontSize: 35,
     margin: 40,
+    color: '#3B7FC9'
   },
   image: {
     width: 200,
