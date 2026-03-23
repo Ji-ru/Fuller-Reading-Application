@@ -1,17 +1,21 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width: screenWidth } = Dimensions.get('window');
+
+// Define a responsive width for form elements (90% of screen, but not wider than 350)
+const formWidth = Math.min(screenWidth - 40, 350);
 
 const signup = StyleSheet.create({
   container: {
-    backgroundColor: '#ECFBFF',
-    padding: 10,
+    backgroundColor: '#f2f6ff',
+    padding: 20,
     flex: 1,
   },
-  // SIGN UP PAGES
   ciscLogo: {
     width: 90,
     height: 33,
-    maxWidth: 90,
-    maxHeight: 33,
+    alignSelf: 'center', // Center logo
+    marginVertical: 10,
   },
   label: {
     fontSize: 35,
@@ -20,18 +24,18 @@ const signup = StyleSheet.create({
     textShadowOffset: { width: 4, height: 0 },
     textShadowRadius: 10,
     textAlign: 'center',
+    marginVertical: 10,
   },
   subLabel: {
     fontSize: 20,
     fontFamily: 'Satoshi-Black',
     textAlign: 'center',
-    color: '#3B7FC9'
+    color: '#3B7FC9',
+    marginBottom: 20,
   },
   defaultProfile: {
     width: 100,
     height: 100,
-    maxWidth: 100,
-    maxHeight: 100,
     borderRadius: 65,
     alignSelf: 'center',
     marginTop: 10,
@@ -54,19 +58,16 @@ const signup = StyleSheet.create({
     height: 16,
     tintColor: '#fff',
   },
-  //   STEPS INDICATOR DESIGN
   stepsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 5,
+    marginVertical: 20,
   },
   stepCircle: {
     width: 24,
     height: 24,
-    maxHeight: 24,
-    maxWidth: 24,
-    borderRadius: 17.5,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -74,51 +75,44 @@ const signup = StyleSheet.create({
     width: 40,
     height: 2,
     backgroundColor: 'black',
-    marginHorizontal: 5,
+    marginHorizontal: 10,
   },
   activateStep: {
     backgroundColor: '#3B7FC9',
-    borderRadius: 17.5,
   },
   inactivateStep: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 17.5,
   },
-
-  //    FORMS
+  // Form elements
   textform: {
     textAlign: 'left',
     fontSize: 15,
     fontFamily: 'Satoshi-Bold',
     marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 5,
   },
   textInputForm: {
-    width: 350,
+    width: formWidth,
     height: 40,
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
     backgroundColor: 'white',
     elevation: 5,
-    maxWidth: 350,
-    maxHeight: 40,
     alignSelf: 'center',
-    marginVertical: 2,
     fontFamily: 'Satoshi-Medium',
     color: 'black',
   },
   dateText: {
     textAlign: 'left',
-    alignItems: 'flex-start',
     fontSize: 15,
     fontFamily: 'Satoshi-Regular',
     marginHorizontal: 20,
   },
   dateInput: {
     flexDirection: 'row',
-    maxWidth: 350,
-    maxHeight: 40,
-    width: 350,
+    width: formWidth,
     height: 40,
     borderRadius: 5,
     backgroundColor: '#fff',
@@ -127,31 +121,26 @@ const signup = StyleSheet.create({
     alignSelf: 'center',
     elevation: 5,
     marginBottom: 10,
-    fontFamily: 'Satoshi-Medium',
+    paddingHorizontal: 15,
   },
   icon: {
-    maxWidth: 24,
-    maxHeight: 24,
-    alignItems: 'flex-end',
-    marginRight: 15,
+    width: 24,
+    height: 24,
   },
   activenumber: {
     fontSize: 12,
     fontFamily: 'Satoshi-Black',
-    color: '#FFFF'
+    color: '#FFF',
   },
   inactivenumber: {
     fontSize: 12,
     fontFamily: 'Satoshi-Black',
-    color: '#0000'
+    color: '#000',
   },
-
-  // Select component (Dropdown)
+  // Dropdown (GradeLevelDropDownSelection)
   dropdownButton: {
     flexDirection: 'row',
-    maxWidth: 350,
-    maxHeight: 40,
-    width: 350,
+    width: formWidth,
     height: 40,
     borderRadius: 5,
     backgroundColor: '#fff',
@@ -159,38 +148,33 @@ const signup = StyleSheet.create({
     alignSelf: 'center',
     elevation: 5,
   },
-
   dropdownArrowicon: {
-    marginLeft: 180,
+    marginLeft: 'auto',
+    marginRight: 15,
   },
-
   dropdownContainer: {
     backgroundColor: '#fff',
-    maxWidth: 350,
-    maxHeight: 40,
-    width: 350,
+    width: formWidth,
     height: 40,
     justifyContent: 'center',
     alignSelf: 'center',
     elevation: 5,
     borderRadius: 5,
   },
-
-  // COMPLETE SIGN UP PAGE
+  // Complete Sign Up Page (if reused)
   completeSignUpContainer: {
     flex: 1,
     backgroundColor: '#ECFBFF',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
   },
   video: {
-    width: 412,
-    height: 412,
+    width: Math.min(screenWidth - 40, 412),
+    height: Math.min(screenWidth - 40, 412),
     marginBottom: 20,
     borderRadius: 20,
     overflow: 'hidden',
-    maxWidth: 412,
-    maxHeight: 412,
   },
   completeTitle: {
     color: '#2CA96A',
@@ -199,13 +183,12 @@ const signup = StyleSheet.create({
     textShadowColor: '#0000004D',
     textShadowOffset: { width: 4, height: 0 },
     textShadowRadius: 10,
-    width: 400,
     textAlign: 'center',
+    width: '100%',
   },
   completeStatement: {
     textAlign: 'justify',
-    paddingLeft: 20,
-    paddingRight: 20,
+    paddingHorizontal: 20,
     paddingTop: 50,
     fontSize: 15,
     fontFamily: 'Satoshi-Regular',
@@ -213,20 +196,17 @@ const signup = StyleSheet.create({
   completeNextButton: {
     backgroundColor: '#2CA96A',
     borderRadius: 5,
-    width: 370,
+    width: Math.min(screenWidth - 40, 370),
     height: 40,
     elevation: 5,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
     fontFamily: 'Satoshi-Medium',
-    maxWidth: 370,
-    maxHeight: 40,
     marginBottom: 10,
     marginTop: 20,
   },
-
-  // SIGN UP LOADING COMPLETION MODAL
+  // Modal styles
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -242,7 +222,7 @@ const signup = StyleSheet.create({
     minWidth: 250,
     minHeight: 300,
     justifyContent: 'center',
-    overflow: 'hidden', // Important for confetti animation
+    overflow: 'hidden',
   },
   modalText: {
     marginTop: 20,
@@ -250,14 +230,13 @@ const signup = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
-    zIndex: 10, // Make sure text is above animations
+    zIndex: 10,
   },
   successText: {
     color: '#4CAF50',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  // Confetti animation (background)
   confettiAnimation: {
     position: 'absolute',
     top: 0,
@@ -266,16 +245,14 @@ const signup = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
-    zIndex: 1, // Lower zIndex to be in background
+    zIndex: 1,
   },
-  // Congratulations animation (foreground)
   congratulationsAnimation: {
     width: 200,
     height: 200,
-    zIndex: 2, // Higher zIndex to be in foreground
-    marginBottom: -20, // Adjust spacing between animation and text
+    zIndex: 2,
+    marginBottom: -20,
   },
-  // Keep old lottieAnimation as fallback or remove if not needed
   lottieAnimation: {
     width: 120,
     height: 120,

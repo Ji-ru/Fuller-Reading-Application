@@ -1,12 +1,17 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width: screenWidth } = Dimensions.get('window');
+
+// Responsive image dimensions – maintain aspect ratio while fitting screen
+const imageWidth = Math.min(screenWidth - 40, 380);
+const imageHeight = imageWidth * (300 / 380); // preserve original 380:300 ratio
 
 const user = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ECFBFF',
+    backgroundColor: '#f2f6ff',
     padding: 10,
   },
-
   text: {
     marginHorizontal: 20,
     marginTop: 40,
@@ -23,25 +28,23 @@ const user = StyleSheet.create({
   statement: {
     fontSize: 16,
     fontFamily: 'Comfortaa-Regular',
-    marginHorizontal: 10,
+    marginHorizontal: 20,
     color: '#3B7FC9',
     textAlign: 'center',
   },
   imaginationReadingImage: {
-    width: 380,
-    height: 300,
+    width: imageWidth,
+    height: imageHeight,
     alignSelf: 'center',
-    maxHeight: 400,
-    maxWidth: 400,
+    marginVertical: 20,
   },
-
-  // MODAL
+  // Modal styles (already responsive)
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-  }, 
+  },
   modalContainer: {
     backgroundColor: 'white',
     borderRadius: 15,
@@ -98,7 +101,6 @@ const user = StyleSheet.create({
     color: 'white',
     fontFamily: 'Satoshi-Medium',
   },
-
 });
 
 export default user;

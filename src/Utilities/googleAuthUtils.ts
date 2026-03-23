@@ -43,6 +43,7 @@ import {
     });
   };
   
+  console.log("This is the API: " + WEBCLIENT_API );
   // ─── Return type ──────────────────────────────────────────────────────────────
   
   export interface GoogleSignInResult {

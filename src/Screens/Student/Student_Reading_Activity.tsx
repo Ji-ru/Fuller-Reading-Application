@@ -22,12 +22,9 @@ import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback
 import { Miscue } from '../../Interfaces/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
-import { FeedbackModal } from '../../Components/Student/Reading/FeedbackModal';
 import { getAuth } from '@react-native-firebase/auth';
-import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { makeTodayKey } from '../../Utilities/currentDateUtils';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
-import Svg, { Text as SvgText } from 'react-native-svg';
 import { useGlobalMusic } from '../../Components/GlobalUse/Background/GlobalMusicContext';
 
 type ReadingActivityScreenRouteProp = RouteProp<

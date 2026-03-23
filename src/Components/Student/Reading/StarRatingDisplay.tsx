@@ -44,7 +44,7 @@ export const StarRatingDisplay: React.FC<StarRatingDisplayProps> = ({
         }
       },
     );
-    
+
     crowdRef.current = new Sound(
       'kid_crowd_yay.wav',
       Sound.MAIN_BUNDLE,
@@ -54,7 +54,7 @@ export const StarRatingDisplay: React.FC<StarRatingDisplayProps> = ({
         }
       },
     );
-    
+
 
     // sadRef.current = new Sound(
     //   require('../../../../assets/sfx/sad.wav'),
@@ -85,25 +85,27 @@ export const StarRatingDisplay: React.FC<StarRatingDisplayProps> = ({
 
     if (starCount > 0) {
       celebrationRef.current?.stop(() => {
+        celebrationRef.current?.stop();
+        celebrationRef.current?.setCurrentTime(0);   // rewind to start
         celebrationRef.current?.setNumberOfLoops(0);
         celebrationRef.current?.setVolume(1.0);
         celebrationRef.current?.play();
       });
 
-      crowdRef.current?.stop(() => {
-        crowdRef.current?.setNumberOfLoops(0);
-        crowdRef.current?.setVolume(0.85);
 
         setTimeout(() => {
+          crowdRef.current?.stop();
+          crowdRef.current?.setCurrentTime(0);
+          crowdRef.current?.setNumberOfLoops(0);
+          crowdRef.current?.setVolume(0.85);
           crowdRef.current?.play();
         }, 120);
-      });
     } else {
-      sadRef.current?.stop(() => {
-        sadRef.current?.setNumberOfLoops(0);
-        sadRef.current?.setVolume(1.0);
-        sadRef.current?.play();
-      });
+      sadRef.current?.stop();
+      sadRef.current?.setCurrentTime(0);
+      sadRef.current?.setNumberOfLoops(0);
+      sadRef.current?.setVolume(1.0);
+      sadRef.current?.play();
     }
   };
 

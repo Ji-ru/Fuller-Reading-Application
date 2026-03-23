@@ -1,111 +1,115 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
+// ─── Tokens ───────────────────────────────────────────────────────────────────
+
+const C = {
+  teal:      '#57b8b3',
+  tealLight: '#EAF6F6',
+  tealDark:  '#2C6975',
+  text:      '#1C1917',
+  textSub:   '#6B7280',
+  textMuted: '#A8A29E',
+  track:     '#F0F4F8',
+  border:    '#E4EAF0',
+  grid:      '#F1F5F9',
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getNiceMax(value: number, unit: 'hr' | 'min'): number {
+  if (value <= 0) return unit === 'min' ? 60 : 1;
+  const step = unit === 'min' ? 15 : 0.5;
+  return Math.max(Math.ceil(value / step) * step, step);
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface ActivityBarChartProps {
   data: { label: string; value: number }[];
   maxValue: number;
   unit: 'hr' | 'min';
 }
 
-/** Get a "nice" ceiling for chart scale so bars never overflow the Y-axis */
-function getNiceMax(value: number, unit: 'hr' | 'min'): number {
-  if (value <= 0) return unit === 'min' ? 60 : 1;
-  const step = unit === 'min' ? 15 : 0.5;
-  const raw = Math.ceil(value / step) * step;
-  return Math.max(raw, step);
-}
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export const ActivityBarChart: React.FC<ActivityBarChartProps> = ({
   data,
   maxValue,
   unit,
 }) => {
-  const chartHeight = 180;
-  const minBarHeight = 4;
+  const CHART_H   = 160;
+  const Y_STEPS   = 3; // fewer lines = less clutter
+  const niceMax   = getNiceMax(maxValue, unit);
+  const needsScroll = data.length > 10;
 
-  // Y-axis scale: always accommodate max value so bars never overflow
-  const displayMaxValue = getNiceMax(maxValue, unit);
+  // Peak bar gets the solid teal; rest get the light wash
+  const peakIndex = data.reduce(
+    (maxIdx, item, i, arr) => (item.value > arr[maxIdx].value ? i : maxIdx),
+    0,
+  );
 
-  // Calculate if we need scrolling (for many data points)
-  const needsScroll = data.length > 12;
+  const yLabels = Array.from({ length: Y_STEPS + 1 }, (_, i) =>
+    (niceMax / Y_STEPS) * (Y_STEPS - i),
+  );
 
-  // Generate Y-axis labels (top to bottom: max to 0); use clean numbers
-  const getYAxisLabels = () => {
-    const steps = 4;
-    const labels: number[] = [];
-    for (let i = 0; i <= steps; i++) {
-      labels.push((displayMaxValue / steps) * (steps - i));
-    }
-    return labels;
-  };
+  const formatVal = (v: number) =>
+    v === 0 ? '0' : v % 1 === 0 ? String(v) : v.toFixed(1);
 
-  const formatYLabel = (val: number) =>
-    Number.isInteger(val) ? String(val) : val.toFixed(0);
-
-  const yAxisLabels = getYAxisLabels();
-
-  const renderChart = () => (
-    <View style={styles.chartArea}>
-      {/* Y-Axis – redesigned layout */}
-      <View style={styles.yAxis}>
-        <View style={styles.yAxisLabelsWrapper}>
-          {yAxisLabels.map((label, index) => (
-            <View key={index} style={styles.yAxisTickRow}>
-              <View style={styles.yAxisTick} />
-              <Text style={styles.yAxisLabel}>
-                {formatYLabel(label)}
-                <Text style={styles.yAxisUnit}> {unit}</Text>
-              </Text>
-            </View>
-          ))}
-        </View>
+  const renderBars = () => (
+    <View style={s.chartArea}>
+      {/* Y-axis */}
+      <View style={s.yAxis}>
+        {yLabels.map((label, i) => (
+          <Text key={i} style={s.yLabel}>
+            {formatVal(label)}
+          </Text>
+        ))}
       </View>
 
-      {/* Chart with bars */}
-      <View style={styles.chartContent}>
-        {/* Grid lines */}
-        <View style={styles.gridContainer}>
-          {yAxisLabels.map((_, index) => (
-            <View key={index} style={styles.gridLine} />
+      {/* Grid + bars */}
+      <View style={s.chartBody}>
+        {/* Horizontal grid lines */}
+        <View style={[StyleSheet.absoluteFill, s.grid]}>
+          {yLabels.map((_, i) => (
+            <View key={i} style={s.gridLine} />
           ))}
         </View>
 
         {/* Bars */}
-        <View style={styles.barsContainer}>
-          {data.map((item, index) => {
-            // Scale bars to fit Y-axis; displayMaxValue is always >= max data value
-            const barHeight =
-              item.value === 0
-                ? 0
-                : Math.max(
-                    (item.value / displayMaxValue) * chartHeight,
-                    minBarHeight,
-                  );
+        <View style={s.barsRow}>
+          {data.map((item, i) => {
+            const isPeak   = i === peakIndex && item.value > 0;
+            const fillH    = item.value > 0
+              ? Math.max((item.value / niceMax) * CHART_H, 6)
+              : 0;
 
             return (
-              <View key={index} style={styles.barColumn}>
-                <View style={styles.barWrapper}>
-                  {/* Value label on top of bar */}
-                  {item.value > 0 && (
-                    <View style={styles.valueContainer}>
-                      <Text style={styles.valueText}>
-                        {item.value.toFixed(2)}
-                      </Text>
-                    </View>
-                  )}
+              <View key={i} style={s.barCol}>
+                {/* Value above bar */}
+                <Text style={[s.barTopVal, isPeak && s.barTopValPeak]}>
+                  {item.value > 0 ? formatVal(item.value) : ''}
+                </Text>
 
-                  {/* Bar */}
+                {/* Bar */}
+                <View style={[s.barTrack, { height: CHART_H }]}>
                   <View
                     style={[
-                      styles.bar,
-                      { height: barHeight },
-                      item.value === 0 && styles.barEmpty,
+                      s.barFill,
+                      {
+                        height: fillH,
+                        backgroundColor: isPeak ? C.teal : C.tealLight,
+                        borderColor:     isPeak ? C.teal : C.border,
+                      },
                     ]}
                   />
                 </View>
 
-                {/* X-axis label */}
-                <Text style={styles.xAxisLabel} numberOfLines={1}>
+                {/* X label */}
+                <Text
+                  style={[s.xLabel, isPeak && s.xLabelPeak]}
+                  numberOfLines={1}
+                >
                   {item.label}
                 </Text>
               </View>
@@ -117,195 +121,123 @@ export const ActivityBarChart: React.FC<ActivityBarChartProps> = ({
   );
 
   return (
-    <View style={styles.container}>
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, styles.legendDotNormal]} />
-          <Text style={styles.legendText}>Active {unit === 'hr' ? 'Hours' : 'Minutes'}</Text>
-        </View>
-      </View>
+    <View style={s.container}>
+      {/* Unit label */}
+      <Text style={s.unitLabel}>{unit === 'hr' ? 'Hours' : 'Minutes'}</Text>
 
-      {/* Chart */}
       {needsScroll ? (
         <ScrollView
           horizontal
-          showsHorizontalScrollIndicator={true}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.scrollContent}
         >
-          {renderChart()}
+          {renderBars()}
         </ScrollView>
       ) : (
-        renderChart()
+        renderBars()
       )}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
   container: {
-    marginVertical: 8,
+    marginTop: 4,
   },
-  
-  // LEGEND
-  legend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 16,
-    gap: 16,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendDotNormal: {
-    backgroundColor: '#4CAF50',
-  },
-  legendText: {
+  unitLabel: {
     fontSize: 11,
     fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
-  },
-
-  // SCROLL VIEW
-  scrollView: {
-    maxHeight: 240,
+    color: C.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
   },
   scrollContent: {
-    paddingHorizontal: 8,
+    paddingRight: 8,
   },
 
-  // CHART AREA
+  // Chart area
   chartArea: {
     flexDirection: 'row',
-    height: 220,
+    gap: 8,
   },
 
-  // Y-AXIS – redesigned layout
+  // Y-axis
   yAxis: {
-    width: 52,
-    height: 180,
-    paddingRight: 12,
-    paddingBottom: 24,
-    borderRightWidth: 1,
-    borderRightColor: '#E5E7EB',
-  },
-  yAxisLabelsWrapper: {
-    flex: 1,
-    height: 180,
+    width: 28,
+    height: 160 + 32, // CHART_H + label height below
     justifyContent: 'space-between',
+    paddingBottom: 32,
+    alignItems: 'flex-end',
   },
-  yAxisTickRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  yAxisTick: {
-    width: 6,
-    height: 1,
-    backgroundColor: '#D1D5DB',
-    marginRight: 8,
-  },
-  yAxisLabel: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Bold',
-    color: '#374151',
-    textAlign: 'right',
-  },
-  yAxisUnit: {
+  yLabel: {
     fontSize: 10,
     fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
-    fontWeight: '500',
+    color: C.textMuted,
+    textAlign: 'right',
   },
 
-  // CHART CONTENT
-  chartContent: {
+  // Body
+  chartBody: {
     flex: 1,
     position: 'relative',
   },
-
-  // GRID LINES
-  gridContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 180,
+  grid: {
     justifyContent: 'space-between',
-    paddingBottom: 24,
+    paddingBottom: 32, // leave room for x labels
+    pointerEvents: 'none',
   },
   gridLine: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: C.grid,
   },
 
-  // BARS CONTAINER
-  barsContainer: {
+  // Bars
+  barsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'flex-end',
-    height: 180,
-    paddingHorizontal: 4,
-    minWidth: 300, // Minimum width for scrollable content
+    gap: 5,
+    minWidth: 280,
   },
-  barColumn: {
-    alignItems: 'center',
+  barCol: {
     flex: 1,
-    minWidth: 40,
-  },
-  barWrapper: {
-    width: '100%',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    height: 160,
-    marginBottom: 4,
   },
-
-  // VALUE LABEL
-  valueContainer: {
-    marginBottom: 4,
+  barTopVal: {
+    fontSize: 9,
+    fontFamily: 'Satoshi-Medium',
+    color: C.textMuted,
+    height: 12,
+    marginBottom: 2,
   },
-  valueText: {
-    fontSize: 10,
+  barTopValPeak: {
+    color: C.tealDark,
     fontFamily: 'Satoshi-Bold',
-    color: '#4CAF50',
   },
-
-  // BAR STYLES
-  bar: {
-    width: 24,
+  barTrack: {
+    width: '100%',
+    backgroundColor: C.track,
     borderRadius: 6,
-    backgroundColor: '#4CAF50',
-    minHeight: 4,
-    position: 'relative',
+    justifyContent: 'flex-end',
     overflow: 'hidden',
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  barEmpty: {
-    backgroundColor: '#E5E7EB',
-    minHeight: 2,
-    shadowOpacity: 0,
+  barFill: {
+    width: '100%',
+    borderRadius: 6,
+    borderWidth: 1,
   },
-
-  // X-AXIS LABEL
-  xAxisLabel: {
+  xLabel: {
+    marginTop: 6,
     fontSize: 10,
-    fontFamily: 'Satoshi-Bold',
-    color: '#6B7280',
+    fontFamily: 'Satoshi-Medium',
+    color: C.textSub,
     textAlign: 'center',
-    marginTop: 4,
-    maxWidth: 50,
+  },
+  xLabelPeak: {
+    color: C.teal,
+    fontFamily: 'Satoshi-Bold',
   },
 });
 

@@ -31,7 +31,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleError, setGoogleError]     = useState('');
+  const [googleError, setGoogleError] = useState('');
 
   const { handleNextStep, handleReplaceStep, routeParams } = useNavigationHelper();
 
@@ -52,12 +52,12 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     dismissKeyboard();
     setAuthError('');
- 
+
     if (!email.trim() || !password.trim()) {
       setAuthError('Please enter both email and password');
       return;
     }
- 
+
     try {
       setLoading(true);
       const result = await loginUser(email.trim(), password);
@@ -66,23 +66,23 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       let errorMessage = 'Login failed. Please try again.';
- 
-      if (error.message.includes('user-not-found'))         errorMessage = 'No account found with this email.';
-      else if (error.message.includes('wrong-password'))    errorMessage = 'Incorrect password. Please try again.';
+
+      if (error.message.includes('user-not-found')) errorMessage = 'No account found with this email.';
+      else if (error.message.includes('wrong-password')) errorMessage = 'Incorrect password. Please try again.';
       else if (error.message.includes('too-many-requests')) errorMessage = 'Too many failed attempts. Please try again later.';
-      else if (error.message.includes('user-disabled'))     errorMessage = 'This account has been disabled.';
-      else if (error.message.includes('invalid-email'))     errorMessage = 'Invalid email address.';
+      else if (error.message.includes('user-disabled')) errorMessage = 'This account has been disabled.';
+      else if (error.message.includes('invalid-email')) errorMessage = 'Invalid email address.';
       else if (error.message.includes('network-request-failed')) errorMessage = 'Network error. Please check your internet connection.';
       else if (error.message.includes('invalid-credential')) errorMessage = 'Invalid email or password. Please try again.';
       else errorMessage = error.message || 'Invalid email or password.';
- 
+
       setAuthError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-   // ── Google Sign-Up ──────────────────────────────────────────────────────────
+  // ── Google Sign-Up ──────────────────────────────────────────────────────────
   /**
    * Launches the Google account picker.
    * On success, navigates to ChooseRole and carries the email + idToken as
@@ -92,11 +92,11 @@ export default function LoginScreen() {
   const handleGoogleSignUp = async () => {
     dismissKeyboard();
     setGoogleError('');
- 
+
     try {
       setGoogleLoading(true);
       const { email: googleEmail } = await initiateGoogleSignUp();
- 
+
       // Navigate to ChooseRole, passing the Google credentials as params.
       // ChooseRole will forward them to SignUpOne → SignUpTwo.
       handleNextStep('ChooseRole', {
@@ -105,7 +105,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       // User deliberately dismissed the picker — show nothing
       if (error.message === 'CANCELLED') return;
- 
+
       setGoogleError(
         error.message.includes('already exists')
           ? error.message
@@ -148,6 +148,15 @@ export default function LoginScreen() {
                     <Text style={login.errorIcon}>!</Text>
                   </View>
                   <Text style={login.errorText}>{authError}</Text>
+                </View>
+              ) : null}
+
+              {googleError ? (
+                <View style={login.errorContainer}>
+                  <View style={login.errorIconCircle}>
+                    <Text style={login.errorIcon}>!</Text>
+                  </View>
+                  <Text style={login.errorText}>{googleError}</Text>
                 </View>
               ) : null}
 
@@ -238,7 +247,7 @@ export default function LoginScreen() {
                       handleGoogleSignUp()
                     }}
                     activeOpacity={0.7}
-                    disabled={loading}
+                    disabled={loading || googleLoading}
                   >
                     <Image
                       style={login.googleimage}

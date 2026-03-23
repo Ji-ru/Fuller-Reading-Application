@@ -1,18 +1,25 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width: screenWidth } = Dimensions.get('window');
+
+// Scale logo width: 25% of screen width, capped at 120, min 80
+const logoWidth = Math.min(Math.max(screenWidth * 0.25, 80), 120);
+const logoHeight = logoWidth * (30 / 120); // maintain 120:30 ratio
+
+// Scale icons based on screen width
+const menuIconSize = Math.min(screenWidth * 0.12, 50);
+const backIconSize = Math.min(screenWidth * 0.15, 60);
+const backIconHeight = backIconSize * (40 / 60); // maintain 60:40 ratio
 
 const upperNav = StyleSheet.create({
   ciscLogo: {
     marginTop: 10,
-    width: 120,
-    height: 30,
-    maxWidth: 120,
-    maxHeight: 30,
+    width: logoWidth,
+    height: logoHeight,
   },
   menuIcon: {
-    width: 50,
-    height: 35,
-    maxWidth: 50,
-    maxHeight: 35,
+    width: menuIconSize,
+    height: menuIconSize * (35 / 50), // maintain original ratio
   },
   touchable: {
     padding: 5,
@@ -21,13 +28,12 @@ const upperNav = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 0,
+    alignItems: 'center',
+    paddingHorizontal: 10,
   },
   backButtonIcon: {
-    width: 60,
-    height: 40,
-    maxWidth: 60,
-    maxHeight: 40,
+    width: backIconSize,
+    height: backIconHeight,
   },
   logoutButton: {
     flexDirection: 'row',

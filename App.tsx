@@ -6,7 +6,7 @@ import { ApplicationProvider } from '@ui-kitten/components';
 import { withBackgroundMusic } from './src/Components/GlobalUse/Background/Student_Bq_Music';
 import * as eva from '@eva-design/eva';
 import { GlobalMusicProvider } from './src/Components/GlobalUse/Background/GlobalMusicContext';
-
+import { configureGoogleSignIn } from './src/Utilities/googleAuthUtils';
 // ========================================================================
 // PAGES
 // ========================================================================
@@ -40,6 +40,7 @@ import AdminUserManagement from './src/Screens/Admin/Admin_UserManagement';
 import AdminViewFacultyData from './src/Screens/Admin/Admin_ViewFacultyData';
 
 const Stack = createNativeStackNavigator();
+configureGoogleSignIn(); 
 
 function App() {
   return (

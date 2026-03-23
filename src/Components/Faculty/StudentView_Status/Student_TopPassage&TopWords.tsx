@@ -1,12 +1,16 @@
 import React from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  StyleSheet,
   ActivityIndicator,
-  ScrollView 
-} from "react-native";   
+  ScrollView,
+  Dimensions
+} from "react-native";
 import { useStudentTopMiscuePassageAndWords } from "../../../Hooks/Faculty/use_StudentView_Progress";
+
+const { width: screenWidth } = Dimensions.get('window');
+const isSmallScreen = screenWidth < 380;
 
 interface MiscueInsightsCardProps {
   studentId: string;
@@ -127,12 +131,12 @@ const StudentTopMiscuePassageAndWords: React.FC<MiscueInsightsCardProps> = ({ st
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   loadingText: {
     marginTop: 12,
@@ -152,7 +156,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
     borderRadius: 12,
-    padding: 20,
+    padding: isSmallScreen ? 12 : 15,
+    marginHorizontal: 10,
     marginBottom: 16,
     elevation: 5,
   },
@@ -165,13 +170,13 @@ const styles = StyleSheet.create({
     borderLeftColor: '#10b981',
   },
   passageTitle: {
-    fontSize: 18,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: '700',
     color: '#1f2937',
     marginBottom: 8,
   },
   passageName: {
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     fontWeight: '600',
     color: '#374151',
     marginBottom: 16,
@@ -186,12 +191,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   passageStatLabel: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     color: '#6b7280',
     marginBottom: 4,
   },
   passageStatValue: {
-    fontSize: 18,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: '700',
     color: '#1f2937',
   },
@@ -199,7 +204,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   wordsTitle: {
-    fontSize: 18,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: '700',
     color: '#1f2937',
   },
@@ -212,7 +217,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   headerText: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     fontWeight: '600',
     color: '#374151',
     flex: 1,
@@ -242,7 +247,7 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   wordText: {
-    fontSize: 15,
+    fontSize: isSmallScreen ? 13 : 15,
     fontWeight: '500',
     color: '#1f2937',
     fontStyle: 'italic',
@@ -251,12 +256,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 20,
-    minWidth: 100,
+    minWidth: 80,
     alignItems: 'center',
   },
   miscueTypeText: {
     color: 'white',
-    fontSize: 12,
+    fontSize: isSmallScreen ? 10 : 12,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -273,12 +278,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#BF00DD',
   },
   noMiscueType: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     color: '#9ca3af',
     fontStyle: 'italic',
   },
   attemptCount: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     color: '#374151',
     fontWeight: '500',
   },
@@ -288,7 +293,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   noDataMessage: {
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     color: '#9ca3af',
     textAlign: 'center',
   },

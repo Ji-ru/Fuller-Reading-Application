@@ -128,14 +128,14 @@ const StudentActivityTrackingCard: React.FC<StudentActivityTrackingCardProps> = 
       />
 
       {/* Activity Bar Chart */}
-      <ActivityBarChart
+      {/* <ActivityBarChart
         data={chartData.map(d => ({
           label: d.day,
           value: formatValue(d.hours),
         }))}
         maxValue={maxBarValue}
         unit={unit}
-      />
+      /> */}
 
       {/* Detailed Activity List */}
       <ActivityDetailsList
