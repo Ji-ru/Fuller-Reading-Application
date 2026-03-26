@@ -2,7 +2,7 @@
 // Firebase usage is up-to-date for React Native Firebase v22 (auth().currentUser for user, all Firestore via controller-services).
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, Alert, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, } from 'react-native';
+import { View, Text, Alert, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, ActivityIndicator } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 
 import {
@@ -10,7 +10,6 @@ import {
   useNavigationHelper,
 } from '../../Controller/NavigationController';
 import readingStyles from '../../UI_Designs/ReadingActivityStyles';
-import selection from '../../UI_Designs/PassageSelectionStyles';
 
 import { useAudioRecording } from '../../Controller/AudioRecordingController';
 import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
@@ -106,7 +105,8 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI } =
+  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI,
+    sttErrorVisible, sttErrorMessage, clearSttError } =
     useSpeechToText();
 
   // Access Global Music Context
@@ -745,7 +745,7 @@ export default function ReadingActivityScreenPage() {
     setIsCorrectAttempt(false);
     setRecordingDuration(0);
     setWordPerMin(0);
-    
+
     // Play Global Music again when returning to reading screen
     playMusic();
   }, [playMusic]);
@@ -768,7 +768,7 @@ export default function ReadingActivityScreenPage() {
   return (
     <SafeAreaView style={readingStyles.container}>
       <ImageBackground
-        source={!isReadingCompleted ? isPassage(readingMaterial) ? getPassageImage(readingMaterial.image) : undefined : require('../../../assets/images/Reading-Activity-Result-bg.png')}
+        source={!isReadingCompleted ? isPassage(readingMaterial) ? getPassageImage(readingMaterial.image) : isAlphabet(readingMaterial) ? require('../../../assets/images/RA-Alphabet-Result-bg.png') : isWords(readingMaterial) ? require('../../../assets/images/RA-Word-Result-bg.png') : undefined : require('../../../assets/images/RA-Passage-Result-bg.png')}
         style={readingStyles.bgImage}
         imageStyle={!isReadingCompleted ? readingStyles.backgroundImage : readingStyles.backgroundResultImage}
         resizeMode='cover'
@@ -837,18 +837,26 @@ export default function ReadingActivityScreenPage() {
               isRecording={isRecording}
               miscues={miscues}
               accuracy={numericAccuracy}
+              accuracyString={accuracyString}
               isReadingCompleted={isReadingCompleted}
+              isTextCorrect={isCorrectAttempt}
+              feedback={feedback}
+              onTryAgain={handleTryAgain}
             />
 
-            {/* Loading Indicator */}
-            {isLoading && (
-              <View style={readingStyles.loadingContainer}>
-                <Text style={readingStyles.loadingText}>Transcribing Audio...</Text>
+            {/* Transcribing Loading Indicator Modal */}
+            <Modal transparent={true} visible={isLoading} animationType="fade">
+              <View style={readingStyles.loadingModalOverlay}>
+                <View style={readingStyles.loadingModalContent}>
+                  <ActivityIndicator size={48} color="#3B7FC9" />
+                  <Text style={readingStyles.loadingModalTitle}>Transcribing Audio...</Text>
+                  <Text style={readingStyles.loadingModalSubtitle}>This will only take a moment.</Text>
+                </View>
               </View>
-            )}
+            </Modal>
 
-            {/* Feedback - Only show when reading is completed and modal is closed */}
-            {!isLoading && !isRecording && isReadingCompleted && (
+            {/* Feedback — Only show for passage (alphabet + word show result inside PassageDisplay) */}
+            {!isLoading && !isRecording && isReadingCompleted && type === 'passage' && (
               <FeedbackResult
                 targetText={targetText}
                 spokenText={spokenText}
@@ -889,6 +897,76 @@ export default function ReadingActivityScreenPage() {
           >
             <Text style={readingStyles.scrollHintText}>▼ See more </Text>
           </TouchableOpacity>
+        )}
+
+        {/* ── STT Error Modal ──────────────────────────────────────────────── */}
+        {/* Shown when AssemblyAI transcription fails, replacing the old Alert. */}
+        {sttErrorVisible && (
+          <View style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            justifyContent: 'center', alignItems: 'center',
+            zIndex: 999,
+          }}>
+            <View style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 20,
+              marginHorizontal: 28,
+              padding: 28,
+              alignItems: 'center',
+              elevation: 10,
+              shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+            }}>
+              {/* Icon */}
+              <View style={{
+                width: 56, height: 56, borderRadius: 28,
+                backgroundColor: '#FFF0F0',
+                justifyContent: 'center', alignItems: 'center',
+                marginBottom: 14,
+              }}>
+                <Text style={{ fontSize: 28 }}>⚠️</Text>
+              </View>
+
+              {/* Title */}
+              <Text style={{
+                fontSize: 18, fontFamily: 'DynaPuff-Bold',
+                color: '#1E1E1E', textAlign: 'center', marginBottom: 8,
+              }}>
+                Transcription Failed
+              </Text>
+
+              {/* Message */}
+              <Text style={{
+                fontSize: 13, fontFamily: 'Satoshi-Regular',
+                color: '#555', textAlign: 'center', marginBottom: 24, lineHeight: 20,
+              }}>
+                {sttErrorMessage}
+              </Text>
+
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity
+                  onPress={clearSttError}
+                  style={{
+                    flex: 1, paddingVertical: 12, borderRadius: 12,
+                    backgroundColor: '#F0F4FF', alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#3B7FC9', fontFamily: 'Satoshi-Bold', fontSize: 14 }}>Dismiss</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => { clearSttError(); handleTryAgain(); }}
+                  style={{
+                    flex: 1, paddingVertical: 12, borderRadius: 12,
+                    backgroundColor: '#3B7FC9', alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontFamily: 'Satoshi-Bold', fontSize: 14 }}>Try Again</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         )}
       </ImageBackground>
     </SafeAreaView>

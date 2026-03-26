@@ -43,17 +43,19 @@ const selection = StyleSheet.create({
   // IMAGE SECTION
   // ==========================================
   image: {
-    width: 150,
-    height: 150,
+    width: 120,
+    height: 120,
   },
   text: {
     fontFamily: 'Comfortaa-Regular',
     fontSize: 20,
+    marginLeft: 10,
   },
   beginText: {
     fontFamily: 'DynaPuff-Bold',
     fontSize: 20,
     color: '#3B7FC9',
+    marginLeft: 10,
   },
   textContainer: {
     flexDirection: 'column',
@@ -71,7 +73,7 @@ const selection = StyleSheet.create({
     maxHeight: 100,
     maxWidth: 100,
     borderRadius: 5,
-    marginRight: 10
+    marginRight: 10,
   },
 
   // ==========================================
@@ -239,63 +241,52 @@ const selection = StyleSheet.create({
   },
 
   // BACK TO LETTERS BUTTON
-  backToLettersButton: {
+  // ==========================================
+  // CHAPTER HEADER (COMBINED ROW)
+  // ==========================================
+  combinedHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#c0e8f2',
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    marginHorizontal: 10,
-    alignSelf: 'flex-start',
-    elevation: 2,
-  },
-  backArrow: {
-    fontSize: 20,
-    color: '#3B7FC9',
-    marginRight: 8,
-    fontFamily: 'Satoshi-Bold',
-  },
-  backToLettersText: {
-    fontSize: 15,
-    fontFamily: 'Satoshi-Bold',
-    color: '#3B7FC9',
-  },
-
-  // SELECTED LETTER HEADER
-  selectedLetterHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#c0e8f2',
-    padding: 16,
+    paddingHorizontal: 14,
     borderRadius: 16,
-    marginBottom: 20,
     marginHorizontal: 10,
+    marginBottom: 16,
     elevation: 2,
   },
-  selectedLetterIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#6db4ff',
+  combinedBackBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    elevation: 2,
+    marginRight: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  selectedLetterIconText: {
-    fontSize: 32,
-    fontFamily: 'Satoshi-Black',
-    color: '#FFFFFF',
-  },
-  selectedLetterTitle: {
+  combinedBackArrow: {
     fontSize: 22,
-    fontFamily: 'Satoshi-Black',
+    color: '#3B7FC9',
+    fontFamily: 'Comfortaa-Bold',
+    lineHeight: 24,
+  },
+  combinedTitleCol: {
+    flex: 1,
+  },
+  combinedTitle: {
+    fontSize: 16,
+    fontFamily: 'Comfortaa-Bold',
     color: '#1F2937',
     marginBottom: 4,
+    lineHeight: 22,
   },
-  selectedLetterSubtitle: {
-    fontSize: 14,
+  combinedSubtitle: {
+    fontSize: 13,
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },
@@ -309,7 +300,7 @@ const selection = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 10,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -426,14 +417,14 @@ const selection = StyleSheet.create({
     height: 'auto',
     backgroundColor: '#ffff',
     borderRadius: 20,
-    borderColor:'#38B6FF',
+    borderColor: '#38B6FF',
     borderWidth: 4,
     borderBottomColor: '#38B6FF',
     elevation: 4,
   },
   itemWrapper: {
     margin: 5,
-    width:'auto',
+    width: 'auto',
     maxWidth: 400,
     height: 'auto',
     maxHeight: 130,
@@ -445,7 +436,7 @@ const selection = StyleSheet.create({
     alignContent: 'center',
     padding: 5,
   },
-  titleAuthorWrapper:{
+  titleAuthorWrapper: {
     width: 250,
     maxWidth: 400,
   },

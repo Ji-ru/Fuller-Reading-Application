@@ -622,11 +622,13 @@ export default function StudentWordMastery({ studentId }: Props) {
           {/* Mastery progress bar + caption */}
           <View style={{ marginTop: 14 }}>
             <View style={styles.detailProgRow}>
-              <FillBar
-                percent={Math.round((currentLesson.masteredWords.length / Math.max(currentLesson.totalWords, 1)) * 100)}
-                color={isLessonComplete(currentLesson) ? T.green : accentColor(currentLesson.latestAccuracy)}
-                height={8}
-              />
+              <View style={{ flex: 1 }}>
+                <FillBar
+                  percent={Math.round((currentLesson.masteredWords.length / Math.max(currentLesson.totalWords, 1)) * 100)}
+                  color={isLessonComplete(currentLesson) ? T.green : accentColor(currentLesson.latestAccuracy)}
+                  height={8}
+                />
+              </View>
               <Text style={[styles.detailProgPct, {
                 color: isLessonComplete(currentLesson) ? T.green : accentColor(currentLesson.latestAccuracy),
               }]}>

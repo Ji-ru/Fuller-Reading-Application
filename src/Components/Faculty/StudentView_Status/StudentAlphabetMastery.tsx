@@ -735,7 +735,12 @@ export default function StudentAlphabetMastery({ studentId }: Props) {
               {slot.correctLetters.length} of 26 letters mastered · {slot.label}
             </Text>
 
-            <View style={styles.historyWrap}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.historyWrap}
+              contentContainerStyle={styles.historyScrollContent}
+            >
               <View style={styles.historyLine} />
               <View style={styles.historyDots}>
                 {slots.map((s, i) => {
@@ -771,7 +776,7 @@ export default function StudentAlphabetMastery({ studentId }: Props) {
                   );
                 })}
               </View>
-            </View>
+            </ScrollView>
           </View>
         </>
       )}
@@ -1080,6 +1085,10 @@ const styles = StyleSheet.create({
   },
 
   historyWrap: { position: 'relative' },
+  historyScrollContent: {
+    flexGrow: 1,
+    position: 'relative',
+  },
   historyLine: {
     position: 'absolute',
     top: 7,
@@ -1092,8 +1101,10 @@ const styles = StyleSheet.create({
   historyDots: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 12,
     position: 'relative',
     zIndex: 1,
+    flexGrow: 1,
   },
   histDotWrap: {
     alignItems: 'center',

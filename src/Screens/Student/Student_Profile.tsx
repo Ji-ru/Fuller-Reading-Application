@@ -449,9 +449,12 @@ const InfoItem = ({ label, value }: { label: string; value: string }) => (
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: '#f8fafc',
   },
   innerContainer: {
+    flexGrow: 1,
+    paddingBottom: 24,
   },
   loadingContainer: {
     flex: 1,

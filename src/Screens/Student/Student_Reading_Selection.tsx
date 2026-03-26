@@ -19,7 +19,7 @@ import { useStudentCompletedAlphabet, useStudentCompletedWord } from '../../Hook
 import { getAuth } from '@react-native-firebase/auth';
 import { WordContext } from '../../Interfaces/dataInterfaces';
 import Svg, { Text as SvgText } from 'react-native-svg';
-import { getPassageImage } from '../../Utilities/ReadingAssets';  
+import { getPassageImage } from '../../Utilities/ReadingAssets';
 
 const currentStudentId = getAuth().currentUser?.uid ?? '';
 
@@ -382,22 +382,20 @@ export default function PageSelectionScreen() {
                 </>
               ) : (
                 <>
-                  <TouchableOpacity
-                    style={selection.backToLettersButton}
-                    onPress={handleBackToChapters}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={selection.backArrow}>←</Text>
-                    <Text style={selection.backToLettersText}>Back to Chapters</Text>
-                  </TouchableOpacity>
+                  <View style={selection.combinedHeaderRow}>
+                    <TouchableOpacity
+                      style={selection.combinedBackBtn}
+                      onPress={handleBackToChapters}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={selection.combinedBackArrow}>←</Text>
+                    </TouchableOpacity>
 
-                  <View style={selection.selectedLetterHeader}>
-                    <View style={selection.selectedLetterIcon}>
-                      <Text style={selection.selectedLetterIconText}>📘</Text>
-                    </View>
-                    <View>
-                      <Text style={selection.selectedLetterTitle}>{selectedChapter.title}</Text>
-                      <Text style={selection.selectedLetterSubtitle}>
+                    <View style={selection.combinedTitleCol}>
+                      <Text style={selection.combinedTitle} numberOfLines={2}>
+                        {selectedChapter.title}
+                      </Text>
+                      <Text style={selection.combinedSubtitle}>
                         {selectedChapter.lessons?.length || 0} lesson(s)
                       </Text>
                     </View>

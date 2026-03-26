@@ -6,7 +6,7 @@ const login = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f2f6ff',
   },
-  
+
   scrollContent: {
     flexGrow: 1,
     paddingVertical: 40,
@@ -22,10 +22,16 @@ const login = StyleSheet.create({
   logoSection: {
     alignItems: 'center',
     zIndex: 1,
-  },
-  video: {
     width: 280,
     height: 280,
+    borderRadius: 140,
+    overflow: 'hidden',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 140,
+    elevation: 20,
   },
 
   // ========== ERROR CONTAINER ==========
@@ -252,7 +258,7 @@ const login = StyleSheet.create({
     elevation: 5,
     maxWidth: 350,
     maxHeight: 40,
-    color: 'black'
+    color: 'black',
   },
   button: {
     backgroundColor: '#5B9BD5',

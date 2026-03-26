@@ -68,7 +68,7 @@
 //   const chartWidth = needsScroll 
 //     ? Math.max(chartData.length * 50, 600) 
 //     : baseChartWidth;
-  
+
 //   const chartHeight = 240;
 //   const paddingLeft = 60;
 //   const paddingRight = 20;
@@ -110,7 +110,7 @@
 //     const minAccuracy = Math.min(...accuracyValues);
 //     const maxAccuracy = Math.max(...accuracyValues);
 //     const maxWpm = Math.max(...wpmValues);
-    
+
 //     // Y-axis always 0-100 for percentage
 //     const yAxisMin = 0;
 //     const yAxisMax = 100;
@@ -310,7 +310,7 @@
 //       {points.map((point, index) => {
 //         // Show labels based on time range
 //         let showLabel = false;
-        
+
 //         if (timeRange === 'week') {
 //           showLabel = true; // Show all days
 //         } else if (timeRange === 'month') {
@@ -855,25 +855,25 @@ import { useStudentAccuracyTrends } from '../../../Hooks/Faculty/use_StudentView
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
 const C = {
-  teal:        '#57b8b3',
-  tealLight:   '#EAF6F6',
-  tealDark:    '#2C6975',
-  amber:       '#F59E0B',
-  amberLight:  '#FEF3C7',
-  text:        '#1C1917',
-  textSub:     '#6B7280',
-  textMuted:   '#A8A29E',
-  surface:     '#FFFFFF',
-  bg:          '#F4F7FA',
-  border:      '#E4EAF0',
-  grid:        '#F1F5F9',
-  success:     '#10B981',
-  successLight:'#D1FAE5',
+  teal: '#57b8b3',
+  tealLight: '#EAF6F6',
+  tealDark: '#2C6975',
+  amber: '#F59E0B',
+  amberLight: '#FEF3C7',
+  text: '#1C1917',
+  textSub: '#6B7280',
+  textMuted: '#A8A29E',
+  surface: '#FFFFFF',
+  bg: '#F4F7FA',
+  border: '#E4EAF0',
+  grid: '#F1F5F9',
+  success: '#10B981',
+  successLight: '#D1FAE5',
   successDark: '#065F46',
-  danger:      '#EF4444',
+  danger: '#EF4444',
   dangerLight: '#FEE2E2',
-  dangerDark:  '#991B1B',
-  stable:      '#6B7280',
+  dangerDark: '#991B1B',
+  stable: '#6B7280',
   stableLight: '#F3F4F6',
 };
 
@@ -899,23 +899,23 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
   );
 
   const accuracyValues = useMemo(() => chartData.map(d => d.accuracy).filter(v => v > 0), [chartData]);
-  const wpmValues      = useMemo(() => chartData.map(d => d.wpm).filter(v => v > 0),      [chartData]);
-  const hasData        = accuracyValues.length > 0;
+  const wpmValues = useMemo(() => chartData.map(d => d.wpm).filter(v => v > 0), [chartData]);
+  const hasData = accuracyValues.length > 0;
 
   // ── Chart dimensions ────────────────────────────────────────────────────────
-  const needsScroll   = timeRange === 'year';
-  const chartWidth    = needsScroll ? Math.max(chartData.length * 50, 600) : 320;
-  const chartHeight   = 220;
-  const pLeft         = 46;
-  const pRight        = 16;
-  const pTop          = 24;
-  const pBottom       = 32;
-  const plotW         = chartWidth - pLeft - pRight;
-  const plotH         = chartHeight - pTop - pBottom;
+  const needsScroll = timeRange === 'year';
+  const chartWidth = needsScroll ? Math.max(chartData.length * 50, 600) : 320;
+  const chartHeight = 220;
+  const pLeft = 46;
+  const pRight = 16;
+  const pTop = 24;
+  const pBottom = 32;
+  const plotW = chartWidth - pLeft - pRight;
+  const plotH = chartHeight - pTop - pBottom;
 
   // Y-axis: fixed 0-100 for percentage, 5 steps
-  const Y_STEPS  = 4;
-  const yLabels  = Array.from({ length: Y_STEPS + 1 }, (_, i) => 100 - i * 25);
+  const Y_STEPS = 4;
+  const yLabels = Array.from({ length: Y_STEPS + 1 }, (_, i) => 100 - i * 25);
 
   // ── Calculations ────────────────────────────────────────────────────────────
   const calc = useMemo(() => {
@@ -924,7 +924,7 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
     const maxWpm = Math.max(...wpmValues, 1);
 
     const avgAccuracy = accuracyValues.reduce((s, v) => s + v, 0) / accuracyValues.length;
-    const avgWpm      = wpmValues.length > 0
+    const avgWpm = wpmValues.length > 0
       ? wpmValues.reduce((s, v) => s + v, 0) / wpmValues.length
       : 0;
 
@@ -948,13 +948,13 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
     const wpmLine = points.filter(p => p.wpm > 0).map(p => `${p.x},${p.wpmY}`).join(' ');
 
     // Trend
-    const validAcc  = chartData.filter(d => d.accuracy > 0);
-    const accDelta  = (validAcc.at(-1)?.accuracy ?? 0) - (validAcc[0]?.accuracy ?? 0);
-    const accPct    = validAcc[0]?.accuracy ? ((accDelta / validAcc[0].accuracy) * 100) : 0;
+    const validAcc = chartData.filter(d => d.accuracy > 0);
+    const accDelta = (validAcc.at(-1)?.accuracy ?? 0) - (validAcc[0]?.accuracy ?? 0);
+    const accPct = validAcc[0]?.accuracy ? ((accDelta / validAcc[0].accuracy) * 100) : 0;
     const accDir: 'up' | 'down' | 'same' = accDelta > 0 ? 'up' : accDelta < 0 ? 'down' : 'same';
 
-    const validWpm  = chartData.filter(d => d.wpm > 0);
-    const wpmDelta  = (validWpm.at(-1)?.wpm ?? 0) - (validWpm[0]?.wpm ?? 0);
+    const validWpm = chartData.filter(d => d.wpm > 0);
+    const wpmDelta = (validWpm.at(-1)?.wpm ?? 0) - (validWpm[0]?.wpm ?? 0);
     const wpmDir: 'up' | 'down' | 'same' = wpmDelta > 0 ? 'up' : wpmDelta < 0 ? 'down' : 'same';
 
     return { avgAccuracy, avgWpm, points, accLine, wpmLine, accDir, accPct, wpmDir };
@@ -965,7 +965,7 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
     if (!calc) return '';
     const { accDir, accPct, wpmDir } = calc;
     const pct = Math.abs(accPct).toFixed(1);
-    if (accDir === 'up')   return `Accuracy improved by ${pct}%, and reading speed ${wpmDir === 'up' ? 'also increased' : wpmDir === 'down' ? 'slightly decreased' : 'stayed stable'}.`;
+    if (accDir === 'up') return `Accuracy improved by ${pct}%, and reading speed ${wpmDir === 'up' ? 'also increased' : wpmDir === 'down' ? 'slightly decreased' : 'stayed stable'}.`;
     if (accDir === 'down') return `Accuracy dropped by ${pct}%. Consider reviewing reading exercises with the student.`;
     return 'Reading accuracy remained consistent over this period.';
   }, [calc]);
@@ -1006,8 +1006,8 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
       {calc?.points.map((p, i) => {
         const show =
           timeRange === 'week' ? true :
-          timeRange === 'month' ? i % 2 === 0 || i === (calc.points.length - 1) :
-          true;
+            timeRange === 'month' ? i % 2 === 0 || i === (calc.points.length - 1) :
+              true;
         if (!show) return null;
         return (
           <SvgText
@@ -1102,6 +1102,9 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
   // ── Main ─────────────────────────────────────────────────────────────────────
   return (
     <View>
+      <View style={s.titleContent}>
+        <Text style={s.title}>Accuracy Chart</Text>
+      </View>
       {/* Time range tabs */}
       <View style={s.tabRow}>
         {(['week', 'month', 'year'] as const).map((r) => (
@@ -1151,9 +1154,9 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
               <Text style={[
                 s.statValue,
                 {
-                  color: calc!.accDir === 'up'   ? C.success
-                       : calc!.accDir === 'down'  ? C.danger
-                       : C.textMuted,
+                  color: calc!.accDir === 'up' ? C.success
+                    : calc!.accDir === 'down' ? C.danger
+                      : C.textMuted,
                 },
               ]}>
                 {calc!.accDir === 'up' ? '↑' : calc!.accDir === 'down' ? '↓' : '→'}{' '}
@@ -1193,21 +1196,22 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
           {/* Insight */}
           <View style={[
             s.insightBox,
-            calc!.accDir === 'up'   ? s.insightUp   :
-            calc!.accDir === 'down' ? s.insightDown  : s.insightStable,
+            calc!.accDir === 'up' ? s.insightUp :
+              calc!.accDir === 'down' ? s.insightDown : s.insightStable,
           ]}>
             <View style={[
               s.insightDot,
-              { backgroundColor:
-                calc!.accDir === 'up'   ? C.success :
-                calc!.accDir === 'down' ? C.danger   : C.stable,
+              {
+                backgroundColor:
+                  calc!.accDir === 'up' ? C.success :
+                    calc!.accDir === 'down' ? C.danger : C.stable,
               },
             ]} />
             <Text style={[
               s.insightText,
               {
-                color: calc!.accDir === 'up'   ? C.successDark :
-                       calc!.accDir === 'down'  ? C.dangerDark  : C.textSub,
+                color: calc!.accDir === 'up' ? C.successDark :
+                  calc!.accDir === 'down' ? C.dangerDark : C.textSub,
               },
             ]}>
               {insight}
@@ -1231,6 +1235,16 @@ const s = StyleSheet.create({
   },
   loadingText: { fontSize: 14, fontFamily: 'Satoshi-Regular', color: C.textSub },
 
+  titleContent: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 18,
+    fontFamily: 'Satoshi-Bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+
   errorBox: {
     borderRadius: 14,
     padding: 24,
@@ -1240,8 +1254,8 @@ const s = StyleSheet.create({
     borderLeftColor: C.danger,
     backgroundColor: C.dangerLight,
   },
-  errorTitle: { fontSize: 15, fontFamily: 'Satoshi-Bold',    color: C.danger },
-  errorSub:   { fontSize: 13, fontFamily: 'Satoshi-Regular', color: C.textSub, textAlign: 'center' },
+  errorTitle: { fontSize: 15, fontFamily: 'Satoshi-Bold', color: C.danger },
+  errorSub: { fontSize: 13, fontFamily: 'Satoshi-Regular', color: C.textSub, textAlign: 'center' },
 
   emptyBox: {
     paddingVertical: 48,
@@ -1265,8 +1279,8 @@ const s = StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
   },
-  tabActive:     { backgroundColor: C.teal },
-  tabText:       { fontSize: 14, fontFamily: 'Satoshi-Medium', color: C.textSub },
+  tabActive: { backgroundColor: C.teal },
+  tabText: { fontSize: 14, fontFamily: 'Satoshi-Medium', color: C.textSub },
   tabTextActive: { fontFamily: 'Satoshi-Bold', color: C.surface },
 
   // Stats row
@@ -1367,9 +1381,9 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     borderLeftWidth: 3,
   },
-  insightUp:     { backgroundColor: C.successLight, borderLeftColor: C.success },
-  insightDown:   { backgroundColor: C.dangerLight,  borderLeftColor: C.danger  },
-  insightStable: { backgroundColor: C.stableLight,  borderLeftColor: C.stable  },
+  insightUp: { backgroundColor: C.successLight, borderLeftColor: C.success },
+  insightDown: { backgroundColor: C.dangerLight, borderLeftColor: C.danger },
+  insightStable: { backgroundColor: C.stableLight, borderLeftColor: C.stable },
   insightDot: {
     width: 8,
     height: 8,

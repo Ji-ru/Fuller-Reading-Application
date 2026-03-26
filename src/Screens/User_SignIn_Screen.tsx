@@ -107,7 +107,7 @@ export default function LoginScreen() {
       if (error.message === 'CANCELLED') return;
 
       setGoogleError(
-        error.message.includes('already exists')
+        error.message?.includes('already exists')
           ? error.message
           : 'Google Sign-In failed. Please try again.',
       );
