@@ -106,15 +106,18 @@ export const useAudioRecording = () => {
   const startRecording = useCallback(
     async (passageText: string) => {
       // Check if granted permission
-      if (!hasPermission) {
-        const grantedPermission = await requestPermission();
-        if (!grantedPermission) {
-          Alert.alert(
-            'Permission Denied',
-            'Cannot record without microphone permission',
-          );
-          return false;
-        }
+      let permissionGranted = hasPermission;
+
+      if (!permissionGranted) {
+        permissionGranted = await requestPermission();
+      }
+
+      if (!permissionGranted) {
+        Alert.alert(
+          'Permission Denied',
+          'Cannot record without microphone permission'
+        );
+        return false;
       }
 
       try {
@@ -139,7 +142,7 @@ export const useAudioRecording = () => {
 
         if (recordingIntervalRef.current) {
           clearInterval(recordingIntervalRef.current);
-          recordingIntervalRef.current = null;
+          recordingIntervalRef.current = interval;
         }
         return true;
       } catch (error) {

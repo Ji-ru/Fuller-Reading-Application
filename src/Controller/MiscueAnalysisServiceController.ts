@@ -5,7 +5,7 @@ import { Miscue } from '../Interfaces/miscue';
 
 export class MiscueAnalysisService {
   static detectMiscues(passageText: string, spokenText: string): Miscue[] {
-    if (!spokenText || spokenText === 'No Speech Detected!') {
+    if (!spokenText || spokenText === 'Walang natukoy na pagbigkas!') {
       return [];
     }
 
@@ -284,7 +284,7 @@ export class MiscueAnalysisService {
     if (accuracyNum >= 90) return 'Great Job!';
     if (accuracyNum >= 80) return 'Good Effort!';
     if (accuracyNum >= 70) return 'Keep Practicing!';
-    return "Let's Try Again!";
+    return "Subukan Muli!";
   }
 
   static formatMiscueWords(miscues: Miscue[]): string {
@@ -352,8 +352,8 @@ export class MiscueAnalysisService {
   // WORD ACCURACY (More tolerant)
   // ==============================
   static checkWordAccuracy(
-    targetWord: string,
-    spokenText: string,
+  targetWord: string,
+  spokenText: string,
   ): {
     isCorrect: boolean;
     accuracy: string;
@@ -367,24 +367,37 @@ export class MiscueAnalysisService {
       };
     }
 
+    // Normalize both target and spoken text
     const normalizedTarget = targetWord.toUpperCase().trim();
     const normalizedSpoken = spokenText.toUpperCase().trim();
 
-    // Remove non-alphabetic characters but keep spaces for multi-word phrases
-    const cleanSpoken = normalizedSpoken.replace(/[^A-Z\s]/g, '').trim();
+    // Remove non-alphabetic characters but keep spaces
     const cleanTarget = normalizedTarget.replace(/[^A-Z\s]/g, '').trim();
+    const cleanSpoken = normalizedSpoken.replace(/[^A-Z\s]/g, '').trim();
 
-    // For words: check if spoken contains the word (more tolerant)
-    const isCorrect =
-      cleanSpoken === cleanTarget || // Exact match
-      cleanSpoken.includes(cleanTarget); // Word appears within spoken text
+    // Split into words
+    const targetWords = cleanTarget.split(/\s+/).filter(Boolean);
+    const spokenWords = cleanSpoken.split(/\s+/).filter(Boolean);
+
+    // Strict comparison: every word must match in order
+    let allMatch = true;
+    if (targetWords.length !== spokenWords.length) {
+      allMatch = false;
+    } else {
+      for (let i = 0; i < targetWords.length; i++) {
+        if (targetWords[i] !== spokenWords[i]) {
+          allMatch = false;
+          break;
+        }
+      }
+    }
 
     return {
-      isCorrect,
-      accuracy: isCorrect ? '100' : '0',
-      feedback: isCorrect
-        ? `✓ Great! You said "${cleanTarget}" correctly.`
-        : `✗ Try again. Expected "${cleanTarget}", you said: "${normalizedSpoken}"`,
+      isCorrect: allMatch,
+      accuracy: allMatch ? '100' : '0',
+      feedback: allMatch
+        ? `✓ Tama! Nabigkas mo ang salitang "${cleanTarget}"`
+        : `✗ Ulitin. Inaaasahan: "${cleanTarget}", ang iyong nabigkas: "${cleanSpoken}"`,
     };
   }
 }

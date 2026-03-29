@@ -610,10 +610,10 @@ export default function ReadingActivityScreenPage() {
         {/* Screen Title */}
         <Text style={selection.label}>
           {type === 'alphabet'
-            ? 'Alphabet Reading'
+            ? 'Pagbasa ng Alpabeto'
             : type === 'word'
-            ? 'Word Reading'
-            : 'Passage Reading'}
+            ? 'Pagbasa ng Salita'
+            : 'Pagbasa ng Talata'}
         </Text>
 
         {/* Display Component */}

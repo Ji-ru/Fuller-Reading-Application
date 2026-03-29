@@ -97,6 +97,7 @@ export default function ReadingHistoryScreen() {
    */
   useEffect(() => {
     fetchReports();
+    
   }, []);
 
   /**

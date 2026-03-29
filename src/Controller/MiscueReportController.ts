@@ -1,29 +1,21 @@
-// Note: This is a controller/service object, not a React component or custom hook.
-// React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used in this file.
-// Use hooks only inside React function components or hooks that start with 'use'.
 import { Miscue } from '../Interfaces/miscue';
 import { MiscueReportDocument } from '../Interfaces/dataInterfaces';
 import { getAuth } from '@react-native-firebase/auth';
 import firestore, {
   getFirestore,
   collection,
-  doc,
-  getDoc,
   getDocs,
   query,
   where,
-  deleteDoc,
-  updateDoc,
-  serverTimestamp,
-  arrayRemove,
-  arrayUnion,
+  orderBy,
 } from '@react-native-firebase/firestore';
 
-// Initialize instances
 const auth = getAuth();
 const db = getFirestore();
 
 export const MiscueReportController = {
+
+  // ================= STORE REPORT =================
   async storeReport(
     passageTitle: string,
     miscues: Miscue[],
@@ -34,677 +26,321 @@ export const MiscueReportController = {
   ): Promise<string> {
     try {
       const user = auth.currentUser;
-      if (!user) {
-        throw new Error(
-          'No authenticated user found. Please sign in to save reports.',
-        );
-      }
+      if (!user) throw new Error('User not logged in');
+
+      const reportRef = firestore().collection('miscueReports').doc();
+      const reportId = reportRef.id;
 
       const { substitution, omission, insertion, repetition } =
         this.generateMiscueSummary(miscues);
 
-      const reportId = firestore().collection('miscueReports').doc().id;
-
-      const reportData: Omit<MiscueReportDocument, 'timestamp'> & {
-        timestamp: any;
-        substitutionCount?: number;
-        omissionCount?: number;
-        insertionCount?: number;
-        repetitionCount?: number;
-      } = {
-        // Core identifiers
+      const reportData = {
         reportId,
         studentId: user.uid,
-
-        // Passage information
         passageTitle,
 
-        // Summary strings (for quick display)
         substitution,
         omission,
         insertion,
         repetition,
 
-        // Detailed miscue data
         miscues: miscues.map(m => ({
           type: m.type,
           expectedWord: m.expected,
           spokenWord: m.spoken,
         })),
 
-        totalWords: totalWords,
+        totalWords,
         accuracyRate: accuracy,
-        wordPerMin: wordPerMin,
-        recordingDuration: recordingDuration,
+        wordPerMin,
+        recordingDuration,
 
-        substitutionCount: miscues.filter(m => m.type === 'substitution')
-          .length,
+        substitutionCount: miscues.filter(m => m.type === 'substitution').length,
         omissionCount: miscues.filter(m => m.type === 'omission').length,
         insertionCount: miscues.filter(m => m.type === 'insertion').length,
         repetitionCount: miscues.filter(m => m.type === 'repetition').length,
-        // Firestore server timestamp
-        timestamp: firestore.FieldValue.serverTimestamp(),
+
+        timestamp: new Date(),
       };
 
-      // ======================================================================
-      // STEP 6: Store in Firestore
-      // ======================================================================
-      await firestore()
-        .collection('miscueReports')
-        .doc(reportId)
-        .set(reportData);
+      await reportRef.set(reportData);
+      console.log("✅ REPORT SAVED:", reportId);
 
       return reportId;
     } catch (error: any) {
-      console.error(' Failed to store miscue report:', error);
-      throw new Error(`Failed to store miscue report: ${error.message}`);
+      console.error('STORE ERROR:', error);
+      throw error;
     }
   },
 
-  /**
-   * ==========================================================================
-   * GENERATE MISCUE SUMMARY
-   * ==========================================================================
-   * Creates formatted summary strings for each miscue type.
-   * Used for quick display without parsing the full miscues array.
-   *
-   * @param miscues - Array of miscue objects
-   * @returns Object with formatted summary strings
-   *
-   * @example
-   * Input: [
-   *   { type: 'substitution', expected: 'cat', spoken: 'car' },
-   *   { type: 'omission', expected: 'the', spoken: '[OMITTED]' }
-   * ]
-   * Output: {
-   *   substitution: '"cat"',
-   *   omission: '"the"',
-   *   insertion: 'None',
-   *   repetition: 'None'
-   * }
-   * ==========================================================================
-   */
-  generateMiscueSummary(miscues: Miscue[]): {
-    substitution: string;
-    omission: string;
-    insertion: string;
-    repetition: string;
-  } {
-    const substitution =
-      miscues
-        .filter(m => m.type === 'substitution')
-        .map(m => `"${m.expected}"`)
-        .join(', ') || 'None';
+  // ================= SUMMARY =================
+  generateMiscueSummary(miscues: Miscue[]) {
+    const format = (arr: Miscue[], key: 'expected' | 'spoken') =>
+      arr.map(m => `"${m[key]}"`).join(', ') || 'None';
 
-    const omission =
-      miscues
-        .filter(m => m.type === 'omission')
-        .map(m => `"${m.expected}"`)
-        .join(', ') || 'None';
-
-    const insertion =
-      miscues
-        .filter(m => m.type === 'insertion')
-        .map(m => `"${m.spoken}"`)
-        .join(', ') || 'None';
-
-    const repetition =
-      miscues
-        .filter(m => m.type === 'repetition')
-        .map(m => `"${m.spoken}"`)
-        .join(', ') || 'None';
-
-    return { substitution, omission, insertion, repetition };
-  },
-  // ==========================================================================================================================
-  /**
-   * ==========================================================================
-   * STORE CORRECT WORD PRONUNCIATION
-   * ==========================================================================
-   * Stores a word that has attempted to read by the student
-   * @param letter - Alphabet Letter of the word
-   * @param word  - Selected word attempted to read
-   * @returns stores the data into the firestore and returns the Word ID
-   */
-  async storeWordCorrectAttempt(letter: string, word: string): Promise<string> {
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error(
-          'No authenticated user found. Please sign in to save reports.',
-        );
-      }
-      // Check if this word has already been completed by this student
-      const existing = await this.hasWordBeenCompleted(user.uid, letter, word);
-      if (existing) {
-        console.log('The Word already completed, skipping storage');
-        return existing;
-      }
-      const wordId = firestore().collection('wordCompeleted').doc().id;
-      const wordData = {
-        wordId,
-        studentId: user.uid,
-        letter,
-        word,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-      };
-
-      await firestore().collection('wordCompeleted').doc(wordId).set(wordData);
-
-      return wordId;
-    } catch (error: any) {
-      throw Error('Failed to store correct word attempt:' + error.message);
-    }
+    return {
+      substitution: format(miscues.filter(m => m.type === 'substitution'), 'expected'),
+      omission: format(miscues.filter(m => m.type === 'omission'), 'expected'),
+      insertion: format(miscues.filter(m => m.type === 'insertion'), 'spoken'),
+      repetition: format(miscues.filter(m => m.type === 'repetition'), 'spoken'),
+    };
   },
 
-  /**
-   * Checks if the selected and read word has been stored already
-   * @param studentId
-   * @param letter
-   * @param word
-   * @returns an empty or an existing data
-   */
-  async hasWordBeenCompleted(
-    studentId: string,
-    letter: string,
-    word: string,
-  ): Promise<string | null> {
-    try {
-      const snapshot = await firestore()
-        .collection('wordCompleted')
-        .where('studentId', '==', studentId)
-        .where('letter', '==', letter)
-        .where('word', '==', word)
-        .limit(1)
-        .get();
-
-      return snapshot.empty ? null : snapshot.docs[0].id;
-    } catch (error: any) {
-      throw new Error('Failed to check word completed: ' + error.message);
-    }
-  },
-
-  /**
-   * ==========================================================================
-   * STORE CORRECT ALPHABET PHONEME
-   * ==========================================================================
-   * Stores a word that has attempted to read by the student
-   * @param letter - Selected alphabet that was read
-   * @returns stores the data into the firestore and returns the Letter ID
-   */
-  async storeAlphabetCorrectAttempt(letter: string): Promise<string> {
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error(
-          'No authenticated user found. Please sign in to save reports.',
-        );
-      }
-      // Check if this word has already been completed by this student
-      const existing = await this.hasAlphabetBeenCompleted(user.uid, letter);
-      if (existing) {
-        console.log('The current alphabet already completed, skipping storage');
-        return existing;
-      }
-      const letterId = firestore().collection('alphabetCompeleted').doc().id;
-      const letterData = {
-        letterId,
-        studentId: user.uid,
-        letter,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-      };
-
-      await firestore()
-        .collection('wordCompeleted')
-        .doc(letterId)
-        .set(letterData);
-
-      return letterId;
-    } catch (error: any) {
-      throw Error('Failed to store correct word attempt:' + error.message);
-    }
-  },
-
-  /**
-   * Checks if the selected and read alphabet has been stored already
-   * @param studentId
-   * @param letter
-   * @returns an empty or an existing data
-   */
-  async hasAlphabetBeenCompleted(
-    studentId: string,
-    letter: string,
-  ): Promise<string | null> {
-    try {
-      const snapshot = await firestore()
-        .collection('alphabetCompeleted')
-        .where('studentId', '==', studentId)
-        .where('letter', '==', letter)
-        .limit(1)
-        .get();
-      return snapshot.empty ? null : snapshot.docs[0].id;
-    } catch (error: any) {
-      throw new Error('Failed to check alphabet completed: ' + error.message);
-    }
-  },
-
-  /**
-   * ==========================================================================
-   * GET COMPLETED WORDS BY STUDENT
-   * ==========================================================================
-   * Retrieves all completed words for a specific student
-   * @param studentId - Firebase Auth UID of the student
-   * @returns Array of completed word objects
-   */
-  async getCompletedWords(
-    studentId: string,
-  ): Promise<Array<{ word: string; letter: string; createdAt: any }>> {
-    try {
-      const snapshot = await firestore()
-        .collection('wordCompleted')
-        .where('studentId', '==', studentId)
-        .orderBy('createdAt', 'desc')
-        .get();
-
-      return snapshot.docs.map(doc => ({
-        word: doc.data().word,
-        letter: doc.data().letter,
-        createdAt: doc.data().createdAt,
-      }));
-    } catch (error: any) {
-      console.error('Failed to fetch completed words:', error);
-      return [];
-    }
-  },
-
-  /**
-   * ==========================================================================
-   * GET COMPLETED ALPHABETS BY STUDENT
-   * ==========================================================================
-   * Retrieves all completed alphabets for a specific student
-   * @param studentId - Firebase Auth UID of the student
-   * @returns Array of completed alphabet letters
-   */
-  async getCompletedAlphabets(studentId: string): Promise<string[]> {
-    try {
-      const snapshot = await firestore()
-        .collection('alphabetCompleted')
-        .where('studentId', '==', studentId)
-        .get();
-
-      return snapshot.docs.map(doc => doc.data().letter);
-    } catch (error: any) {
-      console.error('Failed to fetch completed alphabets:', error);
-      return [];
-    }
-  },
-
-  // ==========================================================================================================================
-
-  /**
-   * UPDATED TO React Native Firebase v22
-   * ==========================================================================
-   * GET STUDENT REPORTS 
-   * ==========================================================================
-   * Retrieves all reports for a specific student, sorted by most recent first.
-   *
-   * @param studentId - Firebase Auth UID of the student
-   * @returns Array of MiscueReportDocument objects
-   *
-   * @throws Error - If Firestore query fails
-   * ==========================================================================
-   */
+  // ================= FETCH STUDENT REPORTS =================
   async getStudentReports(studentId: string): Promise<MiscueReportDocument[]> {
     try {
       const reportRef = collection(db, 'miscueReports');
-      const studentMiscueReport = query(
-        reportRef,
-        where('studentId', '==', studentId),
+      const q = query(reportRef, where('studentId', '==', studentId), orderBy('timestamp', 'desc'));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        // Return the stored miscueReports if they exist
+        return snapshot.docs.map((doc: { id: any; data: () => any; }) => ({
+          reportId: doc.id,
+          ...doc.data(),
+        })) as MiscueReportDocument[];
+      }
+
+      // If no miscueReports exist, dynamically generate "report-like" data from completed words
+      const wordSnapshot = await getDocs(
+        query(
+          collection(db, 'wordCompleted'),
+          where('studentId', '==', studentId),
+          orderBy('createdAt', 'desc')
+        )
       );
 
-      const studentReportSnapshot = await getDocs(studentMiscueReport);
-
-      return studentReportSnapshot.docs.map((doc: any) => ({
-        uid: doc.reportId,
-        ...doc.data(),
-      })) as MiscueReportDocument[];
-
-    } catch (error: any) {
-      console.error('Failed to fetch student reports:', error);
-      throw new Error(`Failed to fetch reports: ${error.message}`);
-    }
-  },
-
-  /**
-   * UPDATED TO React Native Firebase v22
-   * Get all recording duration in a class
-   * 
-   * @param studentId 
-   * @returns - all recording duration
-   */
-  async getRecordingDuration(studentId: string): Promise<MiscueReportDocument[]> {
-    try {
-      const recordRef = collection(db, 'miscueReports');
-      const studentRecordingQuery = query(recordRef, where('studentId', '==', studentId));
-
-      const studentRecordingSnapshot = await getDocs(studentRecordingQuery);
-
-      return studentRecordingSnapshot.docs.map((doc: any) => {
+      return wordSnapshot.docs.map((doc: { data: () => any; }) => {
         const data = doc.data();
         return {
-          reportId: doc.id,
-          ...data,
-          // Ensure all required fields are included
-          miscues: data.miscues || [],
-          accuracyRate: data.accuracyRate || 0,
-          wordPerMin: data.wordPerMin || 0,
-          recordingDuration: data.recordingDuration || '00:00:00',
-        } as MiscueReportDocument;
+          reportId: data.wordId,
+          studentId: studentId,
+          passageTitle: data.letter || 'Unknown Passage',
+          timestamp: data.createdAt || new Date(),
+          accuracyRate: 100, // assume correct if wordCompleted
+          wordPerMin: 0,
+          recordingDuration: null,
+          substitution: 'None',
+          omission: 'None',
+          insertion: 'None',
+          repetition: 'None',
+          miscues: [],
+          substitutionCount: 0,
+          omissionCount: 0,
+          insertionCount: 0,
+          repetitionCount: 0,
+          totalWords: 1,
+          totalMiscues: 0,
+        } as unknown as MiscueReportDocument;
       });
-    } catch (error: any) {
-      throw new Error("Failed to fetch duration: " + error.message);
-      
+    } catch (error) {
+      console.error('FETCH ERROR:', error);
+      return [];
     }
   },
 
-  /**
-   * ==========================================================================
-   * GET PASSAGE REPORTS
-   * ==========================================================================
-   * Retrieves reports for a specific passage, optionally filtered by student.
-   *
-   * @param passageTitle - Title of the passage
-   * @param studentId - Optional: filter by specific student
-   * @returns Array of MiscueReportDocument objects
-   * ==========================================================================
-   */
-  // async getPassageReports(
-  //   passageTitle: string,
-  //   studentId?: string,
-  // ): Promise<MiscueReportDocument[]> {
-  //   try {
-  //     let query = firestore()
-  //       .collection('miscueReports')
-  //       .where('passageTitle', '==', passageTitle);
+  // ================= GROUP REPORTS BY PASSAGE =================
+  groupReportsByPassage(reports: MiscueReportDocument[]) {
+    const groupMap = new Map<string, MiscueReportDocument[]>();
 
-  //     if (studentId) {
-  //       query = query.where('studentId', '==', studentId);
-  //     }
+    reports.forEach(report => {
+      const passageTitle = report.passageTitle || 'Unknown Passage';
+      if (!groupMap.has(passageTitle)) groupMap.set(passageTitle, []);
+      groupMap.get(passageTitle)?.push(report);
+    });
 
-  //     const snapshot = await query.orderBy('timestamp', 'desc').get();
+    return Array.from(groupMap.entries()).map(([passageTitle, reports]) => ({
+      passageTitle,
+      reports,
+    }));
+  },
 
-  //     return snapshot.docs.map(
-  //       doc =>
-  //         ({
-  //           reportId: doc.id,
-  //           ...doc.data(),
-  //         } as MiscueReportDocument),
-  //     );
-  //   } catch (error: any) {
-  //     console.error('Failed to fetch passage reports:', error);
-  //     throw new Error(`Failed to fetch passage reports: ${error.message}`);
-  //   }
-  // },
+  // ================= WORD STORAGE =================
+  async storeWordCorrectAttempt(letter: string, word: string): Promise<string> {
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not logged in');
 
-  /**
-   * ==========================================================================
-   * GET REPORT BY ID
-   * ==========================================================================
-   * Retrieves a single report by its document ID.
-   *
-   * @param reportId - Firestore document ID
-   * @returns MiscueReportDocument or null if not found
-   * ==========================================================================
-   */
-  // async getReportById(reportId: string): Promise<MiscueReportDocument | null> {
-  //   try {
-  //     const doc = await firestore()
-  //       .collection('miscueReports')
-  //       .doc(reportId)
-  //       .get();
+    const existing = await this.hasWordBeenCompleted(user.uid, letter, word);
+    if (existing) return existing;
 
-  //     if (!doc.exists) {
-  //       return null;
-  //     }
+    const docRef = firestore().collection('wordCompleted').doc();
+    await docRef.set({
+      wordId: docRef.id,
+      studentId: user.uid,
+      letter,
+      word,
+      createdAt: firestore.FieldValue.serverTimestamp(),
+    });
 
-  //     return {
-  //       reportId: doc.id,
-  //       ...doc.data(),
-  //     } as MiscueReportDocument;
-  //   } catch (error: any) {
-  //     console.error('Failed to fetch report by ID:', error);
-  //     throw new Error(`Failed to fetch report: ${error.message}`);
-  //   }
-  // },
+    return docRef.id;
+  },
 
-  /**
-   * ==========================================================================
-   * DELETE REPORT
-   * ==========================================================================
-   * Permanently deletes a report from Firestore.
-   *
-   * @param reportId - Document ID to delete
-   * @throws Error - If Firestore operation fails
-   * ==========================================================================
-   */
-  // async deleteReport(reportId: string): Promise<void> {
-  //   try {
-  //     await firestore().collection('miscueReports').doc(reportId).delete();
+  async hasWordBeenCompleted(studentId: string, letter: string, word: string) {
+    const snapshot = await firestore()
+      .collection('wordCompleted')
+      .where('studentId', '==', studentId)
+      .where('letter', '==', letter)
+      .where('word', '==', word)
+      .limit(1)
+      .get();
 
-  //     console.log(`âœ… Report ${reportId} deleted successfully`);
-  //   } catch (error: any) {
-  //     console.error('Failed to delete report:', error);
-  //     throw new Error(`Failed to delete report: ${error.message}`);
-  //   }
-  // },
+    return snapshot.empty ? null : snapshot.docs[0].id;
+  },
 
-  /**
-   * ==========================================================================
-   * UPDATE REPORT
-   * ==========================================================================
-   * Updates an existing report with new data.
-   *
-   * @param reportId - Document ID to update
-   * @param updates - Partial data to update
-   * @throws Error - If Firestore operation fails
-   * ==========================================================================
-   */
-  // async updateReport(
-  //   reportId: string,
-  //   updates: Partial<Omit<MiscueReportDocument, 'reportId' | 'timestamp'>>,
-  // ): Promise<void> {
-  //   try {
-  //     await firestore()
-  //       .collection('miscueReports')
-  //       .doc(reportId)
-  //       .update({
-  //         ...updates,
-  //         updatedAt: firestore.FieldValue.serverTimestamp(),
-  //       });
+  // ================= ALPHABET STORAGE =================
+  async storeAlphabetCorrectAttempt(letter: string): Promise<string> {
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not logged in');
 
-  //     console.log(`âœ… Report ${reportId} updated successfully`);
-  //   } catch (error: any) {
-  //     console.error('Failed to update report:', error);
-  //     throw new Error(`Failed to update report: ${error.message}`);
-  //   }
-  // },
-  // =====================================
+    const existing = await this.hasAlphabetBeenCompleted(user.uid, letter);
+    if (existing) return existing;
 
-  // Add these functions to your DatabaseController
+    const docRef = firestore().collection('alphabetCompleted').doc();
+    await docRef.set({
+      letterId: docRef.id,
+      studentId: user.uid,
+      letter,
+      createdAt: firestore.FieldValue.serverTimestamp(),
+    });
 
-  /**
-   * ==========================================================================
-   * GET STUDENT READING STATISTICS
-   * ==========================================================================
-   * Calculates various reading statistics for a student
-   * @param studentId - Firebase Auth UID of the student
-   * @returns Object containing reading statistics
-   */
-  async getStudentReadingStats(studentId: string): Promise<{
-    totalAttempts: number;
-    averageAccuracy: number;
-    topMiscueType: string;
-    mostCommonMiscueWords: { word: string; count: number }[];
-    passagePerformance: { title: string; accuracy: number; attempts: number }[];
-  }> {
+    return docRef.id;
+  },
+
+  async hasAlphabetBeenCompleted(studentId: string, letter: string) {
+    const snapshot = await firestore()
+      .collection('alphabetCompleted')
+      .where('studentId', '==', studentId)
+      .where('letter', '==', letter)
+      .limit(1)
+      .get();
+
+    return snapshot.empty ? null : snapshot.docs[0].id;
+  },
+
+  // ================= DEBUG HELPER =================
+  async debugCheckReports(studentId: string) {
+    const snapshot = await firestore()
+      .collection('miscueReports')
+      .where('studentId', '==', studentId)
+      .get();
+
+    console.log('RAW FIRESTORE DATA:', snapshot.docs.map(d => d.data()));
+  },
+
+  async getStudentReadingStats(studentId: string) {
     try {
-      // Get all miscue reports for the student
-      const miscueReports = await this.getStudentReports(studentId);
+      const snapshot = await firestore()
+        .collection('miscueReports')
+        .where('studentId', '==', studentId)
+        .get();
 
-      if (miscueReports.length === 0) {
+      if (snapshot.empty) {
         return {
           totalAttempts: 0,
           averageAccuracy: 0,
-          topMiscueType: 'No data',
+          topMiscueType: 'None',
           mostCommonMiscueWords: [],
           passagePerformance: [],
         };
       }
 
-      // Calculate total attempts and average accuracy
-      const totalAttempts = miscueReports.length;
-      const totalAccuracy = miscueReports.reduce(
-        (sum, report) => sum + report.accuracyRate,
-        0,
-      );
-      const averageAccuracy = totalAccuracy / totalAttempts;
+      let totalAccuracy = 0;
 
-      // Calculate miscue type frequencies
-      const miscueTypeCount = {
+      const miscueTypeCount: Record<string, number> = {
         substitution: 0,
         omission: 0,
         insertion: 0,
         repetition: 0,
       };
 
-      // Get all miscues from all reports
-      const allMiscues: Array<{ type: string; expectedWord: string }> = [];
-      miscueReports.forEach(report => {
-        if (report.miscues && Array.isArray(report.miscues)) {
-          report.miscues.forEach(miscue => {
-            miscueTypeCount[miscue.type as keyof typeof miscueTypeCount]++;
-            allMiscues.push({
-              type: miscue.type,
-              expectedWord: miscue.expectedWord,
-            });
+      const wordFrequency: Record<string, number> = {};
+      const passageMap: Record<string, { total: number; attempts: number }> = {};
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+
+        totalAccuracy += data.accuracyRate || 0;
+
+        // Count miscues
+        miscueTypeCount.substitution += data.substitutionCount || 0;
+        miscueTypeCount.omission += data.omissionCount || 0;
+        miscueTypeCount.insertion += data.insertionCount || 0;
+        miscueTypeCount.repetition += data.repetitionCount || 0;
+
+        // Count words
+        if (data.miscues) {
+          data.miscues.forEach((m: any) => {
+            const word = m.expected || m.spoken;
+            if (!word) return;
+            wordFrequency[word] = (wordFrequency[word] || 0) + 1;
           });
         }
-      });
 
-      // Find top miscue type
-      const topMiscueType = Object.entries(miscueTypeCount).sort(
-        ([, a], [, b]) => b - a,
-      )[0][0];
-
-      // Find most common miscue words
-      const wordFrequency: Record<string, number> = {};
-      allMiscues.forEach(miscue => {
-        if (miscue.expectedWord) {
-          wordFrequency[miscue.expectedWord] =
-            (wordFrequency[miscue.expectedWord] || 0) + 1;
+        // Passage performance
+        const title = data.passageTitle || 'Unknown';
+        if (!passageMap[title]) {
+          passageMap[title] = { total: 0, attempts: 0 };
         }
+        passageMap[title].total += data.accuracyRate || 0;
+        passageMap[title].attempts += 1;
       });
 
+      const totalAttempts = snapshot.docs.length;
+
+      // Get top miscue type
+      const topMiscueType =
+        Object.entries(miscueTypeCount).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+        'None';
+
+      // Get most common words
       const mostCommonMiscueWords = Object.entries(wordFrequency)
-        .map(([word, count]) => ({ word, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5); // Top 5 most common miscue words
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([word, count]) => ({ word, count }));
 
-      // Calculate passage performance
-      const passageMap: Record<string, { accuracy: number; attempts: number }> =
-        {};
-      miscueReports.forEach(report => {
-        if (report.passageTitle) {
-          if (!passageMap[report.passageTitle]) {
-            passageMap[report.passageTitle] = { accuracy: 0, attempts: 0 };
-          }
-          passageMap[report.passageTitle].accuracy += report.accuracyRate;
-          passageMap[report.passageTitle].attempts++;
-        }
-      });
-
-      const passagePerformance = Object.entries(passageMap)
-        .map(([title, data]) => ({
+      // Passage performance array
+      const passagePerformance = Object.entries(passageMap).map(
+        ([title, val]) => ({
           title,
-          accuracy: data.accuracy / data.attempts,
-          attempts: data.attempts,
-        }))
-        .sort((a, b) => b.attempts - a.attempts); // Sort by number of attempts
+          accuracy: val.total / val.attempts,
+          attempts: val.attempts,
+        }),
+      );
 
       return {
         totalAttempts,
-        averageAccuracy: parseFloat(averageAccuracy.toFixed(2)),
-        topMiscueType: this.formatMiscueType(topMiscueType),
+        averageAccuracy: Number((totalAccuracy / totalAttempts).toFixed(2)),
+        topMiscueType,
         mostCommonMiscueWords,
         passagePerformance,
       };
-    } catch (error: any) {
-      console.error('Failed to get student reading stats:', error);
-      throw new Error(`Failed to get reading statistics: ${error.message}`);
+    } catch (error) {
+      console.error('STATS ERROR:', error);
+      throw error;
     }
   },
 
-  /**
-   * ==========================================================================
-   * FORMAT MISCUE TYPE
-   * ==========================================================================
-   * Converts miscue type code to readable format
-   * @param type - Miscue type code
-   * @returns Formatted miscue type string
-   */
-  formatMiscueType(type: string): string {
-    const typeMap: Record<string, string> = {
-      substitution: 'Substitution',
-      omission: 'Omission',
-      insertion: 'Insertion',
-      repetition: 'Repetition',
-    };
-    return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
-  },
-
-  /**
-   * ==========================================================================
-   * GET STUDENT PROGRESS OVER TIME
-   * ==========================================================================
-   * Retrieves student's progress data for chart visualization
-   * @param studentId - Firebase Auth UID of the student
-   * @returns Array of progress data points
-   */
-  async getStudentProgressOverTime(studentId: string): Promise<
-    Array<{
-      date: string;
-      accuracy: number;
-      wpm: number;
-      passageTitle: string;
-    }>
-  > {
+  async getStudentProgressOverTime(studentId: string) {
     try {
       const snapshot = await firestore()
         .collection('miscueReports')
         .where('studentId', '==', studentId)
-        .limit(20) // Last 20 attempts
+        .orderBy('timestamp', 'asc')
         .get();
 
-      return snapshot.docs
-        .map(doc => {
-          const data = doc.data();
-          const timestamp = data.timestamp?.toDate();
-          return {
-            date: timestamp
-              ? timestamp.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })
-              : 'Unknown Date',
-            accuracy: data.accuracyRate || 0,
-            wpm: data.wordPerMin || 0,
-            passageTitle: data.passageTitle || 'Unknown Passage',
-          };
-        })
-        .reverse(); // Reverse to show oldest first
-    } catch (error: any) {
-      console.error('Failed to get student progress:', error);
-      return [];
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+
+        return {
+          date: data.timestamp?.toDate?.().toISOString() || '',
+          accuracy: Number((data.accuracyRate || 0).toFixed(2)),
+          wpm: Number((data.wordPerMin || 0).toFixed(2)),
+          passageTitle: data.passageTitle || 'Unknown',
+        };
+      });
+    } catch (error) {
+      console.error('PROGRESS ERROR:', error);
+      throw error;
     }
-  },
+  }, 
 };

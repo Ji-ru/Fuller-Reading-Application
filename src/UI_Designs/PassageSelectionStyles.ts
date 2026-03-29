@@ -71,12 +71,18 @@ const selection = StyleSheet.create({
     fontFamily: 'Satoshi-MediumItalic',
   },
   wordSectionContainer: {
-    marginVertical: 5
+    backgroundColor: '#ECFBFF', 
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    zIndex: 1, 
   },
+
   wordSection: {
     fontSize: 25,
-    fontFamily: 'Satoshi-BlackItalic',
-    left: 10
+    fontWeight: 'bold',
+    color: '#4F46E5',
   },
 
   // PASSAGE LIST

@@ -120,5 +120,6 @@ export const useSpeechToText = () => {
     processAudioWithHuggingFace,
     // processAudioWithGoogle,
     getSimulatedResponse,
+
   };
 };

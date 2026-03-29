@@ -1,5 +1,5 @@
 import React, { JSX } from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, ScrollView } from 'react-native';
 import {
   Passage,
   Alphabet,
@@ -271,13 +271,17 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   };
 
   // ALPHABET DISPLAY
-  if (isAlphabet(material)) {
+  if (type === 'alphabet' && isAlphabet(material)) {
     return (
-      <View style={readingStyles.alphabetContainer}>
-        {/* Big Letter Display */}
-        <View style={readingStyles.letterContainer}>
-          <Text style={readingStyles.bigLetter}>{material.letter}</Text>
+      <View style={readingStyles.wordCardContainer}>
+        <View style={readingStyles.wordCard}>
+          <Text style={readingStyles.wordCardText}>
+            {material.letter}
+          </Text>
         </View>
+        <Text style={readingStyles.wordCardInstruction}>
+          Basahin ang titik
+        </Text>
       </View>
     );
   }
@@ -291,33 +295,56 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         <View style={readingStyles.wordCard}>
           <Text style={readingStyles.wordCardText}>{allWords[0]}</Text>
         </View>
-        <Text style={readingStyles.wordCardInstruction}>Read the word</Text>
+        <Text style={readingStyles.wordCardInstruction}>Basahin ang salita</Text>
       </View>
     );
   }
   
 
   // PASSAGE DISPLAY
-  return (
-    <View style={readingStyles.insideContainer}>
-      <Image
-        style={readingStyles.readingImage}
-        source={getPassageImage(material.image)}
-      />
-      <View
-        style={
-          !isRecording
-            ? readingStyles.passageContainerFeedback
-            : readingStyles.passageContainer
-        }
-      >
-        <Text style={readingStyles.passageTitle}>{material.title}</Text>
-        <Text style={readingStyles.passageAuthor}>By {material.author}</Text>
-        <View style={readingStyles.textContainer}>
-          {/* MODIFIED: Now uses renderTextContent which shows colored miscues */}
-          <Text style={readingStyles.textLine}>{renderTextContent()}</Text>
+  if(type === 'passage' && isPassage(material)){
+    return (
+      <View style={readingStyles.insideContainer}>
+        <Image
+          style={readingStyles.readingImage}
+          source={getPassageImage(material.image)}
+        />
+        <View
+          style={
+            !isRecording
+              ? readingStyles.passageContainerFeedback
+              : readingStyles.passageContainer
+          }
+        >
+          <Text style={readingStyles.passageTitle}>{material.title}</Text>
+          <Text style={readingStyles.passageAuthor}>By {material.author}</Text>
+          <View style={readingStyles.textContainer}>
+            {/* MODIFIED: Now uses renderTextContent which shows colored miscues */}
+            <View style={readingStyles.wordCardContainer}>
+              <View style={readingStyles.passageCard}>
+                
+                <Text style={readingStyles.passageTitle}>
+                  {material.title}
+                </Text>
+
+                <Text style={readingStyles.passageAuthor}>
+                  By {material.author}
+                </Text>
+
+                
+                <ScrollView
+                  style={readingStyles.passageScroll}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {renderTextContent()}
+                </ScrollView>
+
+              </View>
+            </View>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  }
+  return null
 };
