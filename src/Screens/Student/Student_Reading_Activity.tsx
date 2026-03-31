@@ -105,9 +105,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI,
-    sttErrorVisible, sttErrorMessage, clearSttError } =
-    useSpeechToText();
+  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
 
   // Access Global Music Context
   const { playMusic, pauseMusic } = useGlobalMusic();
@@ -283,7 +281,8 @@ export default function ReadingActivityScreenPage() {
         throw new Error('No audio file provided');
       }
       // const transcription = await processAudioWithGoogle(audioFile);
-      const transcription = await processAudioWithAssemblyAI(audioFile);
+      // const transcription = await processAudioWithAssemblyAI(audioFile);
+      const transcription = await processAudioWithDeepgram(audioFile);
       setSpokenText(transcription);
       console.log('THIS IS THE SPOKEN: ' + transcription);
 
@@ -302,7 +301,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithAssemblyAI, getSimulatedResponse, targetText]);
+  }, [getSimulatedResponse, targetText, processAudioWithDeepgram]);
 
   /**
    * Handles the record/play toggle for recording user speech:
