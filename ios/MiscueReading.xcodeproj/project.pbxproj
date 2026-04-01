@@ -1,0 +1,604 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0C80B921A6F3F58F76C31292 /* libPods-MiscueReading.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-MiscueReading.a */; };
+		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		2E3ADDBEFB214E8BB6F984EC /* Comfortaa-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 071B8764D249457BA71B6F2A /* Comfortaa-Bold.ttf */; };
+		177777D330FF40C9911D31A9 /* Comfortaa-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B00C582811BB4CA689C7502B /* Comfortaa-Light.ttf */; };
+		53441EE5ACC84C978725E17C /* Comfortaa-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9770740A8F7C44418124BCA1 /* Comfortaa-Medium.ttf */; };
+		ECCD410A30DD403691A1C70F /* Comfortaa-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F1E6D8E9238841879F691FD9 /* Comfortaa-Regular.ttf */; };
+		DD6E0D7E004E4C73A1736C30 /* Comfortaa-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A8BBA12E920C4AF3A8C10B0E /* Comfortaa-SemiBold.ttf */; };
+		0B2767988B6242D4AE01ED1D /* Comfortaa-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 67E4D897DBFC400F9B3C9A8D /* Comfortaa-VariableFont_wght.ttf */; };
+		F1820DF6211A4426A637D853 /* DynaPuff-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 400A4018719B488FA088A035 /* DynaPuff-Bold.ttf */; };
+		A43D785DF70547CFA89A0521 /* DynaPuff-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2106C8B0D55E4FCD84D9FDBC /* DynaPuff-Medium.ttf */; };
+		DA2B0CF1FDDF4A92B001D3CE /* DynaPuff-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4FCEAB4E96324EB8A939DE7E /* DynaPuff-Regular.ttf */; };
+		49D7669AC4314D4CBF5C6C17 /* DynaPuff-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3BA0BD9640E1448AB5E65C11 /* DynaPuff-SemiBold.ttf */; };
+		E5A3810397384D0794CFDB39 /* DynaPuff-VariableFont_wdth,wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1CDF56EE8CE944F9B003AB6F /* DynaPuff-VariableFont_wdth,wght.ttf */; };
+		973A095FA6DB47AD90E3F116 /* DynaPuff_Condensed-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FC086FABEAE74BC7A929DB4B /* DynaPuff_Condensed-Bold.ttf */; };
+		5C4A3008577B48929645E5E2 /* DynaPuff_Condensed-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 95821AF783A84DEBACB99BFB /* DynaPuff_Condensed-Medium.ttf */; };
+		63BE3655825645B99CD26F6E /* DynaPuff_Condensed-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3D8026EBF602403B86FDDB7D /* DynaPuff_Condensed-Regular.ttf */; };
+		DC070B7229E04F9B9FD62B5C /* DynaPuff_Condensed-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0834BA1B281C4500B8C20BAE /* DynaPuff_Condensed-SemiBold.ttf */; };
+		97D81D94603A489A83EE07E0 /* DynaPuff_SemiCondensed-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D156ED53EAAE406FABEFCDD2 /* DynaPuff_SemiCondensed-Bold.ttf */; };
+		F92A618C596D4297AAF1C851 /* DynaPuff_SemiCondensed-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3BC06FE367634D21ACE55455 /* DynaPuff_SemiCondensed-Medium.ttf */; };
+		2042B1362B4E4C8B8C0C3462 /* DynaPuff_SemiCondensed-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2372BC635D434A8CA451D1C1 /* DynaPuff_SemiCondensed-Regular.ttf */; };
+		EBAC4888A9F44F008160135F /* DynaPuff_SemiCondensed-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 29A4C732E7524B54A89873A5 /* DynaPuff_SemiCondensed-SemiBold.ttf */; };
+		5D8A563E7C364C09B363ED6A /* Satoshi-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 871D8ED100354F12B3381447 /* Satoshi-Black.ttf */; };
+		ED17BB98B3B54B8FB3D81E5F /* Satoshi-BlackItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 88464D1C2A384EA097E9C2C7 /* Satoshi-BlackItalic.ttf */; };
+		6828B47C521E4C18AF9C7417 /* Satoshi-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A6D33E27193C417FBB582E22 /* Satoshi-Bold.ttf */; };
+		57711F95BCF74CE788C78B5D /* Satoshi-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E53730BF8226469BA70D6FF5 /* Satoshi-BoldItalic.ttf */; };
+		30597ABF3B044AB4AADF115A /* Satoshi-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = ABF8D3861BA04DD5BE8D074F /* Satoshi-Italic.ttf */; };
+		18433B1E55E349E3B0166CD5 /* Satoshi-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B666E41E41974048A85131A7 /* Satoshi-Light.ttf */; };
+		35BBF384C909455DA444FD52 /* Satoshi-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 648092A98E3A4426937D296C /* Satoshi-LightItalic.ttf */; };
+		372076A27519449F8B6CF7BC /* Satoshi-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DA74D1D922EF4E5FB5461B12 /* Satoshi-Medium.ttf */; };
+		D324871BE0E146D986699477 /* Satoshi-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 229BF20E4353467C9B74D03A /* Satoshi-MediumItalic.ttf */; };
+		CFDA2D02D57E46F9A17C98AD /* Satoshi-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5E275777B902418099C858D0 /* Satoshi-Regular.ttf */; };
+		E3C30E69858A4B5582C54B87 /* Satoshi-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1E85E109E6434E3A9ECD1B5A /* Satoshi-Variable.ttf */; };
+		804714BDB2CB49799D38BA56 /* Satoshi-VariableItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6FCADBA387A44C36A37FB241 /* Satoshi-VariableItalic.ttf */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		13B07F961A680F5B00A75B9A /* MiscueReading.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiscueReading.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = MiscueReading/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = MiscueReading/Info.plist; sourceTree = "<group>"; };
+		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = MiscueReading/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		3B4392A12AC88292D35C810B /* Pods-MiscueReading.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MiscueReading.debug.xcconfig"; path = "Target Support Files/Pods-MiscueReading/Pods-MiscueReading.debug.xcconfig"; sourceTree = "<group>"; };
+		5709B34CF0A7D63546082F79 /* Pods-MiscueReading.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MiscueReading.release.xcconfig"; path = "Target Support Files/Pods-MiscueReading/Pods-MiscueReading.release.xcconfig"; sourceTree = "<group>"; };
+		5DCACB8F33CDC322A6C60F78 /* libPods-MiscueReading.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MiscueReading.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = MiscueReading/AppDelegate.swift; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = MiscueReading/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		071B8764D249457BA71B6F2A /* Comfortaa-Bold.ttf */ = {isa = PBXFileReference; name = "Comfortaa-Bold.ttf"; path = "../assets/fonts/Comfortaa-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		B00C582811BB4CA689C7502B /* Comfortaa-Light.ttf */ = {isa = PBXFileReference; name = "Comfortaa-Light.ttf"; path = "../assets/fonts/Comfortaa-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		9770740A8F7C44418124BCA1 /* Comfortaa-Medium.ttf */ = {isa = PBXFileReference; name = "Comfortaa-Medium.ttf"; path = "../assets/fonts/Comfortaa-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		F1E6D8E9238841879F691FD9 /* Comfortaa-Regular.ttf */ = {isa = PBXFileReference; name = "Comfortaa-Regular.ttf"; path = "../assets/fonts/Comfortaa-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A8BBA12E920C4AF3A8C10B0E /* Comfortaa-SemiBold.ttf */ = {isa = PBXFileReference; name = "Comfortaa-SemiBold.ttf"; path = "../assets/fonts/Comfortaa-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		67E4D897DBFC400F9B3C9A8D /* Comfortaa-VariableFont_wght.ttf */ = {isa = PBXFileReference; name = "Comfortaa-VariableFont_wght.ttf"; path = "../assets/fonts/Comfortaa-VariableFont_wght.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		400A4018719B488FA088A035 /* DynaPuff-Bold.ttf */ = {isa = PBXFileReference; name = "DynaPuff-Bold.ttf"; path = "../assets/fonts/DynaPuff-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		2106C8B0D55E4FCD84D9FDBC /* DynaPuff-Medium.ttf */ = {isa = PBXFileReference; name = "DynaPuff-Medium.ttf"; path = "../assets/fonts/DynaPuff-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		4FCEAB4E96324EB8A939DE7E /* DynaPuff-Regular.ttf */ = {isa = PBXFileReference; name = "DynaPuff-Regular.ttf"; path = "../assets/fonts/DynaPuff-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3BA0BD9640E1448AB5E65C11 /* DynaPuff-SemiBold.ttf */ = {isa = PBXFileReference; name = "DynaPuff-SemiBold.ttf"; path = "../assets/fonts/DynaPuff-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		1CDF56EE8CE944F9B003AB6F /* DynaPuff-VariableFont_wdth,wght.ttf */ = {isa = PBXFileReference; name = "DynaPuff-VariableFont_wdth,wght.ttf"; path = "../assets/fonts/DynaPuff-VariableFont_wdth,wght.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		FC086FABEAE74BC7A929DB4B /* DynaPuff_Condensed-Bold.ttf */ = {isa = PBXFileReference; name = "DynaPuff_Condensed-Bold.ttf"; path = "../assets/fonts/DynaPuff_Condensed-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		95821AF783A84DEBACB99BFB /* DynaPuff_Condensed-Medium.ttf */ = {isa = PBXFileReference; name = "DynaPuff_Condensed-Medium.ttf"; path = "../assets/fonts/DynaPuff_Condensed-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3D8026EBF602403B86FDDB7D /* DynaPuff_Condensed-Regular.ttf */ = {isa = PBXFileReference; name = "DynaPuff_Condensed-Regular.ttf"; path = "../assets/fonts/DynaPuff_Condensed-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		0834BA1B281C4500B8C20BAE /* DynaPuff_Condensed-SemiBold.ttf */ = {isa = PBXFileReference; name = "DynaPuff_Condensed-SemiBold.ttf"; path = "../assets/fonts/DynaPuff_Condensed-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D156ED53EAAE406FABEFCDD2 /* DynaPuff_SemiCondensed-Bold.ttf */ = {isa = PBXFileReference; name = "DynaPuff_SemiCondensed-Bold.ttf"; path = "../assets/fonts/DynaPuff_SemiCondensed-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3BC06FE367634D21ACE55455 /* DynaPuff_SemiCondensed-Medium.ttf */ = {isa = PBXFileReference; name = "DynaPuff_SemiCondensed-Medium.ttf"; path = "../assets/fonts/DynaPuff_SemiCondensed-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		2372BC635D434A8CA451D1C1 /* DynaPuff_SemiCondensed-Regular.ttf */ = {isa = PBXFileReference; name = "DynaPuff_SemiCondensed-Regular.ttf"; path = "../assets/fonts/DynaPuff_SemiCondensed-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		29A4C732E7524B54A89873A5 /* DynaPuff_SemiCondensed-SemiBold.ttf */ = {isa = PBXFileReference; name = "DynaPuff_SemiCondensed-SemiBold.ttf"; path = "../assets/fonts/DynaPuff_SemiCondensed-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		871D8ED100354F12B3381447 /* Satoshi-Black.ttf */ = {isa = PBXFileReference; name = "Satoshi-Black.ttf"; path = "../assets/fonts/Satoshi-Black.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		88464D1C2A384EA097E9C2C7 /* Satoshi-BlackItalic.ttf */ = {isa = PBXFileReference; name = "Satoshi-BlackItalic.ttf"; path = "../assets/fonts/Satoshi-BlackItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A6D33E27193C417FBB582E22 /* Satoshi-Bold.ttf */ = {isa = PBXFileReference; name = "Satoshi-Bold.ttf"; path = "../assets/fonts/Satoshi-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		E53730BF8226469BA70D6FF5 /* Satoshi-BoldItalic.ttf */ = {isa = PBXFileReference; name = "Satoshi-BoldItalic.ttf"; path = "../assets/fonts/Satoshi-BoldItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		ABF8D3861BA04DD5BE8D074F /* Satoshi-Italic.ttf */ = {isa = PBXFileReference; name = "Satoshi-Italic.ttf"; path = "../assets/fonts/Satoshi-Italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		B666E41E41974048A85131A7 /* Satoshi-Light.ttf */ = {isa = PBXFileReference; name = "Satoshi-Light.ttf"; path = "../assets/fonts/Satoshi-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		648092A98E3A4426937D296C /* Satoshi-LightItalic.ttf */ = {isa = PBXFileReference; name = "Satoshi-LightItalic.ttf"; path = "../assets/fonts/Satoshi-LightItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		DA74D1D922EF4E5FB5461B12 /* Satoshi-Medium.ttf */ = {isa = PBXFileReference; name = "Satoshi-Medium.ttf"; path = "../assets/fonts/Satoshi-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		229BF20E4353467C9B74D03A /* Satoshi-MediumItalic.ttf */ = {isa = PBXFileReference; name = "Satoshi-MediumItalic.ttf"; path = "../assets/fonts/Satoshi-MediumItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		5E275777B902418099C858D0 /* Satoshi-Regular.ttf */ = {isa = PBXFileReference; name = "Satoshi-Regular.ttf"; path = "../assets/fonts/Satoshi-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		1E85E109E6434E3A9ECD1B5A /* Satoshi-Variable.ttf */ = {isa = PBXFileReference; name = "Satoshi-Variable.ttf"; path = "../assets/fonts/Satoshi-Variable.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		6FCADBA387A44C36A37FB241 /* Satoshi-VariableItalic.ttf */ = {isa = PBXFileReference; name = "Satoshi-VariableItalic.ttf"; path = "../assets/fonts/Satoshi-VariableItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0C80B921A6F3F58F76C31292 /* libPods-MiscueReading.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		13B07FAE1A68108700A75B9A /* MiscueReading */ = {
+			isa = PBXGroup;
+			children = (
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				761780EC2CA45674006654EE /* AppDelegate.swift */,
+				13B07FB61A68108700A75B9A /* Info.plist */,
+				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
+				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+			);
+			name = MiscueReading;
+			sourceTree = "<group>";
+		};
+		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				5DCACB8F33CDC322A6C60F78 /* libPods-MiscueReading.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		83CBB9F61A601CBA00E9B192 = {
+			isa = PBXGroup;
+			children = (
+				13B07FAE1A68108700A75B9A /* MiscueReading */,
+				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				83CBBA001A601CBA00E9B192 /* Products */,
+				2D16E6871FA4F8E400B85C8A /* Frameworks */,
+				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				EA1C063EE2D848B0A91DA064 /* Resources */,
+			);
+			indentWidth = 2;
+			sourceTree = "<group>";
+			tabWidth = 2;
+			usesTabs = 0;
+		};
+		83CBBA001A601CBA00E9B192 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13B07F961A680F5B00A75B9A /* MiscueReading.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				3B4392A12AC88292D35C810B /* Pods-MiscueReading.debug.xcconfig */,
+				5709B34CF0A7D63546082F79 /* Pods-MiscueReading.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		EA1C063EE2D848B0A91DA064 /* Resources */ = {
+			isa = "PBXGroup";
+			children = (
+				071B8764D249457BA71B6F2A /* Comfortaa-Bold.ttf */,
+				B00C582811BB4CA689C7502B /* Comfortaa-Light.ttf */,
+				9770740A8F7C44418124BCA1 /* Comfortaa-Medium.ttf */,
+				F1E6D8E9238841879F691FD9 /* Comfortaa-Regular.ttf */,
+				A8BBA12E920C4AF3A8C10B0E /* Comfortaa-SemiBold.ttf */,
+				67E4D897DBFC400F9B3C9A8D /* Comfortaa-VariableFont_wght.ttf */,
+				400A4018719B488FA088A035 /* DynaPuff-Bold.ttf */,
+				2106C8B0D55E4FCD84D9FDBC /* DynaPuff-Medium.ttf */,
+				4FCEAB4E96324EB8A939DE7E /* DynaPuff-Regular.ttf */,
+				3BA0BD9640E1448AB5E65C11 /* DynaPuff-SemiBold.ttf */,
+				1CDF56EE8CE944F9B003AB6F /* DynaPuff-VariableFont_wdth,wght.ttf */,
+				FC086FABEAE74BC7A929DB4B /* DynaPuff_Condensed-Bold.ttf */,
+				95821AF783A84DEBACB99BFB /* DynaPuff_Condensed-Medium.ttf */,
+				3D8026EBF602403B86FDDB7D /* DynaPuff_Condensed-Regular.ttf */,
+				0834BA1B281C4500B8C20BAE /* DynaPuff_Condensed-SemiBold.ttf */,
+				D156ED53EAAE406FABEFCDD2 /* DynaPuff_SemiCondensed-Bold.ttf */,
+				3BC06FE367634D21ACE55455 /* DynaPuff_SemiCondensed-Medium.ttf */,
+				2372BC635D434A8CA451D1C1 /* DynaPuff_SemiCondensed-Regular.ttf */,
+				29A4C732E7524B54A89873A5 /* DynaPuff_SemiCondensed-SemiBold.ttf */,
+				871D8ED100354F12B3381447 /* Satoshi-Black.ttf */,
+				88464D1C2A384EA097E9C2C7 /* Satoshi-BlackItalic.ttf */,
+				A6D33E27193C417FBB582E22 /* Satoshi-Bold.ttf */,
+				E53730BF8226469BA70D6FF5 /* Satoshi-BoldItalic.ttf */,
+				ABF8D3861BA04DD5BE8D074F /* Satoshi-Italic.ttf */,
+				B666E41E41974048A85131A7 /* Satoshi-Light.ttf */,
+				648092A98E3A4426937D296C /* Satoshi-LightItalic.ttf */,
+				DA74D1D922EF4E5FB5461B12 /* Satoshi-Medium.ttf */,
+				229BF20E4353467C9B74D03A /* Satoshi-MediumItalic.ttf */,
+				5E275777B902418099C858D0 /* Satoshi-Regular.ttf */,
+				1E85E109E6434E3A9ECD1B5A /* Satoshi-Variable.ttf */,
+				6FCADBA387A44C36A37FB241 /* Satoshi-VariableItalic.ttf */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+			path = "";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		13B07F861A680F5B00A75B9A /* MiscueReading */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "MiscueReading" */;
+			buildPhases = (
+				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
+				13B07F871A680F5B00A75B9A /* Sources */,
+				13B07F8C1A680F5B00A75B9A /* Frameworks */,
+				13B07F8E1A680F5B00A75B9A /* Resources */,
+				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
+				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
+				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MiscueReading;
+			productName = MiscueReading;
+			productReference = 13B07F961A680F5B00A75B9A /* MiscueReading.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		83CBB9F71A601CBA00E9B192 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1210;
+				TargetAttributes = {
+					13B07F861A680F5B00A75B9A = {
+						LastSwiftMigration = 1120;
+					};
+				};
+			};
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "MiscueReading" */;
+			compatibilityVersion = "Xcode 12.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 83CBB9F61A601CBA00E9B192;
+			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				13B07F861A680F5B00A75B9A /* MiscueReading */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		13B07F8E1A680F5B00A75B9A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
+				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				2E3ADDBEFB214E8BB6F984EC /* Comfortaa-Bold.ttf in Resources */,
+				177777D330FF40C9911D31A9 /* Comfortaa-Light.ttf in Resources */,
+				53441EE5ACC84C978725E17C /* Comfortaa-Medium.ttf in Resources */,
+				ECCD410A30DD403691A1C70F /* Comfortaa-Regular.ttf in Resources */,
+				DD6E0D7E004E4C73A1736C30 /* Comfortaa-SemiBold.ttf in Resources */,
+				0B2767988B6242D4AE01ED1D /* Comfortaa-VariableFont_wght.ttf in Resources */,
+				F1820DF6211A4426A637D853 /* DynaPuff-Bold.ttf in Resources */,
+				A43D785DF70547CFA89A0521 /* DynaPuff-Medium.ttf in Resources */,
+				DA2B0CF1FDDF4A92B001D3CE /* DynaPuff-Regular.ttf in Resources */,
+				49D7669AC4314D4CBF5C6C17 /* DynaPuff-SemiBold.ttf in Resources */,
+				E5A3810397384D0794CFDB39 /* DynaPuff-VariableFont_wdth,wght.ttf in Resources */,
+				973A095FA6DB47AD90E3F116 /* DynaPuff_Condensed-Bold.ttf in Resources */,
+				5C4A3008577B48929645E5E2 /* DynaPuff_Condensed-Medium.ttf in Resources */,
+				63BE3655825645B99CD26F6E /* DynaPuff_Condensed-Regular.ttf in Resources */,
+				DC070B7229E04F9B9FD62B5C /* DynaPuff_Condensed-SemiBold.ttf in Resources */,
+				97D81D94603A489A83EE07E0 /* DynaPuff_SemiCondensed-Bold.ttf in Resources */,
+				F92A618C596D4297AAF1C851 /* DynaPuff_SemiCondensed-Medium.ttf in Resources */,
+				2042B1362B4E4C8B8C0C3462 /* DynaPuff_SemiCondensed-Regular.ttf in Resources */,
+				EBAC4888A9F44F008160135F /* DynaPuff_SemiCondensed-SemiBold.ttf in Resources */,
+				5D8A563E7C364C09B363ED6A /* Satoshi-Black.ttf in Resources */,
+				ED17BB98B3B54B8FB3D81E5F /* Satoshi-BlackItalic.ttf in Resources */,
+				6828B47C521E4C18AF9C7417 /* Satoshi-Bold.ttf in Resources */,
+				57711F95BCF74CE788C78B5D /* Satoshi-BoldItalic.ttf in Resources */,
+				30597ABF3B044AB4AADF115A /* Satoshi-Italic.ttf in Resources */,
+				18433B1E55E349E3B0166CD5 /* Satoshi-Light.ttf in Resources */,
+				35BBF384C909455DA444FD52 /* Satoshi-LightItalic.ttf in Resources */,
+				372076A27519449F8B6CF7BC /* Satoshi-Medium.ttf in Resources */,
+				D324871BE0E146D986699477 /* Satoshi-MediumItalic.ttf in Resources */,
+				CFDA2D02D57E46F9A17C98AD /* Satoshi-Regular.ttf in Resources */,
+				E3C30E69858A4B5582C54B87 /* Satoshi-Variable.ttf in Resources */,
+				804714BDB2CB49799D38BA56 /* Satoshi-VariableItalic.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/.xcode.env",
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
+		};
+		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MiscueReading/Pods-MiscueReading-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MiscueReading/Pods-MiscueReading-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MiscueReading/Pods-MiscueReading-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-MiscueReading-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E235C05ADACE081382539298 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MiscueReading/Pods-MiscueReading-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MiscueReading/Pods-MiscueReading-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MiscueReading/Pods-MiscueReading-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		13B07F871A680F5B00A75B9A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		13B07F941A680F5B00A75B9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-MiscueReading.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = MiscueReading/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_NAME = MiscueReading;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		13B07F951A680F5B00A75B9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-MiscueReading.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = MiscueReading/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_NAME = MiscueReading;
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		83CBBA201A601CBA00E9B192 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
+				);
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		83CBBA211A601CBA00E9B192 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
+				);
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "MiscueReading" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13B07F941A680F5B00A75B9A /* Debug */,
+				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "MiscueReading" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83CBBA201A601CBA00E9B192 /* Debug */,
+				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
+}
