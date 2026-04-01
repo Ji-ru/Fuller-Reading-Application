@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
   ScrollView,
-  ActivityIndicator,
   StyleSheet,
   Dimensions,
+  Modal,
+  Animated,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import bubbles from '../../UI_Designs/BubblesDesign';
-import user from '../../UI_Designs/UserStyle';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import {
@@ -23,22 +24,9 @@ import { MiscueReportController } from '../../Controller/MiscueReportController'
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
 
-/**
- * ==========================================================================
- * STUDENT PROFILE COMPONENT
- * ==========================================================================
- * Comprehensive student profile with:
- * - Basic and academic information
- * - Reading performance statistics
- * - Interactive progress visualizations
- * - Trend analysis
- * ==========================================================================
- */
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// ========================================================================
-// TYPE DEFINITIONS
-// ========================================================================
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface StudentStats {
   totalAttempts: number;
   averageAccuracy: number;
@@ -46,7 +34,6 @@ interface StudentStats {
   mostCommonMiscueWords: { word: string; count: number }[];
   passagePerformance: { title: string; accuracy: number; attempts: number }[];
 }
-
 interface ProgressData {
   date: string;
   accuracy: number;
@@ -54,1326 +41,789 @@ interface ProgressData {
   passageTitle: string;
 }
 
-export default function Profile() {
-  // ========================================================================
-  // STATE MANAGEMENT
-  // ========================================================================
+// ─── Palette ──────────────────────────────────────────────────────────────────
+const C = {
+  green:      '#2ecc71',
+  greenDark:  '#27ae60',
+  greenDeep:  '#1a7a45',
+  greenLight: '#d4f5e2',
+  greenPale:  '#f0faf4',
+  mint:       '#a8edce',
+  teal:       '#1abc9c',
+  yellow:     '#f6d860',
+  orange:     '#f39c12',
+  red:        '#e74c3c',
+  white:      '#ffffff',
+  ink:        '#1b2e23',
+  inkLight:   '#4a6358',
+  slate:      '#8fafa0',
+  bg:         '#f0faf4',
+};
 
-  /** Controls visibility of dropdown menu */
-  const [menuVisible, setMenuVisible] = useState(false);
+// ─── Skeleton pulse ───────────────────────────────────────────────────────────
+function Skeleton({ w = '100%', h = 16, r = 8 }: { w?: any; h?: number; r?: number }) {
+  const anim = useRef(new Animated.Value(0.35)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration: 750, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0.35, duration: 750, useNativeDriver: true }),
+      ]),
+    ).start();
+  }, []);
+  return (
+    <Animated.View
+      style={{ width: w, height: h, borderRadius: r, backgroundColor: C.mint, opacity: anim }}
+    />
+  );
+}
 
-  /** Controls visibility of logout confirmation modal */
-  const [logoutVisible, setLogoutVisible] = useState(false);
+// ─── Bounce-in wrapper ────────────────────────────────────────────────────────
+function BounceIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const scale   = useRef(new Animated.Value(0.7)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.parallel([
+        Animated.spring(scale,   { toValue: 1, useNativeDriver: true, tension: 60, friction: 7 }),
+        Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
+  return <Animated.View style={{ transform: [{ scale }], opacity }}>{children}</Animated.View>;
+}
 
-  /** Stores current user's profile data from Firestore */
-  const [profileData, setProfileData] = useState<UserDocument | null>(null);
-
-  /** Stores class information if student is enrolled */
-  const [classData, setClassData] = useState<ClassDocument | null>(null);
-
-  /** Stores comprehensive reading statistics */
-  const [readingStats, setReadingStats] = useState<StudentStats | null>(null);
-
-  /** Stores progress data points for charts */
-  const [progressData, setProgressData] = useState<ProgressData[]>([]);
-
-  /** Loading state for async data fetching */
-  const [loading, setLoading] = useState(true);
-
-  /** Error message for display if data fetching fails */
-  const [error, setError] = useState<string | null>(null);
-
-  // ========================================================================
-  // HOOKS
-  // ========================================================================
-
-  const { handleLogout, handleBackStep } = useNavigationHelper();
-  const screenWidth = Dimensions.get('window').width;
-
-  // ========================================================================
-  // LIFECYCLE
-  // ========================================================================
+// ─── Detail Modal ─────────────────────────────────────────────────────────────
+function DetailModal({
+  visible,
+  title,
+  emoji,
+  onClose,
+  children,
+}: {
+  visible: boolean;
+  title: string;
+  emoji: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const slideY    = useRef(new Animated.Value(300)).current;
+  const bgOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    fetchProfileData();
-  }, []);
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(slideY,    { toValue: 0,   useNativeDriver: true, tension: 65, friction: 10 }),
+        Animated.timing(bgOpacity, { toValue: 1,   duration: 200,         useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideY,    { toValue: 300, duration: 220, useNativeDriver: true }),
+        Animated.timing(bgOpacity, { toValue: 0,   duration: 220, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible]);
 
-  // ========================================================================
-  // DATA FETCHING
-  // ========================================================================
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <Animated.View style={[S.modalOverlay, { opacity: bgOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+        <Animated.View style={[S.modalSheet, { transform: [{ translateY: slideY }] }]}>
+          <View style={S.modalHandle} />
+          <View style={S.modalHeader}>
+            <Text style={S.modalEmoji}>{emoji}</Text>
+            <Text style={S.modalTitle}>{title}</Text>
+            <TouchableOpacity onPress={onClose} style={S.modalClose}>
+              <Text style={S.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false}>{children}</ScrollView>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
 
-  /**
-   * ==========================================================================
-   * FETCH PROFILE DATA
-   * ==========================================================================
-   * Orchestrates fetching of all profile-related data:
-   * 1. User profile from Authentication
-   * 2. Class information if student is enrolled
-   * 3. Reading statistics and analytics
-   * 4. Progress data for visualizations
-   *
-   * @throws Sets error state if any fetch operation fails
-   * ==========================================================================
-   */
-  const fetchProfileData = async () => {
+// ─── Accuracy Ring ────────────────────────────────────────────────────────────
+function AccuracyRing({ value }: { value: number }) {
+  const color = value >= 90 ? C.green : value >= 75 ? C.yellow : C.red;
+  const label = value >= 90 ? 'Mahusay! 🌟' : value >= 75 ? 'Magaling! 👍' : 'Kaya mo! 💪';
+  return (
+    <View style={S.ringContainer}>
+      <View style={[S.ringOuter, { borderColor: C.greenLight }]}>
+        <View style={[S.ringInner, { borderColor: color }]}>
+          <Text style={[S.ringValue, { color }]}>{value.toFixed(1)}%</Text>
+          <Text style={S.ringUnit}>katumpakan</Text>
+        </View>
+      </View>
+      <Text style={[S.ringLabel, { color }]}>{label}</Text>
+    </View>
+  );
+}
+
+// ─── Mini bar chart ───────────────────────────────────────────────────────────
+function MiniBarChart({
+  data,
+  valueKey,
+  color,
+}: {
+  data: ProgressData[];
+  valueKey: 'accuracy' | 'wpm';
+  color: string;
+}) {
+  const slice = data.slice(-8);
+  const max   = Math.max(...slice.map(d => d[valueKey]), 1);
+  return (
+    <View style={S.miniChart}>
+      {slice.map((d, i) => (
+        <View key={i} style={S.miniBarCol}>
+          <Text style={S.miniBarVal}>{d[valueKey]}</Text>
+          <View style={[S.miniBar, { height: Math.max((d[valueKey] / max) * 80, 4), backgroundColor: color }]} />
+          <Text style={S.miniBarDate}>{d.date}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ─── Stat Tile (tappable) ─────────────────────────────────────────────────────
+function StatTile({
+  emoji,
+  value,
+  label,
+  color,
+  onPress,
+  delay,
+}: {
+  emoji: string;
+  value: string | number;
+  label: string;
+  color: string;
+  onPress: () => void;
+  delay?: number;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const press = () => {
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 0.92, duration: 80, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1,    useNativeDriver: true }),
+    ]).start();
+    onPress();
+  };
+  return (
+    <BounceIn delay={delay}>
+      <TouchableOpacity onPress={press} activeOpacity={0.85}>
+        <Animated.View style={[S.statTile, { borderTopColor: color, transform: [{ scale }] }]}>
+          <Text style={S.statTileEmoji}>{emoji}</Text>
+          <Text style={[S.statTileValue, { color }]}>{value}</Text>
+          <Text style={S.statTileLabel}>{label}</Text>
+          <Text style={S.statTileTap}>i-tap para sa detalye</Text>
+        </Animated.View>
+      </TouchableOpacity>
+    </BounceIn>
+  );
+}
+
+// ─── Small helpers ────────────────────────────────────────────────────────────
+function InfoPill({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <View style={S.infoPill}>
+      <Text style={S.infoPillIcon}>{icon}</Text>
+      <View>
+        <Text style={S.infoPillLabel}>{label}</Text>
+        <Text style={S.infoPillValue} numberOfLines={1}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
+function TrendPill({
+  label,
+  from,
+  to,
+  delta,
+  suffix,
+}: {
+  label: string;
+  from: number;
+  to: number;
+  delta: number;
+  suffix: string;
+}) {
+  const flat  = Math.abs(delta) < 0.5;
+  const up    = delta > 0;
+  const color = flat ? C.slate : up ? C.green : C.red;
+  const arrow = flat ? '→' : up ? '↑' : '↓';
+  return (
+    <View style={[S.trendPill, { borderColor: color }]}>
+      {!!label && <Text style={S.trendPillLabel}>{label}</Text>}
+      <Text style={[S.trendPillVal, { color }]}>
+        {from}{suffix} {arrow} {to}{suffix}
+      </Text>
+      {!flat && (
+        <Text style={[S.trendPillDelta, { color }]}>
+          {up ? '+' : ''}{delta.toFixed(1)}{suffix}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+function ModalStat({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <View style={[S.modalStat, { borderColor: color }]}>
+      <Text style={[S.modalStatVal, { color }]}>{value}</Text>
+      <Text style={S.modalStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function Profile() {
+  const [menuVisible,   setMenuVisible]   = useState(false);
+  const [logoutVisible, setLogoutVisible] = useState(false);
+  const [profileData,   setProfileData]   = useState<UserDocument | null>(null);
+  const [classData,     setClassData]     = useState<ClassDocument | null>(null);
+  const [readingStats,  setReadingStats]  = useState<StudentStats | null>(null);
+  const [progressData,  setProgressData]  = useState<ProgressData[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState<string | null>(null);
+  const [modal, setModal] = useState<'accuracy' | 'wpm' | 'miscues' | 'passages' | 'words' | null>(null);
+
+  const { handleLogout, handleBackStep } = useNavigationHelper();
+
+  useEffect(() => { fetchAll(); }, []);
+
+  const fetchAll = async () => {
     try {
       setLoading(true);
-      const currentUser = getCurrentUser();
+      setError(null);
+      const cur = getCurrentUser();
+      if (!cur) { setError('No user logged in'); return; }
 
-      if (!currentUser) {
-        setError('No user logged in');
-        return;
-      }
-
-      // Fetch user profile
-      const profile = await getUserProfile(currentUser.uid);
+      const profile = await getUserProfile(cur.uid);
       setProfileData(profile);
 
-      // Fetch class data if student has a class
       if (profile?.studentData?.classCode) {
-        const classInfo = await getClassByCode(profile.studentData.classCode);
-        console.log(profile.studentData.classCode);
-        setClassData(classInfo);
+        const cls = await getClassByCode(profile.studentData.classCode);
+        setClassData(cls);
       }
 
-      // Fetch reading statistics
-      const stats = await MiscueReportController.getStudentReadingStats(
-        currentUser.uid,
-      );
+      const [stats, progress] = await Promise.all([
+        MiscueReportController.getStudentReadingStats(cur.uid),
+        MiscueReportController.getStudentProgressOverTime(cur.uid),
+      ]);
       setReadingStats(stats);
-
-      // Fetch progress data for charts
-      const progress = await MiscueReportController.getStudentProgressOverTime(
-        currentUser.uid,
-      );
       setProgressData(progress);
-    } catch (err: any) {
-      console.error('Error fetching profile data:', err);
-      setError(err.message || 'Failed to load profile data');
+    } catch (e: any) {
+      setError(e.message || 'Failed to load');
     } finally {
       setLoading(false);
     }
   };
 
-  // ========================================================================
-  // UTILITY FUNCTIONS
-  // ========================================================================
+  // Trend computations
+  const firstAcc = progressData[0]?.accuracy ?? 0;
+  const lastAcc  = progressData[progressData.length - 1]?.accuracy ?? 0;
+  const accDelta = lastAcc - firstAcc;
+  const firstWpm = progressData[0]?.wpm ?? 0;
+  const lastWpm  = progressData[progressData.length - 1]?.wpm ?? 0;
+  const wpmDelta = lastWpm - firstWpm;
+  const avgWpm   = progressData.length
+    ? Math.round(progressData.reduce((s, d) => s + d.wpm, 0) / progressData.length)
+    : 0;
+  const bestAcc  = progressData.length ? Math.max(...progressData.map(d => d.accuracy)) : 0;
+  const bestWpm  = progressData.length ? Math.max(...progressData.map(d => d.wpm)) : 0;
 
-  /**
-   * Formats date of birth string to readable format
-   * @param dateString - Date string to format
-   * @returns Formatted date or 'Not set'
-   */
-  const formatDateOfBirth = (dateString?: string) => {
-    if (!dateString) return 'Not set';
-    return dateString; // Already formatted from backend
-  };
+  const getReadingLevelLabel = (level?: string) =>
+    ({
+      beginner:     'Baguhan 🌱',
+      intermediate: 'Gitna 📖',
+      advanced:     'Abante 🚀',
+      expert:       'Dalubhasa ⭐',
+    }[level || 'beginner'] ?? 'Baguhan 🌱');
 
-  /**
-   * Gets readable reading level label
-   * @param level - Reading level code
-   * @returns Formatted reading level
-   */
-  const getReadingLevelLabel = (level?: string) => {
-    const levels: Record<string, string> = {
-      beginner: 'Beginner',
-      intermediate: 'Intermediate',
-      advanced: 'Advanced',
-      expert: 'Expert',
-    };
-    return levels[level || 'beginner'] || 'Beginner';
-  };
-
-  // ========================================================================
-  // EVENT HANDLERS
-  // ========================================================================
-
-  const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
-  };
-
-  const handleLogoutPress = () => {
-    setMenuVisible(false);
-    setLogoutVisible(true);
-  };
-
-  const confirmLogout = async () => {
-    setLogoutVisible(false);
-    await handleLogout();
-  };
-
-  const cancelLogout = () => {
-    setLogoutVisible(false);
-  };
-
-  // ========================================================================
-  // LOADING STATE
-  // ========================================================================
-
+  // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <SafeAreaView style={S.loadingBg}>
+        <View style={S.loadingCard}>
+          <Text style={S.loadingEmoji}>📚</Text>
+          <Text style={S.loadingTitle}>Naglo-load ang profile…</Text>
+          <View style={{ gap: 10, marginTop: 16 }}>
+            <Skeleton h={20} w="70%" />
+            <Skeleton h={14} w="50%" />
+            <Skeleton h={14} w="60%" />
+          </View>
+        </View>
       </SafeAreaView>
     );
   }
-
-  // ========================================================================
-  // ERROR STATE
-  // ========================================================================
 
   if (error) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchProfileData}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
+      <SafeAreaView style={S.loadingBg}>
+        <View style={S.loadingCard}>
+          <Text style={{ fontSize: 40 }}>😕</Text>
+          <Text style={S.errorText}>{error}</Text>
+          <TouchableOpacity style={S.retryBtn} onPress={fetchAll}>
+            <Text style={S.retryText}>Subukan Ulit</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
 
-  // ========================================================================
-  // COMPUTED VALUES
-  // ========================================================================
-
-  const topMiscuedPassage = readingStats?.passagePerformance?.[0] || null;
-  const hasProgressData = progressData.length > 0;
-
-  // ========================================================================
-  // MAIN RENDER
-  // ========================================================================
-
+  // ── Main render ─────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={S.bg}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.innerContainer}>
 
-          {/* BUBBLE DECORATIONS */}
-          <View style={bubbles.bubblesContainer}>
-            <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-            <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-            <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-            <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
+        {/* Bubbles */}
+        <View style={bubbles.bubblesContainer} pointerEvents="none">
+          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
+          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
+          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
+          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
+          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
+          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
+        </View>
+
+        {/* Nav */}
+        <View style={{ zIndex: 100 }}>
+          <View style={upperNav.header}>
+            <TouchableOpacity style={upperNav.touchable} onPress={() => handleBackStep()}>
+              <Image source={require('../../../assets/icons/BackButton-icon.png')} />
+            </TouchableOpacity>
+            <Image style={upperNav.ciscLogo} source={require('../../../assets/images/cisckids.png')} />
+            <TouchableOpacity style={upperNav.touchable} onPress={() => setMenuVisible(v => !v)}>
+              <Image style={upperNav.menuIcon} source={require('../../../assets/icons/Menu-icon.png')} />
+            </TouchableOpacity>
           </View>
-
-          {/* HEADER */}
-          <View style={styles.header}>
-            <View style={upperNav.header}>
+          {menuVisible && (
+            <View style={upperNav.dropdownMenu}>
               <TouchableOpacity
-                style={upperNav.touchable}
-                onPress={() => handleBackStep()}
+                onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
+                style={upperNav.logoutButton}
               >
-                <Image
-                  source={require('../../../assets/icons/BackButton-icon.png')}
-                />
-              </TouchableOpacity>
-
-              <Image
-                style={upperNav.ciscLogo}
-                source={require('../../../assets/images/cisckids.png')}
-              />
-              <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-                <Image
-                  style={upperNav.menuIcon}
-                  source={require('../../../assets/icons/Menu-icon.png')}
-                />
+                <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
+                <Text style={upperNav.logoutText}>Logout</Text>
               </TouchableOpacity>
             </View>
+          )}
+          {menuVisible && (
+            <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
+          )}
+        </View>
 
-            {/* DROPDOWN MENU */}
-            {menuVisible && (
-              <View style={upperNav.dropdownMenu}>
-                <TouchableOpacity
-                  onPress={handleLogoutPress}
-                  style={styles.logoutButton}
-                >
-                  <Image
-                    source={require('../../../assets/icons/Logout-icon.png')}
-                    style={upperNav.logoutIcon}
-                  />
-                  <Text style={upperNav.logoutText}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* OVERLAY TO CLOSE MENU */}
-            {menuVisible && (
-              <TouchableOpacity
-                style={upperNav.closeMenu}
-                onPress={() => setMenuVisible(false)}
-                activeOpacity={1}
-              />
-            )}
-          </View>
-
-          {/* PROFILE HEADER */}
-          <View style={styles.profileHeader}>
-            <View style={styles.profileImageContainer}>
+        {/* ── Hero Card ─────────────────────────────────────────────────────── */}
+        <BounceIn delay={50}>
+          <View style={S.heroCard}>
+            <View style={S.heroAvatarWrap}>
               <Image
                 source={
                   profileData?.profileImageUrl
                     ? { uri: profileData.profileImageUrl }
                     : require('../../../assets/images/defaultProfile.png')
                 }
-                style={styles.profileImage}
+                style={S.heroAvatar}
               />
-            </View>
-            <Text style={styles.studentName}>
-              {profileData?.firstName} {profileData?.lastName}
-            </Text>
-            <Text style={styles.studentRole}>Student</Text>
-          </View>
-
-          {/* BASIC INFORMATION */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Basic Information</Text>
-            <View style={styles.infoGrid}>
-              <InfoItem
-                label="First Name"
-                value={profileData?.firstName || 'N/A'}
-              />
-              <InfoItem
-                label="Middle Name"
-                value={profileData?.middleName || 'N/A'}
-              />
-              <InfoItem
-                label="Last Name"
-                value={profileData?.lastName || 'N/A'}
-              />
-              <InfoItem
-                label="Birthdate"
-                value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)}
-              />
-              <InfoItem
-                label="Sex"
-                value={
-                  profileData?.sex === 'male'
-                    ? 'Male'
-                    : profileData?.sex === 'female'
-                    ? 'Female'
-                    : 'N/A'
-                }
-              />
-            </View>
-          </View>
-
-          {/* ACADEMIC INFORMATION */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Academic Information</Text>
-            <View style={styles.infoGrid}>
-              <InfoItem
-                label="Grade Level"
-                value={`Grade ${profileData?.studentData?.gradeLevel || 'N/A'}`}
-              />
-              <InfoItem
-                label="Class"
-                value={classData?.className || 'Not assigned'}
-              />
-              <InfoItem
-                label="Reading Level"
-                value={getReadingLevelLabel(
-                  profileData?.studentData?.reading_Level,
-                )}
-              />
-            </View>
-          </View>
-
-          {/* READING STATISTICS */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Reading Statistics</Text>
-            <View style={styles.statsGrid}>
-              <StatCard
-                number={readingStats?.totalAttempts || 0}
-                label="Total Attempts"
-              />
-              <StatCard
-                number={`${readingStats?.averageAccuracy || 0}%`}
-                label="Avg. Accuracy"
-              />
-              <StatCard
-                number={readingStats?.topMiscueType || 'N/A'}
-                label="Top Miscue Type"
-              />
-            </View>
-
-            {/* TOP MISCUED PASSAGE */}
-            {topMiscuedPassage && (
-              <View style={styles.miscueCard}>
-                <Text style={styles.miscueTitle}>Top Miscued Passage</Text>
-                <Text style={styles.miscuePassage}>
-                  {topMiscuedPassage.title}
+              <View style={S.heroBadge}>
+                <Text style={S.heroBadgeText}>
+                  {getReadingLevelLabel(profileData?.studentData?.reading_Level)}
                 </Text>
-                <View style={styles.miscueStats}>
-                  <Text style={styles.miscueStat}>
-                    Accuracy:{' '}
-                    <Text style={styles.miscueStatValue}>
-                      {topMiscuedPassage.accuracy.toFixed(1)}%
-                    </Text>
-                  </Text>
-                  <Text style={styles.miscueStat}>
-                    Attempts:{' '}
-                    <Text style={styles.miscueStatValue}>
-                      {topMiscuedPassage.attempts}
-                    </Text>
-                  </Text>
-                </View>
               </View>
-            )}
-
-            {/* MOST COMMON MISCUE WORDS */}
-            {readingStats?.mostCommonMiscueWords &&
-              readingStats.mostCommonMiscueWords.length > 0 && (
-                <View style={styles.miscueCard}>
-                  <Text style={styles.miscueTitle}>
-                    Most Common Miscue Words
-                  </Text>
-                  <View style={styles.wordList}>
-                    {readingStats.mostCommonMiscueWords.map((item, index) => (
-                      <View key={index} style={styles.wordItem}>
-                        <Text style={styles.wordText}>"{item.word}"</Text>
-                        <Text style={styles.wordCount}>{item.count} times</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-          </View>
-
-          {/* READING PROGRESS CHARTS */}
-          {hasProgressData && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Reading Progress</Text>
-
-              {/* ACCURACY OVER TIME CHART */}
-              <AccuracyChart data={progressData} />
-
-              {/* WPM OVER TIME CHART */}
-              <WPMChart data={progressData} />
-
-              {/* PERFORMANCE SUMMARY */}
-              <PerformanceSummary data={progressData} />
             </View>
-          )}
+            <Text style={S.heroName}>{profileData?.firstName} {profileData?.lastName}</Text>
+            <Text style={S.heroSub}>
+              Grade {profileData?.studentData?.gradeLevel ?? '—'} • {classData?.className ?? 'Walang klase'}
+            </Text>
+            {readingStats && readingStats.totalAttempts > 0 && (
+              <AccuracyRing value={readingStats.averageAccuracy} />
+            )}
+          </View>
+        </BounceIn>
 
-          {/* REFRESH BUTTON */}
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={fetchProfileData}
-          >
-            <Text style={styles.refreshButtonText}>Refresh Data</Text>
+        {/* ── Personal Info ─────────────────────────────────────────────────── */}
+        <BounceIn delay={120}>
+          <View style={S.section}>
+            <Text style={S.sectionTitle}>👤 Impormasyon</Text>
+            <View style={S.infoRow}>
+              <InfoPill icon="🎂" label="Kaarawan" value={profileData?.studentData?.dateOfBirth ?? 'Hindi itinakda'} />
+              <InfoPill icon="⚧" label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
+            </View>
+            <View style={S.infoRow}>
+              <InfoPill icon="📧" label="Email" value={profileData?.email ?? '—'} />
+            </View>
+          </View>
+        </BounceIn>
+
+        {/* ── Stat Tiles ────────────────────────────────────────────────────── */}
+        {readingStats && (
+          <View style={S.section}>
+            <Text style={S.sectionTitle}>📊 Mga Istatistika</Text>
+            <View style={S.tilesGrid}>
+              <StatTile emoji="🔁" value={readingStats.totalAttempts}      label="Pagtatangka"     color={C.teal}   delay={160} onPress={() => setModal('passages')} />
+              <StatTile emoji="🎯" value={`${readingStats.averageAccuracy}%`} label="Katumpakan"   color={C.green}  delay={200} onPress={() => setModal('accuracy')} />
+              <StatTile emoji="⚡" value={`${avgWpm}`}                      label="WPM"            color={C.orange} delay={240} onPress={() => setModal('wpm')} />
+              <StatTile emoji="⚠️" value={readingStats.topMiscueType}       label="Top Pagkakamali" color={C.red}   delay={280} onPress={() => setModal('miscues')} />
+            </View>
+          </View>
+        )}
+
+        {/* ── Progress ─────────────────────────────────────────────────────── */}
+        {progressData.length > 1 && (
+          <BounceIn delay={320}>
+            <View style={S.section}>
+              <Text style={S.sectionTitle}>📈 Pag-unlad</Text>
+              <View style={S.trendRow}>
+                <TrendPill label="Katumpakan" from={firstAcc} to={lastAcc} delta={accDelta} suffix="%" />
+                <TrendPill label="WPM"        from={firstWpm} to={lastWpm} delta={wpmDelta} suffix="" />
+              </View>
+              <Text style={S.chartLabel}>Katumpakan (huling 8 pagbabasa)</Text>
+              <MiniBarChart data={progressData} valueKey="accuracy" color={C.green} />
+              <Text style={[S.chartLabel, { marginTop: 16 }]}>WPM (huling 8 pagbabasa)</Text>
+              <MiniBarChart data={progressData} valueKey="wpm" color={C.orange} />
+            </View>
+          </BounceIn>
+        )}
+
+        {/* ── Common Miscue Words preview ───────────────────────────────────── */}
+        {readingStats && readingStats.mostCommonMiscueWords.length > 0 && (
+          <BounceIn delay={360}>
+            <TouchableOpacity style={S.section} onPress={() => setModal('words')} activeOpacity={0.85}>
+              <View style={S.sectionHeaderRow}>
+                <Text style={S.sectionTitle}>🔤 Mga Salitang May Pagkakamali</Text>
+                <Text style={S.seeMore}>Tingnan lahat ›</Text>
+              </View>
+              <View style={S.wordChips}>
+                {readingStats.mostCommonMiscueWords.slice(0, 5).map((w, i) => (
+                  <View
+                    key={i}
+                    style={[S.wordChip, { backgroundColor: i === 0 ? C.red : i === 1 ? C.orange : C.yellow }]}
+                  >
+                    <Text style={S.wordChipText}>"{w.word}"</Text>
+                    <Text style={S.wordChipCount}>{w.count}×</Text>
+                  </View>
+                ))}
+              </View>
+            </TouchableOpacity>
+          </BounceIn>
+        )}
+
+        {/* Refresh */}
+        <BounceIn delay={400}>
+          <TouchableOpacity style={S.refreshBtn} onPress={fetchAll} activeOpacity={0.8}>
+            <Text style={S.refreshText}>🔄  I-refresh ang Data</Text>
           </TouchableOpacity>
-        </View>
+        </BounceIn>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* LOGOUT MODAL */}
-      <LogoutModal
-        visible={logoutVisible}
-        onCancel={cancelLogout}
-        onConfirm={confirmLogout}
-      />
-    </SafeAreaView>
-  );
-}
+      {/* ══════════════════════════════════════════════════════════════════════
+          DETAIL MODALS
+      ══════════════════════════════════════════════════════════════════════ */}
 
-// ============================================================================
-// CHILD COMPONENTS
-// ============================================================================
-
-/**
- * ==========================================================================
- * INFO ITEM COMPONENT
- * ==========================================================================
- * Displays a label-value pair in the info grid
- * @param label - Display label
- * @param value - Display value
- * ==========================================================================
- */
-const InfoItem = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.infoItem}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
-  </View>
-);
-
-/**
- * ==========================================================================
- * STAT CARD COMPONENT
- * ==========================================================================
- * Displays a statistic in a card format
- * @param number - Statistic number/value
- * @param label - Statistic label
- * ==========================================================================
- */
-const StatCard = ({
-  number,
-  label,
-}: {
-  number: number | string;
-  label: string;
-}) => (
-  <View style={styles.statCard}>
-    <Text style={styles.statNumber}>{number}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
-
-/**
- * ==========================================================================
- * ACCURACY CHART COMPONENT
- * ==========================================================================
- * Renders a line chart showing accuracy progression over time
- * Features:
- * - Animated bars with connecting lines
- * - Y-axis percentage labels
- * - Color-coded by performance level
- * @param data - Array of progress data points
- * ==========================================================================
- */
-const AccuracyChart = ({ data }: { data: ProgressData[] }) => {
-  const maxHeight = 120;
-  const chartData = data.slice(-10); // Show last 10 readings
-
-  return (
-    <View style={styles.chartContainer}>
-      <Text style={styles.chartSubtitle}>Accuracy Over Time</Text>
-      <View style={styles.chartWrapper}>
-        {/* Y-Axis Labels */}
-        <View style={styles.yAxis}>
-          <Text style={styles.yAxisLabel}>100%</Text>
-          <Text style={styles.yAxisLabel}>75%</Text>
-          <Text style={styles.yAxisLabel}>50%</Text>
-          <Text style={styles.yAxisLabel}>25%</Text>
-          <Text style={styles.yAxisLabel}>0%</Text>
-        </View>
-
-        {/* Chart Bars */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chartScroll}
-        >
-          <View style={styles.chartBarsContainer}>
-            {chartData.map((item, index) => {
-              const height = (item.accuracy / 100) * maxHeight;
-              const isLast = index === chartData.length - 1;
-              const barColor =
-                item.accuracy >= 90
-                  ? '#10b981'
-                  : item.accuracy >= 75
-                  ? '#f59e0b'
-                  : '#ef4444';
-
-              return (
-                <View key={index} style={styles.chartBarWrapper}>
-                  <View style={styles.chartBarColumn}>
-                    {/* Accuracy Value */}
-                    <Text style={[styles.chartValue, { color: barColor }]}>
-                      {item.accuracy}%
-                    </Text>
-
-                    {/* Bar */}
-                    <View
-                      style={[
-                        styles.chartBar,
-                        { height, backgroundColor: barColor },
-                      ]}
-                    />
-
-                    {/* Connector Line */}
-                    {!isLast && (
-                      <View
-                        style={[
-                          styles.chartConnector,
-                          { backgroundColor: barColor },
-                        ]}
-                      />
-                    )}
-                  </View>
-
-                  {/* Date Label */}
-                  <Text style={styles.chartLabel}>{item.date}</Text>
-                </View>
-              );
-            })}
+      {/* Accuracy */}
+      <DetailModal visible={modal === 'accuracy'} title="Katumpakan" emoji="🎯" onClose={() => setModal(null)}>
+        <View style={S.modalBody}>
+          <Text style={S.modalFormula}>Paano kinukuwenta ang Katumpakan?</Text>
+          <View style={S.formulaBox}>
+            <Text style={S.formulaText}>Katumpakan = (Tamang Salita ÷ Kabuuang Salita) × 100</Text>
           </View>
-        </ScrollView>
-      </View>
-    </View>
-  );
-};
+          <Text style={S.modalDesc}>
+            Halimbawa: kung may 90 tamang salita sa 100 na salita, ang katumpakan ay 90%.
+          </Text>
+          <View style={S.modalStatRow}>
+            <ModalStat label="Kasalukuyan" value={`${readingStats?.averageAccuracy ?? 0}%`} color={C.green} />
+            <ModalStat label="Pinakamataas" value={`${bestAcc}%`}                           color={C.teal} />
+          </View>
+          {progressData.length > 1 && (
+            <>
+              <Text style={S.modalSub}>Kasaysayan ng Katumpakan</Text>
+              <MiniBarChart data={progressData} valueKey="accuracy" color={C.green} />
+              <View style={[S.trendRow, { marginTop: 10 }]}>
+                <TrendPill label="" from={firstAcc} to={lastAcc} delta={accDelta} suffix="%" />
+              </View>
+            </>
+          )}
+          <View style={S.gradeGuide}>
+            <Text style={S.gradeGuideTitle}>Gabay sa Grado</Text>
+            {[
+              { range: '90–100%', label: 'Mahusay 🌟',            color: C.green  },
+              { range: '75–89%',  label: 'Magaling 👍',            color: C.yellow },
+              { range: '0–74%',   label: 'Kailangan ng Tulong 💪', color: C.red    },
+            ].map(g => (
+              <View key={g.range} style={[S.gradeRow, { borderLeftColor: g.color }]}>
+                <Text style={S.gradeRange}>{g.range}</Text>
+                <Text style={[S.gradeLabel, { color: g.color }]}>{g.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </DetailModal>
 
-/**
- * ==========================================================================
- * WPM CHART COMPONENT
- * ==========================================================================
- * Renders a bar chart showing words per minute progression
- * Features:
- * - Vertical bars scaled to max WPM
- * - Value labels on bars
- * - Gradient-like color scheme
- * @param data - Array of progress data points
- * ==========================================================================
- */
-const WPMChart = ({ data }: { data: ProgressData[] }) => {
-  const maxHeight = 100;
-  const chartData = data.slice(-10); // Show last 10 readings
-  const maxWPM = Math.max(...chartData.map(d => d.wpm), 100);
+      {/* WPM */}
+      <DetailModal visible={modal === 'wpm'} title="Bilis ng Pagbabasa (WPM)" emoji="⚡" onClose={() => setModal(null)}>
+        <View style={S.modalBody}>
+          <Text style={S.modalFormula}>Paano kinukuwenta ang WPM?</Text>
+          <View style={S.formulaBox}>
+            <Text style={S.formulaText}>WPM = Kabuuang Salita ÷ (Oras sa Minuto)</Text>
+          </View>
+          <Text style={S.modalDesc}>
+            Halimbawa: kung nabasa mo ang 120 salita sa loob ng 2 minuto, ang iyong WPM ay 60.
+          </Text>
+          <View style={S.modalStatRow}>
+            <ModalStat label="Average"      value={`${avgWpm}`}  color={C.orange} />
+            <ModalStat label="Pinakamataas" value={`${bestWpm}`} color={C.teal}   />
+          </View>
+          {progressData.length > 1 && (
+            <>
+              <Text style={S.modalSub}>Kasaysayan ng WPM</Text>
+              <MiniBarChart data={progressData} valueKey="wpm" color={C.orange} />
+              <View style={[S.trendRow, { marginTop: 10 }]}>
+                <TrendPill label="" from={firstWpm} to={lastWpm} delta={wpmDelta} suffix="" />
+              </View>
+            </>
+          )}
+          <View style={S.gradeGuide}>
+            <Text style={S.gradeGuideTitle}>Pamantayan para sa Grade 1–3</Text>
+            {[
+              { range: '60+ WPM',    label: 'Mabilis 🚀',     color: C.green  },
+              { range: '40–59 WPM',  label: 'Katamtaman 📖',  color: C.yellow },
+              { range: 'Wala sa 40', label: 'Baguhan 🌱',     color: C.red    },
+            ].map(g => (
+              <View key={g.range} style={[S.gradeRow, { borderLeftColor: g.color }]}>
+                <Text style={S.gradeRange}>{g.range}</Text>
+                <Text style={[S.gradeLabel, { color: g.color }]}>{g.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </DetailModal>
 
-  return (
-    <View style={styles.chartContainer}>
-      <Text style={styles.chartSubtitle}>Words Per Minute Over Time</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.wpmChartContainer}>
-          {chartData.map((item, index) => {
-            const height = (item.wpm / maxWPM) * maxHeight;
-            const barColor = `hsl(${160 + (item.wpm / maxWPM) * 40}, 70%, 50%)`;
+      {/* Miscue Types */}
+      <DetailModal visible={modal === 'miscues'} title="Mga Uri ng Pagkakamali" emoji="⚠️" onClose={() => setModal(null)}>
+        <View style={S.modalBody}>
+          <Text style={S.modalDesc}>
+            Ang <Text style={{ fontWeight: '700' }}>miscue</Text> ay isang pagkakamali sa pagbabasa. May apat na uri:
+          </Text>
+          {[
+            { type: 'Substitution', fil: 'Pagpapalit', desc: 'Binago ang salita — "pusa" → "aso"',      color: C.red    },
+            { type: 'Omission',     fil: 'Kaligtaan',  desc: 'Nalaktawan ang isang salita',              color: C.orange },
+            { type: 'Insertion',    fil: 'Pagsingit',  desc: 'Nagdagdag ng salitang hindi nasa teksto',  color: C.yellow },
+            { type: 'Repetition',   fil: 'Pag-uulit',  desc: 'Inulit ang isang salita o parirala',       color: C.teal   },
+          ].map(m => (
+            <View key={m.type} style={[S.miscueTypeCard, { borderLeftColor: m.color }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <Text style={[S.miscueTypeName, { color: m.color }]}>{m.fil}</Text>
+                <Text style={S.miscueTypeEng}> ({m.type})</Text>
+              </View>
+              <Text style={S.miscueTypeDesc}>{m.desc}</Text>
+              {readingStats?.topMiscueType.toLowerCase() === m.type.toLowerCase() && (
+                <View style={[S.topBadge, { backgroundColor: m.color }]}>
+                  <Text style={S.topBadgeText}>Pinakamadalas mo!</Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+      </DetailModal>
 
+      {/* Passage Performance */}
+      <DetailModal visible={modal === 'passages'} title="Mga Pagtatangka sa Talata" emoji="📖" onClose={() => setModal(null)}>
+        <View style={S.modalBody}>
+          <Text style={S.modalDesc}>
+            Narito ang iyong performance sa bawat talata na iyong binasa.
+          </Text>
+          {(readingStats?.passagePerformance ?? []).length === 0 && (
+            <Text style={{ color: C.slate, textAlign: 'center', marginTop: 16 }}>Wala pang data.</Text>
+          )}
+          {(readingStats?.passagePerformance ?? []).map((p, i) => {
+            const col = p.accuracy >= 90 ? C.green : p.accuracy >= 75 ? C.yellow : C.red;
             return (
-              <View key={index} style={styles.wpmBarWrapper}>
-                <Text style={styles.wpmValue}>{item.wpm}</Text>
-                <View
-                  style={[
-                    styles.wpmBar,
-                    { height, backgroundColor: '#10b981' },
-                  ]}
-                />
-                <Text style={styles.wpmLabel}>{item.date}</Text>
+              <View key={i} style={S.passageRow}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={S.passageTitle} numberOfLines={1}>{p.title}</Text>
+                  <Text style={[S.passageAcc, { color: col }]}>{p.accuracy.toFixed(1)}%</Text>
+                </View>
+                <View style={S.passageBarBg}>
+                  <View style={[S.passageBar, { width: `${p.accuracy}%`, backgroundColor: col }]} />
+                </View>
+                <Text style={S.passageAttempts}>{p.attempts} pagtatangka</Text>
               </View>
             );
           })}
         </View>
-      </ScrollView>
-    </View>
+      </DetailModal>
+
+      {/* Common Words */}
+      <DetailModal visible={modal === 'words'} title="Mga Salitang May Pagkakamali" emoji="🔤" onClose={() => setModal(null)}>
+        <View style={S.modalBody}>
+          <Text style={S.modalDesc}>
+            Ito ang mga salitang madalas mong mali. Subukan mong sanayin ang mga ito!
+          </Text>
+          {(readingStats?.mostCommonMiscueWords ?? []).map((w, i) => {
+            const maxCount = readingStats?.mostCommonMiscueWords[0]?.count ?? 1;
+            return (
+              <View key={i} style={S.wordDetailRow}>
+                <View style={[S.wordRank, { backgroundColor: i < 3 ? C.red : C.greenLight }]}>
+                  <Text style={[S.wordRankText, { color: i < 3 ? C.white : C.greenDeep }]}>#{i + 1}</Text>
+                </View>
+                <Text style={S.wordDetailWord}>"{w.word}"</Text>
+                <View style={S.wordDetailBarBg}>
+                  <View
+                    style={[
+                      S.wordDetailBar,
+                      { width: `${(w.count / maxCount) * 100}%`, backgroundColor: i < 3 ? C.red : C.orange },
+                    ]}
+                  />
+                </View>
+                <Text style={S.wordDetailCount}>{w.count}×</Text>
+              </View>
+            );
+          })}
+        </View>
+      </DetailModal>
+
+      <LogoutModal visible={logoutVisible} onCancel={() => setLogoutVisible(false)} onConfirm={async () => { setLogoutVisible(false); await handleLogout(); }} />
+    </SafeAreaView>
   );
-};
-/**
- * ==========================================================================
- * PERFORMANCE SUMMARY COMPONENT
- * ==========================================================================
- * Displays aggregate statistics and trend analysis
- * Features:
- * - Best accuracy, average WPM, total readings
- * - Progress trend indicator with emoji
- * - First vs last comparison
- * @param data - Array of progress data points
- * ==========================================================================
- */
-const PerformanceSummary = ({ data }: { data: ProgressData[] }) => {
-  // Safety checks for empty data
-  if (data.length === 0) {
-    return (
-      <View style={styles.summaryContainer}>
-        <Text style={styles.summaryTitle}>Performance Summary</Text>
-        <Text style={styles.noDataText}>No reading data available</Text>
-      </View>
-    );
-  }
+}
 
-  // Find best and worst accuracy
-  const bestAccuracy = Math.max(...data.map(d => d.accuracy));
-  const worstAccuracy = Math.min(...data.map(d => d.accuracy));
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const S = StyleSheet.create({
+  bg:           { flex: 1, backgroundColor: C.bg },
+  loadingBg:    { flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
+  loadingCard:  { backgroundColor: C.white, borderRadius: 20, padding: 32, alignItems: 'center', width: SCREEN_WIDTH * 0.8 },
+  loadingEmoji: { fontSize: 48, marginBottom: 12 },
+  loadingTitle: { fontSize: 18, fontWeight: '700', color: C.greenDeep, marginBottom: 4 },
+  errorText:    { fontSize: 15, color: C.red, textAlign: 'center', marginVertical: 12 },
+  retryBtn:     { backgroundColor: C.green, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 24, marginTop: 8 },
+  retryText:    { color: C.white, fontWeight: '700', fontSize: 15 },
 
-  // Calculate average WPM with safety check
-  const totalWPM = data.reduce((sum, d) => sum + d.wpm, 0);
-  const avgWPM = Math.round(totalWPM / data.length);
-
-  // Find best and average WPM
-  const bestWPM = Math.max(...data.map(d => d.wpm));
-
-  // Calculate WPM improvement
-  const firstWPM = data[0]?.wpm || 0;
-  const lastWPM = data[data.length - 1]?.wpm || 0;
-  const wpmImprovement = lastWPM - firstWPM;
-
-  // Accuracy trend calculation
-  const firstAccuracy = data[0]?.accuracy || 0;
-  const lastAccuracy = data[data.length - 1]?.accuracy || 0;
-  const accuracyImprovement = lastAccuracy - firstAccuracy;
-
-  // Determine overall trend (weighted: 70% accuracy, 30% WPM)
-  const accuracyTrendScore =
-    accuracyImprovement > 5 ? 1 : accuracyImprovement < -5 ? -1 : 0;
-  const wpmTrendScore = wpmImprovement > 10 ? 1 : wpmImprovement < -10 ? -1 : 0;
-  const overallTrendScore = accuracyTrendScore * 0.7 + wpmTrendScore * 0.3;
-
-  const isImproving = overallTrendScore > 0.2;
-  const isDecreasing = overallTrendScore < -0.2;
-
-  const totalReadings = data.length;
-
-  return (
-    <View style={styles.summaryContainer}>
-      <Text style={styles.summaryTitle}>Performance Summary</Text>
-
-      {/* Stats Grid */}
-      <View style={styles.summaryGrid}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>{bestAccuracy}%</Text>
-          <Text style={styles.summaryLabel}>Best Accuracy</Text>
-          {worstAccuracy > 0 && (
-            <Text style={styles.summarySubtext}>Lowest: {worstAccuracy}%</Text>
-          )}
-        </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>{avgWPM}</Text>
-          <Text style={styles.summaryLabel}>Avg WPM</Text>
-          {bestWPM > avgWPM && (
-            <Text style={styles.summarySubtext}>Best: {bestWPM}</Text>
-          )}
-        </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>{totalReadings}</Text>
-          <Text style={styles.summaryLabel}>Total Readings</Text>
-          {data.length >= 5 && (
-            <Text style={styles.summarySubtext}>
-              Last 7 days: {data.slice(-7).length}
-            </Text>
-          )}
-        </View>
-      </View>
-
-      {/* Progress Trend - More Detailed */}
-      {data.length >= 2 && (
-        <View style={styles.trendContainer}>
-          <Text style={styles.trendTitle}>Progress Analysis</Text>
-
-          <View style={styles.trendRow}>
-            <Text style={styles.trendLabel}>Accuracy Trend:</Text>
-            <View style={styles.trendValueContainer}>
-              <Text style={styles.trendValue}>
-                {firstAccuracy}% → {lastAccuracy}%
-                {accuracyImprovement !== 0 && (
-                  <Text
-                    style={
-                      accuracyImprovement > 0
-                        ? styles.positiveTrend
-                        : styles.negativeTrend
-                    }
-                  >
-                    {accuracyImprovement > 0 ? ' ↑' : ' ↓'}{' '}
-                    {Math.abs(accuracyImprovement).toFixed(1)}%
-                  </Text>
-                )}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.trendRow}>
-            <Text style={styles.trendLabel}>WPM Trend:</Text>
-            <View style={styles.trendValueContainer}>
-              <Text style={styles.trendValue}>
-                {firstWPM} → {lastWPM}
-                {wpmImprovement !== 0 && (
-                  <Text
-                    style={
-                      wpmImprovement > 0
-                        ? styles.positiveTrend
-                        : styles.negativeTrend
-                    }
-                  >
-                    {wpmImprovement > 0 ? ' ↑' : ' ↓'}{' '}
-                    {Math.abs(wpmImprovement)}
-                  </Text>
-                )}
-              </Text>
-            </View>
-          </View>
-
-          {/* Overall Trend Indicator */}
-          <View style={styles.overallTrendContainer}>
-            <Text style={styles.overallTrendLabel}>Overall Progress:</Text>
-            <View style={styles.trendIndicator}>
-              {isImproving ? (
-                <>
-                  <Text style={styles.trendEmoji}>📈</Text>
-                  <Text style={styles.trendUp}>Significant Improvement</Text>
-                </>
-              ) : isDecreasing ? (
-                <>
-                  <Text style={styles.trendEmoji}>📉</Text>
-                  <Text style={styles.trendDown}>Needs Attention</Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.trendEmoji}>➡️</Text>
-                  <Text style={styles.trendNeutral}>Steady Progress</Text>
-                </>
-              )}
-            </View>
-          </View>
-        </View>
-      )}
-    </View>
-  );
-};
-
-// ============================================================================
-// STYLES
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#f8fafc',
+  heroCard: {
+    backgroundColor: C.white, marginHorizontal: 16, marginTop: 12,
+    borderRadius: 24, alignItems: 'center', paddingVertical: 28, paddingHorizontal: 20,
+    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 6,
+    borderTopWidth: 5, borderTopColor: C.green,
   },
-  innerContainer: {
-    padding: 10
+  heroAvatarWrap: { position: 'relative', marginBottom: 14 },
+  heroAvatar: { width: 96, height: 96, borderRadius: 48, borderWidth: 4, borderColor: C.green },
+  heroBadge: {
+    position: 'absolute', bottom: -6, left: '50%', transform: [{ translateX: -44 }],
+    backgroundColor: C.greenDark, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3,
+    minWidth: 88, alignItems: 'center',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#64748b',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#ef4444',
-    textAlign: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 32,
-  },
-  retryButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  header: {
-    position: 'relative',
-    zIndex: 100,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#e2e8f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 3,
-    borderColor: '#3b82f6',
-  },
-  profileImage: {
-    width: 94,
-    height: 94,
-    borderRadius: 47,
-  },
-  studentName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  studentRole: {
-    fontSize: 16,
-    color: '#64748b',
-  },
+  heroBadgeText: { color: C.white, fontSize: 11, fontWeight: '700' },
+  heroName: { fontSize: 22, fontWeight: '800', color: C.ink, marginTop: 8 },
+  heroSub:  { fontSize: 13, color: C.slate, marginTop: 4 },
+
+  ringContainer: { alignItems: 'center', marginTop: 20 },
+  ringOuter: { width: 120, height: 120, borderRadius: 60, borderWidth: 8, justifyContent: 'center', alignItems: 'center' },
+  ringInner: { width: 96, height: 96, borderRadius: 48, borderWidth: 5, justifyContent: 'center', alignItems: 'center' },
+  ringValue: { fontSize: 22, fontWeight: '800' },
+  ringUnit:  { fontSize: 10, color: C.slate },
+  ringLabel: { marginTop: 8, fontSize: 14, fontWeight: '700' },
+
   section: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: C.white, marginHorizontal: 16, marginTop: 14,
+    borderRadius: 20, padding: 18,
+    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 16,
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  infoItem: {
-    width: '48%',
-    marginBottom: 16,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  statCard: {
-    backgroundColor: '#f1f5f9',
-    padding: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginHorizontal: 2,
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  miscueCard: {
-    backgroundColor: '#fef2f2',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
-  },
-  miscueTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#dc2626',
-    marginBottom: 8,
-  },
-  miscuePassage: {
-    fontSize: 14,
-    color: '#1e293b',
-    marginBottom: 8,
-  },
-  miscueStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  miscueStat: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  miscueStatValue: {
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  wordList: {
-    marginTop: 8,
-  },
-  wordItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#fecaca',
-  },
-  wordText: {
-    fontSize: 14,
-    color: '#1e293b',
-    fontStyle: 'italic',
-  },
-  wordCount: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  chartContainer: {
-    marginBottom: 24,
-  },
-  chartSubtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 12,
-  },
-  chartWrapper: {
-    flexDirection: 'row',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    minHeight: 160,
-  },
-  yAxis: {
-    justifyContent: 'space-between',
-    paddingRight: 8,
-    height: 120,
-  },
-  yAxisLabel: {
-    fontSize: 10,
-    color: '#94a3b8',
-    fontWeight: '500',
-  },
-  chartScroll: {
-    flex: 1,
-  },
-  chartBarsContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 120,
-    paddingHorizontal: 4,
-  },
-  chartBarWrapper: {
-    alignItems: 'center',
-    marginHorizontal: 6,
-  },
-  chartBarColumn: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  chartValue: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  chartBar: {
-    width: 16,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    minHeight: 4,
-  },
-  chartConnector: {
-    position: 'absolute',
-    top: '50%',
-    right: -6,
-    width: 12,
-    height: 2,
-    opacity: 0.4,
-  },
-  chartLabel: {
-    fontSize: 10,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  wpmChartContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: 100,
-    paddingHorizontal: 10,
-    marginTop: 10,
-  },
+  sectionTitle:     { fontSize: 16, fontWeight: '800', color: C.ink, marginBottom: 14 },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  seeMore:          { fontSize: 13, color: C.green, fontWeight: '600' },
 
-  wpmBarContainer: {
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 4,
-  },
+  infoRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
+  infoPill:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.greenPale, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, flex: 1 },
+  infoPillIcon:  { fontSize: 18 },
+  infoPillLabel: { fontSize: 11, color: C.slate },
+  infoPillValue: { fontSize: 14, fontWeight: '700', color: C.ink },
 
-  wpmBar: {
-    width: 20,
-    backgroundColor: '#10b981',
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    marginBottom: 4,
+  tilesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  statTile: {
+    width: (SCREEN_WIDTH - 68) / 2, backgroundColor: C.greenPale,
+    borderRadius: 18, padding: 16, alignItems: 'center', borderTopWidth: 4,
   },
+  statTileEmoji: { fontSize: 26, marginBottom: 6 },
+  statTileValue: { fontSize: 22, fontWeight: '800', marginBottom: 2 },
+  statTileLabel: { fontSize: 12, color: C.inkLight, textAlign: 'center' },
+  statTileTap:   { fontSize: 10, color: C.slate, marginTop: 6 },
 
-  wpmBarValue: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#065f46',
-    marginBottom: 2,
-  },
+  trendRow:       { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  trendPill:      { flex: 1, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', backgroundColor: C.white },
+  trendPillLabel: { fontSize: 11, color: C.slate, marginBottom: 2 },
+  trendPillVal:   { fontSize: 14, fontWeight: '700' },
+  trendPillDelta: { fontSize: 11, fontWeight: '600', marginTop: 2 },
 
-  wpmBarLabel: {
-    fontSize: 10,
-    color: '#64748b',
-    textAlign: 'center',
-  },
+  miniChart:   { flexDirection: 'row', alignItems: 'flex-end', gap: 4, marginTop: 6 },
+  miniBarCol:  { alignItems: 'center', flex: 1 },
+  miniBarVal:  { fontSize: 9, color: C.inkLight, marginBottom: 2 },
+  miniBar:     { width: '100%', borderTopLeftRadius: 4, borderTopRightRadius: 4, minHeight: 4 },
+  miniBarDate: { fontSize: 8, color: C.slate, marginTop: 3 },
+  chartLabel:  { fontSize: 12, color: C.inkLight, fontWeight: '600', marginBottom: 6 },
 
-  statsSummaryContainer: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 10,
-  },
+  wordChips:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  wordChip:      { flexDirection: 'row', alignItems: 'center', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, gap: 4 },
+  wordChipText:  { fontSize: 13, fontWeight: '700', color: C.ink },
+  wordChipCount: { fontSize: 11, color: C.ink, opacity: 0.7 },
 
-  statsSummaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 16,
+  refreshBtn: {
+    backgroundColor: C.green, marginHorizontal: 16, marginTop: 16, paddingVertical: 16, borderRadius: 20, alignItems: 'center',
+    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 5,
   },
+  refreshText: { color: C.white, fontSize: 16, fontWeight: '800' },
 
-  statBox: {
-    alignItems: 'center',
-    flex: 1,
-    padding: 12,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(27,46,35,0.45)', justifyContent: 'flex-end' },
+  modalSheet: {
+    backgroundColor: C.white, borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40, maxHeight: '85%',
   },
+  modalHandle:    { width: 40, height: 5, borderRadius: 3, backgroundColor: C.mint, alignSelf: 'center', marginBottom: 14 },
+  modalHeader:    { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  modalEmoji:     { fontSize: 28, marginRight: 10 },
+  modalTitle:     { flex: 1, fontSize: 20, fontWeight: '800', color: C.ink },
+  modalClose:     { padding: 6, backgroundColor: C.greenPale, borderRadius: 20 },
+  modalCloseText: { fontSize: 14, color: C.inkLight, fontWeight: '700' },
+  modalBody:      { paddingBottom: 20 },
+  modalFormula:   { fontSize: 15, fontWeight: '700', color: C.ink, marginBottom: 8 },
+  formulaBox:     { backgroundColor: C.greenPale, borderRadius: 12, padding: 14, marginBottom: 10, borderLeftWidth: 4, borderLeftColor: C.green },
+  formulaText:    { fontSize: 14, color: C.inkLight, fontStyle: 'italic' },
+  modalDesc:      { fontSize: 14, color: C.inkLight, lineHeight: 21, marginBottom: 16 },
+  modalSub:       { fontSize: 14, fontWeight: '700', color: C.ink, marginTop: 16, marginBottom: 8 },
+  modalStatRow:   { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  modalStat:      { flex: 1, borderRadius: 14, borderWidth: 2, padding: 14, alignItems: 'center', backgroundColor: C.greenPale },
+  modalStatVal:   { fontSize: 24, fontWeight: '800', marginBottom: 2 },
+  modalStatLabel: { fontSize: 12, color: C.slate },
 
-  statBoxNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: 4,
-  },
+  gradeGuide:      { backgroundColor: C.greenPale, borderRadius: 14, padding: 14, marginTop: 16 },
+  gradeGuideTitle: { fontSize: 13, fontWeight: '700', color: C.ink, marginBottom: 10 },
+  gradeRow:        { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, paddingLeft: 12, borderLeftWidth: 4, marginBottom: 6, backgroundColor: C.white, borderRadius: 8 },
+  gradeRange:      { flex: 1, fontSize: 13, color: C.ink },
+  gradeLabel:      { fontSize: 13, fontWeight: '700' },
 
-  statBoxLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
-  },
+  miscueTypeCard:  { borderLeftWidth: 5, paddingLeft: 14, paddingVertical: 12, marginBottom: 12, backgroundColor: C.greenPale, borderRadius: 12 },
+  miscueTypeName:  { fontSize: 16, fontWeight: '800' },
+  miscueTypeEng:   { fontSize: 13, color: C.slate },
+  miscueTypeDesc:  { fontSize: 13, color: C.inkLight },
+  topBadge:        { alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 },
+  topBadgeText:    { color: C.white, fontSize: 11, fontWeight: '700' },
 
-  trendContainer: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 12,
-  },
+  passageRow:      { marginBottom: 16 },
+  passageTitle:    { fontSize: 14, fontWeight: '700', color: C.ink, flex: 1, marginRight: 8 },
+  passageAcc:      { fontSize: 14, fontWeight: '800' },
+  passageBarBg:    { height: 10, backgroundColor: C.greenLight, borderRadius: 5, overflow: 'hidden', marginBottom: 4 },
+  passageBar:      { height: 10, borderRadius: 5 },
+  passageAttempts: { fontSize: 11, color: C.slate },
 
-  trendTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 8,
-  },
-
-  trendIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  trendText: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-
-  trendArrow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  trendUp: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  trendUpText: {
-    fontSize: 14,
-    color: '#10b981',
-    fontWeight: '600',
-  },
-
-  trendDown: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  trendDownText: {
-    fontSize: 14,
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-
-  trendNeutral: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  trendNeutralText: {
-    fontSize: 14,
-    color: '#f59e0b',
-    fontWeight: '600',
-  },
-  // WPM Chart styles
-  wpmBarWrapper: {
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  wpmValue: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#065f46',
-    marginBottom: 4,
-  },
-  wpmLabel: {
-    fontSize: 10,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  // Performance Summary styles
-  summaryContainer: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 16,
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  summaryCard: {
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  summaryNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: 4,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  trendContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  trendEmoji: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  // Refresh Button
-  refreshButton: {
-    backgroundColor: '#3b82f6',
-    marginHorizontal: 16,
-    marginVertical: 24,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  refreshButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-
-  noDataText: {
-    textAlign: 'center',
-    color: '#94a3b8',
-    fontStyle: 'italic',
-    marginTop: 16,
-  },
-
-  summarySubtext: {
-    fontSize: 10,
-    color: '#64748b',
-    marginTop: 2,
-  },
-
-  trendRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-
-  trendLabel: {
-    fontSize: 14,
-    color: '#475569',
-    fontWeight: '500',
-  },
-
-  trendValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  trendValue: {
-    fontSize: 14,
-    color: '#1e293b',
-  },
-
-  positiveTrend: {
-    color: '#10b981',
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-
-  negativeTrend: {
-    color: '#ef4444',
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-
-  overallTrendContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-  },
-
-  overallTrendLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 8,
-  },
+  wordDetailRow:   { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 10 },
+  wordRank:        { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  wordRankText:    { fontSize: 12, fontWeight: '800' },
+  wordDetailWord:  { fontSize: 14, fontWeight: '700', color: C.ink, width: 90 },
+  wordDetailBarBg: { flex: 1, height: 10, backgroundColor: C.greenLight, borderRadius: 5, overflow: 'hidden' },
+  wordDetailBar:   { height: 10, borderRadius: 5 },
+  wordDetailCount: { fontSize: 13, fontWeight: '700', color: C.slate, width: 28, textAlign: 'right' },
 });
