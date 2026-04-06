@@ -93,6 +93,23 @@ export default function ReadingActivityScreenPage() {
     }
   }, [scrollViewHeight, contentHeight]);
 
+  useEffect(() => {
+    // This return function acts as "componentWillUnmount"
+    return () => {
+      // Finalize Alphabet Session if one was started
+      if (type === 'alphabet' && alphabetSessionIdRef.current) {
+        MiscueReportController.finalizeAlphabetSession(
+          alphabetSessionIdRef.current
+        ).catch((err) => console.error('Failed to finalize alphabet session', err));
+      }
+      // Finalize Word Session if one was started
+      if (type === 'word' && wordSessionIdRef.current) {
+        MiscueReportController.finalizeWordSession(
+          wordSessionIdRef.current
+        ).catch((err) => console.error('Failed to finalize word session', err));
+      }
+    };
+  }, [type]); // We only need type since the refs persist automatically
   // Hooks
   const {
     isRecording,
@@ -105,9 +122,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI,
-    sttErrorVisible, sttErrorMessage, clearSttError } =
-    useSpeechToText();
+  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
 
   // Access Global Music Context
   const { playMusic, pauseMusic } = useGlobalMusic();
@@ -283,14 +298,16 @@ export default function ReadingActivityScreenPage() {
         throw new Error('No audio file provided');
       }
       // const transcription = await processAudioWithGoogle(audioFile);
-      const transcription = await processAudioWithAssemblyAI(audioFile);
-      setSpokenText(transcription);
-      console.log('THIS IS THE SPOKEN: ' + transcription);
+      // const transcription = await processAudioWithAssemblyAI(audioFile);
+      const transcription = await processAudioWithDeepgram(audioFile);
+      setSpokenText(transcription.fulltext);
+      console.log('THIS IS THE SPOKEN: ' + transcription.fulltext);
+      console.log('THIS IS THE UTTERANCES: ' + transcription.utterances);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      await analyzeReading(transcription, duration);
+      await analyzeReading(transcription.fulltext, duration);
       setIsReadingCompleted(true);
     } catch (error) {
       // Fallback on error: 0% accuracy instead of 100% simulated response
@@ -446,6 +463,8 @@ export default function ReadingActivityScreenPage() {
 
     checkIfAlreadyCompleted();
   }, [type, readingMaterial, getTargetText]);
+
+
 
   /**
    * Analyzes user transcription depending on reading type (alphabet, word, passage).
@@ -773,130 +792,134 @@ export default function ReadingActivityScreenPage() {
         imageStyle={!isReadingCompleted ? readingStyles.backgroundImage : readingStyles.backgroundResultImage}
         resizeMode='cover'
       >
-        <ScrollView
-          ref={resultScrollViewRef}
-          contentContainerStyle={readingStyles.screenScrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          onScroll={handleParentScroll}
-          onContentSizeChange={handleParentContentSizeChange}
-          onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
-          scrollEventThrottle={16}
-        >
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            ref={resultScrollViewRef}
+            contentContainerStyle={readingStyles.screenScrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onScroll={handleParentScroll}
+            onContentSizeChange={handleParentContentSizeChange}
+            onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
+            scrollEventThrottle={16}
+          >
 
-          <View style={readingStyles.insideContainer}>
+            <View style={readingStyles.insideContainer}>
 
-            {/* Header */}
-            <ReadingHeader
-              onBack={handleBackStep}
-              onMenuToggle={toggleMenu}
-              onLogout={handleLogout}
-              menuVisible={menuVisible}
-            />
+              {/* Header */}
+              <ReadingHeader
+                onBack={handleBackStep}
+                onMenuToggle={toggleMenu}
+                onLogout={handleLogout}
+                menuVisible={menuVisible}
+              />
 
-            {/* Screen Title */}
-            {/* {!isReadingCompleted ? (<Svg height={60} width={400}>
-            <SvgText
-              x={190}                 // center X
-              y={35}                  // baseline Y
-              fontSize={40}
-              fontFamily="DynaPuff-Bold"
-              textAnchor="middle"     // center align
-              fill="none"          // inside color
-              stroke="#D7E9FF"        // outline color
-              strokeWidth={8}         // outline thickness
-              strokeLinejoin='round'
-            >
-              {type === 'alphabet'
-                ? 'Alphabet Reading'
-                : type === 'word'
-                  ? 'Word Reading'
-                  : 'Passage Reading'}
-            </SvgText>
-            <SvgText
-              x={190}
-              y={35}
-              fontSize={40}
-              fontFamily="DynaPuff-Bold"
-              textAnchor="middle"
-              fill="#3B7FC9"
-            >
-              {type === 'alphabet'
-                ? 'Alphabet Reading'
-                : type === 'word'
-                  ? 'Word Reading'
-                  : 'Passage Reading'}
-            </SvgText>
-          </Svg>): null} */}
+              {/* Screen Title */}
+              {/* {!isReadingCompleted ? (<Svg height={60} width={400}>
+              <SvgText
+                x={190}                 // center X
+                y={35}                  // baseline Y
+                fontSize={40}
+                fontFamily="DynaPuff-Bold"
+                textAnchor="middle"     // center align
+                fill="none"          // inside color
+                stroke="#D7E9FF"        // outline color
+                strokeWidth={8}         // outline thickness
+                strokeLinejoin='round'
+              >
+                {type === 'alphabet'
+                  ? 'Alphabet Reading'
+                  : type === 'word'
+                    ? 'Word Reading'
+                    : 'Passage Reading'}
+              </SvgText>
+              <SvgText
+                x={190}
+                y={35}
+                fontSize={40}
+                fontFamily="DynaPuff-Bold"
+                textAnchor="middle"
+                fill="#3B7FC9"
+              >
+                {type === 'alphabet'
+                  ? 'Alphabet Reading'
+                  : type === 'word'
+                    ? 'Word Reading'
+                    : 'Passage Reading'}
+              </SvgText>
+            </Svg>): null} */}
 
-            {/* Display Component */}
-            <PassageDisplay
-              material={readingMaterial}
-              type={type}
-              spokenText={spokenText}
-              isRecording={isRecording}
-              miscues={miscues}
-              accuracy={numericAccuracy}
-              accuracyString={accuracyString}
-              isReadingCompleted={isReadingCompleted}
-              isTextCorrect={isCorrectAttempt}
-              feedback={feedback}
-              onTryAgain={handleTryAgain}
-            />
-
-            {/* Transcribing Loading Indicator Modal */}
-            <Modal transparent={true} visible={isLoading} animationType="fade">
-              <View style={readingStyles.loadingModalOverlay}>
-                <View style={readingStyles.loadingModalContent}>
-                  <ActivityIndicator size={48} color="#3B7FC9" />
-                  <Text style={readingStyles.loadingModalTitle}>Transcribing Audio...</Text>
-                  <Text style={readingStyles.loadingModalSubtitle}>This will only take a moment.</Text>
-                </View>
-              </View>
-            </Modal>
-
-            {/* Feedback — Only show for passage (alphabet + word show result inside PassageDisplay) */}
-            {!isLoading && !isRecording && isReadingCompleted && type === 'passage' && (
-              <FeedbackResult
-                targetText={targetText}
-                spokenText={spokenText}
-                miscues={miscues}
-                onTryAgain={handleTryAgain}
+              {/* Display Component */}
+              <PassageDisplay
+                material={readingMaterial}
                 type={type}
-                accuracy={accuracyString}
-                feedback={feedback}
-                isTextCorrect={isCorrectAttempt}
-              />
-            )}
-
-            {/* Recording Controls - Only show when not completed */}
-            {!isReadingCompleted && (
-              <RecordingControls
+                spokenText={spokenText}
                 isRecording={isRecording}
-                isLoading={isLoading}
-                hasPermission={hasPermission}
-                recordTime={formatTime(recordTime)}
-                onRecordToggle={handleRecordToggle}
+                miscues={miscues}
+                accuracy={numericAccuracy}
+                accuracyString={accuracyString}
+                isReadingCompleted={isReadingCompleted}
+                isTextCorrect={isCorrectAttempt}
+                feedback={feedback}
+                onTryAgain={handleTryAgain}
               />
-            )}
 
-            {/* Feedback Modal */}
-            {/* <FeedbackModal
+              {/* Transcribing Loading Indicator Modal */}
+              <Modal transparent={true} visible={isLoading} animationType="fade">
+                <View style={readingStyles.loadingModalOverlay}>
+                  <View style={readingStyles.loadingModalContent}>
+                    <ActivityIndicator size={48} color="#3B7FC9" />
+                    <Text style={readingStyles.loadingModalTitle}>Transcribing Audio...</Text>
+                    <Text style={readingStyles.loadingModalSubtitle}>This will only take a moment.</Text>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Feedback — Only show for passage (alphabet + word show result inside PassageDisplay) */}
+              {!isLoading && !isRecording && isReadingCompleted && type === 'passage' && (
+                <FeedbackResult
+                  targetText={targetText}
+                  spokenText={spokenText}
+                  miscues={miscues}
+                  onTryAgain={handleTryAgain}
+                  type={type}
+                  accuracy={accuracyString}
+                  feedback={feedback}
+                  isTextCorrect={isCorrectAttempt}
+                />
+              )}
+              {/* Feedback Modal */}
+              {/* <FeedbackModal
             visible={showFeedbackModal}
             type={feedbackModalType}
             onClose={handleFeedbackModalClose}
             autoClose={true}
           /> */}
+
+            </View>
+          </ScrollView>
+          {showScrollHint && !isAtBottom && (
+            <TouchableOpacity
+              style={readingStyles.scrollHintOverlay}
+              onPress={handleScrollHintPress}
+              activeOpacity={0.85}
+            >
+              <Text style={readingStyles.scrollHintText}>▼ See more </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Recording Controls - Only show when not completed */}
+        {!isReadingCompleted && (
+          <View style={{ paddingBottom: 20 }}>
+            <RecordingControls
+              isRecording={isRecording}
+              isLoading={isLoading}
+              hasPermission={hasPermission}
+              recordTime={formatTime(recordTime)}
+              onRecordToggle={handleRecordToggle}
+            />
           </View>
-        </ScrollView>
-        {showScrollHint && !isAtBottom && (
-          <TouchableOpacity
-            style={readingStyles.scrollHintOverlay}
-            onPress={handleScrollHintPress}
-            activeOpacity={0.85}
-          >
-            <Text style={readingStyles.scrollHintText}>▼ See more </Text>
-          </TouchableOpacity>
         )}
 
         {/* ── STT Error Modal ──────────────────────────────────────────────── */}

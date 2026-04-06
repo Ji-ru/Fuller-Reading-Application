@@ -26,6 +26,7 @@ import UsersRegisteredChart from '../../Components/Admin/UsersRegisteredChart';
 import ClassStatusChart from '../../Components/Admin/ClassStatusChart';
 import ClassesPerGradeChart from '../../Components/Admin/ClassesPerGradeChart';
 import ReadingLevelDistributionChart from '../../Components/Admin/ReadingLevelDistributionChart';
+import { sw, sh, sf } from '../../Utils/responsive';
 
 const COLORS = {
   textPrimary: '#1E1E1E',
@@ -202,68 +203,68 @@ export default function AdminDashboard() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 28,
+    fontSize: sf(28),
     fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   sectionSubtitle: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Regular',
     color: COLORS.textSecondary,
-    marginBottom: 20,
+    marginBottom: sh(20),
   },
   filterItem: {
-    marginBottom: 20,
+    marginBottom: sh(20),
     position: 'relative',
     zIndex: 10,
   },
   filterLabel: {
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Medium',
     color: COLORS.textSecondary,
-    marginBottom: 6,
+    marginBottom: sh(6),
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#F5F5F5',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(12),
+    borderRadius: sw(8),
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   filterButtonText: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Regular',
     color: COLORS.textPrimary,
   },
   dropdownArrow: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#7F8C8D',
   },
   filterDropdownMenu: {
     position: 'absolute',
-    top: 70, // adjust based on button height
+    top: sh(70), // adjust based on button height
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: sw(8),
     borderWidth: 1,
     borderColor: COLORS.border,
-    maxHeight: 200,
+    maxHeight: sw(200),
     zIndex: 1000,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: sw(4),
     elevation: 3,
   },
   filterDropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: sh(12),
+    paddingHorizontal: sw(14),
     borderBottomWidth: 0.5,
     borderBottomColor: '#F0F0F0',
   },
@@ -271,7 +272,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F8F7',
   },
   filterDropdownItemText: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Regular',
     color: '#555',
   },

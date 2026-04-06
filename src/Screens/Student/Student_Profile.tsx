@@ -27,6 +27,7 @@ import StudentTopMiscuePassageAndWords from '../../Components/Faculty/StudentVie
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
 import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
+import { sw, sh, sf } from '../../Utils/responsive';
 
 /**
  * ==========================================================================
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     flexGrow: 1,
-    paddingBottom: 24,
+    paddingBottom: sh(24),
   },
   loadingContainer: {
     flex: 1,
@@ -463,26 +464,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
+    marginTop: sh(12),
+    fontSize: sf(16),
     color: '#64748b',
   },
   errorText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#ef4444',
     textAlign: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 32,
+    marginBottom: sh(16),
+    paddingHorizontal: sw(32),
   },
   retryButton: {
     backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: sw(24),
+    paddingVertical: sh(12),
+    borderRadius: sw(8),
   },
   retryButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
   },
   header: {
@@ -492,57 +493,57 @@ const styles = StyleSheet.create({
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
+    padding: sw(16),
+    borderRadius: sw(12),
   },
   profileHeader: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: sh(24),
     backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
+    marginHorizontal: sw(16),
+    marginTop: sh(16),
+    borderRadius: sw(16),
     elevation: 4,
   },
   profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: sw(100),
+    height: sw(100),
+    borderRadius: sw(50),
     backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: sh(12),
     borderWidth: 3,
     borderColor: '#3b82f6',
   },
   profileImage: {
-    width: 94,
-    height: 94,
-    borderRadius: 47,
+    width: sw(94),
+    height: sw(94),
+    borderRadius: sw(47),
   },
   studentName: {
-    fontSize: 24,
+    fontSize: sf(24),
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   studentRole: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#64748b',
   },
   section: {
     backgroundColor: 'white',
-    marginHorizontal: 10,
-    marginTop: 16,
-    padding: 20,
-    borderRadius: 16,
+    marginHorizontal: sw(10),
+    marginTop: sh(16),
+    padding: sw(20),
+    borderRadius: sw(16),
     elevation: 4,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   infoGrid: {
     flexDirection: 'row',
@@ -551,66 +552,66 @@ const styles = StyleSheet.create({
   },
   infoItem: {
     width: '48%',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   infoLabel: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#64748b',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   infoValue: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
     color: '#1e293b',
   },
   statsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   statCard: {
     backgroundColor: '#f1f5f9',
-    padding: 10,
-    borderRadius: 12,
+    padding: sw(10),
+    borderRadius: sw(12),
     alignItems: 'center',
-    marginHorizontal: 2,
+    marginHorizontal: sw(2),
   },
   statNumber: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: 'bold',
     color: '#3b82f6',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#64748b',
     textAlign: 'center',
   },
   miscueCard: {
     backgroundColor: '#fef2f2',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 12,
+    padding: sw(16),
+    borderRadius: sw(12),
+    marginTop: sh(12),
     borderLeftWidth: 4,
     borderLeftColor: '#ef4444',
   },
   miscueTitle: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
     color: '#dc2626',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
   miscuePassage: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#1e293b',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
   miscueStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   miscueStat: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#64748b',
   },
   miscueStatValue: {
@@ -618,48 +619,48 @@ const styles = StyleSheet.create({
     color: '#1e293b',
   },
   wordList: {
-    marginTop: 8,
+    marginTop: sh(8),
   },
   wordItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: sh(6),
     borderBottomWidth: 1,
     borderBottomColor: '#fecaca',
   },
   wordText: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#1e293b',
     fontStyle: 'italic',
   },
   wordCount: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#64748b',
   },
   chartContainer: {
-    marginBottom: 24,
+    marginBottom: sh(24),
   },
   chartSubtitle: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
     color: '#475569',
-    marginBottom: 12,
+    marginBottom: sh(12),
   },
   chartWrapper: {
     flexDirection: 'row',
     backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    minHeight: 160,
+    borderRadius: sw(12),
+    padding: sw(16),
+    minHeight: sw(160),
   },
   yAxis: {
     justifyContent: 'space-between',
-    paddingRight: 8,
-    height: 120,
+    paddingRight: sw(8),
+    height: sw(120),
   },
   yAxisLabel: {
-    fontSize: 10,
+    fontSize: sf(10),
     color: '#94a3b8',
     fontWeight: '500',
   },
@@ -669,38 +670,38 @@ const styles = StyleSheet.create({
   chartBarsContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    height: 120,
-    paddingHorizontal: 4,
+    height: sw(120),
+    paddingHorizontal: sw(4),
   },
   chartBarWrapper: {
     alignItems: 'center',
-    marginHorizontal: 6,
+    marginHorizontal: sw(6),
   },
   chartBarColumn: {
     alignItems: 'center',
     position: 'relative',
   },
   chartValue: {
-    fontSize: 11,
+    fontSize: sf(11),
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   chartBar: {
-    width: 16,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    minHeight: 4,
+    width: sw(16),
+    borderTopLeftRadius: sw(8),
+    borderTopRightRadius: sw(8),
+    minHeight: sw(4),
   },
   chartConnector: {
     position: 'absolute',
     top: '50%',
-    right: -6,
-    width: 12,
-    height: 2,
+    right: sw(-6),
+    width: sw(12),
+    height: sw(2),
     opacity: 0.4,
   },
   chartLabel: {
-    fontSize: 10,
+    fontSize: sf(10),
     color: '#64748b',
     textAlign: 'center',
   },
@@ -708,90 +709,90 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'flex-end',
-    height: 100,
-    paddingHorizontal: 10,
-    marginTop: 10,
+    height: sw(100),
+    paddingHorizontal: sw(10),
+    marginTop: sh(10),
   },
 
   wpmBarContainer: {
     alignItems: 'center',
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: sw(4),
   },
 
   wpmBar: {
-    width: 20,
+    width: sw(20),
     backgroundColor: '#10b981',
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    marginBottom: 4,
+    borderTopLeftRadius: sw(4),
+    borderTopRightRadius: sw(4),
+    marginBottom: sh(4),
   },
 
   wpmBarValue: {
-    fontSize: 11,
+    fontSize: sf(11),
     fontWeight: '600',
     color: '#065f46',
-    marginBottom: 2,
+    marginBottom: sh(2),
   },
 
   wpmBarLabel: {
-    fontSize: 10,
+    fontSize: sf(10),
     color: '#64748b',
     textAlign: 'center',
   },
 
   statsSummaryContainer: {
     backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 10,
+    borderRadius: sw(12),
+    padding: sw(16),
+    marginTop: sh(10),
   },
 
   statsSummaryTitle: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
     color: '#475569',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
 
   statBox: {
     alignItems: 'center',
     flex: 1,
-    padding: 12,
+    padding: sw(12),
     backgroundColor: 'white',
-    borderRadius: 8,
-    marginHorizontal: 4,
+    borderRadius: sw(8),
+    marginHorizontal: sw(4),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: sw(1) },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: sw(2),
     elevation: 1,
   },
 
   statBoxNumber: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: 'bold',
     color: '#3b82f6',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
 
   statBoxLabel: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#64748b',
     textAlign: 'center',
   },
 
   trendContainer: {
     backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: sw(8),
+    padding: sw(12),
   },
 
   trendTitle: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontWeight: '600',
     color: '#475569',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
 
   trendIndicator: {
@@ -801,7 +802,7 @@ const styles = StyleSheet.create({
   },
 
   trendText: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#64748b',
   },
 
@@ -811,91 +812,91 @@ const styles = StyleSheet.create({
   },
 
   trendUp: {
-    fontSize: 20,
-    marginRight: 6,
+    fontSize: sf(20),
+    marginRight: sw(6),
   },
 
   trendUpText: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#10b981',
     fontWeight: '600',
   },
 
   trendDown: {
-    fontSize: 20,
-    marginRight: 6,
+    fontSize: sf(20),
+    marginRight: sw(6),
   },
 
   trendDownText: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#ef4444',
     fontWeight: '600',
   },
 
   trendNeutral: {
-    fontSize: 20,
-    marginRight: 6,
+    fontSize: sf(20),
+    marginRight: sw(6),
   },
 
   trendNeutralText: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#f59e0b',
     fontWeight: '600',
   },
   // WPM Chart styles
   wpmBarWrapper: {
     alignItems: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: sw(4),
   },
   wpmValue: {
-    fontSize: 11,
+    fontSize: sf(11),
     fontWeight: '600',
     color: '#065f46',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   wpmLabel: {
-    fontSize: 10,
+    fontSize: sf(10),
     color: '#64748b',
     textAlign: 'center',
   },
   // Performance Summary styles
   summaryContainer: {
     backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
+    borderRadius: sw(12),
+    padding: sw(16),
+    marginTop: sh(16),
   },
   summaryTitle: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
     color: '#475569',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   summaryGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   summaryCard: {
     backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
+    padding: sw(12),
+    borderRadius: sw(8),
     alignItems: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: sw(4),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: sw(1) },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: sw(2),
     elevation: 1,
   },
   summaryNumber: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: 'bold',
     color: '#3b82f6',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   summaryLabel: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#64748b',
     textAlign: 'center',
   },
@@ -905,27 +906,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   trendEmoji: {
-    fontSize: 20,
-    marginRight: 6,
+    fontSize: sf(20),
+    marginRight: sw(6),
   },
 
   // Refresh Button
   refreshButton: {
     backgroundColor: '#3b82f6',
-    marginHorizontal: 16,
-    marginVertical: 24,
-    paddingVertical: 16,
-    borderRadius: 12,
+    marginHorizontal: sw(16),
+    marginVertical: sh(24),
+    paddingVertical: sh(16),
+    borderRadius: sw(12),
     alignItems: 'center',
     shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: sw(8),
     elevation: 4,
   },
   refreshButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
   },
 
@@ -933,24 +934,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#94a3b8',
     fontStyle: 'italic',
-    marginTop: 16,
+    marginTop: sh(16),
   },
 
   summarySubtext: {
-    fontSize: 10,
+    fontSize: sf(10),
     color: '#64748b',
-    marginTop: 2,
+    marginTop: sh(2),
   },
 
   trendRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
 
   trendLabel: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#475569',
     fontWeight: '500',
   },
@@ -961,33 +962,33 @@ const styles = StyleSheet.create({
   },
 
   trendValue: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#1e293b',
   },
 
   positiveTrend: {
     color: '#10b981',
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: sw(4),
   },
 
   negativeTrend: {
     color: '#ef4444',
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: sw(4),
   },
 
   overallTrendContainer: {
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: sh(12),
+    paddingTop: sh(12),
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
   },
 
   overallTrendLabel: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontWeight: '600',
     color: '#475569',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
 });

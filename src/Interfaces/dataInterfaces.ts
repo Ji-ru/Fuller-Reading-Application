@@ -1,5 +1,5 @@
-import { Timestamp } from "@react-native-firebase/firestore";
-import { MiscueType } from "./miscue";
+import { Timestamp } from '@react-native-firebase/firestore';
+import { MiscueType } from './miscue';
 
 export interface MiscueReport {
   studentId: string;
@@ -8,13 +8,12 @@ export interface MiscueReport {
   insertion: string;
   repetition: string;
   timestamp: Date;
-};
+}
 /**
  * TYPES OF USER ROLES
  *  - used in base user information
  */
 export type UserRole = 'student' | 'faculty' | 'admin';
-
 
 /**
  * USER DOCUMENT INTERFACE
@@ -23,7 +22,7 @@ export type UserRole = 'student' | 'faculty' | 'admin';
 export interface UserDocument {
   // USER ID
   uid: string;
-  email: string;
+  email?: string;
   role: UserRole;
 
   // USER PROFILE INFORMATION
@@ -39,7 +38,11 @@ export interface UserDocument {
     gradeLevel: number;
     dateOfBirth?: string;
     classCode?: string;
-    reading_Level?: 'beginner' | 'intermediate' | 'advanced';
+    reading_Level?: 'beginner' | 'emerging' | 'intermediate' | 'advanced';
+    readingLevelUpdatedAt?: Timestamp;
+    parentConsent: {
+      confirmed: boolean;
+    };
   };
 
   // Faculty specific data
@@ -48,7 +51,7 @@ export interface UserDocument {
     assignedClassIds: string[];
   };
 
-  // Admin specific data 
+  // Admin specific data
   // adminData?: {
   //   permissions?: string[];
   //   isSuperAdmin?: boolean;
@@ -56,8 +59,8 @@ export interface UserDocument {
   // };
 
   // Creation and update from Firestore Timestamp
-  createdAt: any;
-  updatedAt?: any;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 /**
@@ -97,15 +100,14 @@ export interface MiscueReportDocument {
   /**
    * ADD THIS NEXT TIME FOR FUTURE PROOFING
    * Can be used for exporting student information for a class
-   * 
+   *
    * - Viewing historical performance
    * - Longitudinal reading analysis
    * - Adviser-approved analytics
-   * 
+   *
    */
   // classId: string;
   // acadYear: string;
-
 
   // Passage Information
   passageTitle: string;
@@ -129,10 +131,10 @@ export interface MiscueReportDocument {
   wordPerMin: number;
   recordingDuration?: string;
 
-  substitutionCount: number,
-  omissionCount: number,
-  insertionCount: number,
-  repetitionCount: number,
+  substitutionCount: number;
+  omissionCount: number;
+  insertionCount: number;
+  repetitionCount: number;
 
   // Creation from Firestore Timestamp
   createdAt: Timestamp;
@@ -145,7 +147,7 @@ export interface PassageDocument {
   pid: string;
   creatorId: string; // Faculty who added the Passage
   creatorName: string; // Denormalized name for quick UI display (avoids extra fetching)
-  facultyIds: string[]; // Faculties who will add this passage 
+  facultyIds: string[]; // Faculties who will add this passage
   classId: string[]; // Classes that can view this passage
   title: string;
   author: string | null;
@@ -154,7 +156,7 @@ export interface PassageDocument {
 }
 
 /**
- * WORD COMPLETION DOCUMENT REPORT INTERFACE 
+ * WORD COMPLETION DOCUMENT REPORT INTERFACE
  *  - used to store completed words
  */
 export interface AlphabetReportDocument {
@@ -193,8 +195,8 @@ export type AlphabetAttemptUpdate = {
 export interface AlphabetSessionData {
   alphabetSessionId: string; // "${uid}_${YYYYMMDD}"
   studentId: string;
-  date: string;              // "YYYYMMDD"
-  displayDate: string;       // "Feb 19"
+  date: string; // "YYYYMMDD"
+  displayDate: string; // "Feb 19"
   attemptedCount: number;
   correctCount: number;
   correctLetters: string[];
@@ -204,7 +206,7 @@ export interface AlphabetSessionData {
 // WORD SESSION
 
 /**
- * WORD COMPLETION DOCUMENT REPORT INTERFACE 
+ * WORD COMPLETION DOCUMENT REPORT INTERFACE
  *  - used to store completed words
  */
 export interface WordReportDocument {
@@ -221,15 +223,15 @@ export interface WordReportDocument {
  * Which are then used for data visualization of their reading progress
  */
 export interface WordSessionReport {
-  wordSessionId: string
-  studentId: string
-  dateKey: string              // YYYYMMDD (for range queries)
-  startedAt: Timestamp
+  wordSessionId: string;
+  studentId: string;
+  dateKey: string; // YYYYMMDD (for range queries)
+  startedAt: Timestamp;
 
   totals: {
-    attempted: number
-    correct: number
-  }
+    attempted: number;
+    correct: number;
+  };
 
   chapters: Record<
     string, // "ch_1"
@@ -237,7 +239,7 @@ export interface WordSessionReport {
       chapterId: number;
       chapterTitle: string;
       attempted: number; // optional but recommended
-      correct: number;   // optional but recommended
+      correct: number; // optional but recommended
 
       lessons: Record<
         string, // "ls_1"
@@ -247,8 +249,8 @@ export interface WordSessionReport {
           attempted: number;
           correct: number;
           targetWords: string[];
-          correctWords: string[];    
-          incorrectWords: string[];  
+          correctWords: string[];
+          incorrectWords: string[];
         }
       >;
     }
@@ -262,9 +264,9 @@ export interface WordSessionReport {
 export type WordAttemptUpdate = {
   incAttempted?: boolean;
   incCorrect?: boolean;
-  addTargetWord?: boolean;     // usually true on firstAttempt
-  addCorrectWord?: boolean;    // true when word becomes correct (firstCorrect)
-  addIncorrectWord?: boolean;  // true when firstAttempt is incorrect and not yet correct
+  addTargetWord?: boolean; // usually true on firstAttempt
+  addCorrectWord?: boolean; // true when word becomes correct (firstCorrect)
+  addIncorrectWord?: boolean; // true when firstAttempt is incorrect and not yet correct
   removeIncorrectWord?: boolean; // true when it becomes correct
 };
 
@@ -283,18 +285,18 @@ export type WordContext = {
 
 /**
  * Similar to Word Session Report interface
- * 
+ *
  * A blueprint for storing data after reading attempt
- * 
- * WILL DELETE LATER and use the Word Session Report interface 
+ *
+ * WILL DELETE LATER and use the Word Session Report interface
  *  - to avoid redanduncy
  */
 export interface WordSessionData {
   wordSessionId: string;
   studentId: string;
 
-  dateKey: string;       // YYYYMMDD
-  displayDate: string;   // "Feb 19"
+  dateKey: string; // YYYYMMDD
+  displayDate: string; // "Feb 19"
 
   attemptedCount: number;
   correctCount: number;
@@ -323,9 +325,9 @@ export interface WordSessionData {
 
 /**
  * Similar to Word Session Report interface
- * 
+ *
  * A blueprint for storing data after reading attempt
- * 
+ *
  * MIGHT DELETE LATER and use the Word Session Report interface
  */
 export interface WordPeriodSlot {
@@ -356,8 +358,8 @@ export interface WordPeriodSlot {
 
 /**
  * Not a Firebase Document
- * 
- * A blueprint for accuracy computations for every session created by the user (student)   
+ *
+ * A blueprint for accuracy computations for every session created by the user (student)
  */
 export interface WordAccuracySummary {
   totalSessions: number;
@@ -368,7 +370,7 @@ export type LessonKey = `ch_${number}::ls_${number}`;
 export type ChapterKey = `ch_${number}`;
 
 export interface WordMasterySummary {
-  totalCompleted: number;     // total unique completed words
+  totalCompleted: number; // total unique completed words
   masteryPercent: number | null; // totalCompleted / totalWordsInCurriculum * 100
   perLessonCompleted: Record<string, number>; // "ch_1::ls_2" -> count
 }

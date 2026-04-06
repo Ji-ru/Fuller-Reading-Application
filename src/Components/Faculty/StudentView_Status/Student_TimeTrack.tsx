@@ -12,6 +12,7 @@ import { useStudentActiveHours } from '../../../Hooks/Faculty/use_StudentView_Pr
 import { ActivitySummaryCard } from './Student_TimeTrackCards/ActivitySummaryCard';
 import { ActivityBarChart } from './Student_TimeTrackCards/ActivityBarChart';
 import { ActivityDetailsList } from './Student_TimeTrackCards/ActivityDetailsList';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 interface StudentActivityTrackingCardProps {
   studentId: string;
@@ -164,21 +165,21 @@ const styles = StyleSheet.create({
   // Time Range Selector
   timeRangeSelector: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: sh(12),
     backgroundColor: '#f3f4f6',
-    borderRadius: 12,
+    borderRadius: sw(12),
     overflow: 'hidden',
   },
   timeRangeButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: sh(8),
     alignItems: 'center',
   },
   timeRangeButtonActive: {
     backgroundColor: '#3b82f6',
   },
   timeRangeButtonText: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontWeight: '500',
     color: '#6b7280',
   },
@@ -192,11 +193,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   toggleLabel: {
-    marginRight: 8,
-    fontSize: 14,
+    marginRight: sw(8),
+    fontSize: sf(14),
     color: '#374151',
   },
 });

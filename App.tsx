@@ -40,7 +40,7 @@ import AdminUserManagement from './src/Screens/Admin/Admin_UserManagement';
 import AdminViewFacultyData from './src/Screens/Admin/Admin_ViewFacultyData';
 
 const Stack = createNativeStackNavigator();
-configureGoogleSignIn(); 
+configureGoogleSignIn();
 
 function App() {
   return (
@@ -78,7 +78,6 @@ function App() {
               <Stack.Screen name='AdminDashboard' component={AdminDashboard} />
               <Stack.Screen name='AdminUserManagement' component={AdminUserManagement} />
               <Stack.Screen name='AdminViewFacultyData' component={AdminViewFacultyData} />
-
 
             </Stack.Navigator>
           </NavigationContainer>

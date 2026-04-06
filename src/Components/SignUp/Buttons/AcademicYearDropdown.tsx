@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { getAcademicYearOptions, formatAcademicYear } from '../../../Utilities/acadYearUtils';
+import { sw, sh, sf } from '../../../Utils/responsive';
 interface AcademicYearDropDownSelectionProps {
   onSelect: (value: string) => void;
   selectedValue?: string;
@@ -90,13 +91,13 @@ const AcademicYearDropDownSelection: React.FC<AcademicYearDropDownSelectionProps
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   label: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontWeight: '500',
     color: '#2C3E50',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
   dropdownButton: {
     flexDirection: 'row',
@@ -105,20 +106,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     borderWidth: 1,
     borderColor: '#E9ECEF',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: sw(8),
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(14),
   },
   selectedText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#2C3E50',
   },
   placeholderText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#7F8C8D',
   },
   dropdownIcon: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#4ECDC4',
   },
   modalOverlay: {
@@ -126,11 +127,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: sw(20),
   },
   modalContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: sw(12),
     width: '90%',
     maxHeight: '60%',
     overflow: 'hidden',
@@ -139,31 +140,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: sw(20),
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontWeight: '600',
     color: '#2C3E50',
   },
   closeButton: {
-    padding: 4,
+    padding: sw(4),
   },
   closeButtonText: {
-    fontSize: 20,
+    fontSize: sf(20),
     color: '#7F8C8D',
   },
   optionsContainer: {
-    maxHeight: 300,
+    maxHeight: sw(300),
   },
   option: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: sh(16),
+    paddingHorizontal: sw(20),
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F9F8',
   },
   optionText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#2C3E50',
   },
   selectedOptionText: {
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   checkmark: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#4ECDC4',
     fontWeight: 'bold',
   },

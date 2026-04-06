@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { sw, sh, sf } from '../../../../Utils/responsive';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -144,36 +145,36 @@ export const ActivityBarChart: React.FC<ActivityBarChartProps> = ({
 
 const s = StyleSheet.create({
   container: {
-    marginTop: 4,
+    marginTop: sh(4),
   },
   unitLabel: {
-    fontSize: 11,
+    fontSize: sf(11),
     fontFamily: 'Satoshi-Medium',
     color: C.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
+    letterSpacing: sf(0.5),
+    marginBottom: sh(12),
   },
   scrollContent: {
-    paddingRight: 8,
+    paddingRight: sw(8),
   },
 
   // Chart area
   chartArea: {
     flexDirection: 'row',
-    gap: 8,
+    gap: sw(8),
   },
 
   // Y-axis
   yAxis: {
-    width: 28,
+    width: sw(28),
     height: 160 + 32, // CHART_H + label height below
     justifyContent: 'space-between',
-    paddingBottom: 32,
+    paddingBottom: sh(32),
     alignItems: 'flex-end',
   },
   yLabel: {
-    fontSize: 10,
+    fontSize: sf(10),
     fontFamily: 'Satoshi-Medium',
     color: C.textMuted,
     textAlign: 'right',
@@ -186,11 +187,11 @@ const s = StyleSheet.create({
   },
   grid: {
     justifyContent: 'space-between',
-    paddingBottom: 32, // leave room for x labels
+    paddingBottom: sh(32), // leave room for x labels
     pointerEvents: 'none',
   },
   gridLine: {
-    height: 1,
+    height: sw(1),
     backgroundColor: C.grid,
   },
 
@@ -198,19 +199,19 @@ const s = StyleSheet.create({
   barsRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 5,
-    minWidth: 280,
+    gap: sw(5),
+    minWidth: sw(280),
   },
   barCol: {
     flex: 1,
     alignItems: 'center',
   },
   barTopVal: {
-    fontSize: 9,
+    fontSize: sf(9),
     fontFamily: 'Satoshi-Medium',
     color: C.textMuted,
-    height: 12,
-    marginBottom: 2,
+    height: sw(12),
+    marginBottom: sh(2),
   },
   barTopValPeak: {
     color: C.tealDark,
@@ -219,18 +220,18 @@ const s = StyleSheet.create({
   barTrack: {
     width: '100%',
     backgroundColor: C.track,
-    borderRadius: 6,
+    borderRadius: sw(6),
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   barFill: {
     width: '100%',
-    borderRadius: 6,
+    borderRadius: sw(6),
     borderWidth: 1,
   },
   xLabel: {
-    marginTop: 6,
-    fontSize: 10,
+    marginTop: sh(6),
+    fontSize: sf(10),
     fontFamily: 'Satoshi-Medium',
     color: C.textSub,
     textAlign: 'center',

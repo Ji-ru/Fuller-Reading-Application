@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
 import { useClassMetrics } from '../../Hooks/Admin/useClassMetrics';
+import { sw, sh, sf } from '../../Utils/responsive';
 
 const screenWidth = Dimensions.get('window').width;
 interface ClassesPerGradeChartProps {
@@ -16,7 +17,7 @@ const chartConfig = {
   color: (opacity = 1) => `rgba(61, 113, 217, ${opacity})`,
   labelColor: (opacity = 1) => `rgba(30, 30, 30, ${opacity})`,
   style: { borderRadius: 16 },
-  barPercentage: 0.7,
+  barPercentage: sw(0.7),
 };
 
 const COLORS = {
@@ -96,26 +97,26 @@ const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) =
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 14,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: sw(14),
+    padding: sw(20),
+    marginBottom: sh(16),
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowRadius: sw(6),
   },
   title: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Regular',
     color: COLORS.textSecondary,
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   errorText: {
     color: COLORS.error,

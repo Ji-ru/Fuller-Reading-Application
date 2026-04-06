@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useUserAnalytics } from '../../Hooks/Admin/useUserAnalytics';
+import { sw, sh, sf } from '../../Utils/responsive';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -75,7 +76,7 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
       {
         data: monthlyRegistrations.map(item => item.count),
         color: (opacity = 1) => `rgba(61, 113, 217, ${opacity})`,
-        strokeWidth: 2,
+        strokeWidth: sw(2),
       },
     ],
     legend: ['New Users'],
@@ -101,26 +102,26 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 14,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: sw(14),
+    padding: sw(20),
+    marginBottom: sh(16),
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowRadius: sw(6),
   },
   title: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Regular',
     color: COLORS.textSecondary,
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   errorText: {
     color: COLORS.error,

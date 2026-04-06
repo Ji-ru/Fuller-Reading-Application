@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { FilterOptions } from '../../../Interfaces/miscue';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 interface FilterSelectorProps {
   facultyId: string | null;
@@ -145,7 +146,7 @@ const FilterSelector: React.FC<FilterSelectorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   dropdownTrigger: {
     flexDirection: 'row',
@@ -154,24 +155,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: sw(8),
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(14),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: sw(1) },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: sw(2),
     elevation: 1,
   },
   dropdownTriggerText: {
-    fontSize: 15,
+    fontSize: sf(15),
     fontFamily: 'Satoshi-Medium',
     color: '#333',
     flex: 1,
-    marginRight: 8,
+    marginRight: sw(8),
   },
   dropdownArrow: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#666',
   },
   modalOverlay: {
@@ -182,40 +183,40 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: sw(12),
     width: '85%',
     maxHeight: '60%',
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.15,
-    shadowRadius: 12,
+    shadowRadius: sw(12),
     elevation: 5,
   },
   dropdownHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: sw(16),
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
   dropdownTitle: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
     color: '#333',
   },
   closeButton: {
-    fontSize: 18,
+    fontSize: sf(18),
     color: '#666',
-    padding: 4,
+    padding: sw(4),
   },
   dropdownList: {
-    paddingVertical: 8,
+    paddingVertical: sh(8),
   },
   dropdownItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: sh(14),
+    paddingHorizontal: sw(16),
     borderBottomWidth: 1,
     borderBottomColor: '#F8F8F8',
   },
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F9FF',
   },
   dropdownItemText: {
-    fontSize: 15,
+    fontSize: sf(15),
     fontFamily: 'Satoshi-Medium',
     color: '#333',
   },
@@ -232,21 +233,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Bold',
   },
   loadingContainer: {
-    padding: 32,
+    padding: sw(32),
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 8,
-    fontSize: 14,
+    marginTop: sh(8),
+    fontSize: sf(14),
     color: '#666',
     fontFamily: 'Satoshi-Medium',
   },
   emptyContainer: {
-    padding: 32,
+    padding: sw(32),
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#999',
     fontFamily: 'Satoshi-Medium',
   },

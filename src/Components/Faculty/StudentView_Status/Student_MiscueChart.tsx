@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import Svg, { G, Circle } from 'react-native-svg';
 import { useStudentMiscueStats } from '../../../Hooks/Faculty/use_StudentView_Progress';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 interface MiscueData {
   type: string;
@@ -185,21 +186,21 @@ const StudentMiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        marginVertical: 10,
+        marginVertical: sh(10),
         flex: 1,
     },
     commonMiscueCard: {
-        padding: 20,
-        marginBottom: 16,
+        padding: sw(20),
+        marginBottom: sh(16),
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: sh(20),
     },
     cardTitle: {
-        fontSize: 18,
+        fontSize: sf(18),
         fontFamily: 'Satoshi-Bold',
         color: '#333',
     },
@@ -215,63 +216,63 @@ const styles = StyleSheet.create({
     },
     legend: {
         flex: 1,
-        marginLeft: 20,
+        marginLeft: sw(20),
     },
     legendItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: sh(12),
     },
     legendRow: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     legendDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        marginRight: 8,
+        width: sw(12),
+        height: sw(12),
+        borderRadius: sw(6),
+        marginRight: sw(8),
     },
     legendLabel: {
-        fontSize: 14,
+        fontSize: sf(14),
         color: '#333',
         fontFamily: 'Satoshi-Medium',
     },
     legendValue: {
-        fontSize: 14,
+        fontSize: sf(14),
         color: '#333',
         fontWeight: '600',
         fontFamily: 'Satoshi-Medium',
     },
     loadingContainer: {
-        height: 200,
+        height: sw(200),
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: sh(20),
     },
     loadingText: {
-        marginTop: 10,
+        marginTop: sh(10),
         color: '#666',
-        fontSize: 14,
+        fontSize: sf(14),
         fontFamily: 'Satoshi-Medium',
     },
     errorContainer: {
-        padding: 20,
+        padding: sw(20),
         backgroundColor: '#FFEBEE',
-        borderRadius: 8,
-        marginTop: 20,
+        borderRadius: sw(8),
+        marginTop: sh(20),
     },
     errorText: {
         color: '#D32F2F',
-        fontSize: 14,
+        fontSize: sf(14),
         fontFamily: 'Satoshi-Bold',
     },
     errorSubtext: {
         color: '#666',
-        fontSize: 12,
+        fontSize: sf(12),
         fontFamily: 'Satoshi-Regular',
-        marginTop: 4,
+        marginTop: sh(4),
     },
     noDataOverlay: {
         position: 'absolute',
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     noDataText: {
-        fontSize: 14,
+        fontSize: sf(14),
         color: '#999',
         fontFamily: 'Satoshi-Medium',
     },

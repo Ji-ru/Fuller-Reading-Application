@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { sw, sh, sf } from '../Utils/responsive';
 
 const feedbackModal = StyleSheet.create({
     overlay: {
@@ -6,17 +7,21 @@ const feedbackModal = StyleSheet.create({
       backgroundColor: 'rgba(0, 0, 0, 0.7)',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: 20,
+      padding: sw(20),
     },
     modalContainer: {
       backgroundColor: 'white',
-      borderRadius: 50,
-      padding: 5,
+      borderRadius: sw(50),
+      padding: sw(5),
       alignItems: 'center',
       width: '90%',
-      maxWidth: 300,
-      minHeight: 300,
+      maxWidth: sw(300),
+      minHeight: sh(300),
       elevation: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: sw(2) },
+      shadowOpacity: 0.25,
+      shadowRadius: sw(3.84),
     },
     confettiAnimation: {
       position: 'absolute',
@@ -28,47 +33,46 @@ const feedbackModal = StyleSheet.create({
       height: '100%',
     },
     excellentAnimation: {
-        width: 220,
-        height: 220,
-        marginTop: 10,
+        width: sw(220),
+        height: sw(220),
+        marginTop: sh(10),
       },
     goodJobAnimation: {
-        width: 160,
-        height: 160,
-        marginTop: 10,
+        width: sw(160),
+        height: sw(160),
+        marginTop: sh(10),
       },
     tryAgainAnimation: {
-      width: 160,
-      height: 160,
-      marginTop: 10,
+      width: sw(160),
+      height: sw(160),
+      marginTop: sh(10),
     },
     title: {
-      fontSize: 25,
+      fontSize: sf(25),
       fontWeight: 'bold',
       color: '#333',
-      marginTop: 10,
-      marginBottom: 8,
+      marginTop: sh(10),
+      marginBottom: sh(8),
       fontFamily: 'Satoshi-Bold',
       textAlign: 'center',
     },
     message: {
-      fontSize: 15,
+      fontSize: sf(15),
       color: '#666',
       textAlign: 'center',
-      marginHorizontal: 10,
-      marginBottom: 20,
-      lineHeight: 22,
+      marginHorizontal: sw(10),
+      marginBottom: sh(20),
+      lineHeight: sf(22),
       fontFamily: 'Satoshi-Regular',
     },
     autoCloseText: {
-      fontSize: 12,
+      fontSize: sf(12),
       color: '#999',
       textAlign: 'center',
-      marginTop: 10,
+      marginTop: sh(10),
       fontFamily: 'Satoshi-MediumItalic',
 
     },
   });
   
   export default feedbackModal;
-  

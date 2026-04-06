@@ -32,14 +32,10 @@ import {
   GoogleAuthProvider,
   signOut,
 } from '@react-native-firebase/auth';
-import {
-  getFirestore,
-  doc,
-  getDoc,
-} from '@react-native-firebase/firestore';
+import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
 import { WEBCLIENT_API } from '@env';
 const auth = getAuth();
-const db   = getFirestore();
+const db = getFirestore();
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -50,12 +46,13 @@ export const configureGoogleSignIn = (): void => {
   });
 };
 
-console.log("This is the API: " + WEBCLIENT_API );
 // ─── Return type ──────────────────────────────────────────────────────────────
 
 export interface GoogleSignInResult {
   /** The Google account email — pre-filled (and locked) in SignUpTwo */
   email: string;
+  /** Whether the user already exists in Firestore */
+  userExists: boolean;
 }
 
 // ─── Main helper ──────────────────────────────────────────────────────────────
@@ -64,11 +61,10 @@ export interface GoogleSignInResult {
  * Launches the native Google account picker, then signs the user into
  * Firebase Auth via signInWithCredential().
  *
- * After this resolves successfully, auth.currentUser is set — so
- * GoogleSignUpUserCredentials() can safely call getAuth().currentUser.
+ * After this resolves successfully, auth.currentUser is set.
  *
  * @throws 'CANCELLED'   — user dismissed the picker or no credential found (caller should stay silent)
- * @throws Error         — duplicate account, missing token, or network issues
+ * @throws Error         — missing token, or network issues
  */
 export const initiateGoogleSignUp = async (): Promise<GoogleSignInResult> => {
   // Verify Play Services availability (Android only; no-op on iOS)
@@ -102,30 +98,34 @@ export const initiateGoogleSignUp = async (): Promise<GoogleSignInResult> => {
   if (!idToken) {
     throw new Error(
       'Google Sign-In did not return an ID token. ' +
-      'Ensure the Web Client ID in googleAuthUtils.ts is correct.',
+        'Ensure the Web Client ID in googleAuthUtils.ts is correct.',
     );
   }
 
   // ── Sign into Firebase Auth ──────────────────────────────────────────────
   // This populates auth.currentUser, which GoogleSignUpUserCredentials() reads.
   const googleCredential = GoogleAuthProvider.credential(idToken);
-  const userCredential   = await signInWithCredential(auth, googleCredential);
-  const firebaseUser     = userCredential.user;
+  const userCredential = await signInWithCredential(auth, googleCredential);
+  const firebaseUser = userCredential.user;
 
-  // ── Duplicate-account guard ──────────────────────────────────────────────
-  // createUserDocument() uses setDoc() which would silently overwrite an
-  // existing account. Catch it here and surface a clear error instead.
-  const userRef      = doc(db, 'users', firebaseUser.uid);
+  // ── Account Existence Check ──────────────────────────────────────────────
+  const userRef = doc(db, 'users', firebaseUser.uid);
   const existingSnap = await getDoc(userRef);
 
-  if (existingSnap.exists()) {
-    // Sign back out — the user should log in, not register
-    await signOut(auth);
-    throw new Error(
-      'An account already exists for this Google address. ' +
-      'Please tap Login instead.',
-    );
-  }
+  return {
+    email: googleUser.email,
+    userExists: existingSnap.exists(),
+  };
+};
 
-  return { email: googleUser.email };
+/**
+ * Signs the user out of the Google session on the device.
+ * Used during app-wide logout to ensure they don't automatically log back in.
+ */
+export const signOutFromGoogle = async (): Promise<void> => {
+  try {
+    await GoogleSignin.signOut();
+  } catch (error: any) {
+    // Ignore error — usually means the user wasn't signed in via Google
+  }
 };

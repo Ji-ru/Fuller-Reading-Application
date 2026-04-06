@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { sw, sh, sf } from '../Utils/responsive';
 
 const loading = StyleSheet.create({
   container: {
@@ -6,33 +7,33 @@ const loading = StyleSheet.create({
     backgroundColor: '#f2f6ff',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: sw(20),
   },
   video: {
-    width: 300,
-    height: 300,
-    marginBottom: 20,
-    borderRadius: 20,
+    width: sw(300),
+    height: sw(300),
+    marginBottom: sh(20),
+    borderRadius: sw(20),
     overflow: 'hidden',
   },
 
   // Progress Container Styles
   progressContainer: {
     position: 'absolute',
-    bottom: 40, // Position at bottom of container
-    left: 20,
-    right: 20,
+    bottom: sh(40), // Position at bottom of container
+    left: sw(20),
+    right: sw(20),
     alignItems: 'center',
   },
 
   // Progress Bar Background
   progressBarBackground: {
     width: '100%',
-    height: 12,
+    height: sh(12),
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 6,
+    borderRadius: sw(6),
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: sh(8),
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
@@ -41,33 +42,33 @@ const loading = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     backgroundColor: '#3d71d9',
-    borderRadius: 6,
+    borderRadius: sw(6),
   },
 
   // Progress Percentage Text
   progressText: {
-    fontSize: 18,
+    fontSize: sf(18),
     color: '#3d71d9',
     fontFamily: 'Satoshi-Bold',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
 
   // Status Message Text
   statusText: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#333',
     textAlign: 'center',
     fontFamily: 'Satoshi-Medium',
-    marginBottom: 12,
+    marginBottom: sh(12),
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 15,
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(6),
+    borderRadius: sw(15),
   },
 
   // Loading Spinner
   loadingSpinner: {
-    marginTop: 4,
+    marginTop: sh(4),
   },
 });
 

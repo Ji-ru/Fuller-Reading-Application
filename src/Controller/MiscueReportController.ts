@@ -2,7 +2,15 @@
 // React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used in this file.
 // Use hooks only inside React function components or hooks that start with 'use'.
 import { Miscue } from '../Interfaces/miscue';
-import { MiscueReportDocument, WordReportDocument, AlphabetReportDocument, AlphabetAttemptUpdate, WordAttemptUpdate } from '../Interfaces/dataInterfaces';
+import {
+  MiscueReportDocument,
+  WordReportDocument,
+  AlphabetReportDocument,
+  AlphabetAttemptUpdate,
+  WordAttemptUpdate,
+  AlphabetSessionReport,
+  WordSessionReport,
+} from '../Interfaces/dataInterfaces';
 import { getAuth } from '@react-native-firebase/auth';
 import {
   getFirestore,
@@ -18,18 +26,32 @@ import {
   increment,
   arrayUnion,
   arrayRemove,
-  updateDoc
+  updateDoc,
 } from '@react-native-firebase/firestore';
 import { StudentProgressResult } from '../Interfaces/miscue';
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
 import { ProgressData } from '../Interfaces/miscue';
 import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import { makeTodayKey } from '../Utilities/currentDateUtils';
+import { recalculateStudentReadingLevel } from '../Services/ReadingLevelService';
 
 // Initialize instances
 const auth = getAuth();
 const db = getFirestore();
 export const MiscueReportController = {
+  // ==========================================================================
+  // MISCUE REPORT STORING AND RETRIEVING
+  // ==========================================================================
+  /**
+   * STORE MISCUE REPORT
+   * @param passageTitle - Title of the passage
+   * @param miscues - Array of miscue objects
+   * @param accuracy - Accuracy rate
+   * @param wordPerMin - Words per minute
+   * @param totalWords - Total words
+   * @param recordingDuration - Recording duration
+   * @returns Promise<string> - Report ID
+   */
   async storeReport(
     passageTitle: string,
     miscues: Miscue[],
@@ -98,8 +120,17 @@ export const MiscueReportController = {
       // STEP 6: Store in Firestore
       // ======================================================================
       await setDoc(miscueDocRef, reportData);
+      // ─── READING LEVEL RECALCULATION (fire-and-forget)
+      // Triggered after every completed passage. Does NOT block the return value.
+      // A failed recalculation is non-fatal — the report is already saved above.
+      recalculateStudentReadingLevel(user.uid).catch(err =>
+        console.warn(
+          '[ReadingLevelService] Background recalculation failed after passage:',
+          err,
+        ),
+      );
 
-      console.log('Storing Complete!: ' + reportData.passageTitle)
+      console.log('Storing Complete!: ' + reportData.passageTitle);
 
       return reportId;
     } catch (error: any) {
@@ -169,17 +200,17 @@ export const MiscueReportController = {
   // ==========================================================================
   /**
    * STORE CORRECT WORD PRONUNCIATION
-   * 
+   *
    * Stores a word that has attempted to read by the student
    * @param letter - Alphabet Letter of the word
    * @param word  - Selected word attempted to read
    * @returns stores the data into the firestore and returns the Word ID
-   * 
+   *
    * @example
    * Input = [
    *  {letter: A ,spokenWord: cap,  targetWord: cap }
    * ]
-   * 
+   *
    * Output: {
    *  wordId: kjahdka
    *  studentId: asdklk (based on getAuth() - the current logged-in student in app);
@@ -187,7 +218,13 @@ export const MiscueReportController = {
    *  createdAt: 7 February 2026 at 14:00:03 UTC+8
    * }
    */
-  async storeWordCorrectAttempt(chapter: number, chapterTitle: string, lesson: number, lessonTitle: string, word: string): Promise<WordReportDocument> {
+  async storeWordCorrectAttempt(
+    chapter: number,
+    chapterTitle: string,
+    lesson: number,
+    lessonTitle: string,
+    word: string,
+  ): Promise<WordReportDocument> {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -251,7 +288,7 @@ export const MiscueReportController = {
     chapterTitle: string,
     lesson: number,
     lessonTitle: string,
-    word: string
+    word: string,
   ): Promise<WordReportDocument | null> {
     try {
       const wordCompleteRef = collection(db, 'wordCompleted');
@@ -280,10 +317,10 @@ export const MiscueReportController = {
   },
 
   /**
- * Starts the session for word every time the student read the selected cahpter, lesson, and then the word
- * 
- * @returns initialization of the current alphabet reading session 
- */
+   * Starts the session for word every time the student read the selected cahpter, lesson, and then the word
+   *
+   * @returns initialization of the current alphabet reading session
+   */
   async startWordSession(): Promise<string> {
     const user = auth.currentUser; // RN Firebase style
     if (!user) throw new Error('No authenticated user.');
@@ -320,55 +357,61 @@ export const MiscueReportController = {
   ): Promise<void> {
     const user = auth.currentUser;
     if (!user) throw new Error('No authenticated user.');
-  
+
     const chapterKey = `ch_${chapters.chapterId}`;
     const lessonKey = `ls_${chapters.lessonId}`;
-  
+
     const sessionRef = doc(db, 'wordSessions', sessionId);
     const updates: Record<string, any> = {};
-  
+
     // --- totals
     if (update.incAttempted) updates['totals.attempted'] = increment(1);
     if (update.incCorrect) updates['totals.correct'] = increment(1);
-  
+
     // --- chapter aggregates
-    if (update.incAttempted) updates[`chapters.${chapterKey}.attempted`] = increment(1);
-    if (update.incCorrect) updates[`chapters.${chapterKey}.correct`] = increment(1);
-  
+    if (update.incAttempted)
+      updates[`chapters.${chapterKey}.attempted`] = increment(1);
+    if (update.incCorrect)
+      updates[`chapters.${chapterKey}.correct`] = increment(1);
+
     // --- chapter metadata
     updates[`chapters.${chapterKey}.chapterId`] = chapters.chapterId;
     updates[`chapters.${chapterKey}.chapterTitle`] = chapters.chapterTitle;
-  
+
     // --- lesson aggregates
     if (update.incAttempted)
-      updates[`chapters.${chapterKey}.lessons.${lessonKey}.attempted`] = increment(1);
+      updates[`chapters.${chapterKey}.lessons.${lessonKey}.attempted`] =
+        increment(1);
     if (update.incCorrect)
-      updates[`chapters.${chapterKey}.lessons.${lessonKey}.correct`] = increment(1);
-  
+      updates[`chapters.${chapterKey}.lessons.${lessonKey}.correct`] =
+        increment(1);
+
     // --- lesson metadata
-    updates[`chapters.${chapterKey}.lessons.${lessonKey}.lessonId`] = chapters.lessonId;
-    updates[`chapters.${chapterKey}.lessons.${lessonKey}.lessonTitle`] = chapters.lessonTitle;
-  
+    updates[`chapters.${chapterKey}.lessons.${lessonKey}.lessonId`] =
+      chapters.lessonId;
+    updates[`chapters.${chapterKey}.lessons.${lessonKey}.lessonTitle`] =
+      chapters.lessonTitle;
+
     // --- word lists
     const basePath = `chapters.${chapterKey}.lessons.${lessonKey}`;
     const word = chapters.targetWord;
-  
+
     if (update.addTargetWord) {
       updates[`${basePath}.targetWords`] = arrayUnion(word);
     }
-  
+
     if (update.addCorrectWord) {
       updates[`${basePath}.correctWords`] = arrayUnion(word);
     }
-  
+
     if (update.addIncorrectWord) {
       updates[`${basePath}.incorrectWords`] = arrayUnion(word);
     }
-  
+
     if (update.removeIncorrectWord) {
       updates[`${basePath}.incorrectWords`] = arrayRemove(word);
     }
-  
+
     if (Object.keys(updates).length === 0) return;
     await updateDoc(sessionRef, updates);
   },
@@ -387,21 +430,20 @@ export const MiscueReportController = {
     try {
       // Build query using modular functions
       const wordCompletedRef = collection(db, 'wordCompleted');
-      const q = query(
-        wordCompletedRef,
-        where('studentId', '==', studentId),
-      );
+      const q = query(wordCompletedRef, where('studentId', '==', studentId));
 
       const querySnapshot = await getDocs(q);
 
-      return querySnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
-        const data = doc.data();
-        return {
-          word: data.word,
-          chapter: data.chapter,
-          createdAt: data.createdAt?.toDate(),
-        };
-      });
+      return querySnapshot.docs.map(
+        (doc: QueryDocumentSnapshot<DocumentData>) => {
+          const data = doc.data();
+          return {
+            word: data.word,
+            chapter: data.chapter,
+            createdAt: data.createdAt?.toDate(),
+          };
+        },
+      );
     } catch (error: any) {
       console.error('Failed to fetch completed words:', error);
       return [];
@@ -414,12 +456,14 @@ export const MiscueReportController = {
 
   /**
    * STORE CORRECT ALPHABET PHONEME
-   * 
+   *
    * Stores a word that has attempted to read by the student
    * @param letter - Selected alphabet that was read
    * @returns stores the data into the firestore and returns the Letter ID
    */
-  async storeAlphabetCorrectAttempt(letter: string): Promise<AlphabetReportDocument> {
+  async storeAlphabetCorrectAttempt(
+    letter: string,
+  ): Promise<AlphabetReportDocument> {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -499,8 +543,8 @@ export const MiscueReportController = {
 
   /**
    * Starts the session for alphabet every time the student read the selected letter
-   * 
-   * @returns initialization of the current alphabet reading session 
+   *
+   * @returns initialization of the current alphabet reading session
    */
   async startAlphabetSession(): Promise<string> {
     const user = auth.currentUser; // RN Firebase style
@@ -548,13 +592,84 @@ export const MiscueReportController = {
 
     if (update.addCorrect) updates.correctLetters = arrayUnion(cleanLetter);
     if (update.addIncorrect) updates.incorrectLetters = arrayUnion(cleanLetter);
-    if (update.removeIncorrect) updates.incorrectLetters = arrayRemove(cleanLetter);
+    if (update.removeIncorrect)
+      updates.incorrectLetters = arrayRemove(cleanLetter);
 
     if (Object.keys(updates).length === 0) return;
 
     await updateDoc(sessionRef, updates);
   },
 
+  /**
+   * Finalizes the current word session and triggers a reading level recalculation.
+   * Used when The student navigates away from the word exercise screen.
+   */
+  async finalizeAlphabetSession(
+    sessionId: string,
+  ): Promise<AlphabetSessionReport> {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No authenticated user.');
+
+    const sessionRef = doc(db, 'alphabetSessions', sessionId);
+
+    // Mark as completed and set the end time
+    await updateDoc(sessionRef, {
+      sessionCompletedAt: serverTimestamp(),
+      isCompleted: true,
+    });
+
+    // Read back the final session
+    const snap = await getDoc(sessionRef);
+    if (!snap.exists()) {
+      throw new Error('Session not found after finalization.');
+    }
+
+    const sessionData = snap.data() as AlphabetSessionReport;
+
+    // Trigger reading level recalculation (fire-and-forget)
+    recalculateStudentReadingLevel(user.uid).catch(err =>
+      console.warn(
+        '[ReadingLevelService] Background recalculation failed after alphabet session:',
+        err,
+      ),
+    );
+
+    return sessionData;
+  },
+  /**
+   * Finalizes the current word session and triggers a reading level recalculation.
+   * Used when The student navigates away from the word exercise screen.
+   */
+  async finalizeWordSession(sessionId: string): Promise<WordSessionReport> {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No authenticated user.');
+
+    const sessionRef = doc(db, 'wordSessions', sessionId);
+
+    // Mark as completed and set the end time
+    await updateDoc(sessionRef, {
+      sessionCompletedAt: serverTimestamp(),
+      isCompleted: true,
+    });
+
+    // Read back the final session
+    const snap = await getDoc(sessionRef);
+    if (!snap.exists()) {
+      throw new Error('Session not found after finalization.');
+    }
+
+    const sessionData = snap.data() as WordSessionReport;
+
+    // Trigger reading level recalculation (fire-and-forget)
+    recalculateStudentReadingLevel(user.uid).catch(err =>
+      console.warn(
+        '[ReadingLevelService] Background recalculation failed after word session:',
+        err,
+      ),
+    );
+
+    return sessionData;
+  },
 
   // ==========================================================================
   // STUDENT PASSAGE DOCUMENT RETRIEVING
@@ -634,46 +749,62 @@ export const MiscueReportController = {
    * The following are what this function will be used for:
    *  - to be used to count how many alphabets are completed
    *  - to identify which alphabets are completed and will be displayed for each alphabet
-   * @param studentId 
+   * @param studentId
    */
-  getStudentCompletedAlphabet(studentId: string, onUpdate: (alphabets: AlphabetReportDocument[]) => void) {
+  getStudentCompletedAlphabet(
+    studentId: string,
+    onUpdate: (alphabets: AlphabetReportDocument[]) => void,
+  ) {
     try {
-      const alphabetQuery = query(collection(db, 'alphabetCompleted'), where('studentId', '==', studentId));
+      const alphabetQuery = query(
+        collection(db, 'alphabetCompleted'),
+        where('studentId', '==', studentId),
+      );
       return onSnapshot(alphabetQuery, snapshot => {
-        const alphabets = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-          ...doc.data(),
-          alphabetId: doc.id
-        })) as AlphabetReportDocument[];
+        const alphabets = snapshot.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => ({
+            ...doc.data(),
+            alphabetId: doc.id,
+          }),
+        ) as AlphabetReportDocument[];
         console.log('Alphebet objects retrieved: ' + JSON.stringify(alphabets));
         onUpdate(alphabets);
       });
     } catch (error: any) {
-      console.log('Failed to retrieved alphabets data: ' + error.any)
-      throw new Error("Failed to retrieved alphabets data: " + error.any);
+      console.log('Failed to retrieved alphabets data: ' + error.any);
+      throw new Error('Failed to retrieved alphabets data: ' + error.any);
     }
   },
 
   /**
- * Retrieves all the completed word made by the student
- * The following are what this function will be used for:
- *  - to be used to count how many words are completed
- *  - to identify which word are completed and will be displayed for each alphabet
- * @param studentId 
- */
-  getStudentCompletedWord(studentId: string, onUpdate: (word: WordReportDocument[]) => void) {
+   * Retrieves all the completed word made by the student
+   * The following are what this function will be used for:
+   *  - to be used to count how many words are completed
+   *  - to identify which word are completed and will be displayed for each alphabet
+   * @param studentId
+   */
+  getStudentCompletedWord(
+    studentId: string,
+    onUpdate: (word: WordReportDocument[]) => void,
+  ) {
     try {
-      const wordQuery = query(collection(db, 'wordCompleted'), where('studentId', '==', studentId));
+      const wordQuery = query(
+        collection(db, 'wordCompleted'),
+        where('studentId', '==', studentId),
+      );
       return onSnapshot(wordQuery, snapshot => {
-        const words = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-          ...doc.data(),
-          alphabetId: doc.id
-        })) as WordReportDocument[];
+        const words = snapshot.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => ({
+            ...doc.data(),
+            alphabetId: doc.id,
+          }),
+        ) as WordReportDocument[];
         console.log('Words objects retrieved: ' + words);
         onUpdate(words);
       });
     } catch (error: any) {
-      console.log('Failed to retrieved words data: ' + error.any)
-      throw new Error("Failed to retrieved words data: " + error.any);
+      console.log('Failed to retrieved words data: ' + error.any);
+      throw new Error('Failed to retrieved words data: ' + error.any);
     }
   },
 
@@ -806,7 +937,6 @@ export const MiscueReportController = {
   //FETCHING STUDENT DATA STUDENT
   // ============================================================================
 
-
   /**
    * FORMAT MISCUE TYPE
    *
@@ -839,7 +969,9 @@ export const MiscueReportController = {
   ): Promise<StudentProgressResult> {
     try {
       // Step 1: Get all student reports
-      const allReports = await MiscueReportController.getStudentReports(studentId);
+      const allReports = await MiscueReportController.getStudentReports(
+        studentId,
+      );
 
       // Step 2: Get date range for filtering
       const { start, end } = getDateRangeForTimeFilter(timeRange);
@@ -859,15 +991,29 @@ export const MiscueReportController = {
       });
 
       // Step 4: Calculate overall averages
-      const totalWPM = filteredReports.reduce((sum, report) => sum + report.wordPerMin, 0);
-      const totalAccuracy = filteredReports.reduce((sum, report) => sum + report.accuracyRate, 0);
-      const totalWords = filteredReports.reduce((sum, report) => sum + report.totalWords, 0);
+      const totalWPM = filteredReports.reduce(
+        (sum, report) => sum + report.wordPerMin,
+        0,
+      );
+      const totalAccuracy = filteredReports.reduce(
+        (sum, report) => sum + report.accuracyRate,
+        0,
+      );
+      const totalWords = filteredReports.reduce(
+        (sum, report) => sum + report.totalWords,
+        0,
+      );
 
       const averageWPM = totalWPM / filteredReports.length;
       const averageAccuracy = totalAccuracy / filteredReports.length;
 
       // Step 5: Generate timeline - USING THE CONSISTENT APPROACH
-      const timeline = MiscueReportController.generateTimeline(filteredReports, timeRange, start, end);
+      const timeline = MiscueReportController.generateTimeline(
+        filteredReports,
+        timeRange,
+        start,
+        end,
+      );
 
       // Step 6: Return result
       return {
@@ -889,13 +1035,20 @@ export const MiscueReportController = {
     reports: MiscueReportDocument[],
     timeRange: 'week' | 'month' | 'year',
     start: Date,
-    end: Date
+    end: Date,
   ): ProgressData[] {
     // Step 1: Generate all periods for this time range
-    const allPeriods = MiscueReportController.getAllPeriods(timeRange, start, end);
+    const allPeriods = MiscueReportController.getAllPeriods(
+      timeRange,
+      start,
+      end,
+    );
 
     // Step 2: Group reports by period
-    const periodData = new Map<string, { accuracySum: number; wpmSum: number; count: number }>();
+    const periodData = new Map<
+      string,
+      { accuracySum: number; wpmSum: number; count: number }
+    >();
 
     for (const report of reports) {
       if (!report.createdAt) continue;
@@ -904,7 +1057,10 @@ export const MiscueReportController = {
         ? report.createdAt.toDate()
         : new Date(report.createdAt.toDate());
 
-      const periodKey = MiscueReportController.getPeriodKey(reportDate, timeRange);
+      const periodKey = MiscueReportController.getPeriodKey(
+        reportDate,
+        timeRange,
+      );
 
       if (!periodKey) continue;
 
@@ -917,7 +1073,7 @@ export const MiscueReportController = {
         periodData.set(periodKey, {
           accuracySum: report.accuracyRate,
           wpmSum: report.wordPerMin,
-          count: 1
+          count: 1,
         });
       }
     }
@@ -948,7 +1104,7 @@ export const MiscueReportController = {
   getAllPeriods(
     timeRange: 'week' | 'month' | 'year',
     start: Date,
-    end: Date
+    end: Date,
   ): Array<{ key: string; displayDate: string }> {
     const periods: Array<{ key: string; displayDate: string }> = [];
 
@@ -969,7 +1125,7 @@ export const MiscueReportController = {
           const key = `${dayName} ${dayNumber}`;
           periods.push({
             key: key,
-            displayDate: key
+            displayDate: key,
           });
         }
         break;
@@ -980,7 +1136,7 @@ export const MiscueReportController = {
           const key = `W${week}`;
           periods.push({
             key: key,
-            displayDate: key
+            displayDate: key,
           });
         }
         break;
@@ -988,15 +1144,25 @@ export const MiscueReportController = {
       case 'year':
         // Show all 12 months
         const monthNames = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
         ];
 
         for (let month = 0; month < 12; month++) {
           const key = monthNames[month];
           periods.push({
             key: key,
-            displayDate: key
+            displayDate: key,
           });
         }
         break;
@@ -1008,7 +1174,10 @@ export const MiscueReportController = {
   /**
    * Get period key for a date (MUST MATCH getAllPeriods format!)
    */
-  getPeriodKey(date: Date, timeRange: 'week' | 'month' | 'year'): string | null {
+  getPeriodKey(
+    date: Date,
+    timeRange: 'week' | 'month' | 'year',
+  ): string | null {
     switch (timeRange) {
       case 'week':
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -1023,8 +1192,20 @@ export const MiscueReportController = {
         return `W${weekOfMonth}`;
 
       case 'year':
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthNames = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
         return monthNames[date.getMonth()];
 
       default:

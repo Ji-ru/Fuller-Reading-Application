@@ -7,6 +7,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 // React-native Built-in Components
 import { Alert } from 'react-native';
+import { serverTimestamp, Timestamp } from '@react-native-firebase/firestore';
 
 // Interfaces of the passages to be passed on with RootStackParamList
 import { ReadingMaterial } from '../Interfaces/passage';
@@ -20,8 +21,8 @@ import { WordContext } from '../Interfaces/dataInterfaces';
 export type RootStackParamList = {
   Loading: undefined;
   SignUpCompleted: { role: UserRole };
-  SignUpTwo: { userInfo: Partial<UserDocument> };
-  SignUpOne: { role: UserRole, googleEmail?: string };
+  SignUpTwo: { role: UserRole; userInfo: Partial<UserDocument> };
+  SignUpOne: { role: UserRole; googleEmail?: string };
   Login: { authError?: string } | undefined;
 
   // STUDENT NAVIGATION
@@ -35,7 +36,6 @@ export type RootStackParamList = {
   StudentMyClass: undefined;
   ReadingHistory: undefined;
   Profile: undefined;
-
 
   ChooseRole: { googleEmail?: string } | undefined;
 
@@ -62,7 +62,7 @@ export type RootStackParamList = {
   AdminViewFacultyData: {
     facultyId: string;
     facultyName: string;
-  }
+  };
 
   FacultyTabs: undefined;
   StudentTabs: undefined;
@@ -82,7 +82,7 @@ export const useNavigationHelper = () => {
   /**
    * Handles the simple next navigation
    * @param destination  a destination based on the RootStackParamList going to any page based on the roles
-   * 
+   *
    * Updated: added an optional params argument
    */
   const handleNextStep = <RouteName extends ScreenNames>(
@@ -99,7 +99,7 @@ export const useNavigationHelper = () => {
    */
   const handleReplaceStep = <RouteName extends ScreenNames>(
     destination: RouteName,
-    params?: RootStackParamList[RouteName]
+    params?: RootStackParamList[RouteName],
   ) => {
     navigation.replace(destination as any, params as any);
   };
@@ -116,7 +116,8 @@ export const useNavigationHelper = () => {
     gradeLevel,
     dateOfBirth,
     assignedGradeLevels,
-    googleEmail
+    googleEmail,
+    parentConsent,
   }: {
     profileImageUrl?: string;
     firstName: string;
@@ -129,6 +130,9 @@ export const useNavigationHelper = () => {
     dateOfBirth?: string;
     assignedGradeLevels?: number[];
     googleEmail?: string;
+    parentConsent?: {
+      confirmed: boolean;
+    };
   }) => {
     // Basic validation
     if (!firstName || !lastName) {
@@ -164,7 +168,7 @@ export const useNavigationHelper = () => {
       email: '',
       role,
       sex,
-      googleEmail
+      googleEmail,
     };
     // Add role-specific data
     if (role === 'student') {
@@ -172,6 +176,9 @@ export const useNavigationHelper = () => {
         gradeLevel: gradeLevel!,
         dateOfBirth: dateOfBirth!,
         reading_Level: 'beginner',
+        parentConsent: {
+          confirmed: false,
+        },
       };
     } else if (role === 'faculty') {
       userInfo.facultyData = {
@@ -181,7 +188,7 @@ export const useNavigationHelper = () => {
     }
 
     // Navigate to SignUpTwo with the collected info
-    navigation.navigate('SignUpTwo', { userInfo });
+    navigation.navigate('SignUpTwo', { role, userInfo });
   };
 
   // Add a method to navigate from ChooseRole to SignUpOne
@@ -212,7 +219,7 @@ export const useNavigationHelper = () => {
   /**
    * Handles naviagtion based on the selected user to view their information and monitor progress of a student or faculty
    * @param param - multiple varibales in array is used to pass information to another page (either Faculty_Student_View_Profile or Admin_ViewFacultyData)
-   * 
+   *
    * PENDING ADMIN INFORMATION (STILL UNDECIDED IF NECESSARY)
    */
   const handleNavigateToUserDetail = ({
@@ -232,22 +239,22 @@ export const useNavigationHelper = () => {
     email?: string;
     role?: UserRole;
     sex: string;
-    reading_Level?: 'beginner' | 'intermediate' | 'advanced',
+    reading_Level?: 'beginner' | 'intermediate' | 'advanced';
   }) => {
     if (role === 'student') {
       handleStudentViewStats({
         studentId: uid,
         studentName: `${firstName} ${middleName ?? ''} ${lastName}`.trim(),
-        readingLevel: reading_Level || ''
-      })
+        readingLevel: reading_Level || '',
+      });
     } else if (role === 'faculty') {
       handleFacultyViewData({
         facultyId: uid,
         facultyName: `${firstName} ${middleName ?? ''} ${lastName}`.trim(),
         email: email || '',
         role: role,
-        sex: sex
-      })
+        sex: sex,
+      });
     }
   };
 
@@ -257,7 +264,11 @@ export const useNavigationHelper = () => {
     type: 'alphabet' | 'passage' | 'word',
     wordContext?: WordContext,
   ) => {
-    navigation.navigate('ReadingActivity', { readingMaterial, type, wordContext });
+    navigation.navigate('ReadingActivity', {
+      readingMaterial,
+      type,
+      wordContext,
+    });
   };
 
   const handleHistoryNext = () => {
@@ -269,7 +280,7 @@ export const useNavigationHelper = () => {
     classId: string;
     className?: string;
     classCode: string;
-    acadYear: string
+    acadYear: string;
   }) => {
     navigation.navigate('MyStudents', classData);
   };
@@ -278,12 +289,12 @@ export const useNavigationHelper = () => {
   const handleFacultyViewData = (facultyData: {
     facultyId: string;
     facultyName: string;
-    email: string,
-    role: UserRole,
-    sex: string
+    email: string;
+    role: UserRole;
+    sex: string;
   }) => {
     navigation.navigate('AdminViewFacultyData', facultyData);
-  }
+  };
 
   // Handles navigation to view students progress
   const handleStudentViewStats = (studentData: {

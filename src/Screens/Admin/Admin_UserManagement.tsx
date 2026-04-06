@@ -15,9 +15,9 @@ import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { useGetUsers } from '../../Hooks/Admin/use_getAllUsers';
 import { UserDocument, UserRole } from '../../Interfaces/dataInterfaces';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import adminUserManagment from '../../UI_Designs/AdminUserManagementStyles';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 export default function AdminUserManagement() {
     // STATE MANAGEMENT
@@ -105,17 +105,17 @@ export default function AdminUserManagement() {
     // HANDLE USER CARD PRESS - Navigate to user detail view
     const handleUserPress = (user: UserDocument) => {
         // Pass user data to the detail screen
-        if (user.role === 'student'){
+        if (user.role === 'student') {
             return handleNavigateToUserDetail({
-              uid: user.uid,
-              firstName: user.firstName,
-              middleName: user.middleName,
-              lastName: user.lastName,
-              role: user.role,
-              sex: user.sex,
-              reading_Level: user.studentData?.reading_Level
+                uid: user.uid,
+                firstName: user.firstName,
+                middleName: user.middleName,
+                lastName: user.lastName,
+                role: user.role,
+                sex: user.sex,
+                reading_Level: user.studentData?.reading_Level
             });
-        }else if (user.role === 'faculty'){
+        } else if (user.role === 'faculty') {
             return handleNavigateToUserDetail({
                 uid: user.uid,
                 firstName: user.firstName,
@@ -124,7 +124,7 @@ export default function AdminUserManagement() {
                 email: user.email,
                 role: user.role,
                 sex: user.sex,
-              });
+            });
         }
     };
 
@@ -157,7 +157,7 @@ export default function AdminUserManagement() {
                         source={
                             item.profileImageUrl
                                 ? { uri: item.profileImageUrl } : item.sex === 'male' ?
-                                require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png') 
+                                    require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png')
                         }
                     />
                     <View style={adminUserManagment.roleIconBadge}>
@@ -206,24 +206,7 @@ export default function AdminUserManagement() {
         <SafeAreaView style={adminUserManagment.safeArea}>
             <View style={adminUserManagment.container}>
                 {/* BUBBLE BACKGROUND DECORATION */}
-                <View style={bubbles.bubblesContainer}>
-                    <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-                    <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-                </View>
+                <BubbleBackground />
 
                 {/* HEADER */}
                 <View style={upperNav.header}>

@@ -24,6 +24,7 @@ import login from '../UI_Designs/LoginStyles';
 import { useNavigationHelper } from '../Controller/NavigationController';
 import { loginUser } from '../Controller/AuthenticationController';
 import { initiateGoogleSignUp } from '../Utilities/googleAuthUtils';
+import { getAuth } from '@react-native-firebase/auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -34,6 +35,20 @@ export default function LoginScreen() {
   const [googleError, setGoogleError] = useState('');
 
   const { handleNextStep, handleReplaceStep, routeParams } = useNavigationHelper();
+
+  // ── Session Restoration Listener ───────────────────────────────────────────
+  useEffect(() => {
+    const auth = getAuth();
+    // onAuthStateChanged fires immediately with the current user state
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      // If a Firebase session already exists on the device, jump to Loading
+      if (user) {
+        handleReplaceStep('Loading');
+      }
+    });
+
+    return unsubscribe; // Cleanup listener on unmount
+  }, [handleReplaceStep]);
 
   useEffect(() => {
     if (routeParams?.authError) {
@@ -95,22 +110,23 @@ export default function LoginScreen() {
 
     try {
       setGoogleLoading(true);
-      const { email: googleEmail } = await initiateGoogleSignUp();
+      const { email: googleEmail, userExists } = await initiateGoogleSignUp();
 
-      // Navigate to ChooseRole, passing the Google credentials as params.
-      // ChooseRole will forward them to SignUpOne → SignUpTwo.
-      handleNextStep('ChooseRole', {
-        googleEmail,
-      });
+      if (userExists) {
+        // User already has an account! Log them in automatically.
+        handleReplaceStep('Loading');
+      } else {
+        // Navigate to ChooseRole, passing the Google credentials as params.
+        // ChooseRole will forward them to SignUpOne → SignUpTwo.
+        handleNextStep('ChooseRole', {
+          googleEmail,
+        });
+      }
     } catch (error: any) {
       // User deliberately dismissed the picker — show nothing
       if (error.message === 'CANCELLED') return;
 
-      setGoogleError(
-        error.message?.includes('already exists')
-          ? error.message
-          : 'Google Sign-In failed. Please try again.',
-      );
+      setGoogleError('Google Sign-In failed. Please try again.');
     } finally {
       setGoogleLoading(false);
     }
@@ -253,7 +269,7 @@ export default function LoginScreen() {
                       style={login.googleimage}
                       source={require('../../assets/images/Google-icon.png')}
                     />
-                    <Text style={login.registerText}>Sign Up with Google</Text>
+                    <Text style={login.registerText}>Continue with Google</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity

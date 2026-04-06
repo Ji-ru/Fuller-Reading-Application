@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Sound from 'react-native-sound';
+import { AppState, AppStateStatus } from 'react-native';
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 
 Sound.setCategory('Ambient', true);
@@ -71,6 +72,27 @@ export const GlobalMusicProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
     return unsubscribe;
   }, [stopMusic]); // stopMusic is stable (useCallback), so this runs only once
+
+  // Listen to AppState to automatically pause when backgrounded
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState.match(/inactive|background/)) {
+        // App goes to background -> manually pause audio node (if it was supposed to be playing)
+        if (isPlayingRef.current && bgMusicRef.current) {
+          bgMusicRef.current.pause();
+        }
+      } else if (nextAppState === 'active') {
+        // App comes back -> resume if it was supposed to be playing
+        if (isPlayingRef.current && bgMusicRef.current) {
+          bgMusicRef.current.play();
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const playMusic = useCallback(() => {
     setIsPlaying(prev => {

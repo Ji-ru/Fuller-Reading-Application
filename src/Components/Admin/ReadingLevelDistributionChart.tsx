@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { useAdminReadingLevelAnalytics } from '../../Hooks/Admin/useAdminReadingLevelAnalytics';
+import { sw, sh, sf } from '../../Utils/responsive';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -12,7 +13,7 @@ interface ReadingLevelDistributionChartProps {
 
 const chartConfig = {
   color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  strokeWidth: 2,
+  strokeWidth: sw(2),
   useShadowColorFromDataset: false,
 };
 
@@ -116,21 +117,21 @@ const ReadingLevelDistributionChart: React.FC<ReadingLevelDistributionChartProps
       population: readingLevels.beginner,
       color: COLORS.beginner,
       legendFontColor: COLORS.textPrimary,
-      legendFontSize: 12,
+      legendFontSize: sw(12),
     },
     {
       name: `Intermediate (${readingLevels.intermediate})`,
       population: readingLevels.intermediate,
       color: COLORS.intermediate,
       legendFontColor: COLORS.textPrimary,
-      legendFontSize: 12,
+      legendFontSize: sw(12),
     },
     {
       name: `Advanced (${readingLevels.advanced})`,
       population: readingLevels.advanced,
       color: COLORS.advanced,
       legendFontColor: COLORS.textPrimary,
-      legendFontSize: 12,
+      legendFontSize: sw(12),
     },
   ];
 
@@ -266,32 +267,32 @@ const ReadingLevelDistributionChart: React.FC<ReadingLevelDistributionChartProps
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 14,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: sw(14),
+    padding: sw(20),
+    marginBottom: sh(16),
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowRadius: sw(6),
     zIndex: 1, // To allow dropdown to overflow nicely if needed, but react native usually needs careful z-indexing
   },
   title: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Regular',
     color: COLORS.textSecondary,
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   filtersRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    gap: sw(12),
+    marginBottom: sh(20),
     zIndex: 10,
   },
   filterItem: {
@@ -300,46 +301,46 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   filterLabel: {
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Medium',
     color: COLORS.textSecondary,
-    marginBottom: 6,
+    marginBottom: sh(6),
   },
   filterButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(10),
     backgroundColor: '#FAFAFA',
     borderWidth: 1,
     borderColor: '#E8E8E8',
-    borderRadius: 8,
+    borderRadius: sw(8),
   },
   filterButtonText: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Medium',
     color: COLORS.textPrimary,
   },
   filterDropdownMenu: {
     position: 'absolute',
-    top: 60,
+    top: sh(60),
     left: 0,
     right: 0,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#E8E8E8',
-    borderRadius: 8,
+    borderRadius: sw(8),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowRadius: sw(12),
     elevation: 5,
     zIndex: 100,
   },
   dropdownOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: sh(12),
+    paddingHorizontal: sw(14),
     borderBottomWidth: 0.5,
     borderBottomColor: '#F0F0F0',
     backgroundColor: '#fff',
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryDim,
   },
   dropdownOptionText: {
-    fontSize: 13,
+    fontSize: sf(13),
     color: '#555',
     fontFamily: 'Satoshi-Regular',
   },
@@ -357,12 +358,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Medium',
   },
   noDataText: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Regular',
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: sh(20),
+    marginBottom: sh(20),
   },
   errorText: {
     color: COLORS.error,

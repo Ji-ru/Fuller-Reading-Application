@@ -7,7 +7,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList, useNavigationHelper } from '../../Controller/NavigationController';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import Sidebar from '../../Components/GlobalUse/Sidebar';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
@@ -19,6 +18,32 @@ import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
 import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
 import AccuracyTrendsChart from '../../Components/Faculty/Dashboard/AccuracyTrends';
 import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/NumberOFClassesAndStudents';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
+import ClassWordMastery from '../../Components/Faculty/Dashboard/ClassWordMastery';
+
+/**
+ * BASIC INFORMATION
+ *  - First Name
+ *  - Middle Name
+ *  - Last Name
+ *  - Email
+ *  - Sex
+ *  - Birthdate
+ * 
+ * ACADEMIC INFORMATION BASED ON FACULTY DASHBOARD  
+ *  - Total Classes
+ *  - Total Students
+ *  - Class Reading Status
+ *  - Alphabet Mastery
+ *  - Word Mastery
+ *  - Activity Tracking
+ *  - Common Miscue Type
+ *  - Overall Reading Statistics
+ *  - Top Miscue Passage
+ *  - Most Common Miscue Words
+ * 
+ */
 
 type ReadingActivityScreenRouteProp = RouteProp<
     RootStackParamList,
@@ -141,24 +166,7 @@ export default function AdminViewFacultyData() {
             <ScrollView showsVerticalScrollIndicator={false}>
                 <View>
                     {/* BUBBLE BACKGROUND DECORATION */}
-                    <View style={bubbles.bubblesContainer}>
-                        <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-                        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-                    </View>
+                    <BubbleBackground />
                     {/* HEADER */}
                     <View style={upperNav.header}>
                         <TouchableOpacity
@@ -166,6 +174,7 @@ export default function AdminViewFacultyData() {
                             onPress={handleBackStep}
                         >
                             <Image
+                                style={upperNav.backButtonIcon}
                                 source={require('../../../assets/icons/BackButton-icon.png')}
                             />
                         </TouchableOpacity>
@@ -205,6 +214,10 @@ export default function AdminViewFacultyData() {
                             studentCount={stats.studentCount}
                         />
 
+                        <ClassAlphabetMastery facultyId={facultyId} filter={filter} />
+
+                        <ClassWordMastery facultyId={facultyId} filter={filter} />
+
                         <ClassReadingStatus facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
 
                         <AccuracyTrendsChart facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
@@ -212,6 +225,7 @@ export default function AdminViewFacultyData() {
                         <ActiveHoursChart facultyId={facultyId} filter={filter} />
 
                         <MiscueAnalytics facultyId={facultyId} filter={filter} />
+
                     </View>
                 </View>
             </ScrollView>

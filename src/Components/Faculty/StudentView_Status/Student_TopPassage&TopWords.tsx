@@ -8,6 +8,7 @@ import {
   Dimensions
 } from "react-native";
 import { useStudentTopMiscuePassageAndWords } from "../../../Hooks/Faculty/use_StudentView_Progress";
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallScreen = screenWidth < 380;
@@ -139,26 +140,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
+    marginTop: sh(12),
+    fontSize: sf(16),
     color: '#6b7280',
   },
   errorText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#ef4444',
     textAlign: 'center',
   },
   noDataText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#6b7280',
     textAlign: 'center',
   },
   card: {
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: sw(12),
     padding: isSmallScreen ? 12 : 15,
-    marginHorizontal: 10,
-    marginBottom: 16,
+    marginHorizontal: sw(10),
+    marginBottom: sh(16),
     elevation: 5,
   },
   passageCard: {
@@ -173,18 +174,18 @@ const styles = StyleSheet.create({
     fontSize: isSmallScreen ? 16 : 18,
     fontWeight: '700',
     color: '#1f2937',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
   passageName: {
     fontSize: isSmallScreen ? 14 : 16,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   passageStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: sh(8),
   },
   passageStatItem: {
     alignItems: 'center',
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
   passageStatLabel: {
     fontSize: isSmallScreen ? 12 : 14,
     color: '#6b7280',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   passageStatValue: {
     fontSize: isSmallScreen ? 16 : 18,
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   wordsHeader: {
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   wordsTitle: {
     fontSize: isSmallScreen ? 16 : 18,
@@ -211,10 +212,10 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#f9fafb',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    marginBottom: 8,
+    paddingVertical: sh(12),
+    paddingHorizontal: sw(8),
+    borderRadius: sw(8),
+    marginBottom: sh(8),
   },
   headerText: {
     fontSize: isSmallScreen ? 12 : 14,
@@ -224,13 +225,13 @@ const styles = StyleSheet.create({
   },
   attemptHeader: {
     textAlign: 'right',
-    paddingRight: 8,
+    paddingRight: sw(8),
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: sh(12),
+    paddingHorizontal: sw(8),
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   column3: {
     flex: 1,
     alignItems: 'flex-end',
-    paddingRight: 8,
+    paddingRight: sw(8),
   },
   wordText: {
     fontSize: isSmallScreen ? 13 : 15,
@@ -253,10 +254,10 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   miscueTypeBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    minWidth: 80,
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(4),
+    borderRadius: sw(20),
+    minWidth: sw(80),
     alignItems: 'center',
   },
   miscueTypeText: {
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   noDataContainer: {
-    padding: 32,
+    padding: sw(32),
     alignItems: 'center',
     justifyContent: 'center',
   },

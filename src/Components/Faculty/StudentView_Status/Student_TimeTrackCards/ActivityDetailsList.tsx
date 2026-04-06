@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { sw, sh, sf } from '../../../../Utils/responsive';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -82,34 +83,34 @@ export const ActivityDetailsList: React.FC<ActivityDetailsListProps> = ({
 const s = StyleSheet.create({
   card: {
     backgroundColor: C.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 12,
+    borderRadius: sw(16),
+    padding: sw(20),
+    marginTop: sh(12),
     borderWidth: 1,
     borderColor: C.border,
   },
   title: {
-    fontSize: 15,
+    fontSize: sf(15),
     fontFamily: 'Satoshi-Bold',
     color: C.text,
-    marginBottom: 14,
+    marginBottom: sh(14),
   },
 
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: sh(10),
     borderBottomWidth: 1,
     borderBottomColor: C.border,
-    gap: 12,
+    gap: sw(12),
   },
   rowLast: {
     borderBottomWidth: 0,
   },
 
   label: {
-    width: 60,
-    fontSize: 13,
+    width: sw(60),
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Medium',
     color: C.textSub,
   },
@@ -122,23 +123,23 @@ const s = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: sw(10),
   },
   progressTrack: {
     flex: 1,
-    height: 6,
+    height: sw(6),
     backgroundColor: C.track,
-    borderRadius: 4,
+    borderRadius: sw(4),
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: sw(4),
   },
 
   value: {
-    minWidth: 52,
-    fontSize: 13,
+    minWidth: sw(52),
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Bold',
     color: C.textMuted,
     textAlign: 'right',

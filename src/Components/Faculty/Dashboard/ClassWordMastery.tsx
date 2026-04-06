@@ -10,6 +10,7 @@ import {
 import { TimeRange, WordChapterProgress, WordLessonProgress } from '../../../Controller/SessionReportContoller';
 import { useClassWordMastery } from '../../../Hooks/Faculty/useClassWordMastery';
 import type { ReadingStatusFilter } from '../../../Screens/Faculty/Faculty_Dashboard';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 // ============================================================================
 // DESIGN TOKENS  (same light system as AlphabetMastery)
@@ -31,7 +32,7 @@ const T = {
   blue: '#60a5fa', blueDim: 'rgba(96,165,250,0.12)', blueBd: 'rgba(96,165,250,0.30)',
   indigo: '#818cf8', indigoDim: 'rgba(129,140,248,0.12)', indigoBd: 'rgba(129,140,248,0.30)',
 
-  radius: 16,
+  radius: sw(16),
 };
 
 // ============================================================================
@@ -658,62 +659,62 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   compTitle: {
     ...F.black,             // Satoshi-Black: dominant headline
-    fontSize: 26,
+    fontSize: sf(26),
     color: T.text,
-    letterSpacing: -0.5,
-    lineHeight: 30,
+    letterSpacing: sf(-0.5),
+    lineHeight: sf(30),
   },
   compSubtitle: {
     ...F.italic,            // Satoshi-Italic: lightweight breadcrumb contrast
-    fontSize: 12,
+    fontSize: sf(12),
     color: T.muted,
-    marginTop: 5,
+    marginTop: sh(5),
   },
   statusChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
+    gap: sw(6),
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(8),
+    borderRadius: sw(999),
     borderWidth: 1,
   },
   statusDot: { width: 7, height: 7, borderRadius: 99 },
   statusText: {
     ...F.bold,              // Satoshi-Bold: punchy badge label
-    fontSize: 11,
-    letterSpacing: 0.2,
+    fontSize: sf(11),
+    letterSpacing: sf(0.2),
   },
 
   // ── Range filter (Week / Month / Year) ────────────────────────────────────
   rangeRow: {
     flexDirection: 'row',
     backgroundColor: T.surface2,
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 16,
+    borderRadius: sw(12),
+    padding: sw(4),
+    marginBottom: sh(16),
   },
   rangeTab: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: sh(8),
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: sw(10),
   },
   rangeTabActive: {
     backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: sw(4),
+    shadowOffset: { width: 0, height: sw(2) },
     elevation: 2,
   },
   rangeTabText: {
     ...F.medium,
-    fontSize: 13,
+    fontSize: sf(13),
     color: T.muted,
   },
   rangeTabTextActive: {
@@ -728,23 +729,23 @@ const styles = StyleSheet.create({
     borderRadius: T.radius,
     borderWidth: 1,
     borderColor: T.border,
-    padding: 14,
-    marginBottom: 14,
+    padding: sw(14),
+    marginBottom: sh(14),
     alignItems: 'center',
   },
   summaryItem: { flex: 1, alignItems: 'center', gap: 3 },
   summaryVal: {
     ...F.black,             // Satoshi-Black: summary hero number
-    fontSize: 18,
+    fontSize: sf(18),
   },
   summaryValSub: {
     ...F.medium,            // Satoshi-Medium: subordinate denominator
-    fontSize: 11,
+    fontSize: sf(11),
   },
   summaryLbl: {
     ...F.medium,            // Satoshi-Medium uppercase: structured label
-    fontSize: 8,
-    letterSpacing: 0.6,
+    fontSize: sf(8),
+    letterSpacing: sf(0.6),
     textTransform: 'uppercase',
     color: T.muted,
   },
@@ -756,24 +757,24 @@ const styles = StyleSheet.create({
     borderRadius: T.radius,
     borderWidth: 1,
     borderColor: T.border,
-    padding: 16,
-    marginBottom: 14,
+    padding: sw(16),
+    marginBottom: sh(14),
   },
   overallCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
   overallPct: {
     ...F.black,             // Satoshi-Black: large pct
-    fontSize: 20,
+    fontSize: sf(20),
   },
   overallCaption: {
     ...F.italic,            // Satoshi-Italic: soft supporting note
-    fontSize: 11,
+    fontSize: sf(11),
     color: T.muted,
-    marginTop: 6,
+    marginTop: sh(6),
   },
 
   // ── Card base ────────────────────────────────────────────────────────────
@@ -782,29 +783,29 @@ const styles = StyleSheet.create({
     borderRadius: T.radius,
     borderWidth: 1,
     borderColor: T.border,
-    padding: 18,
-    marginBottom: 14,
+    padding: sw(18),
+    marginBottom: sh(14),
   },
   cardLabel: {
     ...F.bold,              // Satoshi-Bold uppercase: section category tag
-    fontSize: 10,
-    letterSpacing: 0.8,
+    fontSize: sf(10),
+    letterSpacing: sf(0.8),
     textTransform: 'uppercase',
     color: T.muted,
-    marginBottom: 2,
+    marginBottom: sh(2),
   },
   cardTitle: {
     ...F.black,             // Satoshi-Black: section headline
-    fontSize: 16,
+    fontSize: sf(16),
     color: T.text,
-    marginBottom: 14,
+    marginBottom: sh(14),
   },
 
   // ── Fill bar ─────────────────────────────────────────────────────────────
   fillTrack: {
     width: '100%',
     backgroundColor: 'rgba(0,0,0,0.06)',
-    borderRadius: 999,
+    borderRadius: sw(999),
     overflow: 'hidden',
   },
   fillBar: { borderRadius: 999 },
@@ -812,11 +813,11 @@ const styles = StyleSheet.create({
   // ── Chapter pill strip (shows chapter title) ──────────────────────────────
   chapterStripContent: { gap: 8, paddingVertical: 4, paddingHorizontal: 2 },
   chapterPill: {
-    minWidth: 72,
-    maxWidth: 180,
-    height: 42,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    minWidth: sw(72),
+    maxWidth: sw(180),
+    height: sw(42),
+    paddingHorizontal: sw(12),
+    borderRadius: sw(12),
     backgroundColor: T.surface2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -828,7 +829,7 @@ const styles = StyleSheet.create({
   chapterPillEmpty: { opacity: 0.35 },
   chapterPillLetter: {
     ...F.black,
-    fontSize: 13,
+    fontSize: sf(13),
     color: T.muted,
     textAlign: 'center',
   },
@@ -838,7 +839,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4, right: 4,
     width: 6, height: 6,
-    borderRadius: 99,
+    borderRadius: sw(99),
     backgroundColor: T.green,
   },
 
@@ -847,39 +848,39 @@ const styles = StyleSheet.create({
   chapterStatBlock: {
     flex: 1,
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: sw(12),
+    padding: sw(12),
     borderTopWidth: 2,
     borderWidth: 1,
     borderColor: T.border,
   },
   chapterStatVal: {
     ...F.black,             // Satoshi-Black: chapter metric
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: sf(18),
+    lineHeight: sf(22),
   },
   chapterStatSub: {
     ...F.medium,            // Satoshi-Medium: denominator
-    fontSize: 12,
+    fontSize: sf(12),
     color: T.muted,
   },
   chapterStatLbl: {
     ...F.medium,            // Satoshi-Medium uppercase: label
-    fontSize: 9,
-    letterSpacing: 0.6,
+    fontSize: sf(9),
+    letterSpacing: sf(0.6),
     textTransform: 'uppercase',
     color: T.muted,
-    marginTop: 3,
+    marginTop: sh(3),
   },
 
   // ── Lesson card ──────────────────────────────────────────────────────────
   lessonCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: sw(14),
     borderWidth: 1,
     borderColor: T.border,
-    marginBottom: 10,
+    marginBottom: sh(10),
     overflow: 'hidden',
   },
   lessonAccentBar: { width: 4 },
@@ -915,7 +916,7 @@ const styles = StyleSheet.create({
   wordTileText: { ...F.bold, fontSize: 13 }, // Satoshi-Bold: word in tile
   wordTileMark: {
     ...F.bold,              // Satoshi-Bold: status mark at tiny size
-    fontSize: 7,
+    fontSize: sf(7),
     position: 'absolute', top: 2, right: 4,
   },
 
@@ -924,36 +925,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 14,
+    marginBottom: sh(14),
   },
   detailIpa: {
     ...F.regular,           // Satoshi-Regular: phonetic annotation
-    fontSize: 13,
+    fontSize: sf(13),
     color: T.blue,
-    marginTop: 2,
+    marginTop: sh(2),
   },
   chipRow: { flexDirection: 'row', gap: 5, flexWrap: 'wrap', justifyContent: 'flex-end' },
   chip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
   chipText: { ...F.bold, fontSize: 10 }, // Satoshi-Bold: chip count
   replayNote: {
     ...F.italic,            // Satoshi-Italic: session footnote
-    fontSize: 10,
+    fontSize: sf(10),
     color: T.muted,
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: sh(10),
   },
   detailProgRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   detailProgPct: {
     ...F.black,             // Satoshi-Black: closing pct
-    fontSize: 14,
-    minWidth: 40,
+    fontSize: sf(14),
+    minWidth: sw(40),
     textAlign: 'right',
   },
   detailCaption: {
     ...F.italic,            // Satoshi-Italic: soft closing note
-    fontSize: 11,
+    fontSize: sf(11),
     color: T.muted,
-    marginTop: 5,
+    marginTop: sh(5),
   },
 
   // ── Empty state ───────────────────────────────────────────────────────────
@@ -963,10 +964,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: T.border,
     borderStyle: 'dashed',
-    padding: 28,
+    padding: sw(28),
     alignItems: 'center',
-    marginBottom: 14,
-    gap: 8,
+    marginBottom: sh(14),
+    gap: sw(8),
   },
   emptyIcon: { fontSize: 32, marginBottom: 4 },
   emptyTitle: { ...F.bold, fontSize: 15, color: T.text, textAlign: 'center' },
@@ -978,12 +979,12 @@ const styles = StyleSheet.create({
     borderRadius: T.radius,
     borderWidth: 1,
     borderColor: T.border,
-    padding: 16,
-    marginVertical: 8,
+    padding: sw(16),
+    marginVertical: sh(8),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: sw(8),
     elevation: 2,
   },
 });

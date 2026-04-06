@@ -2,11 +2,36 @@
 // useState: manage internal status (e.g. isLoading), useEffect: handle side effects, useRef: persistent mutable values, useCallback/useMemo: memoize event handlers or calculations.
 import { useState, useCallback } from 'react';
 import { readFile } from 'react-native-fs';
-import { API_KEY } from '@env';
+import { API_KEY, DEEPGRAM_API } from '@env';
 import { Buffer } from 'buffer';
 
+// ASSEMBLY API AND URL
 const ASSEMBLYAI_API_KEY = API_KEY;
 const BASE_URL = 'https://api.assemblyai.com/v2';
+
+// DEEPGRAM API, URL AND TYPES
+const DEEPGRAM_API_KEY = DEEPGRAM_API;
+const DEEPGRAM_URL =
+  'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true&utterances=true&utt_split=0.8';
+
+type Utterance = {
+  transcript: string;
+  confidence: number;
+  start?: number;
+  end?: number;
+};
+
+type DeepgramResponse = {
+  results?: {
+    channels?: Array<{
+      alternatives?: Array<{
+        transcript?: string;
+        confidence?: number;
+        utterances?: Utterance[];
+      }>;
+    }>;
+  };
+};
 
 export const useSpeechToText = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +75,6 @@ export const useSpeechToText = () => {
     const data = await uploadResponse.json();
     return data.upload_url;
   };
-
 
   /**
    * Request transcription
@@ -137,9 +161,62 @@ export const useSpeechToText = () => {
     return targetText; // your existing fallback logic
   };
 
+  // DEEPGRAM SPEECH TO TEXT IMPLEMENTATION
+  const processAudioWithDeepgram = useCallback(
+    async (
+      audioFile: string,
+    ): Promise<{
+      fulltext: string;
+      utterances: Utterance[];
+    }> => {
+      try {
+        setIsLoading(true);
+
+        const base64audio = await readFile(audioFile, 'base64');
+        const binaryAudio = Buffer.from(base64audio, 'base64');
+
+        const response = await fetch(DEEPGRAM_URL, {
+          method: 'POST',
+          headers: {
+            authorization: `Token ${DEEPGRAM_API_KEY}`,
+            'Content-Type': 'application/octet-stream',
+          },
+          body: binaryAudio,
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Upload failed: ${errText}`);
+        }
+
+        const data: DeepgramResponse = await response.json();
+        const alt = data?.results?.channels?.[0]?.alternatives?.[0];
+        const fulltext = alt?.transcript?.trim() || '';
+        const utterances = alt?.utterances || [];
+
+        return { fulltext: fulltext || 'No speech detected', utterances };
+      } catch (error: any) {
+        // Surface the error through state instead of Alert so the calling
+        // screen can show a styled, dismissible modal with retry support.
+        setSttErrorVisible(true);
+        setSttErrorMessage(
+          error?.message
+            ? `Transcription failed: ${error.message}`
+            : 'Failed to transcribe audio. Please check your internet connection and try again.',
+        );
+        console.log('STT Error: ' + error.message);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
   return {
     isLoading,
     processAudioWithAssemblyAI,
+    processAudioWithDeepgram,
     getSimulatedResponse,
     // ── STT error modal ──────────────────────────────────────────────────────
     sttErrorVisible,

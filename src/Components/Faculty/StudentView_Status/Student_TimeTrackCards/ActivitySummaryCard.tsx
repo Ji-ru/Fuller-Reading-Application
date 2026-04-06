@@ -1,5 +1,6 @@
 
 import { View, Text, StyleSheet } from "react-native";
+import { sw, sh, sf } from '../../../../Utils/responsive';
 
 interface ActivitySummaryCardProps {
   total: number;
@@ -58,44 +59,44 @@ export const ActivitySummaryCard: React.FC<ActivitySummaryCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "white",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: sw(16),
+    padding: sw(20),
+    marginBottom: sh(16),
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: sw(1) },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: sw(4),
     elevation: 2,
   },
   title: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontWeight: "700",
     color: "#1f2937",
-    marginBottom: 12,
+    marginBottom: sh(12),
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: sh(12),
   },
   stat: {
     flex: 1,
     alignItems: "center",
   },
   value: {
-    fontSize: 24,
+    fontSize: sf(24),
     fontWeight: "700",
     color: "#111827",
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   label: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: "#6b7280",
   },
   trend: {
-    marginTop: 4,
-    fontSize: 13,
+    marginTop: sh(4),
+    fontSize: sf(13),
     fontWeight: "500",
     textAlign: "center",
   },
