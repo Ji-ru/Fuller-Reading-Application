@@ -76,7 +76,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithHuggingFace } =
+  const { isLoading, getSimulatedResponse, transcribeAudio } =
     useSpeechToText();
 
   // Navigation
@@ -226,7 +226,7 @@ export default function ReadingActivityScreenPage() {
   const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
     try {
       // const transcription = await processAudioWithGoogle(audioFile);
-      const transcription = await processAudioWithHuggingFace(audioFile);
+      const transcription = await transcribeAudio(audioFile, type, targetText);
       setSpokenText(transcription);
       console.log('THIS IS THE SPOKEN: ' + transcription);
 
@@ -244,7 +244,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithHuggingFace, getSimulatedResponse, targetText]);
+  }, [transcribeAudio, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:

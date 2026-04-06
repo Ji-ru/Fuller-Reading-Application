@@ -17,7 +17,7 @@ const LogoutModal:  React.FC<LogoutModalProps> = ({
   onCancel, 
   onConfirm, 
   title = "Logout",
-  message = "Are you sure you want to logout?",
+  message = "Sigurado ka ba na mag log out?",
   cancelText = "Cancel",
   confirmText = "Logout"
 }) => {
