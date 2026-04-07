@@ -7,6 +7,7 @@ import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import facultyProfile from '../../UI_Designs/FacultyProfile';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { getCurrentUser, getUserProfile, updateFacultyProfile } from '../../Controller/AuthenticationController';
+import { UserDocument } from '../../Interfaces/dataInterfaces';
 
 export default function FacultyProfile() {
   // ========================================================================
@@ -25,7 +26,7 @@ export default function FacultyProfile() {
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-
+  const [profileData, setProfileData] = useState<UserDocument | null>(null);
   // ========================================================================
   // HOOKS  
   // ========================================================================
@@ -45,6 +46,8 @@ export default function FacultyProfile() {
       const user = getCurrentUser();
       if (user) {
         const profile = await getUserProfile(user.uid);
+        setProfileData(profile);
+
         if (profile) {
           setFirstName(profile.firstName || '');
           setMiddleName(profile.middleName || '');
@@ -150,12 +153,16 @@ export default function FacultyProfile() {
             <View style={facultyProfile.profileCard}>
               
               {/* Floating Avatar */}
-              <View style={facultyProfile.avatarContainer}>
-                <Image 
-                  source={require('../../../assets/icons/User-icon.png')} 
-                  style={facultyProfile.avatarIcon} 
-                />
-              </View>
+            <View style={facultyProfile.avatarContainer}>
+              <Image
+                source={
+                  profileData?.profileImageUrl
+                    ? { uri: profileData.profileImageUrl } : profileData?.sex === 'male' ?
+                      require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png')
+                }
+                style={facultyProfile.avatarIcon}
+              />
+            </View>
 
               {/* FIRST NAME */}
               <View style={facultyProfile.inputGroup}>
