@@ -1,31 +1,100 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import BottomNav from '../../Components/Faculty/NavigationBar/BottomNav'; 
 import facultyProfile from '../../UI_Designs/FacultyProfile';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import { getCurrentUser, getUserProfile, updateFacultyProfile } from '../../Controller/AuthenticationController';
+import { UserDocument } from '../../Interfaces/dataInterfaces';
+
 export default function FacultyProfile() {
   // ========================================================================
   // STATE MANAGEMENT 
   // ========================================================================
 
-  /** Controls visibility of dropdown menu */
   const [menuVisible, setMenuVisible] = useState(false);
-
-  /** Controls visibility of logout confirmation modal */
   const [logoutVisible, setLogoutVisible] = useState(false);
-  
+
+  // Profile States
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [profileData, setProfileData] = useState<UserDocument | null>(null);
   // ========================================================================
   // HOOKS  
   // ========================================================================
-  
+
   const { handleBackStep, handleLogout } = useNavigationHelper();
-  
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
   // ========================================================================
-  // EVENT HANDLER   
+  // DATA FETCHING & UPDATING
+  // ========================================================================
+
+  const fetchProfileData = async () => {
+    try {
+      const user = getCurrentUser();
+      if (user) {
+        const profile = await getUserProfile(user.uid);
+        setProfileData(profile);
+
+        if (profile) {
+          setFirstName(profile.firstName || '');
+          setMiddleName(profile.middleName || '');
+          setLastName(profile.lastName || '');
+          setEmail(profile.email || '');
+        }
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not load profile data.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      Alert.alert('Validation Error', 'First Name, Last Name, and Email are required.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const user = getCurrentUser();
+      if (user) {
+        await updateFacultyProfile(user.uid, {
+          firstName: firstName.trim(),
+          middleName: middleName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+        });
+        setIsEditing(false);
+        Alert.alert('Success', 'Profile updated successfully!');
+      }
+    } catch (error: any) {
+      Alert.alert('Update Failed', error.message || 'An error occurred while updating.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    fetchProfileData(); // Reset to original values
+  };
+
+  // ========================================================================
+  // EVENT HANDLERS   
   // ========================================================================
 
   const toggleMenu = () => {
@@ -48,31 +117,12 @@ export default function FacultyProfile() {
 
   return (
     <SafeAreaView style={facultyProfile.container}>
-        <View style={facultyProfile.insideContainer}>
-
+      <View style={facultyProfile.insideContainer}>
         {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer}>
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
+        <BubbleBackground />
 
         {/* HEADER */}
         <View style={upperNav.header}>
-
           <Image
             style={upperNav.ciscLogo}
             source={require('../../../assets/images/cisckids.png')}
@@ -84,6 +134,133 @@ export default function FacultyProfile() {
             />
           </TouchableOpacity>
         </View>
+
+        {/* MAIN SCROLL CONTENT */}
+        <ScrollView 
+          contentContainerStyle={facultyProfile.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={facultyProfile.titleGroup}>
+            <Text style={facultyProfile.screenTitle}>My Profile</Text>
+          </View>
+
+          {isLoading ? (
+            <View style={facultyProfile.loadingContainer}>
+              <ActivityIndicator size="large" color="#3B7FC9" />
+            </View>
+          ) : (
+            <View style={facultyProfile.profileCard}>
+              
+              {/* Floating Avatar */}
+            <View style={facultyProfile.avatarContainer}>
+              <Image
+                source={
+                  profileData?.profileImageUrl
+                    ? { uri: profileData.profileImageUrl } : profileData?.sex === 'male' ?
+                      require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png')
+                }
+                style={facultyProfile.avatarIcon}
+              />
+            </View>
+
+              {/* FIRST NAME */}
+              <View style={facultyProfile.inputGroup}>
+                <Text style={facultyProfile.label}>First Name</Text>
+                <TextInput
+                  style={[
+                    facultyProfile.textInput,
+                    !isEditing && facultyProfile.textInputDisabled,
+                  ]}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  editable={isEditing}
+                />
+              </View>
+
+              {/* MIDDLE NAME (OPTIONAL) */}
+              <View style={facultyProfile.inputGroup}>
+                <Text style={facultyProfile.label}>Middle Name</Text>
+                <TextInput
+                  style={[
+                    facultyProfile.textInput,
+                    !isEditing && facultyProfile.textInputDisabled,
+                  ]}
+                  value={middleName}
+                  onChangeText={setMiddleName}
+                  editable={isEditing}
+                  placeholder={isEditing ? 'Optional' : ''}
+                  placeholderTextColor="#A0A0A0"
+                />
+              </View>
+
+              {/* LAST NAME */}
+              <View style={facultyProfile.inputGroup}>
+                <Text style={facultyProfile.label}>Last Name</Text>
+                <TextInput
+                  style={[
+                    facultyProfile.textInput,
+                    !isEditing && facultyProfile.textInputDisabled,
+                  ]}
+                  value={lastName}
+                  onChangeText={setLastName}
+                  editable={isEditing}
+                />
+              </View>
+
+              {/* EMAIL */}
+              <View style={facultyProfile.inputGroup}>
+                <Text style={facultyProfile.label}>Email Address</Text>
+                <TextInput
+                  style={[
+                    facultyProfile.textInput,
+                    !isEditing && facultyProfile.textInputDisabled,
+                  ]}
+                  value={email}
+                  onChangeText={setEmail}
+                  editable={isEditing}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* ACTION BUTTONS */}
+              {isEditing ? (
+                <View style={facultyProfile.actionRow}>
+                  <TouchableOpacity 
+                    style={facultyProfile.cancelButton} 
+                    onPress={handleCancel}
+                    disabled={isSaving}
+                  >
+                    <Text style={facultyProfile.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={facultyProfile.saveButton} 
+                    onPress={handleSave}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={facultyProfile.saveButtonText}>Save</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={facultyProfile.actionRow}>
+                  <TouchableOpacity 
+                    style={facultyProfile.editButton} 
+                    onPress={() => setIsEditing(true)}
+                  >
+                    <Text style={facultyProfile.editButtonText}>Edit Profile</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+            </View>
+          )}
+        </ScrollView>
 
         {/* DROPDOWN MENU */}
         {menuVisible && (
@@ -109,14 +286,14 @@ export default function FacultyProfile() {
             activeOpacity={1}
           />
         )}
+        
         {/* LOGOUT MODAL */}
         <LogoutModal
           visible={logoutVisible}
           onCancel={cancelLogout}
           onConfirm={confirmLogout}
         />
-        </View>
-      <BottomNav />
+      </View>
     </SafeAreaView>
   );
 }

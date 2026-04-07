@@ -51,6 +51,25 @@
 	<false/>
 	<key>UIAppFonts</key>
 	<array>
+		<string>Comfortaa-Bold.ttf</string>
+		<string>Comfortaa-Light.ttf</string>
+		<string>Comfortaa-Medium.ttf</string>
+		<string>Comfortaa-Regular.ttf</string>
+		<string>Comfortaa-SemiBold.ttf</string>
+		<string>Comfortaa-VariableFont_wght.ttf</string>
+		<string>DynaPuff-Bold.ttf</string>
+		<string>DynaPuff-Medium.ttf</string>
+		<string>DynaPuff-Regular.ttf</string>
+		<string>DynaPuff-SemiBold.ttf</string>
+		<string>DynaPuff-VariableFont_wdth,wght.ttf</string>
+		<string>DynaPuff_Condensed-Bold.ttf</string>
+		<string>DynaPuff_Condensed-Medium.ttf</string>
+		<string>DynaPuff_Condensed-Regular.ttf</string>
+		<string>DynaPuff_Condensed-SemiBold.ttf</string>
+		<string>DynaPuff_SemiCondensed-Bold.ttf</string>
+		<string>DynaPuff_SemiCondensed-Medium.ttf</string>
+		<string>DynaPuff_SemiCondensed-Regular.ttf</string>
+		<string>DynaPuff_SemiCondensed-SemiBold.ttf</string>
 		<string>Satoshi-Black.ttf</string>
 		<string>Satoshi-BlackItalic.ttf</string>
 		<string>Satoshi-Bold.ttf</string>

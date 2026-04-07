@@ -1,5 +1,4 @@
 // Note: React hooks such as useState and useEffect can be used inside custom hooks or components but not in plain objects or services.
-import { useEffect, useState } from 'react';
 import { Platform, PermissionsAndroid, Alert } from 'react-native';
 
 // Alternative: Non-hook version for direct usage

@@ -2,81 +2,80 @@ import React, { useEffect, useState } from 'react';
 import Video from 'react-native-video';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  where,
+} from '@react-native-firebase/firestore';
+import { getAuth, signOut } from '@react-native-firebase/auth';
 import loading from '../../UI_Designs/LoadingStyles';
 
 export default function LoadingScreen() {
-  const { handleReplaceStep } = useNavigationHelper();
+  const auth = getAuth();
+  const db = getFirestore();
+  const { handleReplaceStep, handleDesignatedUserPage } = useNavigationHelper();
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Loading...');
 
   useEffect(() => {
     console.log('LoadingScreen: Starting verification...');
-    
+
     const verifyUserAndNavigate = async () => {
       try {
         // Check authentication
-        const currentUser = auth().currentUser;
-        
+        const currentUser = auth.currentUser;
+
         if (!currentUser) {
           console.log('LoadingScreen: No user found, going to Login');
           setStatusMessage('No user found. Redirecting...');
           setTimeout(() => {
-            handleReplaceStep('Login');
+            handleReplaceStep('Login', { authError: 'Session expired. Please sign in again.' });
           }, 1000);
           return;
         }
 
-        console.log('LoadingScreen: User found, checking profile...');
         setStatusMessage('Checking profile...');
-        
-        // Check user profile
-        const userDoc = await firestore()
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
 
-        if (!userDoc.exists) {
-          console.log('LoadingScreen: Profile not found, going to Login');
+        // Check user profile
+        const userRef = await collection(db, 'users');
+        const userProfile = query(userRef, where('uid', '==', currentUser.uid));
+        const userSnapshot = await getDocs(userProfile);
+        
+        if (userSnapshot.empty) {
           setStatusMessage('Profile not found. Redirecting...');
-          setTimeout(() => {
-            auth().signOut();
-            handleReplaceStep('Login');
+          setTimeout(async () => {
+            await signOut(auth);
+            handleReplaceStep('Login', { authError: 'Account profile not found. Please contact an administrator.' });
           }, 1000);
           return;
         }
-
+        // Get the document of the user
+        const userDoc = userSnapshot.docs[0];
         const userData = userDoc.data();
         const role = userData?.role;
-        
-        console.log(`LoadingScreen: User verified as ${role}, going to UserHome`);
+
+
         setStatusMessage(`Welcome ${userData?.firstName || ''}!`);
 
         // Success - navigate to UserHome
         setTimeout(() => {
-          if (role === 'student') {
-            handleReplaceStep('UserHome');
-          } else if (role === 'faculty') {
-            handleReplaceStep('FacultyDashboard');
-          }
-          
+          handleDesignatedUserPage(role)
         }, 500);
 
       } catch (error) {
-        console.error('LoadingScreen: Error during verification:', error);
-        setStatusMessage('Error. Redirecting...');
+        setStatusMessage('Error verifying. Redirecting...');
         setTimeout(() => {
-          handleReplaceStep('Login');
+          handleReplaceStep('Login', { authError: 'Failed to verify account. Please check your internet connection.' });
         }, 1000);
       }
     };
 
     // Set a timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
-      console.log('LoadingScreen: Timeout reached, going to Login');
-      handleReplaceStep('Login');
-    }, 3500);
+      handleReplaceStep('Login', { authError: 'Connection timed out. Please try signing in again.' });
+    }, 5000);
 
     // Start verification after a short delay
     const verifyTimer = setTimeout(() => {
@@ -95,7 +94,6 @@ export default function LoadingScreen() {
     }, 50);
 
     return () => {
-      console.log('LoadingScreen: Cleanup');
       clearTimeout(timeoutId);
       clearTimeout(verifyTimer);
       clearInterval(progressInterval);
@@ -108,16 +106,27 @@ export default function LoadingScreen() {
         style={loading.video}
         source={require('../../../assets/videos/cisc_logo_animated.mp4')}
         repeat={true}
-        resizeMode='cover'
+        resizeMode="cover"
       />
-      
+
       <View style={loading.progressContainer}>
         <View style={loading.progressBarBackground}>
-          <View style={[loading.progressBarFill, { width: `${Math.min(progress, 100)}%` }]} />
+          <View
+            style={[
+              loading.progressBarFill,
+              { width: `${Math.min(progress, 100)}%` },
+            ]}
+          />
         </View>
-        <Text style={loading.progressText}>{Math.round(Math.min(progress, 100))}%</Text>
+        <Text style={loading.progressText}>
+          {Math.round(Math.min(progress, 100))}%
+        </Text>
         <Text style={loading.statusText}>{statusMessage}</Text>
-        <ActivityIndicator size="small" color="#2CA96A" style={loading.loadingSpinner} />
+        <ActivityIndicator
+          size="small"
+          color="#2CA96A"
+          style={loading.loadingSpinner}
+        />
       </View>
     </View>
   );

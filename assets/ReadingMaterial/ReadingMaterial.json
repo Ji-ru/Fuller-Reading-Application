@@ -1,431 +1,1488 @@
 {
   "Alphabet": [
-    {"letter": "A"}, {"letter": "B"}, {"letter": "C"}, {"letter": "D"}, {"letter": "E"},
-    {"letter": "F"}, {"letter": "G"}, {"letter": "H"}, {"letter": "I"}, {"letter": "J"},
-    {"letter": "K"}, {"letter": "L"}, {"letter": "M"}, {"letter": "N"}, {"letter": "O"},
-    {"letter": "P"}, {"letter": "Q"}, {"letter": "R"}, {"letter": "S"}, {"letter": "T"},
-    {"letter": "U"}, {"letter": "V"}, {"letter": "W"}, {"letter": "X"}, {"letter": "Y"},
-    {"letter": "Z"}
+    {
+      "letter": "A"
+    },
+    {
+      "letter": "B"
+    },
+    {
+      "letter": "C"
+    },
+    {
+      "letter": "D"
+    },
+    {
+      "letter": "E"
+    },
+    {
+      "letter": "F"
+    },
+    {
+      "letter": "G"
+    },
+    {
+      "letter": "H"
+    },
+    {
+      "letter": "I"
+    },
+    {
+      "letter": "J"
+    },
+    {
+      "letter": "K"
+    },
+    {
+      "letter": "L"
+    },
+    {
+      "letter": "M"
+    },
+    {
+      "letter": "N"
+    },
+    {
+      "letter": "O"
+    },
+    {
+      "letter": "P"
+    },
+    {
+      "letter": "Q"
+    },
+    {
+      "letter": "R"
+    },
+    {
+      "letter": "S"
+    },
+    {
+      "letter": "T"
+    },
+    {
+      "letter": "U"
+    },
+    {
+      "letter": "V"
+    },
+    {
+      "letter": "W"
+    },
+    {
+      "letter": "X"
+    },
+    {
+      "letter": "Y"
+    },
+    {
+      "letter": "Z"
+    }
   ],
-
   "Words": [
     {
-      "letter": "A",
-      "contrasts": [
+      "chapters": [
         {
-          "phoneme": "short_a",
-          "ipa": "/æ/",
-          "words": ["ant", "cat", "bat", "hat", "map", "pan", "rat", "jam", "fan", "cap"]
+          "chapter_id": 1,
+          "title": "Vowels",
+          "lessons": [
+            {
+              "lesson_id": 1,
+              "title": "Vowel 'a'",
+              "letter": "A",
+              "words": [
+                "cat",
+                "bat",
+                "hat",
+                "mat",
+                "rat",
+                "map",
+                "tap",
+                "cap",
+                "nap",
+                "lap"
+              ],
+              "phrases": [
+                "a fat cat",
+                "mad rat ran",
+                "sad dad sat",
+                "can tap the map",
+                "a bag and a tag"
+              ]
+            },
+            {
+              "lesson_id": 2,
+              "title": "Vowel 'e'",
+              "letter": "E",
+              "words": [
+                "bed",
+                "red",
+                "fed",
+                "led",
+                "pen",
+                "hen",
+                "ten",
+                "men",
+                "den",
+                "wet"
+              ],
+              "phrases": [
+                "ten red pens",
+                "get the wet pet",
+                "men fed the hen",
+                "let me get the net",
+                "set the bed in the den"
+              ]
+            },
+            {
+              "lesson_id": 3,
+              "title": "Vowel 'i'",
+              "letter": "I",
+              "words": [
+                "big",
+                "dig",
+                "fig",
+                "pig",
+                "wig",
+                "hit",
+                "sit",
+                "fit",
+                "kit",
+                "lit"
+              ],
+              "phrases": [
+                "big pig digs",
+                "sit and win",
+                "hit the tin",
+                "fit the wig on him",
+                "dig with a big kit"
+              ]
+            },
+            {
+              "lesson_id": 4,
+              "title": "Vowel 'o'",
+              "letter": "O",
+              "words": [
+                "dog",
+                "log",
+                "fog",
+                "bog",
+                "hot",
+                "dot",
+                "pot",
+                "got",
+                "not",
+                "lot"
+              ],
+              "phrases": [
+                "hot dog on a log",
+                "hop on top",
+                "mop the pot",
+                "fog got the dog",
+                "not a lot to pop"
+              ]
+            },
+            {
+              "lesson_id": 5,
+              "title": "Vowel 'u'",
+              "letter": "U",
+              "words": [
+                "bug",
+                "dug",
+                "hug",
+                "mug",
+                "rug",
+                "tug",
+                "cup",
+                "pup",
+                "up",
+                "cut"
+              ],
+              "phrases": [
+                "bug on the rug",
+                "run to the sun",
+                "hug the pup",
+                "cut the nut",
+                "fun in the hut"
+              ]
+            }
+          ]
         },
         {
-          "phoneme": "long_a",
-          "ipa": "/eɪ/",
-          "words": ["ape", "cake", "face", "game", "lake", "name", "rain", "train", "day", "play"]
-        }
-      ]
-    },
-
-    {
-      "letter": "B",
-      "contrasts": [
-        {
-          "phoneme": "initial_b",
-          "ipa": "/b/",
-          "words": ["ball", "bat", "bed", "bus", "bug", "bag", "box", "boy", "bear", "bike"]
+          "chapter_id": 2,
+          "title": "Vowel Digraphs and Diphthongs",
+          "lessons": [
+            {
+              "lesson_id": 1,
+              "title": "consonant + 'a' + consonant + 'e'",
+              "letter": "A",
+              "words": [
+                "cake",
+                "bake",
+                "lake",
+                "make",
+                "take",
+                "wake",
+                "name",
+                "game",
+                "same",
+                "came"
+              ],
+              "phrases": [
+                "make a cake",
+                "wake up late",
+                "same name game",
+                "take the cake to the lake",
+                "save the date"
+              ]
+            },
+            {
+              "lesson_id": 2,
+              "title": "words with '-ai'",
+              "letter": "A",
+              "words": [
+                "rain",
+                "pain",
+                "gain",
+                "main",
+                "train",
+                "brain",
+                "chain",
+                "drain",
+                "plain",
+                "stain"
+              ],
+              "phrases": [
+                "train in the rain",
+                "mail the sail",
+                "gain no pain",
+                "snail on the trail",
+                "chain on the drain"
+              ]
+            },
+            {
+              "lesson_id": 3,
+              "title": "words with '-ay'",
+              "letter": "A",
+              "words": [
+                "day",
+                "bay",
+                "hay",
+                "jay",
+                "lay",
+                "may",
+                "pay",
+                "ray",
+                "say",
+                "way"
+              ],
+              "phrases": [
+                "play all day",
+                "stay away today",
+                "lay in the hay",
+                "pay to play",
+                "gray clay tray"
+              ]
+            },
+            {
+              "lesson_id": 4,
+              "title": "words with 'ie'",
+              "letter": "E",
+              "words": [
+                "pie",
+                "tie",
+                "lie",
+                "die",
+                "field",
+                "yield",
+                "brief",
+                "chief",
+                "thief",
+                "belief"
+              ],
+              "phrases": [
+                "tie the pie",
+                "chief of the field",
+                "piece of relief",
+                "yield to belief",
+                "brief niece"
+              ]
+            },
+            {
+              "lesson_id": 5,
+              "title": "words with 'ee'",
+              "letter": "E",
+              "words": [
+                "see",
+                "bee",
+                "fee",
+                "tee",
+                "wee",
+                "tree",
+                "free",
+                "knee",
+                "three",
+                "speed"
+              ],
+              "phrases": [
+                "see the bee",
+                "three free trees",
+                "meet my feet",
+                "need speed to feed",
+                "sweet sheet"
+              ]
+            },
+            {
+              "lesson_id": 6,
+              "title": "words with 'ea'",
+              "letter": "E",
+              "words": [
+                "eat",
+                "meat",
+                "beat",
+                "heat",
+                "seat",
+                "feat",
+                "neat",
+                "treat",
+                "wheat",
+                "beach"
+              ],
+              "phrases": [
+                "eat the meat",
+                "teach at the beach",
+                "please speak",
+                "weak sneak",
+                "wheat treat"
+              ]
+            },
+            {
+              "lesson_id": 7,
+              "title": "words added with 'e'",
+              "letter": "I",
+              "words": [
+                "bite",
+                "kite",
+                "site",
+                "mite",
+                "quite",
+                "white",
+                "write",
+                "hide",
+                "ride",
+                "side"
+              ],
+              "phrases": [
+                "ride the white kite",
+                "hide and slide",
+                "quite wide side",
+                "five brides glide",
+                "drive to dive"
+              ]
+            },
+            {
+              "lesson_id": 8,
+              "title": "words ending in '-y'",
+              "letter": "I",
+              "words": [
+                "fly",
+                "sky",
+                "dry",
+                "try",
+                "cry",
+                "fry",
+                "sly",
+                "spy",
+                "shy",
+                "why"
+              ],
+              "phrases": [
+                "fly in the sky",
+                "try not to cry",
+                "shy spy",
+                "why deny",
+                "apply and supply"
+              ]
+            },
+            {
+              "lesson_id": 9,
+              "title": "words with 'l'",
+              "letter": "I",
+              "words": [
+                "wild",
+                "mild",
+                "child",
+                "file",
+                "mile",
+                "pile",
+                "tile",
+                "while",
+                "smile",
+                "style"
+              ],
+              "phrases": [
+                "wild child",
+                "smile a while",
+                "file the tile",
+                "final mile",
+                "vital cycle"
+              ]
+            },
+            {
+              "lesson_id": 10,
+              "title": "words with 'ie'",
+              "letter": "I",
+              "words": [
+                "pie",
+                "tie",
+                "lie",
+                "die",
+                "cried",
+                "tried",
+                "fried",
+                "dried",
+                "flies",
+                "ties"
+              ],
+              "phrases": [
+                "tie the pie",
+                "tried and cried",
+                "flies and dies",
+                "fried pies",
+                "spies lie"
+              ]
+            },
+            {
+              "lesson_id": 11,
+              "title": "words with '-o' or '-u'",
+              "letter": "O",
+              "words": [
+                "on",
+                "off",
+                "son",
+                "won",
+                "ton",
+                "done",
+                "none",
+                "month",
+                "front",
+                "come"
+              ],
+              "phrases": [
+                "come and love",
+                "son won",
+                "some glove above",
+                "mother and brother",
+                "front of another"
+              ]
+            },
+            {
+              "lesson_id": 12,
+              "title": "words added with 'e'",
+              "letter": "O",
+              "words": [
+                "bone",
+                "stone",
+                "cone",
+                "zone",
+                "phone",
+                "throne",
+                "alone",
+                "home",
+                "dome",
+                "Rome"
+              ],
+              "phrases": [
+                "home alone",
+                "stone throne",
+                "smoke broke the cone",
+                "hope and cope",
+                "joke on the phone"
+              ]
+            },
+            {
+              "lesson_id": 13,
+              "title": "words with '-aw'",
+              "letter": "O",
+              "words": [
+                "saw",
+                "raw",
+                "law",
+                "draw",
+                "straw",
+                "claw",
+                "flaw",
+                "jaw",
+                "paw",
+                "thaw"
+              ],
+              "phrases": [
+                "saw the law",
+                "draw with a claw",
+                "yawn at dawn",
+                "crawl on the lawn",
+                "awful hawk"
+              ]
+            },
+            {
+              "lesson_id": 14,
+              "title": "words with '-au'",
+              "letter": "O",
+              "words": [
+                "haul",
+                "maul",
+                "Paul",
+                "fault",
+                "vault",
+                "cause",
+                "pause",
+                "sauce",
+                "launch",
+                "haunt"
+              ],
+              "phrases": [
+                "Paul's fault",
+                "pause and haul",
+                "taught the daughter",
+                "caught in autumn",
+                "naughty author"
+              ]
+            },
+            {
+              "lesson_id": 15,
+              "title": "words with '-oo'",
+              "letter": "O",
+              "words": [
+                "book",
+                "look",
+                "cook",
+                "hook",
+                "took",
+                "shook",
+                "foot",
+                "good",
+                "wood",
+                "hood"
+              ],
+              "phrases": [
+                "look at the book",
+                "good wood",
+                "cook shook the hook",
+                "stood on foot",
+                "could pull wool"
+              ]
+            },
+            {
+              "lesson_id": 16,
+              "title": "words with '-o' or '-u'",
+              "letter": "A",
+              "words": [
+                "love",
+                "dove",
+                "above",
+                "glove",
+                "shove",
+                "some",
+                "come",
+                "done",
+                "none",
+                "won"
+              ],
+              "phrases": [
+                "love from above",
+                "some money honey",
+                "come up front",
+                "mother loves son",
+                "done with glove"
+              ]
+            },
+            {
+              "lesson_id": 17,
+              "title": "words with '-ou' sounded as /aw/",
+              "letter": "A",
+              "words": [
+                "out",
+                "pout",
+                "shout",
+                "about",
+                "scout",
+                "proud",
+                "cloud",
+                "loud",
+                "found",
+                "round"
+              ],
+              "phrases": [
+                "shout out loud",
+                "proud of cloud",
+                "found round sound",
+                "count and bounce",
+                "mouse in the house"
+              ]
+            },
+            {
+              "lesson_id": 18,
+              "title": "words with '-ow' sounded as /aw/",
+              "letter": "A",
+              "words": [
+                "cow",
+                "how",
+                "now",
+                "bow",
+                "wow",
+                "plow",
+                "brow",
+                "town",
+                "down",
+                "brown"
+              ],
+              "phrases": [
+                "cow in town",
+                "how now brown cow",
+                "flower power",
+                "down with a frown",
+                "clown with a crown"
+              ]
+            },
+            {
+              "lesson_id": 19,
+              "title": "words with 'oy' or 'oi' sounds",
+              "letter": "O",
+              "words": [
+                "boy",
+                "toy",
+                "joy",
+                "Roy",
+                "annoy",
+                "enjoy",
+                "employ",
+                "destroy",
+                "loyal",
+                "royal"
+              ],
+              "phrases": [
+                "boy and his toy",
+                "joy to employ",
+                "boil in oil",
+                "join the coin",
+                "noise of voice"
+              ]
+            },
+            {
+              "lesson_id": 20,
+              "title": "words with '-ew'",
+              "letter": "U",
+              "words": [
+                "new",
+                "few",
+                "dew",
+                "chew",
+                "blew",
+                "crew",
+                "drew",
+                "flew",
+                "grew",
+                "knew"
+              ],
+              "phrases": [
+                "new crew flew",
+                "chew few cashews",
+                "knew the view",
+                "threw a screw",
+                "nephew grew"
+              ]
+            }
+          ]
         },
         {
-          "phoneme": "final_b",
-          "ipa": "/b/",
-          "words": ["web", "tub", "crib", "grab", "crab", "blob", "bulb", "club", "robe", "cube"]
-        }
-      ]
-    },
-
-    {
-      "letter": "C",
-      "contrasts": [
-        {
-          "phoneme": "hard_c",
-          "ipa": "/k/",
-          "words": ["cat", "cap", "cup", "car", "cow", "cake", "corn", "crab", "cage", "candy"]
+          "chapter_id": 3,
+          "title": "Consonant Blending",
+          "lessons": [
+            {
+              "lesson_id": 1,
+              "title": "Consonant Blend 'bl'",
+              "letter": "B",
+              "words": [
+                "blue",
+                "blow",
+                "black",
+                "block",
+                "blood",
+                "blend",
+                "blink",
+                "blind",
+                "bleed",
+                "blaze"
+              ],
+              "phrases": [
+                "black and blue",
+                "blow a bubble",
+                "blind blink",
+                "blood and blade",
+                "bless and bliss"
+              ]
+            },
+            {
+              "lesson_id": 2,
+              "title": "Consonant Blend 'br'",
+              "letter": "B",
+              "words": [
+                "brown",
+                "bring",
+                "bread",
+                "break",
+                "brick",
+                "brave",
+                "bride",
+                "brain",
+                "brush",
+                "brass"
+              ],
+              "phrases": [
+                "brown bread",
+                "brave bride",
+                "break a brick",
+                "brush and broom",
+                "bring brass"
+              ]
+            },
+            {
+              "lesson_id": 3,
+              "title": "Consonant Blend 'gl'",
+              "letter": "G",
+              "words": [
+                "glad",
+                "glass",
+                "glue",
+                "globe",
+                "glove",
+                "glow",
+                "glide",
+                "gloom",
+                "glare",
+                "gleam"
+              ],
+              "phrases": [
+                "glad glove",
+                "glass globe",
+                "glue and glow",
+                "glide with glory",
+                "gloom and gleam"
+              ]
+            },
+            {
+              "lesson_id": 4,
+              "title": "Consonant Blend 'gr'",
+              "letter": "G",
+              "words": [
+                "green",
+                "grass",
+                "grow",
+                "great",
+                "grape",
+                "grade",
+                "grain",
+                "grand",
+                "grasp",
+                "gray"
+              ],
+              "phrases": [
+                "green grass",
+                "grow grapes",
+                "great grade",
+                "grasp and grip",
+                "greet with grace"
+              ]
+            },
+            {
+              "lesson_id": 5,
+              "title": "Consonant Blend 'cr'",
+              "letter": "C",
+              "words": [
+                "crab",
+                "crack",
+                "crash",
+                "cream",
+                "creek",
+                "creep",
+                "crew",
+                "crib",
+                "crown",
+                "crowd"
+              ],
+              "phrases": [
+                "crab in creek",
+                "cream and crack",
+                "crown on crew",
+                "crawl to crib",
+                "crazy craft"
+              ]
+            },
+            {
+              "lesson_id": 6,
+              "title": "Consonant Blend 'cl'",
+              "letter": "C",
+              "words": [
+                "clap",
+                "class",
+                "clean",
+                "clock",
+                "close",
+                "cloud",
+                "clown",
+                "club",
+                "clam",
+                "clay"
+              ],
+              "phrases": [
+                "clap in class",
+                "clean clock",
+                "close the cloud",
+                "clown in club",
+                "clay and claw"
+              ]
+            },
+            {
+              "lesson_id": 7,
+              "title": "Consonant Blend 'dr'",
+              "letter": "D",
+              "words": [
+                "draw",
+                "dream",
+                "dress",
+                "drink",
+                "drive",
+                "drop",
+                "drum",
+                "dry",
+                "drag",
+                "drain"
+              ],
+              "phrases": [
+                "draw a dream",
+                "dress and drive",
+                "drink drop",
+                "drum drill",
+                "dry and drain"
+              ]
+            },
+            {
+              "lesson_id": 8,
+              "title": "Consonant Blend 'fl'",
+              "letter": "F",
+              "words": [
+                "flag",
+                "flat",
+                "fly",
+                "flow",
+                "flower",
+                "floor",
+                "float",
+                "flash",
+                "flame",
+                "flap"
+              ],
+              "phrases": [
+                "flag on floor",
+                "fly and float",
+                "flower flow",
+                "flash flame",
+                "flat flake"
+              ]
+            },
+            {
+              "lesson_id": 9,
+              "title": "Consonant Blend 'fr'",
+              "letter": "F",
+              "words": [
+                "free",
+                "from",
+                "frog",
+                "friend",
+                "fresh",
+                "fruit",
+                "front",
+                "frame",
+                "freeze",
+                "frost"
+              ],
+              "phrases": [
+                "free friend",
+                "fresh fruit",
+                "frog from front",
+                "freeze and frost",
+                "fry french fries"
+              ]
+            },
+            {
+              "lesson_id": 10,
+              "title": "Consonant Blend 'pl'",
+              "letter": "P",
+              "words": [
+                "play",
+                "plane",
+                "plate",
+                "please",
+                "plant",
+                "plus",
+                "place",
+                "plan",
+                "plum",
+                "plug"
+              ],
+              "phrases": [
+                "play on plane",
+                "please place plate",
+                "plant a plum",
+                "plan plus plot",
+                "plug and play"
+              ]
+            },
+            {
+              "lesson_id": 11,
+              "title": "Consonant Blend 'st'",
+              "letter": "S",
+              "words": [
+                "stop",
+                "star",
+                "start",
+                "stay",
+                "step",
+                "stand",
+                "still",
+                "stick",
+                "store",
+                "stone"
+              ],
+              "phrases": [
+                "stop and start",
+                "star on stage",
+                "stay still",
+                "stick and stone",
+                "store story"
+              ]
+            },
+            {
+              "lesson_id": 12,
+              "title": "Consonant Blend 'sp'",
+              "letter": "S",
+              "words": [
+                "space",
+                "speak",
+                "spin",
+                "spot",
+                "spell",
+                "spend",
+                "spoon",
+                "sport",
+                "spring",
+                "speed"
+              ],
+              "phrases": [
+                "speak in space",
+                "spin and spot",
+                "spoon with speed",
+                "spell and spend",
+                "spring sport"
+              ]
+            },
+            {
+              "lesson_id": 13,
+              "title": "Consonant Blend 'tr'",
+              "letter": "T",
+              "words": [
+                "tree",
+                "train",
+                "truck",
+                "trip",
+                "true",
+                "try",
+                "track",
+                "trail",
+                "treat",
+                "trick"
+              ],
+              "phrases": [
+                "tree by train",
+                "true trick",
+                "trip on track",
+                "try to treat",
+                "trail of trucks"
+              ]
+            },
+            {
+              "lesson_id": 14,
+              "title": "Consonant Blend 'tw'",
+              "letter": "T",
+              "words": [
+                "twin",
+                "twist",
+                "twelve",
+                "twenty",
+                "twice",
+                "twine",
+                "tweet",
+                "twig",
+                "twirl",
+                "tweed"
+              ],
+              "phrases": [
+                "twin twists",
+                "twice twelve",
+                "twenty twigs",
+                "tweet and twirl",
+                "twine in tweed"
+              ]
+            },
+            {
+              "lesson_id": 15,
+              "title": "Consonant Blend 'wh'",
+              "letter": "W",
+              "words": [
+                "what",
+                "when",
+                "where",
+                "why",
+                "which",
+                "while",
+                "white",
+                "whale",
+                "wheel",
+                "whip"
+              ],
+              "phrases": [
+                "what white whale",
+                "when wheels turn",
+                "where whips crack",
+                "why while away",
+                "which wheel"
+              ]
+            },
+            {
+              "lesson_id": 16,
+              "title": "Consonant Blend 'kw - sounded as \"qu\"'",
+              "letter": "Q",
+              "words": [
+                "quick",
+                "quiet",
+                "queen",
+                "quilt",
+                "quiz",
+                "quit",
+                "quite",
+                "quote",
+                "quest",
+                "quack"
+              ],
+              "phrases": [
+                "quick queen",
+                "quiet quiz",
+                "quilt quest",
+                "quite a quote",
+                "quit the quack"
+              ]
+            },
+            {
+              "lesson_id": 17,
+              "title": "Consonant Blend 'sw'",
+              "letter": "S",
+              "words": [
+                "swim",
+                "sweet",
+                "swing",
+                "swift",
+                "sweep",
+                "sweat",
+                "swan",
+                "swell",
+                "swirl",
+                "switch"
+              ],
+              "phrases": [
+                "swim swift",
+                "sweet swing",
+                "sweep and swirl",
+                "swan switch",
+                "swell to swim"
+              ]
+            },
+            {
+              "lesson_id": 18,
+              "title": "Consonant Blend 'ch'",
+              "letter": "C",
+              "words": [
+                "chair",
+                "chat",
+                "check",
+                "cheese",
+                "chest",
+                "chick",
+                "child",
+                "chin",
+                "chip",
+                "chop"
+              ],
+              "phrases": [
+                "chair check",
+                "chat with child",
+                "cheese and chips",
+                "chop chest",
+                "chin up chick"
+              ]
+            },
+            {
+              "lesson_id": 19,
+              "title": "Consonant Blend 'sh'",
+              "letter": "S",
+              "words": [
+                "ship",
+                "shop",
+                "shut",
+                "shell",
+                "shark",
+                "sheep",
+                "sheet",
+                "shine",
+                "short",
+                "show"
+              ],
+              "phrases": [
+                "ship shop",
+                "shut shell",
+                "shark shine",
+                "sheep sheet",
+                "short show"
+              ]
+            }
+          ]
         },
         {
-          "phoneme": "soft_c",
-          "ipa": "/s/",
-          "words": ["cent", "city", "circle", "cement", "celery", "cider", "citrus", "civil", "celebrate", "cycle"]
-        }
-      ]
-    },
-
-    {
-      "letter": "D",
-      "contrasts": [
-        {
-          "phoneme": "initial_d",
-          "ipa": "/d/",
-          "words": ["dog", "duck", "dad", "door", "day", "doll", "dish", "desk", "dust", "dinner"]
+          "chapter_id": 4,
+          "title": "Consonant Clusters",
+          "lessons": [
+            {
+              "lesson_id": 1,
+              "title": "Consonant Cluster 'str'",
+              "letter": "S",
+              "words": [
+                "street",
+                "strong",
+                "string",
+                "stream",
+                "strike",
+                "strip",
+                "straight",
+                "strange",
+                "stress",
+                "stretch"
+              ],
+              "phrases": [
+                "strong street",
+                "strange stream",
+                "straight string",
+                "strike and stretch",
+                "strip of stress"
+              ]
+            },
+            {
+              "lesson_id": 2,
+              "title": "Consonant Cluster 'spl'",
+              "letter": "S",
+              "words": [
+                "splash",
+                "split",
+                "splendid",
+                "splinter",
+                "splice",
+                "spleen",
+                "splurge",
+                "splotch",
+                "splat",
+                "splatter"
+              ],
+              "phrases": [
+                "splash and split",
+                "splendid splinter",
+                "splice spleen",
+                "splurge splotch",
+                "splat and splatter"
+              ]
+            },
+            {
+              "lesson_id": 3,
+              "title": "Consonant Cluster 'scr'",
+              "letter": "S",
+              "words": [
+                "scream",
+                "scratch",
+                "scrap",
+                "screen",
+                "script",
+                "scroll",
+                "scrub",
+                "screw",
+                "scrape",
+                "scribe"
+              ],
+              "phrases": [
+                "scream and scratch",
+                "scrap screen",
+                "script scroll",
+                "scrub and scrape",
+                "screw scribe"
+              ]
+            }
+          ]
         },
         {
-          "phoneme": "final_d",
-          "ipa": "/d/",
-          "words": ["bed", "red", "mad", "sad", "glad", "hand", "card", "bird", "cold", "wind"]
-        }
-      ]
-    },
-
-    {
-      "letter": "E",
-      "contrasts": [
-        {
-          "phoneme": "short_e",
-          "ipa": "/ɛ/",
-          "words": ["egg", "bed", "red", "pen", "ten", "net", "jet", "leg", "men", "pet"]
-        },
-        {
-          "phoneme": "long_e",
-          "ipa": "/iː/",
-          "words": ["bee", "tree", "see", "key", "tea", "me", "we", "she", "green", "feet"]
-        }
-      ]
-    },
-
-    {
-      "letter": "F",
-      "contrasts": [
-        {
-          "phoneme": "initial_f",
-          "ipa": "/f/",
-          "words": ["fish", "fan", "fox", "frog", "foot", "farm", "fire", "flag", "fun", "food"]
-        },
-        {
-          "phoneme": "final_f",
-          "ipa": "/f/",
-          "words": ["if", "off", "cuff", "puff", "cliff", "wolf", "leaf", "roof", "self", "staff"]
-        }
-      ]
-    },
-
-    {
-      "letter": "G",
-      "contrasts": [
-        {
-          "phoneme": "hard_g",
-          "ipa": "/g/",
-          "words": ["goat", "game", "gate", "gum", "gift", "gorilla", "grass", "gold", "garden", "goose"]
-        },
-        {
-          "phoneme": "soft_g",
-          "ipa": "/dʒ/",
-          "words": ["giant", "giraffe", "gym", "gem", "age", "cage", "page", "stage", "bridge", "edge"]
-        }
-      ]
-    },
-
-    {
-      "letter": "H",
-      "contrasts": [
-        {
-          "phoneme": "initial_h",
-          "ipa": "/h/",
-          "words": ["hat", "hand", "house", "horse", "hill", "honey", "hammer", "heart", "hot", "help"]
-        },
-        {
-          "phoneme": "silent_h",
-          "ipa": "∅",
-          "words": ["hour", "honor", "honest", "heir", "herb", "ghost", "what", "when", "where", "white"]
-        }
-      ]
-    },
-
-    {
-      "letter": "I",
-      "contrasts": [
-        {
-          "phoneme": "short_i",
-          "ipa": "/ɪ/",
-          "words": ["igloo", "ink", "insect", "inch", "ill", "in", "it", "is", "if", "its"]
-        },
-        {
-          "phoneme": "long_i",
-          "ipa": "/aɪ/",
-          "words": ["ice", "idea", "iron", "island", "ivy", "eye", "five", "bike", "kite", "light"]
-        }
-      ]
-    },
-
-    {
-      "letter": "J",
-      "contrasts": [
-        {
-          "phoneme": "j_sound",
-          "ipa": "/dʒ/",
-          "words": ["jam", "jet", "jug", "jacket", "jelly", "jewel", "jump", "jungle", "juice", "joker"]
-        },
-        {
-          "phoneme": "j_vowel_following",
-          "ipa": "/dʒ/",
-          "words": ["jay", "joy", "jeans", "jingle", "jolly", "jumbo", "jigsaw", "jukebox", "jamboree", "jog"]
-        }
-      ]
-    },
-
-    {
-      "letter": "K",
-      "contrasts": [
-        {
-          "phoneme": "k_sound",
-          "ipa": "/k/",
-          "words": ["kite", "king", "key", "kitten", "kitchen", "kettle", "kangaroo", "ketchup", "kiwi", "kick"]
-        },
-        {
-          "phoneme": "silent_k",
-          "ipa": "∅",
-          "words": ["knee", "knife", "knock", "know", "knit", "knob", "kneel", "knockout", "known", "knelt"]
-        }
-      ]
-    },
-
-    {
-      "letter": "L",
-      "contrasts": [
-        {
-          "phoneme": "initial_l",
-          "ipa": "/l/",
-          "words": ["lion", "lamp", "leg", "leaf", "lake", "lock", "ladder", "lemon", "lady", "laugh"]
-        },
-        {
-          "phoneme": "final_l",
-          "ipa": "/l/",
-          "words": ["ball", "bell", "fall", "wall", "doll", "call", "tail", "pool", "school", "mail"]
-        }
-      ]
-    },
-
-    {
-      "letter": "M",
-      "contrasts": [
-        {
-          "phoneme": "initial_m",
-          "ipa": "/m/",
-          "words": ["moon", "map", "mug", "mom", "man", "milk", "monkey", "mouse", "mitten", "mop"]
-        },
-        {
-          "phoneme": "final_m",
-          "ipa": "/m/",
-          "words": ["ham", "jam", "dam", "gum", "drum", "plum", "room", "team", "arm", "farm"]
-        }
-      ]
-    },
-
-    {
-      "letter": "N",
-      "contrasts": [
-        {
-          "phoneme": "initial_n",
-          "ipa": "/n/",
-          "words": ["nest", "net", "nut", "nose", "neck", "nail", "nurse", "night", "name", "new"]
-        },
-        {
-          "phoneme": "final_n",
-          "ipa": "/n/",
-          "words": ["can", "fan", "man", "pen", "ten", "sun", "moon", "rain", "train", "brain"]
-        }
-      ]
-    },
-
-    {
-      "letter": "O",
-      "contrasts": [
-        {
-          "phoneme": "short_o",
-          "ipa": "/ɒ/",
-          "words": ["octopus", "on", "off", "ox", "odd", "olive", "otter", "orange", "ocean", "open"]
-        },
-        {
-          "phoneme": "long_o",
-          "ipa": "/oʊ/",
-          "words": ["over", "oval", "own", "old", "only", "oak", "bone", "rose", "home", "rope"]
-        }
-      ]
-    },
-
-    {
-      "letter": "P",
-      "contrasts": [
-        {
-          "phoneme": "initial_p",
-          "ipa": "/p/",
-          "words": ["pig", "pen", "pan", "pot", "pet", "park", "peach", "pizza", "pumpkin", "pin"]
-        },
-        {
-          "phoneme": "final_p",
-          "ipa": "/p/",
-          "words": ["cap", "map", "lap", "tap", "hop", "top", "mop", "pop", "stop", "cup"]
-        }
-      ]
-    },
-
-    {
-      "letter": "Q",
-      "contrasts": [
-        {
-          "phoneme": "qu_sound",
-          "ipa": "/kw/",
-          "words": ["queen", "quilt", "quick", "quiet", "quack", "question", "quarter", "quiz", "quail", "quote"]
-        },
-        {
-          "phoneme": "squ_sound",
-          "ipa": "/skw/",
-          "words": ["square", "squeeze", "squirrel", "squat", "squeak", "squad", "squeal", "squash", "squawk", "squire"]
-        }
-      ]
-    },
-
-    {
-      "letter": "R",
-      "contrasts": [
-        {
-          "phoneme": "initial_r",
-          "ipa": "/r/",
-          "words": ["rabbit", "rat", "rug", "run", "rain", "robot", "rocket", "rose", "ring", "river"]
-        },
-        {
-          "phoneme": "final_r",
-          "ipa": "/r/",
-          "words": ["car", "star", "far", "jar", "door", "bear", "ear", "four", "your", "chair"]
-        }
-      ]
-    },
-
-    {
-      "letter": "S",
-      "contrasts": [
-        {
-          "phoneme": "initial_s",
-          "ipa": "/s/",
-          "words": ["sun", "sock", "seal", "soup", "soap", "sand", "salt", "sink", "seven", "six"]
-        },
-        {
-          "phoneme": "final_s",
-          "ipa": "/s/",
-          "words": ["has", "is", "was", "his", "as", "these", "those", "please", "cheese", "boys"]
-        }
-      ]
-    },
-
-    {
-      "letter": "T",
-      "contrasts": [
-        {
-          "phoneme": "initial_t",
-          "ipa": "/t/",
-          "words": ["tree", "top", "ten", "tap", "tub", "tag", "truck", "turtle", "tiger", "tooth"]
-        },
-        {
-          "phoneme": "final_t",
-          "ipa": "/t/",
-          "words": ["cat", "hat", "bat", "rat", "sit", "hit", "pot", "hot", "cut", "nut"]
-        }
-      ]
-    },
-
-    {
-      "letter": "U",
-      "contrasts": [
-        {
-          "phoneme": "short_u",
-          "ipa": "/ʌ/",
-          "words": ["umbrella", "up", "under", "ugly", "umpire", "uncle", "until", "us", "utter", "bug"]
-        },
-        {
-          "phoneme": "long_u",
-          "ipa": "/juː/",
-          "words": ["unicorn", "uniform", "use", "useful", "user", "unite", "unit", "ukulele", "music", "cube"]
-        }
-      ]
-    },
-
-    {
-      "letter": "V",
-      "contrasts": [
-        {
-          "phoneme": "initial_v",
-          "ipa": "/v/",
-          "words": ["van", "vet", "vest", "vine", "vote", "vowel", "volcano", "violin", "vegetable", "valley"]
-        },
-        {
-          "phoneme": "final_v",
-          "ipa": "/v/",
-          "words": ["have", "give", "live", "love", "move", "above", "dove", "glove", "shove", "stove"]
-        }
-      ]
-    },
-
-    {
-      "letter": "W",
-      "contrasts": [
-        {
-          "phoneme": "initial_w",
-          "ipa": "/w/",
-          "words": ["whale", "web", "wig", "wind", "window", "wolf", "worm", "wagon", "water", "winter"]
-        },
-        {
-          "phoneme": "silent_w",
-          "ipa": "∅",
-          "words": ["write", "wrong", "wrap", "wrist", "answer", "saw", "draw", "law", "paw", "raw"]
-        }
-      ]
-    },
-
-    {
-      "letter": "X",
-      "contrasts": [
-        {
-          "phoneme": "x_final",
-          "ipa": "/ks/",
-          "words": ["box", "fox", "mix", "six", "ax", "ox", "fix", "wax", "tax", "relax"]
-        },
-        {
-          "phoneme": "x_initial",
-          "ipa": "/z/",
-          "words": ["xylophone", "x-ray", "xenon", "xerox", "xenops", "xenia", "xeric", "xylan", "xyster", "xenial"]
-        }
-      ]
-    },
-
-    {
-      "letter": "Y",
-      "contrasts": [
-        {
-          "phoneme": "initial_y",
-          "ipa": "/j/",
-          "words": ["yoyo", "yarn", "yell", "yes", "yellow", "yard", "year", "young", "yogurt", "yam"]
-        },
-        {
-          "phoneme": "final_y",
-          "ipa": "/aɪ/",
-          "words": ["my", "by", "fly", "sky", "dry", "try", "cry", "why", "shy", "buy"]
-        }
-      ]
-    },
-
-    {
-      "letter": "Z",
-      "contrasts": [
-        {
-          "phoneme": "initial_z",
-          "ipa": "/z/",
-          "words": ["zebra", "zoo", "zero", "zap", "zigzag", "zombie", "zipper", "zest", "zone", "zoom"]
-        },
-        {
-          "phoneme": "final_z",
-          "ipa": "/z/",
-          "words": ["buzz", "fizz", "jazz", "fuzz", "whiz", "quiz", "topaz", "blitz", "waltz", "spritz"]
+          "chapter_id": 5,
+          "title": "Final Consonant Blend (words that ends with Consonant Cluster)",
+          "lessons": [
+            {
+              "lesson_id": 1,
+              "title": "Final Consonant Blend 'st'",
+              "letter": "S",
+              "words": [
+                "best",
+                "fast",
+                "last",
+                "past",
+                "rest",
+                "test",
+                "west",
+                "just",
+                "must",
+                "dust"
+              ],
+              "phrases": [
+                "best test",
+                "fast past",
+                "last rest",
+                "west dust",
+                "just must"
+              ]
+            },
+            {
+              "lesson_id": 2,
+              "title": "Final Consonant Blend 'lt'",
+              "letter": "L",
+              "words": [
+                "belt",
+                "felt",
+                "melt",
+                "salt",
+                "built",
+                "guilt",
+                "tilt",
+                "wilt",
+                "bolt",
+                "jolt"
+              ],
+              "phrases": [
+                "belt felt",
+                "melt salt",
+                "built with guilt",
+                "tilt and jolt",
+                "wilt and bolt"
+              ]
+            },
+            {
+              "lesson_id": 3,
+              "title": "Final Consonant Blend 'ft'",
+              "letter": "F",
+              "words": [
+                "left",
+                "gift",
+                "lift",
+                "soft",
+                "shift",
+                "drift",
+                "swift",
+                "craft",
+                "theft",
+                "loft"
+              ],
+              "phrases": [
+                "left gift",
+                "soft lift",
+                "swift shift",
+                "drift craft",
+                "theft in loft"
+              ]
+            },
+            {
+              "lesson_id": 4,
+              "title": "Final Consonant Blend 'ct'",
+              "letter": "C",
+              "words": [
+                "fact",
+                "pact",
+                "act",
+                "exact",
+                "react",
+                "contact",
+                "impact",
+                "attract",
+                "object",
+                "collect"
+              ],
+              "phrases": [
+                "fact act",
+                "exact pact",
+                "react to contact",
+                "impact object",
+                "attract and collect"
+              ]
+            },
+            {
+              "lesson_id": 5,
+              "title": "Final Consonant Blend 'rt'",
+              "letter": "R",
+              "words": [
+                "part",
+                "heart",
+                "start",
+                "smart",
+                "chart",
+                "cart",
+                "art",
+                "short",
+                "sort",
+                "sport"
+              ],
+              "phrases": [
+                "part of heart",
+                "start smart",
+                "chart cart",
+                "short sport",
+                "sort art"
+              ]
+            },
+            {
+              "lesson_id": 6,
+              "title": "Final Consonant Blend 'nt'",
+              "letter": "N",
+              "words": [
+                "want",
+                "went",
+                "sent",
+                "bent",
+                "rent",
+                "tent",
+                "plant",
+                "print",
+                "hint",
+                "paint"
+              ],
+              "phrases": [
+                "want tent",
+                "went sent",
+                "bent rent",
+                "plant hint",
+                "paint print"
+              ]
+            },
+            {
+              "lesson_id": 7,
+              "title": "Final Consonant Blend 'nk'",
+              "letter": "N",
+              "words": [
+                "bank",
+                "tank",
+                "think",
+                "drink",
+                "sink",
+                "pink",
+                "link",
+                "wink",
+                "blank",
+                "thank"
+              ],
+              "phrases": [
+                "bank tank",
+                "think drink",
+                "pink sink",
+                "link wink",
+                "blank thank"
+              ]
+            },
+            {
+              "lesson_id": 8,
+              "title": "Final Consonant Blend 'rk'",
+              "letter": "R",
+              "words": [
+                "work",
+                "park",
+                "dark",
+                "mark",
+                "bark",
+                "shark",
+                "spark",
+                "fork",
+                "cork",
+                "clerk"
+              ],
+              "phrases": [
+                "work park",
+                "dark mark",
+                "bark shark",
+                "spark fork",
+                "cork clerk"
+              ]
+            },
+            {
+              "lesson_id": 9,
+              "title": "Final Consonant Blend 'sk'",
+              "letter": "S",
+              "words": [
+                "ask",
+                "task",
+                "mask",
+                "desk",
+                "risk",
+                "disk",
+                "dusk",
+                "tusk",
+                "brisk",
+                "whisk"
+              ],
+              "phrases": [
+                "ask task",
+                "mask desk",
+                "risk disk",
+                "dusk tusk",
+                "brisk whisk"
+              ]
+            },
+            {
+              "lesson_id": 10,
+              "title": "Final Consonant Blend 'nd'",
+              "letter": "N",
+              "words": [
+                "and",
+                "hand",
+                "land",
+                "sand",
+                "band",
+                "stand",
+                "find",
+                "kind",
+                "mind",
+                "wind"
+              ],
+              "phrases": [
+                "hand band",
+                "land sand",
+                "stand and",
+                "find kind",
+                "mind wind"
+              ]
+            }
+          ]
         }
       ]
     }
   ],
-
   "Passages": [
     {
       "title": "Hickory Dickory Dock",
@@ -438,64 +1495,71 @@
       "title": "The Itsy Bitsy Spider",
       "author": "Traditional Nursery Rhyme",
       "category": "nursery rhyme",
-      "image": "",
+      "image": "ItsyBitsy",
       "text": "The itsy bitsy spider climbed up the waterspout.\n Down came the rain and washed the spider out.\n Out came the sun and dried up all the rain,\n and the itsy bitsy spider climbed up the spout again."
     },
     {
       "title": "Twinkle, Twinkle, Little Star",
       "author": "Jane Taylor",
       "category": "nursery rhyme",
-      "image": "",
+      "image": "Twinkle",
       "text": "Twinkle, twinkle, little star,\n How I wonder what you are!\n Up above the world so high,\n Like a diamond in the sky."
     },
     {
       "title": "Humpty Dumpty",
       "author": "Mother Goose",
       "category": "nursery rhyme",
-      "image": "",
+      "image": "Humpty",
       "text": "Humpty Dumpty sat on a wall,\n Humpty Dumpty had a great fall.\n All the king's horses and all the king's men\n Couldn't put Humpty together again."
     },
     {
       "title": "The Caterpillar",
       "author": "Christina Rossetti",
       "category": "poet",
-      "image": "",
+      "image": "Caterpillar",
       "text": "Brown and furry\n Caterpillar in a hurry,\n Take your walk\n To the shady leaf, or stalk,\n Or what not,\n Which may be the chosen spot.\n No toad spy you,\n Hovering bird of prey pass by you;"
     },
     {
       "title": "Hey Diddle Diddle",
       "author": "Mother Goose",
       "category": "nursery rhyme",
-      "image": "",
+      "image": "Diddle",
       "text": "Hey diddle diddle,\n The cat and the fiddle,\n The cow jumped over the moon.\n The little dog laughed to see such sport,\n And the dish ran away with the spoon."
     },
     {
       "title": "At the Zoo",
       "author": "William Makepeace Thackeray",
       "category": "poet",
-      "image": "",
+      "image": "Zoo",
       "text": "First I saw the white bear, then I saw the black;\n Then I saw the camel with a hump upon his back;\n Then I saw the grey wolf, with mutton in his maw;\n Then I saw the wombat waddle in the straw;\n Then I saw the elephant a-waving of his trunk;\n Then I saw the monkeys—mercy, how unpleasantly they smelt!"
     },
     {
       "title": "Jack and Jill",
       "author": "Mother Goose",
       "category": "nursery rhyme",
-      "image": "",
+      "image": "JackJill",
       "text": "Jack and Jill went up the hill\n To fetch a pail of water.\n Jack fell down and broke his crown,\n And Jill came tumbling after."
     },
     {
       "title": "The Rainbow",
       "author": "Christina Rossetti",
       "category": "poet",
-      "image": "",
+      "image": "Rainbow",
       "text": "Boats sail on the rivers,\n And ships sail on the seas;\n But clouds that sail across the sky\n Are prettier far than these."
     },
     {
       "title": "Baa, Baa, Black Sheep",
       "author": "Mother Goose",
       "category": "nursery rhyme",
-      "image": "",
+      "image": "BlackSheep",
       "text": "Baa, baa, black sheep,\n Have you any wool?\n Yes, sir, yes, sir,\n Three bags full;\n One for the master,\n And one for the dame,\n And one for the little boy\n Who lives down the lane."
+    },
+    {
+      "title": "Miss Polly Had a Dolly",
+      "author": "Traditional",
+      "category": "nursery rhyme",
+      "image": "MissPolly",
+      "text": "Miss Polly had a dolly who was sick, sick, sick.\nSo she phoned for the doctor to be quick, quick, quick.\nThe doctor came with his bag and his hat\nAnd he knocked on the door with a rat-a-tat-tat.\nHe looked at the dolly and he shook his head\nAnd he said \"Miss Polly, put her straight to bed!\"\nHe wrote on a paper for a pill, pill, pill\n\"I'll be back in the morning with my bill, bill, bill.\""
     }
   ]
 }

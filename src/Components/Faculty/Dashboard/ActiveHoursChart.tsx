@@ -1,20 +1,26 @@
 // ActiveHoursChart.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { useActiveHours } from '../../../Hooks/use_ActiveHours';
+import { useFacultyClassesFilter } from '../../../Hooks/use_ReadingStudentStats';
+import { FilterOptions } from '../../../Interfaces/miscue';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 type TimeRange = 'week' | 'month' | 'year';
 
 interface ActiveHoursChartProps {
   facultyId?: string | null;
-  data?: { day: string; hours: number }[];
-  
+  filter: {
+    academicYear: string;
+    selectedView: string;
+  };
 }
 
 const TIME_RANGES: { label: string; value: TimeRange }[] = [
@@ -23,62 +29,48 @@ const TIME_RANGES: { label: string; value: TimeRange }[] = [
   { label: 'Year', value: 'year' },
 ];
 
-const X_AXIS_LABELS: Record<TimeRange, string[]> = {
-  week: ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'],
-  month: ['W1', 'W2', 'W3', 'W4', 'W5'],
-  year: [
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-  ],
-};
-
 const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
   facultyId = null,
-  data,
+  filter,
 }) => {
-  const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const [timeRange, setTimeRange] = useState<TimeRange>('week');
+  const { selectedView, academicYear } = filter;
+  const isOverall = selectedView === 'overall';
 
+  // Fetch classes to get class name from ID
+  const { classes: facultyClasses } = useFacultyClassesFilter(facultyId);
+  const selectedClassName = useMemo(() => {
+    if (isOverall) return 'Overall';
+    const cls = facultyClasses.find(c => c.classId === selectedView);
+    return cls?.className || selectedView;
+  }, [isOverall, selectedView, facultyClasses]);
+
+  // Build filter options for the hook – explicitly typed as FilterOptions
+  const filterOptions: FilterOptions = {
+    type: isOverall ? 'overall' : 'class',
+    ...(!isOverall && selectedView && { classId: selectedView }),
+    ...(academicYear && { academicYear }),
+  };
+
+  // Fetch data
   const {
     chartData: hookData,
     loading,
     error,
   } = useActiveHours(facultyId, {
     timeRange,
+    filter: filterOptions,
   });
 
-  const labels = X_AXIS_LABELS[timeRange];
+  // Use the data directly – labels are already the correct period strings
+  const chartData = hookData && hookData.length > 0 ? hookData : [];
 
-  let chartData =
-    hookData && hookData.length > 0
-      ? labels.map(label => {
-          const match = hookData.find(d => d.day === label);
-          return {
-            day: label,
-            hours: match ? match.hours : 0,
-          };
-        })
-      : labels.map(label => ({ day: label, hours: 0 }));
-
-  let displayInMinutes = false;
-
+  // Auto‑switch between hours and minutes
   const maxValue = Math.max(...chartData.map(d => d.hours), 0);
-  displayInMinutes = maxValue < 1;
+  const displayInMinutes = maxValue < 1;
 
   const displayData = displayInMinutes
-    ? chartData.map(item => ({
-        ...item,
-        hours: item.hours * 60,
-      }))
+    ? chartData.map(item => ({ ...item, hours: item.hours * 60 }))
     : chartData;
 
   const maxDisplayValue = displayInMinutes
@@ -87,9 +79,35 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
 
   const chartHeight = 200;
 
+  // Y-axis labels
+  const yAxisLabels = displayInMinutes
+    ? Array.from({ length: 5 }, (_, i) =>
+        Math.round((maxDisplayValue / 4) * (4 - i)),
+      )
+    : [8, 6, 4, 2, 0];
+
+  // Range title for subtitle
+  const rangeTitle =
+    timeRange === 'week'
+      ? 'This Week'
+      : timeRange === 'month'
+      ? 'Last 30 Days'
+      : 'Academic Year';
+
+  // Totals & average
+  const totalValue = displayData.reduce((sum, item) => sum + item.hours, 0);
+  const avgValue = displayData.length > 0 ? totalValue / displayData.length : 0;
+
+  // Loading & Error states
   if (loading) {
     return (
       <View style={styles.container}>
+        {/* <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {isOverall ? '📊 Overall Activity' : `📚 Class: ${selectedClassName}`}
+            {academicYear && ` • ${academicYear}`}
+          </Text>
+        </View> */}
         <View style={styles.loadingCard}>
           <ActivityIndicator size="large" color="#4CAF50" />
           <Text style={styles.loadingText}>Loading activity data...</Text>
@@ -101,6 +119,12 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
   if (error) {
     return (
       <View style={styles.container}>
+        <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {isOverall ? '📊 Overall Activity' : `📚 Class: ${selectedClassName}`}
+            {academicYear && ` • ${academicYear}`}
+          </Text>
+        </View>
         <View style={styles.errorCard}>
           <Text style={styles.errorIcon}>📊</Text>
           <Text style={styles.errorTitle}>Unable to Load Chart</Text>
@@ -110,25 +134,16 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
     );
   }
 
-  const yAxisLabels = displayInMinutes
-    ? Array.from({ length: 5 }, (_, i) =>
-        Math.round((maxDisplayValue / 4) * (4 - i)),
-      )
-    : [8, 6, 4, 2, 0];
-
-  const rangeTitle =
-    timeRange === 'week'
-      ? 'This Week'
-      : timeRange === 'month'
-      ? 'This Month'
-      : 'This Academic Year';
-
-  // Calculate total hours/minutes
-  const totalValue = displayData.reduce((sum, item) => sum + item.hours, 0);
-  const avgValue = displayData.length > 0 ? totalValue / displayData.length : 0;
-
   return (
     <View style={styles.container}>
+      {/* Filter context header */}
+      {/* <View style={styles.filterIndicator}>
+        <Text style={styles.filterIndicatorText}>
+          {isOverall ? '📊 Overall Activity' : `📚 Class: ${selectedClassName}`}
+          {academicYear && ` • ${academicYear}`}
+        </Text>
+      </View> */}
+
       {/* Header Section */}
       <View style={styles.headerSection}>
         <View style={styles.titleRow}>
@@ -214,38 +229,44 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
             ))}
           </View>
 
-          {/* Bars */}
-          <View style={styles.barsContainer}>
-            {displayData.slice(0, labels.length).map((item, index) => {
-              const barHeight = Math.max(
-                (item.hours / maxDisplayValue) * chartHeight,
-                2,
-              );
-              const isHighest =
-                item.hours === Math.max(...displayData.map(d => d.hours));
+          {/* Bars – using dynamic labels from the data */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={timeRange === 'year' || displayData.length > 8}
+            style={styles.barsScrollView}
+          >
+            <View style={styles.barsContainer}>
+              {displayData.map((item, index) => {
+                const barHeight = Math.max(
+                  (item.hours / maxDisplayValue) * chartHeight,
+                  2,
+                );
+                const isHighest =
+                  item.hours === Math.max(...displayData.map(d => d.hours));
 
-              return (
-                <View key={index} style={styles.barColumn}>
-                  <View style={styles.barWrapper}>
-                    {/* Value on top of bar for highest */}
-                    {item.hours > 0 && (
-                      <Text style={styles.barTopValue}>
-                        {item.hours.toFixed(2)}
-                      </Text>
-                    )}
-                    <View
-                      style={[
-                        styles.bar,
-                        { height: barHeight },
-                        isHighest && styles.barHighest,
-                      ]}
-                    />
+                return (
+                  <View key={index} style={styles.barColumn}>
+                    <View style={styles.barWrapper}>
+                      {item.hours > 0 && (
+                        <Text style={styles.barTopValue}>
+                          {item.hours.toFixed(2)}
+                        </Text>
+                      )}
+                      <View
+                        style={[
+                          styles.bar,
+                          { height: barHeight },
+                          isHighest && styles.barHighest,
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.xAxisLabel}>{item.day}</Text>
                   </View>
-                  <Text style={styles.xAxisLabel}>{item.day}</Text>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+            </View>
+          </ScrollView>
         </View>
       </View>
 
@@ -265,91 +286,98 @@ const ActiveHoursChart: React.FC<ActiveHoursChartProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: sw(14),
+    padding: sw(20),
+    marginBottom: sh(16),
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.06,
-    shadowRadius: 8,
+    shadowRadius: sw(8),
   },
-
-  // HEADER
+  filterIndicator: {
+    backgroundColor: '#F0F9FF',
+    padding: sw(16),
+    borderRadius: sw(12),
+    marginBottom: sh(16),
+    borderLeftWidth: 4,
+    borderLeftColor: '#5B5FED',
+  },
+  filterIndicatorText: {
+    fontSize: sf(15),
+    fontFamily: 'Satoshi-Medium',
+    color: '#1F2937',
+  },
   headerSection: {
-    marginBottom: 20,
+    marginBottom: sh(20),
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: sw(44),
+    height: sw(44),
+    borderRadius: sw(12),
     backgroundColor: '#E8F5E9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: sw(12),
   },
   titleIcon: {
-    fontSize: 24,
+    fontSize: sf(24),
   },
   titleContent: {
     flex: 1,
   },
   title: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
     color: '#1F2937',
-    marginBottom: 2,
+    marginBottom: sh(2),
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Medium',
     color: '#9CA3AF',
   },
-
-  // TIME RANGE SELECTOR
   rangeSelector: {
     flexDirection: 'row',
     backgroundColor: '#F3F4F6',
-    borderRadius: 10,
-    padding: 4,
+    borderRadius: sw(10),
+    padding: sw(4),
     alignSelf: 'flex-start',
   },
   rangeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    minWidth: 70,
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(8),
+    borderRadius: sw(8),
+    minWidth: sw(70),
     alignItems: 'center',
   },
   rangeButtonActive: {
     backgroundColor: '#4CAF50',
     shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowRadius: sw(4),
     elevation: 2,
   },
   rangeButtonText: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Bold',
     color: '#6B7280',
   },
   rangeButtonTextActive: {
     color: '#fff',
   },
-
-  // STATS ROW
   statsRow: {
     flexDirection: 'row',
     backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 24,
+    borderRadius: sw(10),
+    padding: sw(16),
+    marginBottom: sh(24),
     alignItems: 'center',
   },
   statItem: {
@@ -357,53 +385,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
+    fontSize: sf(24),
     fontFamily: 'Satoshi-Black',
     color: '#4CAF50',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   statUnit: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontFamily: 'Satoshi-Medium',
     color: '#9CA3AF',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },
   statDivider: {
-    width: 1,
-    height: 40,
+    width: sw(1),
+    height: sw(40),
     backgroundColor: '#E5E7EB',
-    marginHorizontal: 16,
+    marginHorizontal: sw(16),
   },
-
-  // CHART
   chartContainer: {
     flexDirection: 'row',
-    height: 240,
+    height: sw(240),
   },
   yAxisContainer: {
-    width: 40,
-    height: 200,
+    width: sw(40),
+    height: sw(200),
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingRight: 8,
-    marginBottom: 20,
+    paddingRight: sw(8),
+    marginBottom: sh(20),
   },
   yAxisLabelContainer: {
-    height: 20,
+    height: sw(20),
     justifyContent: 'center',
   },
   yAxisLabel: {
-    fontSize: 15,
+    fontSize: sf(15),
     fontFamily: 'Satoshi-Bold',
     color: '#6B7280',
     textAlign: 'right',
   },
   yAxisUnit: {
-    fontSize: 9,
+    fontSize: sf(9),
     fontFamily: 'Satoshi-Medium',
     color: '#9CA3AF',
   },
@@ -416,20 +442,23 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 200,
+    height: sw(200),
     justifyContent: 'space-between',
-    paddingBottom: 10,
-    paddingTop: 12,
+    paddingBottom: sh(10),
+    paddingTop: sh(12),
   },
   gridLine: {
-    height: 1,
+    height: sw(1),
     backgroundColor: '#F3F4F6',
+  },
+  barsScrollView: {
+    flex: 1,
   },
   barsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'flex-end',
-    height: 213,
+    height: sw(213),
   },
   barColumn: {
     alignItems: 'center',
@@ -439,41 +468,41 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    height: 180,
+    height: sw(180),
   },
   barTopValue: {
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Bold',
     color: '#4CAF50',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   bar: {
-    width: 24,
+    width: sw(24),
     backgroundColor: '#4CAF50',
-    borderRadius: 6,
-    minHeight: 2,
+    borderRadius: sw(6),
+    minHeight: sw(2),
     shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowRadius: sw(4),
+    marginLeft: sw(20),
   },
   barHighest: {
     backgroundColor: '#2E7D32',
     shadowOpacity: 0.25,
   },
   xAxisLabel: {
-    fontSize: 11,
+    fontSize: sf(11),
     fontFamily: 'Satoshi-Bold',
     color: '#6B7280',
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: sh(8),
+    marginLeft: sw(20),
   },
-
-  // LEGEND
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
-    paddingTop: 12,
+    paddingTop: sh(12),
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
   },
@@ -482,45 +511,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: sw(10),
+    height: sw(10),
+    borderRadius: sw(5),
     backgroundColor: '#4CAF50',
-    marginRight: 8,
+    marginRight: sw(8),
   },
   legendText: {
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },
-
-  // LOADING & ERROR
   loadingCard: {
-    padding: 40,
+    padding: sw(40),
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 15,
+    marginTop: sh(16),
+    fontSize: sf(15),
     fontFamily: 'Satoshi-Medium',
     color: '#6B7280',
   },
   errorCard: {
-    padding: 40,
+    padding: sw(40),
     alignItems: 'center',
   },
   errorIcon: {
-    fontSize: 48,
-    marginBottom: 12,
+    fontSize: sf(48),
+    marginBottom: sh(12),
   },
   errorTitle: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
     color: '#EF4444',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
   errorText: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Medium',
     color: '#9CA3AF',
     textAlign: 'center',

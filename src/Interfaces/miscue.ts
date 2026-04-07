@@ -36,36 +36,39 @@ export interface RecordingState {
 //   repetition: number;
 // }
 
-
 // export interface StudentsStats {
-  //   totalStudents: number;
-  //   totalClasses: number;
-  // }
-  export interface StudentMiscueReport {
-    accuracyRate: number;
-    miscues?: Array<{
-      type: MiscueType;
-      expectedWord?: string;
-      spokenWord?: string;
-    }>;
-  }
-  
-  
-  export interface StudentStats {
-    totalAttempts: number;
-    averageAccuracy: number;
-    topMiscueType: string;
-    mostCommonMiscueWords: { word: string; count: number }[];
-    passagePerformance: { title: string; accuracy: number; attempts: number }[];
-  }
+//   totalStudents: number;
+//   totalClasses: number;
+// }
+export interface StudentMiscueReport {
+  accuracyRate: number;
+  miscues?: Array<{
+    type: MiscueType;
+    expectedWord?: string;
+    spokenWord?: string;
+  }>;
+}
 
-  export interface MiscuePercentage {
-    type: string;
-    percentage: number;
-    count: number;
-    color: string;
-  }
-  
+export interface StudentStats {
+  totalAttempts: number;
+  averageAccuracy: number;
+  topMiscueType: string;
+  mostCommonMiscueWords: { word: string; count: number; type: MiscueType }[];
+  passagePerformance: {
+    title: string;
+    accuracy: number;
+    attempts: number;
+    totalMiscues: number;
+  }[];
+}
+
+export interface MiscuePercentage {
+  type: string;
+  percentage: number;
+  count: number;
+  color: string;
+}
+
 export interface OverAllStudentTopMiscue {
   topMiscueType: string;
   commonMiscueWords: Array<{
@@ -89,12 +92,6 @@ export interface AverageWPMandAccuracy {
   totalStudents: number;
 }
 
-export interface FilterOptions {
-  acadYear?: string;
-  classId?: string;
-  startDate?: Date;
-  endDate?: Date;
-}
 
 export interface ClassMiscueStats {
   classId: string;
@@ -107,35 +104,55 @@ export interface ClassMiscueStats {
   averages: AverageWPMandAccuracy;
 }
 
-// For the students only
-export interface ProgressData {
-  date: string;
-  accuracy: number;
-  wpm: number;
-  passageTitle: string;
+// ==================== FACULTY DASHBOARD INTERFACES ====================
+
+export interface StudentReadingStatus {
+  studentId: string;
+  name: string;
+  gradeLevel: number;
+  status: 'fluent' | 'developing' | 'emerging' | 'atRisk' | 'insufficientData';
+  averageAccuracy: number;
+  averageWPM: number;
+  miscueDensity: number; // miscues per 100 words
+  trend: 'improving' | 'stable' | 'declining';
+  classificationScore?: number;
+  confidence?: 'high' | 'medium' | 'low';
+  hasSufficientData?: boolean;
+  passageLengthInfo: {
+    averageWords: number;
+    minWords: number;
+    maxWords: number;
+    adjustedThresholds?: {
+      fluent: number;
+      developing: number;
+      emerging: number;
+    };
+  }
+  lastReportDate: Date;
 }
+
 // Reading Health Classification Criteria
 export interface ReadingHealthThresholds {
   // Accuracy Rate thresholds
-  fluentAccuracy: number;      // e.g., 95%+
-  developingAccuracy: number;  // e.g., 85-94%
-  emergingAccuracy: number;    // e.g., 70-84%
+  fluentAccuracy: number; // e.g., 95%+
+  developingAccuracy: number; // e.g., 85-94%
+  emergingAccuracy: number; // e.g., 70-84%
   // Below 70% = At Risk
-  
+
   // WPM thresholds (grade-level adjusted)
   fluentWPM: (gradeLevel: number) => number;
   developingWPM: (gradeLevel: number) => number;
   emergingWPM: (gradeLevel: number) => number;
-  
+
   // Miscue Density thresholds (miscues per 100 words)
-  fluentMiscueDensity: number;     // e.g., < 5%
+  fluentMiscueDensity: number; // e.g., < 5%
   developingMiscueDensity: number; // e.g., 5-10%
-  emergingMiscueDensity: number;   // e.g., 11-20%
+  emergingMiscueDensity: number; // e.g., 11-20%
   // Above 20% = At Risk
-  
+
   // Trend analysis (last 3 reports)
-  improvingTrend: number;  // e.g., > 5% improvement
-  decliningTrend: number;  // e.g., > 5% decline
+  improvingTrend: number; // e.g., > 5% improvement
+  decliningTrend: number; // e.g., > 5% decline
 }
 
 export interface ClassReadingHealth {
@@ -146,49 +163,83 @@ export interface ClassReadingHealth {
     fluent: {
       percentage: number;
       count: number;
-      students: string[];
+      students: StudentReadingStatus[];
     };
     developing: {
       percentage: number;
       count: number;
-      students: string[];
+      students: StudentReadingStatus[];
     };
     emerging: {
       percentage: number;
       count: number;
-      students: string[];
+      students: StudentReadingStatus[];
     };
     atRisk: {
       percentage: number;
       count: number;
-      students: string[];
+      students: StudentReadingStatus[];
+    };
+    insufficientData: {
+      percentage: number;
+      count: number;
+      students: StudentReadingStatus[];
     };
   };
   totalStudents: number;
+  participationRate: number;
+  dataQuality: {
+    confidence: 'high' | 'medium' | 'low';
+    recommendation: string;
+  };
+  requiredActions?:string;
   lastUpdated: Date;
-}
-
-export interface StudentReadingStatus {
-  studentId: string;
-  name: string;
-  gradeLevel: number;
-  status: 'fluent' | 'developing' | 'emerging' | 'atRisk';
-  averageAccuracy: number;
-  averageWPM: number;
-  miscueDensity: number; // miscues per 100 words
-  trend: 'improving' | 'stable' | 'declining';
-  lastReportDate: Date;
 }
 
 // FOR COMMON MISCUE TYPE / WORDS / PASSAGE
 export interface FilterOptions {
+  /** 'overall' = all classes, 'class' = one specific class */
   type: 'overall' | 'class';
+  /** Required when type === 'class' */
   classId?: string;
   className?: string;
+  /** Academic year string e.g. "2025-2026" — filters reports by createdAt */
+  acadYear?: string;
+  /** Optional explicit date bounds (takes priority over acadYear if both supplied) */
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export interface ClassFilterData {
   classId: string;
   className: string;
   gradeLevel: number;
+}
+
+// ==================== STUDENT VIEW INTERFACES ====================
+export interface ProgressData {
+  date: string;
+  accuracy: number;
+  wpm: number;
+}
+
+export interface StudentProgressResult {
+  timeline: ProgressData[];
+  averageWPM: number;
+  averageAccuracy: number;
+  totalWords: number;
+}
+
+export interface TopMiscuedPassage {
+  title: string;
+  averageAccuracy: number;
+  attempts: number;
+  totalMiscues: number;
+}
+
+export interface CommonWord {
+  word: string;
+  errorExample: string;
+  errorCount: number;
+  dominantMiscueType?: string;
 }

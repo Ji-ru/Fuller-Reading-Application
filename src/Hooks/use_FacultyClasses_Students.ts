@@ -1,4 +1,3 @@
-import { getAuth } from '@react-native-firebase/auth';
 import {
   getFirestore,
   collection,
@@ -14,6 +13,9 @@ import {
   arrayUnion,
 } from '@react-native-firebase/firestore';
 import { ClassDocument, UserDocument } from '../Interfaces/dataInterfaces';
+import { FilterOptions } from '../Interfaces/miscue';
+import { onSnapshot } from '@react-native-firebase/firestore';
+import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 
 // Initialize instances
 const db = getFirestore();
@@ -43,7 +45,68 @@ export const getFacultyClasses_Student = {
       throw new Error("Failed to fetch faculty's classes. " + error.message);
     }
   },
-  
+
+  /**
+   * For a real time update of edited classes 
+   * - If archived, it should reflect to my archive component
+   * @param facultyId - gets the their created classes
+   * @param onUpdate - reflects any updated class
+   * @returns - displays objects (class) that has been modified for real time reflection to and from MyClass and MyArchive
+   */
+  getToFacultyClassesRealTime(
+    facultyId: string,
+    onUpdate: (classes: ClassDocument[]) => void,
+  ) {
+    const q = query(
+      collection(db, 'classes'),
+      where('facultyId', '==', facultyId),
+    );
+
+    return onSnapshot(q, snapshot => {
+      const classes = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+        ...doc.data(),
+        classId: doc.id,
+      })) as ClassDocument[];
+      console.log('This is class object' + classes)
+      onUpdate(classes);
+    });
+  },
+
+
+  /**
+ * Get student IDs based on filter
+ */
+  async getFilteredStudentIds(
+    facultyId: string,
+    filter?: FilterOptions,
+  ): Promise<{ studentIds: string[]; className?: string }> {
+    try {
+      const classes = await getFacultyClasses_Student.getFacultyClasses(facultyId);
+
+      if (filter?.type === 'class' && filter.classId) {
+        // Get specific class
+        const selectedClass = classes.find(
+          cls => cls.classId === filter.classId,
+        );
+        if (!selectedClass) {
+          throw new Error('Class not found');
+        }
+        return {
+          studentIds: selectedClass.studentIds || [],
+          className: selectedClass.className,
+        };
+      } else {
+        // Get all students from all classes
+        const allStudentIds = classes.flatMap(cls => cls.studentIds || []);
+        // Remove duplicates (students might be in multiple classes?)
+        const uniqueStudentIds = Array.from(new Set(allStudentIds));
+        return { studentIds: uniqueStudentIds };
+      }
+    } catch (error: any) {
+      throw new Error('Failed to get filtered students: ' + error.message);
+    }
+  },
+
 
   // ====================================================================
   // STUDENT RELATED FUNCTIONS
@@ -222,9 +285,8 @@ export const getFacultyClasses_Student = {
 
       return {
         success: true,
-        message: `Class "${
-          classData.className || classId
-        }" deleted successfully.`,
+        message: `Class "${classData.className || classId
+          }" deleted successfully.`,
       };
     } catch (error: any) {
       throw new Error(`Failed to delete class: ${error.message}`);

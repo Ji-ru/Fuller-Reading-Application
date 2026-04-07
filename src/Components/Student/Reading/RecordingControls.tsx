@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, TouchableOpacity, Image, Text } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, TouchableOpacity, Image, Text, Animated } from 'react-native';
 import readingStyles from '../../../UI_Designs/ReadingActivityStyles';
 
 interface RecordingControlsProps {
@@ -11,6 +11,34 @@ interface RecordingControlsProps {
   showRecordingStatus?: boolean;
 }
 
+interface RecordingTimerBadgeProps {
+  recordTime: string;
+}
+
+const RecordingTimerBadge: React.FC<RecordingTimerBadgeProps> = ({ recordTime }) => {
+  // Pulse animation for the red dot indicator
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 0.3, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [pulseAnim]);
+
+  return (
+    <View style={readingStyles.timerBadge}>
+      {/* Pulsing dot */}
+      <Animated.View style={[readingStyles.timerDot, { opacity: pulseAnim }]} />
+      <Text style={readingStyles.timerText}>{recordTime}</Text>
+    </View>
+  );
+};
+
 export const RecordingControls: React.FC<RecordingControlsProps> = ({
   isRecording,
   isLoading,
@@ -19,12 +47,11 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
   onRecordToggle,
   showRecordingStatus = true,
 }) => {
+
   return (
     <View style={readingStyles.microphoneContainer}>
       {showRecordingStatus && isRecording && (
-        <View>
-          <Text>Recording... {recordTime}</Text>
-        </View>
+        <RecordingTimerBadge recordTime={recordTime} />
       )}
 
       <TouchableOpacity
@@ -42,7 +69,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
               ? require('../../../../assets/icons/MicrophoneSlash-icon.png')
               : require('../../../../assets/icons/Microphone-icon.png')
           }
-          style={isLoading ? { opacity: 1 } : {}}
+          style={readingStyles.microphoneIcon}
         />
       </TouchableOpacity>
 

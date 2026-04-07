@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import user from '../../UI_Designs/UserStyle';
-import bubbles from '../../UI_Designs/BubblesDesign';
 import buttons from '../../UI_Designs/ButtonStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 export default function UserHomeScreen() {
+
   // HANDLE MENU
   const [menuVisible, setMenuVisible] = useState(false);
   // HANDLE LOGOUT
@@ -39,27 +40,7 @@ export default function UserHomeScreen() {
     <SafeAreaView style={user.container}>
       <View>
         {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer}>
-          {/* Top Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-
-          {/* Bottom Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
+        <BubbleBackground />
 
         {/* HEADER (LOGO + MENU ICON) */}
         <View>
@@ -119,23 +100,18 @@ export default function UserHomeScreen() {
           style={user.imaginationReadingImage}
           source={require('../../../assets/images/Imagination-Reading.png')}
         />
+
         <Text style={user.statement}>
           When you can read, you can make your own stories and use your big
           imagination!
         </Text>
 
         {/* BUTTONS */}
-        <TouchableOpacity
-          style={buttons.startReadingButton}
-          onPress={() => handleNextStep('PassageSelection')}
-        >
+        <TouchableOpacity style={buttons.startReadingButton} onPress={() => handleNextStep('PassageSelection')}>
           <Text style={buttons.nextPageText}>Start Learning</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('ReadingHistory')}>
+        <TouchableOpacity style={buttons.readingHistoryButton} onPress={() => handleNextStep('ReadingHistory')}>
           <Text style={buttons.nextPageText}>Reading History</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={buttons.readingHistoryButton} onPress={()=>handleNextStep('Profile')}>
-          <Text style={buttons.nextPageText}>My Profile</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

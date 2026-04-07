@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Miscue } from '../../../Interfaces/miscue';
 import { MiscueAnalysisService } from '../../../Controller/MiscueAnalysisServiceController';
 import readingStyles from '../../../UI_Designs/ReadingActivityStyles';
+import Svg, { Text as SvgText } from 'react-native-svg';
 
 interface ReadingFeedbackProps {
   targetText: string;
@@ -25,9 +26,15 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
   feedback: passedFeedback,
   isTextCorrect,
 }) => {
+
+  // ─────────────────────────────────────────────────────────
+  // ALPHABET FEEDBACK — REDESIGNED
+  // Colour-coded header band (green = correct, orange = not
+  // quite), then two rows comparing expected vs spoken.
+  // ─────────────────────────────────────────────────────────
+  // Inside FeedbackResult component, replace the alphabet feedback block with this:
+
   if (type === 'alphabet') {
-    // FOR ALPHABET ANALYSIS
-    // Use passed accuracy/feedback or calculate if not provided
     const alphabetAccuracy =
       passedAccuracy ||
       MiscueAnalysisService.checkAlphabetPhonemeAccuracy(targetText, spokenText)
@@ -36,78 +43,164 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
       passedFeedback ||
       MiscueAnalysisService.checkAlphabetPhonemeAccuracy(targetText, spokenText)
         .feedback;
-    const isCorrect = alphabetAccuracy == '100';
-    return (
-      <View>
-        <View
-          style={[
-            readingStyles.calculationContainer,
-            isCorrect
-              ? readingStyles.correctContainer
-              : readingStyles.incorrectContainer,
-          ]}
-        >
-          <Text style={readingStyles.calculationText}>
-            {isCorrect ? '✓ Correct!' : '✗ Incorrect'}
-          </Text>
-        </View>
+    const isCorrect = alphabetAccuracy === '100';
 
-        <Text style={readingStyles.feedbackLabel}>Result</Text>
-        <View style={readingStyles.feedbackContainer}>
-          <Text style={readingStyles.feedbackText}>
-            Expected:{' '}
-            <Text style={readingStyles.boldText}>
-              {targetText.toUpperCase()}
+    return (
+      <View style={{ width: '100%', alignItems: 'center' }}>
+        <View style={[
+          readingStyles.newAlphaCard,
+          isCorrect ? readingStyles.newAlphaCardCorrect : readingStyles.newAlphaCardIncorrect
+        ]}>
+          <View style={readingStyles.newAlphaHeader}>
+            <Text style={readingStyles.newAlphaHeaderEmoji}>{isCorrect ? '🌟' : '💡'}</Text>
+            <Text style={[
+              readingStyles.newAlphaHeaderText,
+              isCorrect ? readingStyles.newAlphaTextCorrect : readingStyles.newAlphaTextIncorrect
+            ]}>
+              {isCorrect ? 'Perfectly Pronounced!' : 'Keep Practicing!'}
             </Text>
-          </Text>
-          <Text style={readingStyles.feedbackText}>
-            You said:{' '}
-            <Text style={readingStyles.boldText}>
-              {spokenText || '(nothing detected)'}
-            </Text>
-          </Text>
-          <Text
-            style={[
-              readingStyles.feedbackText,
-              isCorrect ? readingStyles.successText : readingStyles.errorText,
-            ]}
-          >
-            {alphabetFeedback}
-          </Text>
+          </View>
+
+          <View style={readingStyles.newAlphaComparisonContainer}>
+            <View style={readingStyles.newAlphaTargetBox}>
+              <Text style={readingStyles.newAlphaLabel}>Letter</Text>
+              <Text style={readingStyles.newAlphaTargetLetter}>{targetText.toUpperCase()}</Text>
+            </View>
+
+            <View style={readingStyles.newAlphaDivider}>
+               <Text style={readingStyles.newAlphaDividerIcon}>{isCorrect ? '✓' : '✗'}</Text>
+            </View>
+
+            <View style={[
+              readingStyles.newAlphaSpokenBox,
+              isCorrect ? readingStyles.newAlphaSpokenCorrect : readingStyles.newAlphaSpokenIncorrect
+            ]}>
+              <Text style={readingStyles.newAlphaLabel}>You Said</Text>
+              <Text style={[
+                readingStyles.newAlphaSpokenLetter,
+                isCorrect ? readingStyles.newAlphaSpokenLetterCorrect : readingStyles.newAlphaSpokenLetterIncorrect
+              ]}>{spokenText ? spokenText.toUpperCase() : '—'}</Text>
+            </View>
+          </View>
+
+          {alphabetFeedback && (
+            <View style={readingStyles.newAlphaFeedbackBox}>
+              <Text style={readingStyles.newAlphaFeedbackText}>{alphabetFeedback}</Text>
+            </View>
+          )}
         </View>
 
         <TouchableOpacity
           style={readingStyles.tryAgainButton}
           onPress={onTryAgain}
         >
-          <Text style={readingStyles.tryAgainText}>Try Again</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  } else if (type === 'word') {
-    return (
-      <View style={readingStyles.feedbackContainer}>
-        <View style={readingStyles.waFeedbackWordBox}>
-          {/* Message */}
-          <Text style={readingStyles.waFeedbackMessage}>
-            {isTextCorrect
-              ? 'You pronounced the it correctly!'
-              : 'Try again! Keep practicing.'}
-          </Text>
-        </View>
-
-        {/* Actions */}
-        <TouchableOpacity
-          style={readingStyles.tryAgainButton}
-          onPress={onTryAgain}
-        >
-          <Text style={readingStyles.tryAgainText}>Try Again</Text>
+          <View style={readingStyles.tryAgainContent}>
+            <Image
+              style={readingStyles.tryAgainIcon}
+              source={require('../../../../assets/icons/Retry-icon.png')}
+            />
+            <Svg height={35} width={200}>
+              <SvgText
+                x={100}
+                y={26}
+                fontSize={30}
+                fontFamily="DynaPuff-Bold"
+                textAnchor="middle"
+                fill="none"
+                stroke="#3B7FC9"
+                strokeWidth={6}
+                strokeLinejoin='round'
+              >
+                Try Again?
+              </SvgText>
+              <SvgText
+                x={100}
+                y={26}
+                fontSize={30}
+                fontFamily="DynaPuff-Bold"
+                textAnchor="middle"
+                fill="#D7E9FF"
+              >
+                Try Again?
+              </SvgText>
+            </Svg>
+          </View>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // FOR THE PASSAGE ANALYSIS
+  // ─────────────────────────────────────────────────────────
+  // WORD FEEDBACK — REDESIGNED
+  // Single colour-coded result band — green when correct,
+  // orange when not — with a clear emoji + message.
+  // ─────────────────────────────────────────────────────────
+  if (type === 'word') {
+    return (
+      <View>
+        {/* Result card */}
+        <View style={readingStyles.wordResultCard}>
+          <View style={[
+            readingStyles.wordResultContent,
+            isTextCorrect
+              ? readingStyles.wordResultCorrect
+              : readingStyles.wordResultIncorrect,
+          ]}>
+            <Text style={readingStyles.wordResultIcon}>
+              {isTextCorrect ? '✓' : '✗'}
+            </Text>
+            <Text style={readingStyles.wordResultText}>
+              {isTextCorrect
+                ? 'You pronounced it correctly!'
+                : 'Keep practicing — you can do it!'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Try again button */}
+        <TouchableOpacity
+          style={readingStyles.tryAgainButton}
+          onPress={onTryAgain}
+        >
+          <View style={readingStyles.tryAgainContent}>
+            <Image
+              style={readingStyles.tryAgainIcon}
+              source={require('../../../../assets/icons/Retry-icon.png')}
+            />
+            <Svg height={35} width={200}>
+              <SvgText
+                x={100}
+                y={26}
+                fontSize={30}
+                fontFamily="DynaPuff-Bold"
+                textAnchor="middle"
+                fill="none"
+                stroke="#3B7FC9"
+                strokeWidth={6}
+                strokeLinejoin='round'
+              >
+                Try Again?
+              </SvgText>
+              <SvgText
+                x={100}
+                y={26}
+                fontSize={30}
+                fontFamily="DynaPuff-Bold"
+                textAnchor="middle"
+                fill="#D7E9FF"
+              >
+                Try Again?
+              </SvgText>
+            </Svg>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // PASSAGE FEEDBACK — UNCHANGED
+  // ─────────────────────────────────────────────────────────
   const accuracy = MiscueAnalysisService.calculateAccuracy(
     targetText,
     spokenText,
@@ -123,47 +216,102 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
 
   return (
     <View>
-      <View style={readingStyles.calculationContainer}>
-        <Text style={readingStyles.calculationText}>
-          {feedback} - {accuracy}%
-        </Text>
-      </View>
-
-      <Text style={readingStyles.feedbackLabel}>Feedback Report</Text>
       <View style={readingStyles.feedbackContainer}>
-        <Text
-          style={[readingStyles.feedbackText, readingStyles.substitutionText]}
-        >
-          Substitution:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.substitution,
-          )}
-        </Text>
-        <Text style={[readingStyles.feedbackText, readingStyles.omissionText]}>
-          Omission:{' '}
-          {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.omission)}
-        </Text>
-        <Text style={[readingStyles.feedbackText, readingStyles.insertionText]}>
-          Insertion:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.insertion,
-          )}
-        </Text>
-        <Text
-          style={[readingStyles.feedbackText, readingStyles.repetitionText]}
-        >
-          Repetition:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.repetition,
-          )}
-        </Text>
+        <Image style={readingStyles.feedbackBookicon} source={require('../../../../assets/icons/Book-icon.png')} />
+        <View style={readingStyles.feedbackTitleWrapper}>
+          <Svg height={50} width={350}>
+            <SvgText
+              x={215}
+              y={35}
+              fontSize={20}
+              fontFamily="DynaPuff-Bold"
+              textAnchor="middle"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth={4}
+              strokeLinejoin='round'
+            >
+              Reading Summary Result
+            </SvgText>
+            <SvgText
+              x={215}
+              y={35}
+              fontSize={20}
+              fontFamily="DynaPuff-Bold"
+              textAnchor="middle"
+              fill="#3B7FC9"
+            >
+              Reading Summary Result
+            </SvgText>
+          </Svg>
+        </View>
+        <View style={readingStyles.miscueRowsWrapper}>
+          {/* SUBSTITUTION */}
+          <Text style={[readingStyles.substitutionBgColor, readingStyles.miscueRow]}>
+            <Text style={readingStyles.feedbackLabelText}>Substitution: </Text>
+            <Text style={readingStyles.feedbackValueText}>
+              {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.substitution)}
+            </Text>
+          </Text>
+
+          {/* OMISSION */}
+          <Text style={[readingStyles.omissionBgColor, readingStyles.miscueRow]}>
+            <Text style={readingStyles.feedbackLabelText}>Omission: </Text>
+            <Text style={readingStyles.feedbackValueText}>
+              {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.omission)}
+            </Text>
+          </Text>
+
+          {/* INSERTION */}
+          <Text style={[readingStyles.insertionBgColor, readingStyles.miscueRow]}>
+            <Text style={readingStyles.feedbackLabelText}>Insertion: </Text>
+            <Text style={readingStyles.feedbackValueText}>
+              {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.insertion)}
+            </Text>
+          </Text>
+
+          {/* REPETITION */}
+          <Text style={[readingStyles.repetitionBgColor, readingStyles.miscueRow]}>
+            <Text style={readingStyles.feedbackLabelText}>Repetition: </Text>
+            <Text style={readingStyles.feedbackValueText}>
+              {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.repetition)}
+            </Text>
+          </Text>
+        </View>
       </View>
 
       <TouchableOpacity
         style={readingStyles.tryAgainButton}
         onPress={onTryAgain}
       >
-        <Text style={readingStyles.tryAgainText}>Try Again</Text>
+        <View style={readingStyles.tryAgainContent}>
+          <Image style={readingStyles.tryAgainIcon} source={require('../../../../assets/icons/Retry-icon.png')} />
+          <Svg height={35} width={200}>
+            <SvgText
+              x={100}
+              y={26}
+              fontSize={30}
+              fontFamily="DynaPuff-Bold"
+              textAnchor="middle"
+              fill="none"
+              stroke="#3B7FC9"
+              strokeWidth={6}
+              strokeLinejoin='round'
+            >
+              Try Again?
+            </SvgText>
+            <SvgText
+              x={100}
+              y={26}
+              fontSize={30}
+              fontFamily="DynaPuff-Bold"
+              textAnchor="middle"
+              fill="#D7E9FF"
+            >
+              Try Again?
+            </SvgText>
+          </Svg>
+        </View>
       </TouchableOpacity>
     </View>
   );

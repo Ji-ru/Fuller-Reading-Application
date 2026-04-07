@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// MiscueAnalytics.tsx
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,11 +12,9 @@ import {
   useMiscueAnalystics,
   useOverallAverageWPMandAccuracy,
   useTopMiscueIdentifier,
-  useFacultyClassesFilter,
 } from '../../../Hooks/use_ReadingStudentStats';
-import { AverageWPMandAccuracy } from '../../../Interfaces/miscue';
 import { FilterOptions } from '../../../Interfaces/miscue';
-import FilterSelector from './FilterSelector';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 // Update these interfaces to match the actual data structure
 interface MiscueData {
@@ -41,55 +40,65 @@ interface TopMiscuedPassage {
 
 interface MiscueAnalyticsProps {
   facultyId?: string | null;
-  miscueData?: MiscueData[];
-  topPassage?: TopMiscuedPassage;
-  commonWords?: CommonWord[];
-  averages?: AverageWPMandAccuracy;
+  filter: {
+    academicYear: string;
+    selectedView: string;
+  };
 }
 
 const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   facultyId = null,
-  miscueData: propMiscueData,
-  topPassage: propTopPassage,
-  commonWords: propCommonWords,
-  averages: propAverages,
+  filter,
 }) => {
-  // State for filter
-  const [filter, setFilter] = useState<FilterOptions>({ type: 'overall' });
+  const { selectedView, academicYear } = filter;
+  const isOverall = selectedView === 'overall';
 
-  // Hook for classes filter dropdown
-  const { classes, loading: classesLoading } =
-    useFacultyClassesFilter(facultyId);
+  // Build filter options for hooks based on parent filter
+  const filterOptions = useMemo<FilterOptions>(() => {
+    const options: FilterOptions = {
+      type: isOverall ? 'overall' : 'class',
+    };
+    
+    if (!isOverall && selectedView) {
+      options.classId = selectedView;
+    }
+    
+    if (academicYear) {
+      options.acadYear = academicYear;
+    }
+    
+    return options;
+  }, [isOverall, selectedView, academicYear]);
 
   // Hook for common miscue type
   const {
     miscueData: hookMiscueData,
     loading: miscueLoading,
     error: miscueError,
-  } = useMiscueAnalystics(facultyId, filter);
+  } = useMiscueAnalystics(facultyId, filterOptions);
 
   // Hook for Top 5 Miscue Data
   const {
     topMiscue,
     loading: topMiscueLoading,
     error: topMiscueError,
-  } = useTopMiscueIdentifier(facultyId, filter);
+  } = useTopMiscueIdentifier(facultyId, filterOptions);
 
   // Hook for getting the average of WPM and Accuracy
   const {
     averages: hookAverages,
     loading: averagesLoading,
     error: averagesError,
-  } = useOverallAverageWPMandAccuracy(facultyId, filter);
+  } = useOverallAverageWPMandAccuracy(facultyId, filterOptions);
 
   // Debug: Log the data from hooks
   useEffect(() => {
-    console.log('🔍 HOOK DATA DEBUG:');
-    console.log('Filter:', filter);
-    console.log('hookMiscueData:', hookMiscueData);
-    console.log('topMiscue:', topMiscue);
-    console.log('hookAverages:', hookAverages);
-  }, [filter, hookMiscueData, topMiscue, hookAverages]);
+    // console.log('🔍 MISCCUE ANALYTICS DATA:');
+    // console.log('Filter:', filterOptions);
+    // console.log('hookMiscueData:', hookMiscueData);
+    // console.log('topMiscue:', topMiscue);
+    // console.log('hookAverages:', hookAverages);
+  }, [filterOptions, hookMiscueData, topMiscue, hookAverages]);
 
   // Default data for fallback (empty/zero data)
   const defaultMiscueData: MiscueData[] = [
@@ -126,10 +135,10 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   // 1. Miscue Data (Pie Chart) - ALWAYS use hook data when available
   const miscueData = hookMiscueData && hookMiscueData.length > 0 
     ? hookMiscueData 
-    : propMiscueData || defaultMiscueData;
+    : defaultMiscueData;
 
   // 2. Averages - ALWAYS use hook data when available
-  const averages = hookAverages || propAverages || defaultAverages;
+  const averages = hookAverages || defaultAverages;
 
   // 3. Top Passage and Common Words - Extract from topMiscue hook
   let passage = defaultTopPassage;
@@ -161,10 +170,6 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
         }));
       }
     }
-  } else if (propTopPassage || propCommonWords) {
-    // Fallback to props if provided
-    if (propTopPassage) passage = propTopPassage;
-    if (propCommonWords) words = propCommonWords;
   }
 
   // ==================== LOADING & ERROR STATES ====================
@@ -175,13 +180,15 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <FilterSelector
-          facultyId={facultyId}
-          currentFilter={filter}
-          onFilterChange={setFilter}
-          classes={classes}
-          loading={classesLoading}
-        />
+        {/* Filter Indicator - Shows current filter context */}
+        {/* <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {isOverall 
+              ? '📊 Overall Reading Statistics' 
+              : `📚 Class: ${selectedView}`}
+            {academicYear && ` • ${academicYear}`}
+          </Text>
+        </View> */}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#5B5FED" />
           <Text style={styles.loadingText}>Loading statistics...</Text>
@@ -193,13 +200,15 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   if (hasError) {
     return (
       <View style={styles.container}>
-        <FilterSelector
-          facultyId={facultyId}
-          currentFilter={filter}
-          onFilterChange={setFilter}
-          classes={classes}
-          loading={classesLoading}
-        />
+        {/* Filter Indicator - Shows current filter context */}
+        {/* <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {isOverall 
+              ? '📊 Overall Reading Statistics' 
+              : `📚 Class: ${selectedView}`}
+            {academicYear && ` • ${academicYear}`}
+          </Text>
+        </View> */}
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error loading data</Text>
           <Text style={styles.errorSubtext}>
@@ -226,15 +235,21 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   const hasNoData = total === 0;
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Filter Component */}
-      <FilterSelector
-        facultyId={facultyId}
-        currentFilter={filter}
-        onFilterChange={setFilter}
-        classes={classes}
-        loading={classesLoading}
-      />
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Filter Indicator - Shows current filter context */}
+      {/* <View style={styles.filterIndicator}>
+        <Text style={styles.filterIndicatorText}>
+          {isOverall 
+            ? '📊 Overall Reading Statistics' 
+            : '📚 Class Reading Statistics'}
+          {!isOverall && (
+            <Text style={styles.filterBold}> {selectedView}</Text>
+          )}
+          {academicYear && (
+            <Text style={styles.filterYear}> • {academicYear}</Text>
+          )}
+        </Text>
+      </View> */}
 
       {/* Pie Chart Card */}
       <View style={styles.card}>
@@ -257,7 +272,7 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
                     cx={center}
                     cy={center}
                     r={radius}
-                    stroke="#CCCCCC" // Gray color
+                    stroke="#CCCCCC"
                     strokeWidth={strokeWidth}
                     fill="transparent"
                     strokeDasharray={circumference}
@@ -339,7 +354,7 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
       {/* Average Stats Card */}
       <View style={[styles.card, styles.averagesCard]}>
         <Text style={styles.averagesTitle}>
-          {filter.type === 'overall' ? 'Overall' : 'Class'} Reading Statistics
+          {isOverall ? 'Overall' : 'Class'} Reading Statistics
         </Text>
         <View style={styles.averagesGrid}>
           <View style={styles.statBox}>
@@ -355,11 +370,6 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{averages.totalStudents}</Text>
             <Text style={styles.statLabel}>Students</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{averages.totalReports}</Text>
-            <Text style={styles.statLabel}>Reports</Text>
           </View>
         </View>
       </View>
@@ -456,35 +466,30 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginVertical: sh(10),
     flex: 1,
   },
   card: {
     backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: sw(16),
+    padding: sw(20),
+    marginBottom: sh(16),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: sw(4),
     elevation: 3,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: sh(20),
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
     color: '#333',
-  },
-  menuDots: {
-    fontSize: 20,
-    color: '#999',
-    fontFamily: 'Satoshi-Bold',
   },
   pieChartContainer: {
     flexDirection: 'row',
@@ -498,31 +503,31 @@ const styles = StyleSheet.create({
   },
   legend: {
     flex: 1,
-    marginLeft: 20,
+    marginLeft: sw(20),
   },
   legendItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: sh(12),
   },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
+    width: sw(12),
+    height: sw(12),
+    borderRadius: sw(6),
+    marginRight: sw(8),
   },
   legendLabel: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#333',
     fontFamily: 'Satoshi-Medium',
   },
   legendValue: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#333',
     fontWeight: '600',
     fontFamily: 'Satoshi-Medium',
@@ -533,30 +538,27 @@ const styles = StyleSheet.create({
     borderLeftColor: '#FF6B6B',
   },
   passageTitle: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
     color: '#FF6B6B',
-    marginBottom: 12,
+    marginBottom: sh(12),
   },
   passageName: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontFamily: 'Satoshi-Medium',
     color: '#333',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   passageStatLabel: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#999',
-    marginBottom: 4,
+    marginBottom: sh(4),
     fontFamily: 'Satoshi-Bold',
   },
   passageStatValue: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
     color: '#333',
-  },
-  passageStatRight: {
-    alignItems: 'flex-end',
   },
   wordsCard: {
     backgroundColor: '#FFF5F5',
@@ -564,54 +566,39 @@ const styles = StyleSheet.create({
     borderLeftColor: '#FF6B6B',
   },
   wordsTitle: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
     color: '#FF6B6B',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
-  wordRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FFE5E5',
-  },
-
-  wordCount: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Bold',
-    color: '#999',
-  },
-  // Add these styles
   loadingContainer: {
-    height: 200,
+    height: sw(200),
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: sh(20),
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: sh(10),
     color: '#666',
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Medium',
   },
   errorContainer: {
-    padding: 20,
+    padding: sw(20),
     backgroundColor: '#FFEBEE',
-    borderRadius: 8,
-    marginTop: 20,
+    borderRadius: sw(8),
+    marginTop: sh(20),
   },
   errorText: {
     color: '#D32F2F',
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Bold',
   },
   errorSubtext: {
     color: '#666',
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Regular',
-    marginTop: 4,
+    marginTop: sh(4),
   },
   noDataOverlay: {
     position: 'absolute',
@@ -623,7 +610,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#999',
     fontFamily: 'Satoshi-Medium',
   },
@@ -631,51 +618,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  topMiscueTypeBadge: {
-    backgroundColor: '#5B5FED',
-    color: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    fontSize: 12,
-    fontFamily: 'Satoshi-Bold',
-  },
-  wordInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  wordDetails: {
-    alignItems: 'flex-end',
-  },
-  wordExample: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'Satoshi-Regular',
-    marginBottom: 2,
+    marginBottom: sh(16),
   },
   passageStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
   },
-  passageStatColumn: {
-    flex: 1,
-    minWidth: 100,
-  },
   // Table styles
   tableHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 10,
-    marginBottom: 10,
+    paddingBottom: sh(10),
+    marginBottom: sh(10),
     borderBottomWidth: 2,
     borderBottomColor: '#FF6B6B',
   },
   headerText: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Bold',
     color: '#FF6B6B',
     flex: 1,
@@ -683,19 +643,19 @@ const styles = StyleSheet.create({
   },
   attemptHeader: {
     textAlign: 'right',
-    paddingRight: 10,
+    paddingRight: sw(10),
   },
   tableRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: sh(12),
     borderBottomWidth: 1,
     borderBottomColor: '#FFE5E5',
   },
   column1: {
     flex: 1,
-    paddingLeft: 5,
+    paddingLeft: sw(5),
   },
   column2: {
     flex: 1,
@@ -704,27 +664,27 @@ const styles = StyleSheet.create({
   column3: {
     flex: 1,
     alignItems: 'flex-end',
-    paddingRight: 10,
+    paddingRight: sw(10),
   },
   wordText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#333',
     fontFamily: 'Satoshi-MediumItalic',
   },
   miscueTypeBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 100,
+    paddingHorizontal: sw(10),
+    paddingVertical: sh(4),
+    borderRadius: sw(12),
+    minWidth: sw(100),
     alignItems: 'center',
   },
   miscueTypeText: {
     color: 'white',
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Bold',
   },
   attemptCount: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Bold',
     color: '#999',
   },
@@ -734,58 +694,66 @@ const styles = StyleSheet.create({
     borderLeftColor: '#5B5FED',
   },
   averagesTitle: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
     color: '#5B5FED',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   averagesGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: sw(12),
+    padding: sw(10),
   },
   statBox: {
     flex: 1,
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
+    fontSize: sf(24),
     fontFamily: 'Satoshi-Bold',
     color: '#5B5FED',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Medium',
     color: '#666',
   },
   statDivider: {
-    width: 1,
-    height: 40,
+    width: sw(1),
+    height: sw(40),
     backgroundColor: '#E5E7EB',
   },
   filterIndicator: {
     backgroundColor: '#F0F9FF',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    padding: sw(16),
+    borderRadius: sw(12),
+    marginBottom: sh(16),
     borderLeftWidth: 4,
     borderLeftColor: '#5B5FED',
   },
   filterIndicatorText: {
-    fontSize: 14,
+    fontSize: sf(15),
     fontFamily: 'Satoshi-Medium',
+    color: '#1F2937',
+  },
+  filterBold: {
+    fontFamily: 'Satoshi-Bold',
     color: '#5B5FED',
   },
+  filterYear: {
+    fontFamily: 'Satoshi-Medium',
+    color: '#6B7280',
+  },
   noDataContainer: {
-    paddingVertical: 20,
+    paddingVertical: sh(20),
     alignItems: 'center',
   },
   noDataMessage: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#999',
     fontFamily: 'Satoshi-Medium',
   },

@@ -1,7 +1,15 @@
 // Note: This file is a pure service/controller—not a React function component or hook.
 // React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used or allowed here.
 // Only use hooks inside function components or custom hooks (functions starting with 'use').
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from '@react-native-firebase/auth';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  GoogleAuthProvider,
+  signInWithCredential,
+  updateEmail,
+} from '@react-native-firebase/auth';
 import {
   getFirestore,
   collection,
@@ -14,35 +22,33 @@ import {
   where,
   limit,
   serverTimestamp,
-  arrayUnion
+  arrayUnion,
+  startAfter,
+  Timestamp,
 } from '@react-native-firebase/firestore';
 import {
   UserDocument,
   MiscueReportDocument,
   ClassDocument,
+  UserRole,
+  PassageDocument,
 } from '../Interfaces/dataInterfaces';
 import { getCurrentAcademicYear } from '../Utilities/acadYearUtils';
+import { QueryDocumentSnapshot } from 'firebase/firestore';
+import { signOutFromGoogle } from '../Utilities/googleAuthUtils';
 
 // Initialize Firebase instances once
 const auth = getAuth();
 const db = getFirestore();
 
-// Helper to format date as "7 December 2025"
-const formatDateToReadable = (date: any): string => {
-  const day = date.getDate();
-  const month = date.toLocaleString('default', { month: 'long' });
-  const year = date.getFullYear();
-  return `${day} ${month} ${year}`;
-};
-
 /* -------------------------------------------------------------
-   CREATE USER ACCOUNT (FACULTY OR STUDENT)
+   CREATE USER ACCOUNT USING REGULAR
 ------------------------------------------------------------- */
 export const SignUpUserCredentials = async (
   email: string,
   password: string,
   userData: {
-    role: string;
+    role: UserRole;
     firstName: string;
     middleName?: string;
     lastName: string;
@@ -51,6 +57,9 @@ export const SignUpUserCredentials = async (
     gradeLevel?: number;
     dateOfBirth?: string;
     assignedGradeLevels?: number[];
+    parentConsent?: {
+      confirmed: boolean;
+    };
   },
 ) => {
   try {
@@ -62,59 +71,115 @@ export const SignUpUserCredentials = async (
     );
     const user = userCredential.user;
 
-    // 2. Base user document
-    const userDocument: UserDocument = {
-      uid: user.uid,
-      email,
-      role: userData.role,
-      firstName: userData.firstName,
-      middleName: userData.middleName,
-      lastName: userData.lastName,
-      sex: userData.sex,
-      profileImageUrl: userData.profileImageUrl,
-      createdAt: serverTimestamp(),
+    await createUserDocument(user.uid, email, userData);
+
+    return { success: true, user };
+  } catch (error: any) {
+    throw new Error(`Registration Failed: ${error.message}`);
+  }
+};
+
+// Shared: creates the Firestore user document and handles faculty class creation
+const createUserDocument = async (
+  uid: string,
+  email: string,
+  userData: {
+    role: UserRole;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    sex: string;
+    profileImageUrl?: string;
+    gradeLevel?: number;
+    dateOfBirth?: string;
+    assignedGradeLevels?: number[];
+    parentConsent?: {
+      confirmed: boolean;
     };
-    
-    let readableDOB: string = '';
-    if (userData.dateOfBirth) {
-      readableDOB = formatDateToReadable(userData.dateOfBirth);
-    }
-    
-    // 3. Role-specific data
-    if (userData.role === 'student') {
-      userDocument.studentData = {
-        gradeLevel: userData.gradeLevel || 1,
-        dateOfBirth: readableDOB,
-        classCode: '',
-        reading_Level: 'beginner',
-      };
-    } else if (userData.role === 'faculty') {
-      userDocument.facultyData = {
-        assignedGradeLevels: userData.assignedGradeLevels || [],
-        assignedClassIds: [],
-      };
-    }
+  },
+) => {
+  const userDocument: UserDocument = {
+    uid,
+    email,
+    role: userData.role,
+    firstName: userData.firstName,
+    middleName: userData.middleName,
+    lastName: userData.lastName,
+    sex: userData.sex,
+    profileImageUrl: userData.profileImageUrl,
+    createdAt: serverTimestamp() as Timestamp,
+  };
 
-    // 4. Write user document - MODULAR API
-    const userRef = doc(db, 'users', user.uid);
-    await setDoc(userRef, userDocument);
+  if (userData.role === 'student') {
+    userDocument.studentData = {
+      gradeLevel: userData.gradeLevel || 1,
+      dateOfBirth: userData.dateOfBirth,
+      classCode: '',
+      reading_Level: 'beginner',
+      readingLevelUpdatedAt: serverTimestamp() as Timestamp,
+      parentConsent: {
+        confirmed: userData.parentConsent?.confirmed || false,
+      },
+    };
+  } else if (userData.role === 'faculty') {
+    userDocument.facultyData = {
+      assignedGradeLevels: userData.assignedGradeLevels || [],
+      assignedClassIds: [],
+    };
+  }
 
-    // 5. Auto-create class for faculty
-    if (
-      userData.role === 'faculty' &&
-      userData.assignedGradeLevels &&
-      userData.assignedGradeLevels.length > 0
-    ) {
-      const initialAssignedGrade = userData.assignedGradeLevels[0];
-      await createClass(
-        user.uid,
-        userData.firstName,
-        userData.lastName,
-        initialAssignedGrade,
+  const userRef = doc(db, 'users', uid);
+  await setDoc(userRef, userDocument);
+
+  // Auto-create class for faculty
+  if (
+    userData.role === 'faculty' &&
+    userData.assignedGradeLevels &&
+    userData.assignedGradeLevels.length > 0
+  ) {
+    const initialAssignedGrade = userData.assignedGradeLevels[0];
+    await createClass(
+      uid,
+      userData.firstName,
+      userData.lastName,
+      initialAssignedGrade,
+    );
+  }
+};
+
+/* -------------------------------------------------------------
+   CREATE USER ACCOUNT USING GOOGLE
+------------------------------------------------------------- */
+export const GoogleSignUpUserCredentials = async (
+  email: string,
+  userData: {
+    role: UserRole;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    sex: string;
+    profileImageUrl?: string;
+    gradeLevel?: number;
+    dateOfBirth?: string;
+    assignedGradeLevels?: number[];
+    parentConsent?: {
+      confirmed: boolean;
+    };
+  },
+) => {
+  try {
+    // 1. Create user - MODULAR API
+    const currentUser = getAuth().currentUser;
+
+    if (!currentUser) {
+      throw new Error(
+        'No authenticated user found. Please sign in with Google first.',
       );
     }
 
-    return { success: true, user };
+    await createUserDocument(currentUser.uid, email, userData);
+
+    return { success: true, user: currentUser };
   } catch (error: any) {
     throw new Error(`Registration Failed: ${error.message}`);
   }
@@ -143,8 +208,8 @@ export const createClass = async (
       acadYear: getCurrentAcademicYear(),
       facultyId,
       studentIds: [],
-      isActive: true,
-      createdAt: serverTimestamp(),
+      status: 'active',
+      createdAt: serverTimestamp() as Timestamp,
     };
 
     // Store class - MODULAR API
@@ -156,7 +221,7 @@ export const createClass = async (
     await updateDoc(facultyRef, {
       'facultyData.assignedClassIds': arrayUnion(classId),
       'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp() as Timestamp,
     });
 
     return { classId, classCode, acadYear: classDocument.acadYear };
@@ -164,7 +229,6 @@ export const createClass = async (
     throw new Error(`Automatic Class Registration Failed: ${error.message}`);
   }
 };
-
 
 /* -------------------------------------------------------------
    CLASS CODE GENERATOR
@@ -182,7 +246,6 @@ export const createCustomClass = async (
   facultyId: string,
   className: string,
   gradeLevel: number,
-
 ) => {
   try {
     const classId = `Class_${Date.now()}_${Math.random()
@@ -198,8 +261,8 @@ export const createCustomClass = async (
       acadYear: getCurrentAcademicYear(),
       facultyId,
       studentIds: [],
-      isActive: true,
-      createdAt: serverTimestamp(),
+      status: 'active',
+      createdAt: serverTimestamp() as Timestamp,
     };
 
     // Store class - MODULAR API
@@ -211,7 +274,7 @@ export const createCustomClass = async (
     await updateDoc(facultyRef, {
       'facultyData.assignedClassIds': arrayUnion(classId),
       'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp() as Timestamp,
     });
 
     return classCode;
@@ -220,7 +283,74 @@ export const createCustomClass = async (
   }
 };
 
+/**
+ * Adds a new passage with a pre-generated passage ID
+ *
+ * Process:
+ *  1. Create a new reference to new document in the 'passages' collection (leaving ID blank)
+ *  2. Extract generated ID
+ *  3. Prepare final data (including ID in the document body)
+ *  4. Save final data to Firestore
+ *
+ * @param passageData - all the data needed for adding the passage
+ * @returns - true if storing is a success, else false
+ */
+export const AddPassage = async (
+  passageData: Omit<PassageDocument, 'pid' | 'createdAt'>,
+) => {
+  try {
+    const passageRef = doc(collection(db, 'passages'));
+    const pid = passageRef.id;
+    const finalData: PassageDocument = {
+      ...passageData,
+      pid: pid,
+      createdAt: serverTimestamp() as Timestamp,
+    };
 
+    await setDoc(passageRef, finalData);
+
+    return { success: true, id: pid };
+  } catch (error: any) {
+    console.error('Adding Passage Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/* -------------------------------------------------------------
+   CLASS ARCHIVING AND UNARCHIVING
+------------------------------------------------------------- */
+/**
+ * Used to archive a class
+ *
+ * @param classId - gets the classId to be archived
+ * @param facultyId - gets also the facultyId to check which teacher is assigned to the class
+ */
+export const archiveClass = async (classId: string, facultyId: string) => {
+  const classRef = doc(db, 'classes', classId);
+
+  await updateDoc(classRef, {
+    status: 'archived',
+    archivedAt: serverTimestamp() as Timestamp,
+    archivedBy: facultyId,
+    updatedAt: serverTimestamp() as Timestamp,
+  });
+};
+
+/**
+ * Used to unarchive a class
+ *
+ * @param classId - gets the class that was archived to be unarchived
+ */
+export const unarchiveClass = async (classId: string) => {
+  const classRef = doc(db, 'classes', classId);
+
+  await updateDoc(classRef, {
+    status: 'active',
+    archivedAt: null,
+    archivedBy: null,
+    updatedAt: serverTimestamp() as Timestamp,
+  });
+};
 
 /* -------------------------------------------------------------
    GET CLASS BY ID (ADMIN USE)
@@ -229,22 +359,22 @@ export const getClassByCode = async (classCode: string) => {
   try {
     const classesRef = collection(db, 'classes');
     const q = query(
-      classesRef, 
-      where('classCode', '==', classCode), 
-      where('isActive', '==', true), 
-      limit(1)
+      classesRef,
+      where('classCode', '==', classCode),
+      where('status', '==', 'active'),
+      limit(1),
     );
-    
+
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) return null;
 
     // Get the first (and should be only) document
     const doc = querySnapshot.docs[0];
-    
-    return { 
-      id: doc.id, 
-      ...doc.data() 
+
+    return {
+      id: doc.id,
+      ...doc.data(),
     } as ClassDocument & { id: string };
   } catch (error: any) {
     throw new Error('Failed to get class: ' + error.message);
@@ -260,11 +390,11 @@ export const getUserProfile = async (
   try {
     const userRef = doc(db, 'users', uid);
     const docSnap = await getDoc(userRef);
-    
+
     if (!docSnap.exists()) {
       return null;
     }
-    
+
     return docSnap.data() as UserDocument;
   } catch (error: any) {
     throw new Error(`Error getting user profile: ${error.message}`);
@@ -282,11 +412,56 @@ export const updateUserProfile = async (
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, {
       ...updates,
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp() as Timestamp,
     });
     return { success: true };
   } catch (error: any) {
     throw new Error('Profile update failed: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   UPDATE FACULTY PROFILE
+------------------------------------------------------------- */
+export const updateFacultyProfile = async (
+  uid: string,
+  updates: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+  },
+) => {
+  try {
+    const userRef = doc(db, 'users', uid);
+
+    // Attempt to update Authentication email if it has changed
+    const currentUser = auth.currentUser;
+    if (
+      currentUser &&
+      currentUser.uid === uid &&
+      currentUser.email !== updates.email
+    ) {
+      try {
+        await updateEmail(currentUser, updates.email);
+      } catch (authError: any) {
+        throw new Error(
+          'Could not update login email. Please re-authenticate if modifying email. ' +
+            authError.message,
+        );
+      }
+    }
+
+    await updateDoc(userRef, {
+      firstName: updates.firstName,
+      middleName: updates.middleName,
+      lastName: updates.lastName,
+      email: updates.email,
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Faculty profile update failed: ' + error.message);
   }
 };
 
@@ -300,10 +475,9 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     const classQuery = query(
       classesRef,
       where('classCode', '==', joinClassCode),
-      where('isActive', '==', true),
-      limit(1)
+      limit(1),
     );
-    
+
     const querySnapshot = await getDocs(classQuery);
 
     if (querySnapshot.empty) throw new Error('Invalid or inactive class code');
@@ -348,7 +522,7 @@ export const createMiscueReport = async (
     const report: MiscueReportDocument = {
       ...reportData,
       reportId: reportRef.id,
-      timestamp: serverTimestamp(),
+      createdAt: serverTimestamp() as Timestamp,
     };
 
     await setDoc(reportRef, report);
@@ -364,40 +538,61 @@ export const createMiscueReport = async (
 ------------------------------------------------------------- */
 export const getStudentClass = async (studentId: string) => {
   try {
+    console.log('This is studentId: ' + studentId);
+
+    // 1. Get student’s document to retrieve the stored classCode
     const studentRef = doc(db, 'users', studentId);
     const studentSnap = await getDoc(studentRef);
     const studentData = studentSnap.data() as UserDocument;
+    const classCode = studentData?.studentData?.classCode;
+    console.log('This is class code: ' + classCode);
 
-    if (!studentData?.studentData?.classCode) return null;
+    // No class enrolled
+    if (!classCode) return null;
 
-    const classRef = doc(db, 'classes', studentData.studentData.classCode);
-    const classSnap = await getDoc(classRef);
+    // 2. Query the classes collection for a document with this classCode
+    const classesRef = collection(db, 'classes');
+    const q = query(
+      classesRef,
+      where('classCode', '==', classCode),
+      where('status', '==', 'active'),
+      limit(1),
+    );
+    const querySnapshot = await getDocs(q);
 
-    if (!classSnap.exists()) return null;
+    // No active class with that code
+    if (querySnapshot.empty) return null;
 
-    return classSnap.data() as ClassDocument;
+    // 3. Return the class data
+    const classDoc = querySnapshot.docs[0];
+    return { id: classDoc.id, ...classDoc.data() } as ClassDocument & {
+      id: string;
+    };
   } catch (error: any) {
     throw new Error('Failed to get student class: ' + error.message);
   }
 };
-
 /* -------------------------------------------------------------
    LOGIN USER
 ------------------------------------------------------------- */
 export const loginUser = async (email: string, password: string) => {
   try {
     // Sign in with email and password - MODULAR API
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
     const user = userCredential.user;
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       user,
-      uid: user.uid
+      uid: user.uid,
     };
   } catch (error: any) {
     let errorMessage = 'Login failed. Please try again.';
-    
+
     // Handle specific Firebase errors
     switch (error.code) {
       case 'auth/invalid-email':
@@ -418,7 +613,7 @@ export const loginUser = async (email: string, password: string) => {
       default:
         errorMessage = error.message || 'Login failed. Please try again.';
     }
-    
+
     throw new Error(errorMessage);
   }
 };
@@ -435,9 +630,298 @@ export const getCurrentUser = () => {
 ------------------------------------------------------------- */
 export const logoutUser = async () => {
   try {
-    await signOut(auth); // MODULAR API
+    await signOutFromGoogle(); // Clear native Google session
+    await signOut(auth); // MODULAR API for Firebase
     return { success: true };
   } catch (error: any) {
     throw new Error(`Logout failed: ${error.message}`);
+  }
+};
+
+/* -------------------------------------------------------------
+   ADMIN FUNCTIONS
+------------------------------------------------------------- */
+
+export interface GetUsersResult {
+  users: UserDocument[];
+  lastDoc?: QueryDocumentSnapshot<UserDocument>;
+}
+
+export interface GetClassesResult {
+  classes: ClassDocument[];
+  lastDoc?: QueryDocumentSnapshot<ClassDocument>;
+}
+
+export const getUsers = async ({
+  role,
+  searchTerm,
+  lastDoc,
+}: {
+  role?: UserRole;
+  searchTerm?: string;
+  lastDoc?: QueryDocumentSnapshot<UserDocument>;
+}): Promise<GetUsersResult> => {
+  try {
+    // SEARCH MODE: Different strategy when searching
+    if (searchTerm) {
+      return await searchUsers({ searchTerm, role });
+    }
+    // BROWSE MODE: Original pagination logic
+    let baseUserQuery = query(
+      collection(db, 'users'),
+
+      limit(60),
+    );
+
+    // Role filter
+    if (role) {
+      baseUserQuery = query(baseUserQuery, where('role', '==', role));
+    }
+
+    // Pagination
+    if (lastDoc) {
+      baseUserQuery = query(baseUserQuery, startAfter(lastDoc));
+    }
+
+    const userQuerySnapshot = await getDocs(baseUserQuery);
+
+    const users: UserDocument[] = userQuerySnapshot.docs.map(
+      (doc: QueryDocumentSnapshot<UserDocument>) => {
+        return {
+          ...doc.data(),
+          uid: doc.id,
+        };
+      },
+    );
+
+    return {
+      users,
+      lastDoc: userQuerySnapshot.docs[userQuerySnapshot.docs.length - 1],
+    };
+  } catch (error: any) {
+    throw new Error('Failed to fetch the users: ' + error.message);
+  }
+};
+
+/**
+ * Admin Function: Gets a paginated list of classes, optionally filtered by status and searched by className.
+ */
+export const getAllClasses = async ({
+  status,
+  searchTerm,
+  lastDoc,
+  limitOverride,
+  acadYear,
+}: {
+  status?: 'active' | 'archived';
+  searchTerm?: string;
+  lastDoc?: QueryDocumentSnapshot<ClassDocument>;
+  limitOverride?: number;
+  acadYear?: string;
+}): Promise<GetClassesResult> => {
+  try {
+    let classesQuery = query(
+      collection(db, 'classes'),
+      limit(limitOverride || 20),
+    );
+
+    if (status) {
+      classesQuery = query(classesQuery, where('status', '==', status));
+    }
+    if (acadYear) {
+      classesQuery = query(classesQuery, where('acadYear', '==', acadYear));
+    }
+    if (lastDoc) {
+      classesQuery = query(classesQuery, startAfter(lastDoc));
+    }
+
+    const snapshot = await getDocs(classesQuery);
+    let classes: ClassDocument[] = snapshot.docs.map(
+      (doc: QueryDocumentSnapshot) => {
+        // Ensuring the correct typing and structure mapping
+        const data = doc.data() as ClassDocument;
+        // Overwrite classId with the document's actual id in case they somehow differ,
+        // but usually the ClassDocument interface holds the id properly inside `classId`.
+        return {
+          ...data,
+        };
+      },
+    );
+
+    // Handle Client-side text search if a searchTerm is provided
+    if (searchTerm) {
+      classes = classes.filter(
+        (cls: ClassDocument) =>
+          (cls.className || '')
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (cls.classCode || '')
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()),
+      );
+    }
+
+    return {
+      classes,
+      lastDoc:
+        snapshot.docs.length > 0
+          ? (snapshot.docs[
+              snapshot.docs.length - 1
+            ] as unknown as QueryDocumentSnapshot<ClassDocument>)
+          : undefined,
+    };
+  } catch (error: any) {
+    throw new Error('Failed to fetch classes: ' + error.message);
+  }
+};
+
+/**
+ * Fetch all classes for a given academic year and return:
+ * - a Set of class codes (for filtering students)
+ * - a Set of class IDs (for filtering faculty)
+ */
+export const getClassesByAcadYear = async (acadYear: string) => {
+  const classesRef = collection(db, 'classes');
+  const q = query(classesRef, where('acadYear', '==', acadYear));
+  const snapshot = await getDocs(q);
+
+  const classCodes = new Set<string>();
+  const classIds = new Set<string>();
+
+  snapshot.forEach((doc: QueryDocumentSnapshot) => {
+    const data = doc.data() as ClassDocument;
+    classCodes.add(data.classCode);
+    classIds.add(data.classId);
+  });
+
+  return { classCodes, classIds };
+};
+
+// Separate search function
+const searchUsers = async ({
+  searchTerm,
+  role,
+}: {
+  searchTerm: string;
+  role?: UserRole;
+}): Promise<GetUsersResult> => {
+  // Option 1: Fetch ALL users (if dataset is small <1000 users)
+  let searchQuery = query(collection(db, 'users'));
+
+  // Apply role filter BEFORE fetching (reduces data transfer)
+  if (role) {
+    searchQuery = query(searchQuery, where('role', '==', role));
+  }
+
+  const snapshot = await getDocs(searchQuery);
+  const users = snapshot.docs.map(
+    (doc: QueryDocumentSnapshot<UserDocument>) => ({
+      ...doc.data(),
+      uid: doc.id,
+    }),
+  );
+
+  const filtered = users.filter((user: any) =>
+    `${user.firstName} ${user.lastName}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase()),
+  );
+
+  return {
+    users: filtered,
+    lastDoc: undefined, // No pagination in search mode
+  };
+};
+
+/**
+ * Fetch users by role, optionally filtered by academic year.
+ *
+ * For students: only those whose `studentData.classCode` is in the given list of class codes.
+ * For faculty: only those whose `facultyData.assignedClassIds` intersects with the given list of class IDs.
+ *
+ * @param role - 'student' | 'faculty' | undefined (if undefined, fetch both)
+ * @param acadYear - optional academic year string (e.g., "2025-2026")
+ * @returns Object with arrays of students and faculty
+ */
+export const getUsersByRole = async (role?: UserRole, acadYear?: string) => {
+  try {
+    let classCodes: Set<string> = new Set();
+    let classIds: Set<string> = new Set();
+
+    // If academic year is given, fetch relevant class codes and IDs
+    if (acadYear) {
+      const { classCodes: codes, classIds: ids } = await getClassesByAcadYear(
+        acadYear,
+      );
+      classCodes = codes;
+      classIds = ids;
+    }
+
+    // Base query: users collection
+    let usersQuery = query(collection(db, 'users'));
+
+    // Apply role filter if provided
+    if (role) {
+      usersQuery = query(usersQuery, where('role', '==', role));
+    }
+
+    // Fetch users (consider pagination if needed – see note below)
+    const snapshot = await getDocs(usersQuery);
+    const allUsers = snapshot.docs.map(
+      (doc: QueryDocumentSnapshot) => doc.data() as UserDocument,
+    );
+
+    // Filter by academic year if required
+    let filteredUsers = allUsers;
+    if (acadYear) {
+      filteredUsers = allUsers.filter((user: UserDocument) => {
+        if (user.role === 'student') {
+          const classCode = user.studentData?.classCode;
+          return !!classCode && classCodes.has(classCode);
+        }
+        if (user.role === 'faculty') {
+          const assignedIds = user.facultyData?.assignedClassIds || [];
+          return assignedIds.some(id => classIds.has(id));
+        }
+        return true; // shouldn't happen, but for safety
+      });
+    }
+
+    // Separate by role
+    const students = filteredUsers.filter(
+      (u: UserDocument) => u.role === 'student',
+    );
+    const faculty = filteredUsers.filter(
+      (u: UserDocument) => u.role === 'faculty',
+    );
+
+    return { students, faculty };
+  } catch (error: any) {
+    console.error('Error fetching users by role:', error);
+    throw new Error(`Failed to fetch users: ${error.message}`);
+  }
+};
+
+// ==============================================================================================================
+// GET CURRENT USER RETRIEVAL
+// ==============================================================================================================
+
+/**
+ * Retrieves the current user's sex from Firestore.
+ * @returns {Promise<string | null>} - The user's sex ('male' | 'female' | other) or null if not found/error.
+ */
+export const getCurrentUserSex = async (): Promise<string | null> => {
+  try {
+    const uid = getAuth().currentUser?.uid;
+    if (!uid) return null;
+
+    const userSnap = await getDoc(doc(getFirestore(), 'users', uid));
+    if (!userSnap.exists()) return null;
+
+    const userData = userSnap.data() as UserDocument;
+    return userData.sex || null;
+  } catch (error) {
+    console.error('[getCurrentUserSex] Error fetching user sex:', error);
+    return null; // fallback
   }
 };

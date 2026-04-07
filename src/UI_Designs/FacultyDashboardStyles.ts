@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { sw, sh, sf } from '../Utils/responsive';
 
 const facultyDashboard = StyleSheet.create({
     safeArea: {
@@ -6,80 +7,84 @@ const facultyDashboard = StyleSheet.create({
       backgroundColor: '#F8F9FA',
     },
     container: {
-      padding: 5,
+      padding: sw(5),
     },
     content: {
-      padding: 10,
+      padding: sw(10),
     },
     dashboardTitle: {
-      fontSize: 28,
+      fontSize: sf(28),
       fontFamily: 'Satoshi-Black',
       color: '#333',
-      marginBottom: 8,
+      marginBottom: sh(8),
     },
     dashboardSubtitle: {
-      fontSize: 16,
+      fontSize: sf(16),
       color: '#666',
-      marginBottom: 24,
+      marginBottom: sh(24),
     },
     statsContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 15,
+      marginBottom: sh(15),
     },
     statCard: {
       flex: 1,
       backgroundColor: 'white',
-      padding: 15,
-      borderRadius: 12,
+      padding: sw(15),
+      borderRadius: sw(12),
       alignItems: 'center',
-      marginHorizontal: 5,
+      marginHorizontal: sw(5),
       elevation: 3,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: sw(1) },
+      shadowOpacity: 0.22,
+      shadowRadius: sw(2.22),
     },
     statValue: {
-      fontSize: 24,
+      fontSize: sf(24),
       fontWeight: 'bold',
       color: '#4ECDC4',
     },
     statLabel: {
-      fontSize: 12,
+      fontSize: sf(12),
       color: '#666',
-      marginTop: 4,
+      marginTop: sh(4),
     },
     loadingContainer: {
-      padding: 40,
+      padding: sw(40),
       alignItems: 'center',
     },
     loadingText: {
-      marginTop: 10,
+      marginTop: sh(10),
       color: '#666',
     },
     errorContainer: {
-      padding: 40,
+      padding: sw(40),
       backgroundColor: '#FFE5E5',
-      borderRadius: 12,
+      borderRadius: sw(12),
       alignItems: 'center',
     },
     errorText: {
       color: '#FF6B6B',
       fontWeight: 'bold',
-      marginBottom: 8,
+      marginBottom: sh(8),
     },
     errorSubtext: {
       color: '#666',
       textAlign: 'center',
     },
     noDataContainer: {
-      padding: 40,
+      padding: sw(40),
       backgroundColor: '#F0F0F0',
-      borderRadius: 12,
+      borderRadius: sw(12),
       alignItems: 'center',
     },
     noDataText: {
-      fontSize: 18,
+      fontSize: sf(18),
       fontWeight: 'bold',
       color: '#666',
-      marginBottom: 8,
+      marginBottom: sh(8),
     },
     noDataSubtext: {
       color: '#888',
@@ -90,8 +95,79 @@ const facultyDashboard = StyleSheet.create({
       alignItems: 'center',
     },
     icons: {
-      width: 32,
-      height: 32,
+      width: sw(32),
+      height: sw(32),
+    },
+
+    // Filter
+    filtersRow: {
+      flexDirection: 'row',
+      gap: sw(12),
+      marginBottom: sh(16),
+      zIndex: 1000,
+    },
+    filterItem: {
+      flex: 1,
+      zIndex: 1000,
+    },
+    filterLabel: {
+      fontSize: sf(12),
+      fontFamily: 'Satoshi-Medium',
+      color: '#7F8C8D',
+      marginBottom: sh(6),
+    },
+    filterButton: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: '#F8F9FA',
+      borderRadius: sw(8),
+      paddingVertical: sh(10),
+      paddingHorizontal: sw(12),
+      borderWidth: 1,
+      borderColor: '#E9ECEF',
+    },
+    filterButtonText: {
+      fontSize: sf(14),
+      color: '#2C3E50',
+      fontFamily: 'Satoshi-Medium',
+      flex: 1,
+      marginRight: sw(8),
+    },
+    filterDropdownMenu: {
+      position: 'absolute',
+      top: sh(62),
+      left: 0,
+      right: 0,
+      backgroundColor: '#FFFFFF',
+      borderRadius: sw(8),
+      borderWidth: 1,
+      borderColor: '#E9ECEF',
+      maxHeight: sh(240),
+      elevation: 5,
+      zIndex: 2000,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: sw(4) },
+      shadowOpacity: 0.15,
+      shadowRadius: sw(8),
+    },
+    filterDropdownOption: {
+      paddingVertical: sh(12),
+      paddingHorizontal: sw(14),
+      borderBottomWidth: 0.5,
+      borderBottomColor: '#F0F0F0',
+    },
+    filterDropdownOptionActive: {
+      backgroundColor: '#E8F8F7',
+    },
+    filterDropdownOptionText: {
+      fontSize: sf(14),
+      color: '#555',
+      fontFamily: 'Satoshi-Regular',
+    },
+    filterDropdownOptionTextActive: {
+      color: '#4ECDC4',
+      fontFamily: 'Satoshi-Medium',
     },
   });
 

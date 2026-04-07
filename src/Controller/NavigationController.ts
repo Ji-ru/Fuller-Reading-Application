@@ -2,27 +2,28 @@
 // For example: useState for local state, useCallback for memoized navigation handlers, useEffect for side effects, useRef to hold persistent values, useMemo for memoized values.
 // Only call hooks at the top level of a function component or custom hook (never in regular JS functions or classes).
 // Navigation Dependencies
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // React-native Built-in Components
 import { Alert } from 'react-native';
+import { serverTimestamp, Timestamp } from '@react-native-firebase/firestore';
 
 // Interfaces of the passages to be passed on with RootStackParamList
 import { ReadingMaterial } from '../Interfaces/passage';
 
 // Interfaces of Students
 import { UserDocument, UserRole } from '../Interfaces/dataInterfaces';
-import { ScreenReplaceTypes } from 'react-native-screens';
 import { logoutUser } from './AuthenticationController';
+import { WordContext } from '../Interfaces/dataInterfaces';
 
 // Specifies what parameters (data) each screen in your navigation stack can receive.
 export type RootStackParamList = {
   Loading: undefined;
   SignUpCompleted: { role: UserRole };
-  SignUpTwo: { userInfo: Partial<UserDocument> };
-  SignUpOne: { role: UserRole };
-  Login: undefined;
+  SignUpTwo: { role: UserRole; userInfo: Partial<UserDocument> };
+  SignUpOne: { role: UserRole; googleEmail?: string };
+  Login: { authError?: string } | undefined;
 
   // STUDENT NAVIGATION
   UserHome: undefined;
@@ -30,16 +31,19 @@ export type RootStackParamList = {
   ReadingActivity: {
     readingMaterial: ReadingMaterial;
     type: 'alphabet' | 'passage' | 'word';
+    wordContext?: WordContext;
   };
-
+  StudentMyClass: undefined;
   ReadingHistory: undefined;
-  ChooseRole: undefined;
   Profile: undefined;
+
+  ChooseRole: { googleEmail?: string } | undefined;
 
   // FACULTY NAVIGATION
   FacultyDashboard: undefined;
   FacultyProfile: undefined;
   MyClass: undefined;
+  MyArchive: undefined;
   MyStudents: {
     classId: string;
     className?: string;
@@ -51,6 +55,17 @@ export type RootStackParamList = {
     studentName: string;
     readingLevel: string;
   };
+
+  // ADMIN NAVIGATION
+  AdminDashboard: undefined;
+  AdminUserManagement: undefined;
+  AdminViewFacultyData: {
+    facultyId: string;
+    facultyName: string;
+  };
+
+  FacultyTabs: undefined;
+  StudentTabs: undefined;
 };
 
 // A list of all the screens within RootStackParamList
@@ -62,20 +77,19 @@ type ScreenNames = keyof RootStackParamList;
  */
 export const useNavigationHelper = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const route = useRoute<any>();
 
   /**
    * Handles the simple next navigation
    * @param destination  a destination based on the RootStackParamList going to any page based on the roles
+   *
+   * Updated: added an optional params argument
    */
-  const handleNextStep = (destination: ScreenNames) => {
-    navigation.navigate(destination as any);
-  };
-
-  /**
-   * For bottom navigation - always uses replace
-   */
-  const handleTabNavigation = (destination: ScreenNames) => {
-    navigation.replace(destination as any);
+  const handleNextStep = <RouteName extends ScreenNames>(
+    destination: RouteName,
+    params?: RootStackParamList[RouteName],
+  ) => {
+    navigation.navigate(destination as any, params as any);
   };
 
   /**
@@ -83,8 +97,11 @@ export const useNavigationHelper = () => {
    * A destination based on the RootStackParamList, which only navigate back to login
    * Better handling for Loading back to login
    */
-  const handleReplaceStep = (destination: ScreenNames) => {
-    navigation.replace(destination as any);
+  const handleReplaceStep = <RouteName extends ScreenNames>(
+    destination: RouteName,
+    params?: RootStackParamList[RouteName],
+  ) => {
+    navigation.replace(destination as any, params as any);
   };
 
   // Handle navigation for SignUpOne to SignUpTwo conatining the necessary data for registration
@@ -99,6 +116,8 @@ export const useNavigationHelper = () => {
     gradeLevel,
     dateOfBirth,
     assignedGradeLevels,
+    googleEmail,
+    parentConsent,
   }: {
     profileImageUrl?: string;
     firstName: string;
@@ -110,6 +129,10 @@ export const useNavigationHelper = () => {
     gradeLevel?: number;
     dateOfBirth?: string;
     assignedGradeLevels?: number[];
+    googleEmail?: string;
+    parentConsent?: {
+      confirmed: boolean;
+    };
   }) => {
     // Basic validation
     if (!firstName || !lastName) {
@@ -137,7 +160,7 @@ export const useNavigationHelper = () => {
     }
 
     // Build StudentInformation object
-    const userInfo: Partial<UserDocument> = {
+    const userInfo: Partial<UserDocument> & { googleEmail?: string } = {
       profileImageUrl: profileImageUrl || '',
       firstName,
       middleName,
@@ -145,6 +168,7 @@ export const useNavigationHelper = () => {
       email: '',
       role,
       sex,
+      googleEmail,
     };
     // Add role-specific data
     if (role === 'student') {
@@ -152,6 +176,9 @@ export const useNavigationHelper = () => {
         gradeLevel: gradeLevel!,
         dateOfBirth: dateOfBirth!,
         reading_Level: 'beginner',
+        parentConsent: {
+          confirmed: false,
+        },
       };
     } else if (role === 'faculty') {
       userInfo.facultyData = {
@@ -161,14 +188,14 @@ export const useNavigationHelper = () => {
     }
 
     // Navigate to SignUpTwo with the collected info
-    navigation.navigate('SignUpTwo', { userInfo });
+    navigation.navigate('SignUpTwo', { role, userInfo });
   };
 
   // Add a method to navigate from ChooseRole to SignUpOne
   const handleRoleSelection = (role: UserRole) => {
     if (role === 'student') {
       navigation.navigate('SignUpOne', { role });
-    } else if (role === 'admin') {
+    } else if (role === 'faculty') {
       navigation.navigate('SignUpOne', { role });
     } else {
       navigation.navigate('SignUpOne', { role });
@@ -181,9 +208,53 @@ export const useNavigationHelper = () => {
 
   const handleDesignatedUserPage = (role: string) => {
     if (role === 'student') {
-      navigation.navigate('UserHome');
+      navigation.replace('StudentTabs');
     } else if (role === 'faculty') {
-      navigation.navigate('FacultyDashboard');
+      navigation.replace('FacultyTabs');
+    } else if (role === 'admin') {
+      navigation.replace('AdminDashboard');
+    }
+  };
+
+  /**
+   * Handles naviagtion based on the selected user to view their information and monitor progress of a student or faculty
+   * @param param - multiple varibales in array is used to pass information to another page (either Faculty_Student_View_Profile or Admin_ViewFacultyData)
+   *
+   * PENDING ADMIN INFORMATION (STILL UNDECIDED IF NECESSARY)
+   */
+  const handleNavigateToUserDetail = ({
+    uid,
+    firstName,
+    middleName,
+    lastName,
+    email,
+    role,
+    sex,
+    reading_Level,
+  }: {
+    uid: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email?: string;
+    role?: UserRole;
+    sex: string;
+    reading_Level?: 'beginner' | 'intermediate' | 'advanced';
+  }) => {
+    if (role === 'student') {
+      handleStudentViewStats({
+        studentId: uid,
+        studentName: `${firstName} ${middleName ?? ''} ${lastName}`.trim(),
+        readingLevel: reading_Level || '',
+      });
+    } else if (role === 'faculty') {
+      handleFacultyViewData({
+        facultyId: uid,
+        facultyName: `${firstName} ${middleName ?? ''} ${lastName}`.trim(),
+        email: email || '',
+        role: role,
+        sex: sex,
+      });
     }
   };
 
@@ -191,23 +262,41 @@ export const useNavigationHelper = () => {
   const handleReadingNext = (
     readingMaterial: ReadingMaterial,
     type: 'alphabet' | 'passage' | 'word',
+    wordContext?: WordContext,
   ) => {
-    navigation.navigate('ReadingActivity', { readingMaterial, type });
+    navigation.navigate('ReadingActivity', {
+      readingMaterial,
+      type,
+      wordContext,
+    });
   };
 
   const handleHistoryNext = () => {
     navigation.navigate('ReadingHistory');
   };
 
+  // Handles navigation to view the faculty's class. Must be signed-in faculty credentials
   const handleClassStudents = (classData: {
     classId: string;
     className?: string;
     classCode: string;
-    acadYear: string
+    acadYear: string;
   }) => {
     navigation.navigate('MyStudents', classData);
   };
 
+  // Handles navigation to view faculty data to monitor their class' progress
+  const handleFacultyViewData = (facultyData: {
+    facultyId: string;
+    facultyName: string;
+    email: string;
+    role: UserRole;
+    sex: string;
+  }) => {
+    navigation.navigate('AdminViewFacultyData', facultyData);
+  };
+
+  // Handles navigation to view students progress
   const handleStudentViewStats = (studentData: {
     studentId: string;
     studentName: string;
@@ -254,11 +343,13 @@ export const useNavigationHelper = () => {
     );
   };
   return {
+    routeParams: route.params,
+    handleNavigateToUserDetail,
     handleNextStep,
-    handleTabNavigation,
     handleReplaceStep,
     handleSignUpNavigationWithData,
     handleDesignatedUserPage,
+    handleFacultyViewData,
     handleCompletedRegistration,
     handleRoleSelection,
     handleReadingNext,

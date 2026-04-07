@@ -1,6 +1,7 @@
 // components/PieChart.tsx
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 const { width } = Dimensions.get('window');
 const CHART_SIZE = width * 0.8;
@@ -128,12 +129,12 @@ const PieChart: React.FC<PieChartProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: sh(20),
   },
   title: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: sh(20),
     color: '#333',
   },
   chartContainer: {
@@ -181,42 +182,42 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   centerText: {
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
   },
   legendContainer: {
-    marginTop: 20,
+    marginTop: sh(20),
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: sw(20),
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 5,
-    padding: 10,
+    marginVertical: sh(5),
+    padding: sw(10),
     backgroundColor: 'white',
-    borderRadius: 8,
+    borderRadius: sw(8),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: sw(1) },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: sw(2),
     elevation: 2,
   },
   legendColor: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    marginRight: 10,
+    width: sw(20),
+    height: sw(20),
+    borderRadius: sw(4),
+    marginRight: sw(10),
   },
   legendText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#333',
   },
   legendCount: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#666',
     fontStyle: 'italic',
   },

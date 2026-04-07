@@ -2,7 +2,7 @@
 // Firebase usage is up-to-date for React Native Firebase v22 (auth().currentUser for user, all Firestore via controller-services).
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, Alert } from 'react-native';
+import { View, Text, Alert, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, ActivityIndicator } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 
 import {
@@ -10,8 +10,6 @@ import {
   useNavigationHelper,
 } from '../../Controller/NavigationController';
 import readingStyles from '../../UI_Designs/ReadingActivityStyles';
-import bubbles from '../../UI_Designs/BubblesDesign';
-import selection from '../../UI_Designs/PassageSelectionStyles';
 
 import { useAudioRecording } from '../../Controller/AudioRecordingController';
 import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
@@ -23,8 +21,10 @@ import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback
 import { Miscue } from '../../Interfaces/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
-import { FeedbackModal } from '../../Components/Student/Reading/FeedbackModal';
 import { getAuth } from '@react-native-firebase/auth';
+import { makeTodayKey } from '../../Utilities/currentDateUtils';
+import { getPassageImage } from '../../Utilities/ReadingAssets';
+import { useGlobalMusic } from '../../Components/GlobalUse/Background/GlobalMusicContext';
 
 type ReadingActivityScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -33,9 +33,8 @@ type ReadingActivityScreenRouteProp = RouteProp<
 
 export default function ReadingActivityScreenPage() {
   // Ref: Store a retry timeout id for feedback modal
-  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const route = useRoute<ReadingActivityScreenRouteProp>();
-  const { readingMaterial, type } = route.params;
+  const { readingMaterial, type, wordContext } = route.params;
 
   // State
   const [spokenText, setSpokenText] = useState('');
@@ -64,6 +63,53 @@ export default function ReadingActivityScreenPage() {
   const [hasStoredCorrectAttempt, setHasStoredCorrectAttempt] = useState(false);
   const [hasCheckedExisting, setHasCheckedExisting] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
+
+  // State for storing Alphabet Sessions 
+  const alphabetSessionIdRef = useRef<string | null>(null);
+  const attemptedSetRef = useRef(new Set<string>());
+  const correctSetRef = useRef(new Set<string>());
+  const incorrectSetRef = useRef(new Set<string>());
+  const sessionDateKeyRef = useRef<string | null>(null);
+
+  // State for storing Word Sessions 
+  const wordSessionIdRef = useRef<string | null>(null);
+  const wordAttemptedSetRef = useRef(new Set<string>()); // prevents retry inflation
+  const correctWordSetRef = useRef(new Set<string>());
+  const incorrectWordSetRef = useRef(new Set<string>());
+
+  // State for scroll hint
+  const [showScrollHint, setShowScrollHint] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+  const resultScrollViewRef = useRef<ScrollView | null>(null);
+
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    if (scrollViewHeight > 0 && contentHeight > scrollViewHeight + 20) {
+      setShowScrollHint(true);
+    } else {
+      setShowScrollHint(false);
+    }
+  }, [scrollViewHeight, contentHeight]);
+
+  useEffect(() => {
+    // This return function acts as "componentWillUnmount"
+    return () => {
+      // Finalize Alphabet Session if one was started
+      if (type === 'alphabet' && alphabetSessionIdRef.current) {
+        MiscueReportController.finalizeAlphabetSession(
+          alphabetSessionIdRef.current
+        ).catch((err) => console.error('Failed to finalize alphabet session', err));
+      }
+      // Finalize Word Session if one was started
+      if (type === 'word' && wordSessionIdRef.current) {
+        MiscueReportController.finalizeWordSession(
+          wordSessionIdRef.current
+        ).catch((err) => console.error('Failed to finalize word session', err));
+      }
+    };
+  }, [type]); // We only need type since the refs persist automatically
   // Hooks
   const {
     isRecording,
@@ -76,11 +122,44 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithHuggingFace } =
-    useSpeechToText();
+  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
+
+  // Access Global Music Context
+  const { playMusic, pauseMusic } = useGlobalMusic();
+
+  const handleScrollHintPress = useCallback(() => {
+    resultScrollViewRef.current?.scrollToEnd({ animated: true });
+  }, []);
 
   // Navigation
   const { handleLogout, handleBackStep } = useNavigationHelper();
+
+  const ensureAlphabetDailySession = useCallback(async () => {
+    if (type !== 'alphabet') return null;
+
+    const todayKey = makeTodayKey();
+
+    // clear if date rollover (your existing logic)
+    if (sessionDateKeyRef.current && sessionDateKeyRef.current !== todayKey) {
+      attemptedSetRef.current.clear();
+      correctSetRef.current.clear();
+      incorrectSetRef.current.clear();
+    }
+
+    sessionDateKeyRef.current = todayKey;
+
+    const sessionId = await MiscueReportController.startAlphabetSession();
+
+    // NEW: if the doc id changed, reset in-memory sets
+    if (alphabetSessionIdRef.current && alphabetSessionIdRef.current !== sessionId) {
+      attemptedSetRef.current.clear();
+      correctSetRef.current.clear();
+      incorrectSetRef.current.clear();
+    }
+
+    alphabetSessionIdRef.current = sessionId;
+    return sessionId;
+  }, [type]);
 
   /**
    * Returns the reading target text based on the type (alphabet, passage, or word).
@@ -117,6 +196,8 @@ export default function ReadingActivityScreenPage() {
     return 'Unknown';
   }, [readingMaterial, type]);
 
+
+
   // useMemo: Memoize word count calculation for performance
   const passageWordCount = useMemo(() => {
     if (type === 'passage' && isPassage(readingMaterial)) {
@@ -131,13 +212,13 @@ export default function ReadingActivityScreenPage() {
   useEffect(() => {
     checkPermission();
     initializeAudio();
-    
+
     // Use memoized word count for passages
     if (type === 'passage' && isPassage(readingMaterial)) {
       setTotalWords(passageWordCount);
     }
   }, [checkPermission, initializeAudio, type, readingMaterial, passageWordCount]);
-  
+
   /**
    * APPLICABLE TO ONLY FOR ALPHABET AND WORD 
    * 
@@ -159,6 +240,7 @@ export default function ReadingActivityScreenPage() {
     });
     return cleanSpoken === cleanTarget;
   }, []);
+
 
   /**
    * Opens the feedback modal with the appropriate message and modal type,
@@ -204,19 +286,6 @@ export default function ReadingActivityScreenPage() {
   }, []);
 
   /**
-   * Calculates the total number of words in a passage
-   * @returns {number} Total word count
-   */
-  const calculateTotalWords = useCallback((): number => {
-    if (type === 'passage' && isPassage(readingMaterial)) {
-      // Split by whitespace and filter out empty strings
-      const words = readingMaterial.text.trim().split(/\s+/);
-      return words.length;
-    }
-    return 0;
-  }, [readingMaterial, type]);
-
-  /**
    * Processes recorded audio by transcribing with Google or fallback to a simulated response.
    * Updates states and triggers analysis and UI changes.
    * @param audioFile - Path to the recorded audio file
@@ -225,26 +294,32 @@ export default function ReadingActivityScreenPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
     try {
+      if (!audioFile) {
+        throw new Error('No audio file provided');
+      }
       // const transcription = await processAudioWithGoogle(audioFile);
-      const transcription = await processAudioWithHuggingFace(audioFile);
-      setSpokenText(transcription);
-      console.log('THIS IS THE SPOKEN: ' + transcription);
+      // const transcription = await processAudioWithAssemblyAI(audioFile);
+      const transcription = await processAudioWithDeepgram(audioFile);
+      setSpokenText(transcription.fulltext);
+      console.log('THIS IS THE SPOKEN: ' + transcription.fulltext);
+      console.log('THIS IS THE UTTERANCES: ' + transcription.utterances);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      analyzeReading(transcription, duration);
+      await analyzeReading(transcription.fulltext, duration);
       setIsReadingCompleted(true);
     } catch (error) {
-      // Use simulated response as fallback
-      const simulatedResponse = getSimulatedResponse(targetText);
-      setSpokenText(simulatedResponse);
-      // Use 0 or a default duration for simulated response
-      analyzeReading(simulatedResponse, 0);
+      // Fallback on error: 0% accuracy instead of 100% simulated response
+      console.log('Audio processing failed, falling back to 0%', error);
+      setSpokenText('');
+      setRecordingDuration(duration);
+      // Send an empty string to trigger 0% accuracy analysis
+      await analyzeReading('', duration);
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithHuggingFace, getSimulatedResponse, targetText]);
+  }, [processAudioWithAssemblyAI, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:
@@ -262,7 +337,8 @@ export default function ReadingActivityScreenPage() {
 
         await handleAudioProcessing(audioFile, currentRecordTime);
       } catch (error) {
-        Alert.alert('Error', 'Failed to process recording');
+        console.warn('Failed to stop recording cleanly, applying fallback', error);
+        await handleAudioProcessing('', recordTime);
       }
     } else {
       // Reset modal state for new recording
@@ -270,9 +346,23 @@ export default function ReadingActivityScreenPage() {
       setShowFeedbackModal(false);
       setHasStoredReport(false); // Reset for new attempts
       setHasStoredCorrectAttempt(false); // Reset storage flag for new attempt
+
+      if (type === 'alphabet') {
+        await ensureAlphabetDailySession(); // prevents race
+      }
+      if (type === 'word') {
+        if (!wordSessionIdRef.current) {
+          wordSessionIdRef.current = await MiscueReportController.startWordSession();
+          wordAttemptedSetRef.current.clear();
+        }
+      }
+
+      // Pause Global Music while recording and analyzing
+      pauseMusic();
+
       await startRecording(targetText);
     }
-  }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText]);
+  }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText, type, ensureAlphabetDailySession, pauseMusic]);
 
   /**
    * Calculates the Words Per Minute (WPM) given transcribed speech and duration in seconds.
@@ -285,7 +375,7 @@ export default function ReadingActivityScreenPage() {
     durationSeconds: number,
   ): number => {
     if (totalWords <= 0 || durationSeconds <= 0) return 0;
-  
+
     const minutes = durationSeconds / 60;
     return Math.round(totalWords / minutes);
   }, []);
@@ -302,11 +392,38 @@ export default function ReadingActivityScreenPage() {
     return isNaN(num) ? 0 : Math.min(100, Math.max(0, num)); // Clamp 0-100
   }, []);
 
+  const numericAccuracy = useMemo(() => {
+    return convertAccuracyStringToNumber(accuracyString);
+  }, [accuracyString, convertAccuracyStringToNumber]);
+
+  const handleParentScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+
+      const reachedBottom =
+        layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+
+      setIsAtBottom(reachedBottom);
+    },
+    [],
+  );
+
+  const handleParentContentSizeChange = useCallback(
+    (_width: number, height: number) => {
+      // update content height to trigger scroll hint evaluation
+      setContentHeight(height);
+    },
+    [],
+  );
+
   /**
    * Effect: On mount or material/type change, check if the reading item was already completed by the user.
    * Sets state if completed.
    */
   useEffect(() => {
+    setAlreadyCompleted(false);
+    setHasStoredCorrectAttempt(false);
+
     const checkIfAlreadyCompleted = async () => {
       try {
         const auth = getAuth();
@@ -324,14 +441,16 @@ export default function ReadingActivityScreenPage() {
             setAlreadyCompleted(true);
           }
         } else if (type === 'word' && isWords(readingMaterial)) {
-          const targetWord = getTargetText();
           const existing = await MiscueReportController.hasWordBeenCompleted(
             user.uid,
-            readingMaterial.letter,
-            targetWord,
+            wordContext?.chapterId || 0,
+            wordContext?.chapterTitle || '',
+            wordContext?.lessonId || 0,
+            wordContext?.lessonTitle || '',
+            targetText,
           );
           if (existing) {
-            console.log('Word already completed:', targetWord);
+            console.log('Word already completed:', targetText);
             setAlreadyCompleted(true);
           }
         }
@@ -345,6 +464,8 @@ export default function ReadingActivityScreenPage() {
     checkIfAlreadyCompleted();
   }, [type, readingMaterial, getTargetText]);
 
+
+
   /**
    * Analyzes user transcription depending on reading type (alphabet, word, passage).
    * Calculates and sets miscues, accuracy, feedback, and stores report if eligible.
@@ -356,16 +477,17 @@ export default function ReadingActivityScreenPage() {
   const analyzeReading = async (transcription: string, duration: number) => {
     let accuracyNum = 0;
     let isWordAlphabetCorrect = false; // Track correct status locally
-
+    console.log("This is transcribed alphabet: " + transcription);
     // ALPHABET READING ANALYZATION
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+      const sessionId = await ensureAlphabetDailySession();
       const result = MiscueAnalysisService.checkAlphabetPhonemeAccuracy(
         readingMaterial.letter,
         transcription,
       );
 
       accuracyNum = convertAccuracyStringToNumber(result.accuracy);
-      isWordAlphabetCorrect = accuracyNum === 100;
+      isWordAlphabetCorrect = result.isCorrect;
 
       setIsCorrectAttempt(result.isCorrect);
       setAccuracyString(result.accuracy);
@@ -373,7 +495,7 @@ export default function ReadingActivityScreenPage() {
       setMiscues([]);
 
       // Store correct alphabet attempt ONLY if correct AND not already stored
-      if (result.isCorrect && !hasStoredCorrectAttempt && !alreadyCompleted) {
+      if (result.isCorrect && !hasStoredCorrectAttempt) {
         try {
           await MiscueReportController.storeAlphabetCorrectAttempt(
             readingMaterial.letter,
@@ -384,11 +506,48 @@ export default function ReadingActivityScreenPage() {
         } catch (error) {
           console.error('Failed to store alphabet attempt:', error);
         }
-      } else if (result.isCorrect && alreadyCompleted) {
-        // return nothing if already stored or incorrect which ends the analyzation
-        console.log('Alphabet already completed earlier');
       }
-    } 
+
+      // Checks the session, then record the reading attempt
+      if (sessionId) {
+        const letter = readingMaterial.letter.toUpperCase();
+        const attempted = attemptedSetRef.current;
+        const correct = correctSetRef.current;
+        const incorrect = incorrectSetRef.current;
+
+        const firstAttempt = !attempted.has(letter);
+        if (firstAttempt) attempted.add(letter);
+
+        if (result.isCorrect) {
+          const firstCorrect = !correct.has(letter);
+          const wasIncorrect = incorrect.has(letter);
+
+          correct.add(letter);
+          incorrect.delete(letter);
+
+          await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
+            incAttempted: firstAttempt,
+            incCorrect: firstCorrect,
+            addCorrect: firstCorrect,
+            removeIncorrect: wasIncorrect,
+          });
+        } else {
+          if (!correct.has(letter)) {
+            const firstIncorrect = !incorrect.has(letter);
+            incorrect.add(letter);
+
+            await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
+              incAttempted: firstAttempt,
+              addIncorrect: firstIncorrect,
+            });
+          } else if (firstAttempt) {
+            await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
+              incAttempted: true,
+            });
+          }
+        }
+      }
+    }
 
     // PASSAGE READING ANALYZATION AND DATABASE STORING
     else if (type === 'passage' && isPassage(readingMaterial)) {
@@ -397,16 +556,20 @@ export default function ReadingActivityScreenPage() {
         readingMaterial.text,
         transcription,
       );
+      console.log('This is detected miscues: ' + detectedMiscues);
 
       // Calculate accuracy
       const calculatedAccuracy = MiscueAnalysisService.calculateAccuracy(
         readingMaterial.text,
         transcription,
       );
+      console.log('This is calculated accuracy: ' + calculatedAccuracy);
+
 
       // Accuracy Feedback after calculation
       const accuracyFeedback =
         MiscueAnalysisService.getAccuracyFeedback(calculatedAccuracy);
+      console.log('This is accuracy feedback: ' + accuracyFeedback);
 
       setMiscues(detectedMiscues);
       setAccuracyString(calculatedAccuracy); // String: "85.5"
@@ -417,50 +580,111 @@ export default function ReadingActivityScreenPage() {
       const wpm = calculateWordsPerMin(totalWords, duration);
       setWordPerMin(wpm);
 
+      console.log('This is WPM: ' + wpm);
       // To avoid duplication it needs to check if it was already stored 
       if (!hasStoredReport) {
-        storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
+        await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
       }
     }
-    
+
     // WORD READING ANALYZATION AND DATABASE STORING
     else if (type === 'word' && isWords(readingMaterial)) {
-      const targetWord = getTargetText();
-      const correct = isTextPerfect(transcription, targetWord);
+      const correct = isTextPerfect(transcription, targetText);
 
       accuracyNum = correct ? 100 : 0;
       isWordAlphabetCorrect = correct;
-      const result = MiscueAnalysisService.checkWordAccuracy(
-        getTargetText(),
-        transcription,
-      );
 
-      // Used for congratulation modal if correct and if incorrect either try again or you're almost there
+      const result = MiscueAnalysisService.checkWordAccuracy(targetText, transcription);
+
       setIsCorrectAttempt(result.isCorrect);
-
       setAccuracyString(result.accuracy);
-      setFeedback(result.feedback);
       setFeedback(
         correct
           ? 'Great job! You pronounced the word correctly.'
           : 'Try again. Practice makes perfect.',
       );
 
-      // Store correct word attempt ONLY if correct AND not already stored
-      if (result.isCorrect && !hasStoredCorrectAttempt && !alreadyCompleted) {
-        try {
-          await MiscueReportController.storeWordCorrectAttempt(
-            readingMaterial.letter,
-            targetWord,
-          );
-          setHasStoredCorrectAttempt(true);
-          setAlreadyCompleted(true); // Update local state
-          console.log('Word stored in database');
-        } catch (error) {
-          console.error('Failed to store word attempt:', error);
-        }
-      } else if (result.isCorrect && alreadyCompleted) {
-        console.log('Word already completed earlier');
+      const sessionId =
+        wordSessionIdRef.current ?? (await MiscueReportController.startWordSession());
+      wordSessionIdRef.current = sessionId;
+
+      const attemptKey = `${wordContext?.chapterId ?? 'ch?'}::${wordContext?.lessonId ?? 'ls?'}::${targetText.toLowerCase()}`;
+
+      const firstAttempt = !wordAttemptedSetRef.current.has(attemptKey);
+      if (firstAttempt) wordAttemptedSetRef.current.add(attemptKey);
+
+      const firstCorrect = correct && !correctWordSetRef.current.has(attemptKey);
+      if (firstCorrect) correctWordSetRef.current.add(attemptKey);
+
+      const firstIncorrect =
+        !correct &&
+        !incorrectWordSetRef.current.has(attemptKey) &&
+        !correctWordSetRef.current.has(attemptKey); // don’t mark incorrect if already correct
+      if (firstIncorrect) incorrectWordSetRef.current.add(attemptKey);
+
+      // --- Attempted (once) + record that this word belongs to the lesson
+      if (firstAttempt) {
+        await MiscueReportController.recordWordAttempt(
+          sessionId,
+          {
+            chapterId: wordContext?.chapterId || 0,
+            chapterTitle: wordContext?.chapterTitle || '',
+            lessonId: wordContext?.lessonId || 0,
+            lessonTitle: wordContext?.lessonTitle || '',
+            targetWord: targetText,
+          },
+          {
+            incAttempted: true,
+            addTargetWord: true,
+            // if first attempt is incorrect, add incorrect
+            addIncorrectWord: firstIncorrect,
+          },
+        );
+      } else if (firstIncorrect) {
+        // if you want incorrectWords even when it wasn't the first attempt:
+        await MiscueReportController.recordWordAttempt(
+          sessionId,
+          {
+            chapterId: wordContext?.chapterId || 0,
+            chapterTitle: wordContext?.chapterTitle || '',
+            lessonId: wordContext?.lessonId || 0,
+            lessonTitle: wordContext?.lessonTitle || '',
+            targetWord: targetText,
+          },
+          { addIncorrectWord: true },
+        );
+      }
+
+      // --- Correct (once) + move incorrect -> correct
+      if (firstCorrect) {
+        await MiscueReportController.recordWordAttempt(
+          sessionId,
+          {
+            chapterId: wordContext?.chapterId || 0,
+            chapterTitle: wordContext?.chapterTitle || '',
+            lessonId: wordContext?.lessonId || 0,
+            lessonTitle: wordContext?.lessonTitle || '',
+            targetWord: targetText,
+          },
+          {
+            incCorrect: true,
+            addCorrectWord: true,
+            removeIncorrectWord: true, // important: “updates everytime it becomes correct”
+          },
+        );
+      }
+
+      // --- Global mastery (wordCompleted)
+      if (correct && !hasStoredCorrectAttempt && !alreadyCompleted) {
+        await MiscueReportController.storeWordCorrectAttempt(
+          wordContext?.chapterId || 0,
+          wordContext?.chapterTitle || '',
+          wordContext?.lessonId || 0,
+          wordContext?.lessonTitle || '',
+          targetText,
+        );
+        setHasStoredCorrectAttempt(true);
+        setAlreadyCompleted(true);
       }
     }
 
@@ -492,24 +716,6 @@ export default function ReadingActivityScreenPage() {
   ) => {
     try {
       // if this attempt is already stored, stop
-      if (hasStoredReport) return;
-
-      /**
-       * Check if spoken text is empty or just error messages
-       * Check if duration is too short (less than 1 second)
-       * Check if WPM is 0 or negative (no words spoken)
-       */
-
-      if (
-        !spokenText ||
-        spokenText.trim() === '' ||
-        spokenText === 'No Speech Detected!' ||
-        spokenText.toLowerCase().includes('no speech') ||
-        duration < 1 ||
-        wpm <= 0
-      ) {
-        return;
-      }
 
       const mins = Math.floor(duration / 60);
       const seconds = Math.floor(duration % 60);
@@ -535,7 +741,6 @@ export default function ReadingActivityScreenPage() {
         formattedDuration
       );
 
-      Alert.alert('Success', 'Successfully stored the miscues data');
       setHasStoredReport(true);
     } catch (error: any) {
       throw new Error('Failed to store miscue report: ' + error.message);
@@ -559,7 +764,10 @@ export default function ReadingActivityScreenPage() {
     setIsCorrectAttempt(false);
     setRecordingDuration(0);
     setWordPerMin(0);
-  }, []);
+
+    // Play Global Music again when returning to reading screen
+    playMusic();
+  }, [playMusic]);
 
   /**
    * Handler to close the feedback modal dialog.
@@ -578,93 +786,212 @@ export default function ReadingActivityScreenPage() {
   // Render
   return (
     <SafeAreaView style={readingStyles.container}>
-      <View style={readingStyles.insideContainer}>
-        {/* Bubble Decorations */}
-        <View style={bubbles.bubblesContainer}>
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
+      <ImageBackground
+        source={!isReadingCompleted ? isPassage(readingMaterial) ? getPassageImage(readingMaterial.image) : isAlphabet(readingMaterial) ? require('../../../assets/images/RA-Alphabet-Result-bg.png') : isWords(readingMaterial) ? require('../../../assets/images/RA-Word-Result-bg.png') : undefined : require('../../../assets/images/RA-Passage-Result-bg.png')}
+        style={readingStyles.bgImage}
+        imageStyle={!isReadingCompleted ? readingStyles.backgroundImage : readingStyles.backgroundResultImage}
+        resizeMode='cover'
+      >
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            ref={resultScrollViewRef}
+            contentContainerStyle={readingStyles.screenScrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onScroll={handleParentScroll}
+            onContentSizeChange={handleParentContentSizeChange}
+            onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
+            scrollEventThrottle={16}
+          >
+
+            <View style={readingStyles.insideContainer}>
+
+              {/* Header */}
+              <ReadingHeader
+                onBack={handleBackStep}
+                onMenuToggle={toggleMenu}
+                onLogout={handleLogout}
+                menuVisible={menuVisible}
+              />
+
+              {/* Screen Title */}
+              {/* {!isReadingCompleted ? (<Svg height={60} width={400}>
+              <SvgText
+                x={190}                 // center X
+                y={35}                  // baseline Y
+                fontSize={40}
+                fontFamily="DynaPuff-Bold"
+                textAnchor="middle"     // center align
+                fill="none"          // inside color
+                stroke="#D7E9FF"        // outline color
+                strokeWidth={8}         // outline thickness
+                strokeLinejoin='round'
+              >
+                {type === 'alphabet'
+                  ? 'Alphabet Reading'
+                  : type === 'word'
+                    ? 'Word Reading'
+                    : 'Passage Reading'}
+              </SvgText>
+              <SvgText
+                x={190}
+                y={35}
+                fontSize={40}
+                fontFamily="DynaPuff-Bold"
+                textAnchor="middle"
+                fill="#3B7FC9"
+              >
+                {type === 'alphabet'
+                  ? 'Alphabet Reading'
+                  : type === 'word'
+                    ? 'Word Reading'
+                    : 'Passage Reading'}
+              </SvgText>
+            </Svg>): null} */}
+
+              {/* Display Component */}
+              <PassageDisplay
+                material={readingMaterial}
+                type={type}
+                spokenText={spokenText}
+                isRecording={isRecording}
+                miscues={miscues}
+                accuracy={numericAccuracy}
+                accuracyString={accuracyString}
+                isReadingCompleted={isReadingCompleted}
+                isTextCorrect={isCorrectAttempt}
+                feedback={feedback}
+                onTryAgain={handleTryAgain}
+              />
+
+              {/* Transcribing Loading Indicator Modal */}
+              <Modal transparent={true} visible={isLoading} animationType="fade">
+                <View style={readingStyles.loadingModalOverlay}>
+                  <View style={readingStyles.loadingModalContent}>
+                    <ActivityIndicator size={48} color="#3B7FC9" />
+                    <Text style={readingStyles.loadingModalTitle}>Transcribing Audio...</Text>
+                    <Text style={readingStyles.loadingModalSubtitle}>This will only take a moment.</Text>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Feedback — Only show for passage (alphabet + word show result inside PassageDisplay) */}
+              {!isLoading && !isRecording && isReadingCompleted && type === 'passage' && (
+                <FeedbackResult
+                  targetText={targetText}
+                  spokenText={spokenText}
+                  miscues={miscues}
+                  onTryAgain={handleTryAgain}
+                  type={type}
+                  accuracy={accuracyString}
+                  feedback={feedback}
+                  isTextCorrect={isCorrectAttempt}
+                />
+              )}
+              {/* Feedback Modal */}
+              {/* <FeedbackModal
+            visible={showFeedbackModal}
+            type={feedbackModalType}
+            onClose={handleFeedbackModalClose}
+            autoClose={true}
+          /> */}
+
+            </View>
+          </ScrollView>
+          {showScrollHint && !isAtBottom && (
+            <TouchableOpacity
+              style={readingStyles.scrollHintOverlay}
+              onPress={handleScrollHintPress}
+              activeOpacity={0.85}
+            >
+              <Text style={readingStyles.scrollHintText}>▼ See more </Text>
+            </TouchableOpacity>
+          )}
         </View>
-
-        {/* Header */}
-        <ReadingHeader
-          onBack={handleBackStep}
-          onMenuToggle={toggleMenu}
-          onLogout={handleLogout}
-          menuVisible={menuVisible}
-        />
-
-        {/* Screen Title */}
-        <Text style={selection.label}>
-          {type === 'alphabet'
-            ? 'Alphabet Reading'
-            : type === 'word'
-            ? 'Word Reading'
-            : 'Passage Reading'}
-        </Text>
-
-        {/* Display Component */}
-        <PassageDisplay
-          material={readingMaterial}
-          type={type}
-          spokenText={spokenText}
-          isRecording={isRecording}
-          miscues={miscues}
-        />
-
-        {/* Loading Indicator */}
-        {isLoading && (
-          <View style={readingStyles.loadingContainer}>
-            <Text style={readingStyles.loadingText}>Transcribing Audio...</Text>
-          </View>
-        )}
-
-        {/* Feedback - Only show when reading is completed and modal is closed */}
-        {!isLoading && !isRecording && isReadingCompleted && (
-          <FeedbackResult
-            targetText={targetText}
-            spokenText={spokenText}
-            miscues={miscues}
-            onTryAgain={handleTryAgain}
-            type={type}
-            accuracy={accuracyString}
-            feedback={feedback}
-            isTextCorrect={isCorrectAttempt}
-          />
-        )}
 
         {/* Recording Controls - Only show when not completed */}
         {!isReadingCompleted && (
-          <RecordingControls
-            isRecording={isRecording}
-            isLoading={isLoading}
-            hasPermission={hasPermission}
-            recordTime={formatTime(recordTime)}
-            onRecordToggle={handleRecordToggle}
-          />
+          <View style={{ paddingBottom: 20 }}>
+            <RecordingControls
+              isRecording={isRecording}
+              isLoading={isLoading}
+              hasPermission={hasPermission}
+              recordTime={formatTime(recordTime)}
+              onRecordToggle={handleRecordToggle}
+            />
+          </View>
         )}
 
-        {/* Feedback Modal */}
-        <FeedbackModal
-          visible={showFeedbackModal}
-          type={feedbackModalType}
-          onClose={handleFeedbackModalClose}
-          autoClose={true}
-        />
-      </View>
+        {/* ── STT Error Modal ──────────────────────────────────────────────── */}
+        {/* Shown when AssemblyAI transcription fails, replacing the old Alert. */}
+        {sttErrorVisible && (
+          <View style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            justifyContent: 'center', alignItems: 'center',
+            zIndex: 999,
+          }}>
+            <View style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 20,
+              marginHorizontal: 28,
+              padding: 28,
+              alignItems: 'center',
+              elevation: 10,
+              shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+            }}>
+              {/* Icon */}
+              <View style={{
+                width: 56, height: 56, borderRadius: 28,
+                backgroundColor: '#FFF0F0',
+                justifyContent: 'center', alignItems: 'center',
+                marginBottom: 14,
+              }}>
+                <Text style={{ fontSize: 28 }}>⚠️</Text>
+              </View>
+
+              {/* Title */}
+              <Text style={{
+                fontSize: 18, fontFamily: 'DynaPuff-Bold',
+                color: '#1E1E1E', textAlign: 'center', marginBottom: 8,
+              }}>
+                Transcription Failed
+              </Text>
+
+              {/* Message */}
+              <Text style={{
+                fontSize: 13, fontFamily: 'Satoshi-Regular',
+                color: '#555', textAlign: 'center', marginBottom: 24, lineHeight: 20,
+              }}>
+                {sttErrorMessage}
+              </Text>
+
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity
+                  onPress={clearSttError}
+                  style={{
+                    flex: 1, paddingVertical: 12, borderRadius: 12,
+                    backgroundColor: '#F0F4FF', alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#3B7FC9', fontFamily: 'Satoshi-Bold', fontSize: 14 }}>Dismiss</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => { clearSttError(); handleTryAgain(); }}
+                  style={{
+                    flex: 1, paddingVertical: 12, borderRadius: 12,
+                    backgroundColor: '#3B7FC9', alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontFamily: 'Satoshi-Bold', fontSize: 14 }}>Try Again</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+      </ImageBackground>
     </SafeAreaView>
   );
 }

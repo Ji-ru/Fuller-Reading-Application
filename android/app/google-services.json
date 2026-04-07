@@ -12,7 +12,20 @@
           "package_name": "com.example.cisc_kids_2"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "274037817546-f0676e9p538unnfas0eekjng7bbgd2gg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.cisc_kids_2",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "274037817546-s3hdesdkb5b3qkdj545padbukovidemq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAMG5RvwLzp437kq73K3NlHGHhDQjvopIM"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "274037817546-s3hdesdkb5b3qkdj545padbukovidemq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "274037817546-la8fgjm20rhu1rq449mq5v04focs6oar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ciscKids2"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +56,12 @@
           "package_name": "com.miscuereading"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "274037817546-s3hdesdkb5b3qkdj545padbukovidemq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAMG5RvwLzp437kq73K3NlHGHhDQjvopIM"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "274037817546-s3hdesdkb5b3qkdj545padbukovidemq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "274037817546-la8fgjm20rhu1rq449mq5v04focs6oar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ciscKids2"
+              }
+            }
+          ]
         }
       }
     }

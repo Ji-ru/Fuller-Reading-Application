@@ -1,5 +1,5 @@
 // Components/Faculty/ClassReadingStatus.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,272 +9,299 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
+  TextInput,
+  Image
 } from 'react-native';
 import { useFetchClassReadingHealth } from '../../../Hooks/use_ReadingStudentStats';
-import { ClassReadingHealth } from '../../../Interfaces/miscue';
-import { getAcademicYearOptions } from '../../../Utilities/acadYearUtils';
+import { ClassReadingHealth, StudentReadingStatus } from '../../../Interfaces/miscue';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
 interface Props {
-  facultyId?: string;
+  facultyId: string;
+  filter: {
+    academicYear: string;
+    selectedView: string;
+  };
+  onFilterChange: (filter: {
+    academicYear: string;
+    selectedView: string;
+  }) => void;
 }
 
-type StatusType = 'fluent' | 'developing' | 'emerging' | 'atRisk';
+type StatusType = 'fluent' | 'developing' | 'emerging' | 'atRisk' | 'insufficientData';
 
-interface StudentModalData {
-  status: StatusType;
-  students: string[];
-  statusLabel: string;
-}
+const TrendIcon = ({ trend }: { trend: 'improving' | 'stable' | 'declining' }) => {
+  switch (trend) {
+    case 'improving': return <Text style={{ color: '#4CAF50' }}>▲</Text>;
+    case 'declining': return <Text style={{ color: '#F44336' }}>▼</Text>;
+    default: return <Text style={{ color: '#9E9E9E' }}>▶</Text>;
+  }
+};
 
-const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
+const ConfidenceBadge = ({ confidence }: { confidence: 'high' | 'medium' | 'low' }) => {
+  const getConfig = () => {
+    switch (confidence) {
+      case 'high': return { color: '#4CAF50', bg: '#E8F5E9', label: 'HIGH' };
+      case 'medium': return { color: '#FF9800', bg: '#FFF3E0', label: 'MED' };
+      case 'low': return { color: '#F44336', bg: '#FFEBEE', label: 'LOW' };
+      default: return { color: '#9E9E9E', bg: '#F5F5F5', label: 'N/A' };
+    }
+  };
+  const config = getConfig();
+  return (
+    <View style={[styles.confidenceBadge, { backgroundColor: config.bg }]}>
+      <Text style={[styles.confidenceText, { color: config.color }]}>{config.label}</Text>
+    </View>
+  );
+};
+
+const ClassReadingStatus: React.FC<Props> = ({ facultyId, filter }) => {
+  // All hooks at the top level, unconditionally
   const [expandedClass, setExpandedClass] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedView, setSelectedView] = useState<string>('overall');
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalData, setModalData] = useState<StudentModalData | null>(null);
-  const [academicYear, setAcademicYear] = useState<string>('');
-  const [academicYears, setAcademicYears] = useState<string[]>([]);
-  const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [modalData, setModalData] = useState<{ status: StatusType; students: StudentReadingStatus[] } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch data using the hook
-  const { loading, classHealthData, error } =
-    useFetchClassReadingHealth(facultyId);
+  const { academicYear, selectedView } = filter;
+  
+  // Always call the hook
+  const { loading, classHealthData, error } = useFetchClassReadingHealth(facultyId);
 
-  const toggleExpand = (classId: string) => {
-    setExpandedClass(expandedClass === classId ? null : classId);
-  };
-
-  // Get unique academic years from the data
-  useEffect(() => {
-    if (classHealthData.length > 0) {
-      const years = Array.from(
-        new Set(classHealthData.map(item => item.acadYear).filter(Boolean)),
-      );
-      setAcademicYears(years);
-
-      if (years.length > 0 && !academicYear) {
-        setAcademicYear(years[0]);
-      }
-    } else {
-      const defaultYears = getAcademicYearOptions();
-      setAcademicYears(defaultYears);
-      if (defaultYears.length > 0 && !academicYear) {
-        setAcademicYear(defaultYears[0]);
-      }
-    }
-  }, [classHealthData]);
-
-  // Filter data by academic year
-  const filteredClassHealthData = academicYear
-    ? classHealthData.filter(item => item.acadYear === academicYear)
-    : classHealthData;
-
-  const getStatusColor = (status: StatusType) => {
+  const getStatusColor = (status: StatusType): string => {
     switch (status) {
-      case 'fluent':
-        return '#4CAF50';
-      case 'developing':
-        return '#FFC107';
-      case 'emerging':
-        return '#FF9800';
-      case 'atRisk':
-        return '#F44336';
-      default:
-        return '#9E9E9E';
+      case 'fluent': return '#4CAF50';
+      case 'developing': return '#FFC107';
+      case 'emerging': return '#FF9800';
+      case 'atRisk': return '#F44336';
+      case 'insufficientData': return '#9E9E9E';
+      default: return '#9E9E9E';
     }
   };
 
-  const getStatusLabel = (status: StatusType) => {
-    return (
-      status.charAt(0).toUpperCase() +
-      status.slice(1).replace(/([A-Z])/g, ' $1')
-    );
+  const getStatusLabel = (status: StatusType): string => {
+    if (status === 'insufficientData') return 'Insufficient Data';
+    return status.charAt(0).toUpperCase() + status.slice(1).replace(/([A-Z])/g, ' $1');
   };
 
-  const openStudentModal = (status: StatusType, students: string[]) => {
-    setModalData({
-      status,
-      students,
-      statusLabel: getStatusLabel(status),
-    });
-    setModalVisible(true);
-  };
+  // Memoized values
+  const filteredClassHealthData = useMemo(() => {
+    if (!classHealthData) return [];
+    return academicYear 
+      ? classHealthData.filter(item => item?.acadYear === academicYear) 
+      : classHealthData;
+  }, [classHealthData, academicYear]);
 
-  const closeStudentModal = () => {
-    setModalVisible(false);
-    setModalData(null);
-  };
-
-  // Calculate overall reading health from all classes
-  const getOverallReadingHealth = (): ClassReadingHealth | null => {
-    if (filteredClassHealthData.length === 0) return null;
+  const overallData = useMemo(() => {
+    if (selectedView !== 'overall' || filteredClassHealthData.length === 0) return null;
 
     const overall: ClassReadingHealth = {
       classId: 'overall',
-      className: `Overall Reading Health`,
+      className: 'Overall Reading Health',
       acadYear: academicYear || 'All Years',
       totalStudents: 0,
+      participationRate: 0,
+      dataQuality: { confidence: 'low', recommendation: 'N/A' },
       lastUpdated: new Date(),
       readingHealth: {
         fluent: { count: 0, percentage: 0, students: [] },
         developing: { count: 0, percentage: 0, students: [] },
         emerging: { count: 0, percentage: 0, students: [] },
         atRisk: { count: 0, percentage: 0, students: [] },
+        insufficientData: { count: 0, percentage: 0, students: [] },
       },
     };
 
     filteredClassHealthData.forEach(classItem => {
-      overall.totalStudents += classItem.totalStudents;
-      Object.keys(overall.readingHealth).forEach(key => {
-        const statusKey = key as StatusType;
-        overall.readingHealth[statusKey].count +=
-          classItem.readingHealth[statusKey].count;
-        overall.readingHealth[statusKey].students.push(
-          ...classItem.readingHealth[statusKey].students,
-        );
+      if (!classItem) return;
+      overall.totalStudents += classItem.totalStudents || 0;
+      (Object.keys(overall.readingHealth) as StatusType[]).forEach(key => {
+        if (classItem.readingHealth?.[key]) {
+          overall.readingHealth[key].count += classItem.readingHealth[key].count || 0;
+          overall.readingHealth[key].students.push(...(classItem.readingHealth[key].students || []));
+        }
       });
     });
 
-    Object.keys(overall.readingHealth).forEach(key => {
-      const statusKey = key as StatusType;
-      overall.readingHealth[statusKey].percentage = parseFloat(
-        (
-          (overall.readingHealth[statusKey].count / overall.totalStudents) *
-          100
-        ).toFixed(1),
-      );
+    (Object.keys(overall.readingHealth) as StatusType[]).forEach(key => {
+      overall.readingHealth[key].percentage = overall.totalStudents > 0 
+        ? parseFloat(((overall.readingHealth[key].count / overall.totalStudents) * 100).toFixed(1))
+        : 0;
     });
 
     return overall;
-  };
+  }, [filteredClassHealthData, selectedView, academicYear]);
 
-  const handleAcademicYearSelect = (year: string) => {
-    setAcademicYear(year);
-    setShowYearDropdown(false);
-    setSelectedView('overall');
-    setExpandedClass(null);
-  };
+  const selectedClass = useMemo(() => {
+    if (selectedView === 'overall' || !selectedView) return null;
+    return filteredClassHealthData.find(c => c?.classId === selectedView) || null;
+  }, [filteredClassHealthData, selectedView]);
+
+  const displayData = useMemo(() => {
+    if (selectedView === 'overall') return overallData;
+    return selectedClass;
+  }, [selectedView, overallData, selectedClass]);
+
+  const filteredStudents = useMemo(() => {
+    if (!modalData?.students) return [];
+    if (!searchQuery.trim()) return modalData.students;
+    
+    return modalData.students.filter(student => 
+      student?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [modalData, searchQuery]);
 
   const renderStatusBar = (health: ClassReadingHealth['readingHealth']) => {
-    const statuses: Array<{ key: StatusType; label: string }> = [
-      { key: 'fluent', label: 'Fluent' },
-      { key: 'developing', label: 'Developing' },
-      { key: 'emerging', label: 'Emerging' },
-      { key: 'atRisk', label: 'At Risk' },
+    if (!health) return null;
+    
+    const statuses: Array<{ key: StatusType }> = [
+      { key: 'fluent' }, { key: 'developing' }, { key: 'emerging' }, { key: 'atRisk' }
     ];
 
     return (
       <View style={styles.statusBarContainer}>
-        {statuses.map(status => (
-          <View
-            key={status.key}
-            style={[
-              styles.statusSegment,
-              {
-                width: `${health[status.key].percentage}%`,
-                backgroundColor: getStatusColor(status.key),
-              },
-            ]}
-          />
-        ))}
+        {statuses.map(status => {
+          const percentage = health[status.key]?.percentage ?? 0;
+          return (
+            <View
+              key={status.key}
+              style={[
+                styles.statusSegment,
+                {
+                  width: `${percentage}%`,
+                  backgroundColor: getStatusColor(status.key),
+                },
+              ]}
+            />
+          );
+        })}
       </View>
     );
   };
 
-  const renderClassCard = (classItem: ClassReadingHealth) => (
-    <TouchableOpacity
-      key={classItem.classId}
-      style={styles.classCard}
-      onPress={() => toggleExpand(classItem.classId)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.classHeader}>
-        <View style={styles.classHeaderLeft}>
-          <Text style={styles.className}>{classItem.className}</Text>
-          <Text style={styles.classStats}>
-            {classItem.totalStudents} students • Updated{' '}
-            {classItem.lastUpdated.toLocaleDateString()}
-          </Text>
-        </View>
-        <Text style={styles.expandIcon}>
-          {expandedClass === classItem.classId ? '▲' : '▼'}
-        </Text>
-      </View>
-
-      {renderStatusBar(classItem.readingHealth)}
-
-      <View style={styles.percentagesContainer}>
-        {Object.entries(classItem.readingHealth).map(([key, value]) => (
-          <View key={key} style={styles.percentageItem}>
-            <View style={styles.statusLegendsContainer}>
-              <View style={styles.statusLegends}>
-                <View
-                  style={[
-                    styles.statusDot,
-                    { backgroundColor: getStatusColor(key as StatusType) },
-                  ]}
-                />
-                <Text style={styles.statusLabel}>
-                  {getStatusLabel(key as StatusType)}
+  const renderClassCard = (classItem: ClassReadingHealth | null) => {
+    if (!classItem) return null;
+    
+    const participationRate = classItem.participationRate || 0;
+    const participationColor = participationRate >= 80 ? '#4CAF50' : participationRate >= 60 ? '#FFC107' : '#F44336';
+    
+    return (
+      <View key={classItem.classId} style={styles.classCard}>
+        <TouchableOpacity
+          style={styles.classHeader}
+          onPress={() => setExpandedClass(expandedClass === classItem.classId ? null : classItem.classId)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.classHeaderLeft}>
+            <Text style={styles.className}>{classItem.className || 'Unknown Class'}</Text>
+            <View style={styles.classMetaRow}>
+              <Text style={styles.classStats}>
+                {classItem.totalStudents || 0} students
+              </Text>
+              <View style={[styles.participationBadge, { backgroundColor: `${participationColor}20` }]}>
+                <Text style={[styles.participationText, { color: participationColor }]}>
+                  {participationRate.toFixed(0)}% Participation
                 </Text>
-              </View>
-              <View style={styles.statusLegends2}>
-                <Text style={styles.percentageValue}>{value.percentage}%</Text>
-                <Text style={styles.countValue}>({value.count} students)</Text>
               </View>
             </View>
           </View>
-        ))}
-      </View>
+          <Text style={styles.expandIcon}>
+            {expandedClass === classItem.classId ? '▲' : '▼'}
+          </Text>
+        </TouchableOpacity>
 
-      {expandedClass === classItem.classId && (
-        <View style={styles.expandedDetails}>
-          {Object.entries(classItem.readingHealth).map(([key, value]) => (
-            <View key={key}>
-              <View style={styles.detailHeader}>
-                <Text
-                  style={[
-                    styles.detailTitle,
-                    { color: getStatusColor(key as StatusType) },
-                  ]}
-                >
-                  {getStatusLabel(key as StatusType)} Students ({value.count})
-                </Text>
-                {value.students.length > 0 && (
-                  <TouchableOpacity
-                    onPress={() =>
-                      openStudentModal(key as StatusType, value.students)
-                    }
-                    style={styles.viewButton}
-                  >
-                    <Text style={styles.viewButtonText}>View All</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              {value.students.length > 0 ? (
-                <View style={styles.studentList}>
-                  {value.students.slice(0, 3).map((student, index) => (
-                    <Text key={index} style={styles.studentName}>
-                      • {student}
-                    </Text>
-                  ))}
-                  {value.students.length > 3 && (
-                    <Text style={styles.moreStudentsText}>
-                      and {value.students.length - 3} more...
-                    </Text>
-                  )}
+        {classItem.requiredActions && (
+          <View style={styles.actionBanner}>
+            <Text style={styles.actionLabel}>⚠️ ACTION REQUIRED</Text>
+            <Text style={styles.actionText}>{classItem.requiredActions}</Text>
+          </View>
+        )}
+
+        {renderStatusBar(classItem.readingHealth)}
+
+        <View style={styles.percentagesContainer}>
+          {Object.entries(classItem.readingHealth || {})
+            .filter(([key]) => key !== 'insufficientData')
+            .map(([key, value]) => {
+              if (!value) return null;
+              return (
+                <View key={key} style={styles.percentageItem}>
+                  <View style={styles.statusLegendsContainer}>
+                    <View style={styles.statusLegends}>
+                      <View
+                        style={[
+                          styles.statusDot,
+                          { backgroundColor: getStatusColor(key as StatusType) },
+                        ]}
+                      />
+                      <Text style={styles.statusLabel}>
+                        {getStatusLabel(key as StatusType)}
+                      </Text>
+                    </View>
+                    <View style={styles.statusLegends2}>
+                      <Text style={styles.percentageValue}>{value.percentage || 0}%</Text>
+                      <Text style={styles.countValue}>({value.count || 0})</Text>
+                    </View>
+                  </View>
                 </View>
-              ) : (
-                <Text style={styles.noStudentsText}>
-                  No students in this category
-                </Text>
-              )}
-            </View>
-          ))}
+              );
+            })}
         </View>
-      )}
-    </TouchableOpacity>
-  );
+
+        <View style={styles.dataQualityRow}>
+          <ConfidenceBadge confidence={classItem.dataQuality?.confidence || 'low'} />
+          <Text style={styles.lastUpdated}>
+            Updated: {classItem.lastUpdated ? new Date(classItem.lastUpdated).toLocaleDateString() : 'N/A'}
+          </Text>
+        </View>
+
+        {expandedClass === classItem.classId && (
+          <View style={styles.expandedDetails}>
+            <Text style={styles.expandedSectionTitle}>Student Categories</Text>
+            
+            <View style={styles.categoriesGrid}>
+              {(['atRisk', 'emerging', 'developing', 'fluent', 'insufficientData'] as StatusType[]).map(key => {
+                const data = classItem.readingHealth?.[key];
+                if (!data || data.count === 0) return null;
+                
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[styles.categoryCard, { borderLeftColor: getStatusColor(key) }]}
+                    onPress={() => {
+                      setModalData({ 
+                        status: key, 
+                        students: data.students || [] 
+                      });
+                      setSearchQuery('');
+                      setModalVisible(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.categoryHeader}>
+                      <View style={[styles.categoryDot, { backgroundColor: getStatusColor(key) }]} />
+                      <Text style={[styles.categoryTitle, { color: getStatusColor(key) }]}>
+                        {getStatusLabel(key)}
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.categoryStats}>
+                      <Text style={styles.categoryCount}>{data.count || 0}</Text>
+                      <Text style={styles.categoryPercentage}>{data.percentage || 0}%</Text>
+                    </View>
+                    
+                    <View style={styles.viewAllRow}>
+                      <Text style={styles.viewAllCategoryText}>View Students</Text>
+                      <Text style={styles.viewAllCategoryIcon}>→</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   const renderContent = () => {
     if (loading) {
@@ -297,7 +324,7 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
       );
     }
 
-    if (filteredClassHealthData.length === 0) {
+    if (!filteredClassHealthData || filteredClassHealthData.length === 0) {
       return (
         <View style={styles.noDataContainer}>
           <Text style={styles.noDataText}>
@@ -312,38 +339,15 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
       );
     }
 
-    if (selectedView === 'overall') {
-      const overallData = getOverallReadingHealth();
-      if (!overallData) return null;
-
-      return (
-        <ScrollView style={styles.classesContainer}>
-          {renderClassCard(overallData)}
-        </ScrollView>
-      );
-    }
-
-    const selectedClass = filteredClassHealthData.find(
-      c => c.classId === selectedView,
-    );
-    if (selectedClass) {
-      return (
-        <ScrollView style={styles.classesContainer}>
-          {renderClassCard(selectedClass)}
-        </ScrollView>
-      );
-    }
-
-    return null;
+    return displayData ? (
+      <ScrollView 
+        style={styles.classesContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {renderClassCard(displayData)}
+      </ScrollView>
+    ) : null;
   };
-
-  const dropdownOptions = [
-    { label: 'Overall Reading Health', value: 'overall' },
-    ...filteredClassHealthData.map(classItem => ({
-      label: classItem.className,
-      value: classItem.classId,
-    })),
-  ];
 
   return (
     <View style={styles.container}>
@@ -352,198 +356,140 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
         <Text style={styles.subtitle}>Status Distribution by Class</Text>
       </View>
 
-      {/* Filters Row: Academic Year + Class Selector */}
-      <View style={styles.filtersRow}>
-        {/* Academic Year Filter */}
-        {academicYears.length > 0 && (
-          <View style={styles.filterItem}>
-            <Text style={styles.filterLabel}>Academic Year</Text>
-            <TouchableOpacity
-              style={styles.filterButton}
-              onPress={() => {
-                setShowYearDropdown(!showYearDropdown);
-                setDropdownOpen(false);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.filterButtonText} numberOfLines={1}>
-                {academicYear || 'All Years'}
-              </Text>
-              <Text style={styles.filterArrow}>
-                {showYearDropdown ? '▲' : '▼'}
-              </Text>
-            </TouchableOpacity>
-
-            {showYearDropdown && (
-              <View style={styles.filterDropdownMenu}>
-                <ScrollView style={styles.filterDropdownScroll}>
-                  <TouchableOpacity
-                    style={[
-                      styles.filterDropdownOption,
-                      !academicYear && styles.filterDropdownOptionSelected,
-                    ]}
-                    onPress={() => handleAcademicYearSelect('')}
-                  >
-                    <Text
-                      style={[
-                        styles.filterDropdownOptionText,
-                        !academicYear &&
-                          styles.filterDropdownOptionTextSelected,
-                      ]}
-                    >
-                      All Years
-                    </Text>
-                  </TouchableOpacity>
-                  {academicYears.map(year => (
-                    <TouchableOpacity
-                      key={year}
-                      style={[
-                        styles.filterDropdownOption,
-                        academicYear === year &&
-                          styles.filterDropdownOptionSelected,
-                      ]}
-                      onPress={() => handleAcademicYearSelect(year)}
-                    >
-                      <Text
-                        style={[
-                          styles.filterDropdownOptionText,
-                          academicYear === year &&
-                            styles.filterDropdownOptionTextSelected,
-                        ]}
-                      >
-                        {year}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Class Selector Dropdown */}
-        {filteredClassHealthData.length > 0 && (
-          <View style={styles.filterItem}>
-            <Text style={styles.filterLabel}>Classes</Text>
-            <TouchableOpacity
-              style={styles.filterButton}
-              onPress={() => {
-                setDropdownOpen(!dropdownOpen);
-                setShowYearDropdown(false);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.filterButtonText} numberOfLines={1}>
-                {dropdownOptions.find(opt => opt.value === selectedView)
-                  ?.label || 'Select View'}
-              </Text>
-              <Text style={styles.filterArrow}>
-                {dropdownOpen ? '▲' : '▼'}
-              </Text>
-            </TouchableOpacity>
-
-            {dropdownOpen && (
-              <View style={styles.filterDropdownMenu}>
-                <ScrollView style={styles.filterDropdownScroll}>
-                  {dropdownOptions.map(option => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.filterDropdownOption,
-                        selectedView === option.value &&
-                          styles.filterDropdownOptionSelected,
-                      ]}
-                      onPress={() => {
-                        setSelectedView(option.value);
-                        setDropdownOpen(false);
-                        setExpandedClass(null);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.filterDropdownOptionText,
-                          selectedView === option.value &&
-                            styles.filterDropdownOptionTextSelected,
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
-
-      {/* Filter Status Info */}
       {academicYear && filteredClassHealthData.length > 0 && (
         <View style={styles.filterStatusContainer}>
           <Text style={styles.filterStatusText}>
             Showing{' '}
             <Text style={styles.filterStatusYear}>{academicYear}</Text> •{' '}
-            {filteredClassHealthData.length} class
-            {filteredClassHealthData.length !== 1 ? 'es' : ''}
+            {selectedView === 'overall' 
+              ? 'Overall Health' 
+              : selectedClass?.className || 'Class Data'
+            }
           </Text>
         </View>
       )}
 
       {renderContent()}
 
-      {/* Student List Modal */}
       <Modal
         visible={modalVisible}
         transparent={true}
         animationType="fade"
-        onRequestClose={closeStudentModal}
+        onRequestClose={() => {
+          setModalVisible(false);
+          setSearchQuery('');
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text
-                style={[
-                  styles.modalTitle,
-                  {
-                    color: modalData
-                      ? getStatusColor(modalData.status)
-                      : '#2C3E50',
-                  },
-                ]}
-              >
-                {modalData?.statusLabel} Students
-              </Text>
+              <View>
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    {
+                      color: modalData
+                        ? getStatusColor(modalData.status)
+                        : '#2C3E50',
+                    },
+                  ]}
+                >
+                  {modalData ? getStatusLabel(modalData.status) : 'Students'}
+                </Text>
+                <Text style={styles.modalStudentCount}>
+                  {filteredStudents.length} of {modalData?.students?.length || 0} student
+                  {modalData?.students?.length !== 1 ? 's' : ''}
+                </Text>
+              </View>
               <TouchableOpacity
-                onPress={closeStudentModal}
+                onPress={() => {
+                  setModalVisible(false);
+                  setSearchQuery('');
+                }}
                 style={styles.closeButton}
               >
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalSubheader}>
-              <Text style={styles.modalStudentCount}>
-                {modalData?.students.length || 0} student
-                {modalData?.students.length !== 1 ? 's' : ''}
-              </Text>
+            <View style={styles.searchContainer}>
+              <View style={styles.searchIconContainer}>
+                <Image 
+                style={styles.searchIcon}
+                source={require('../../../../assets/icons/Search-icon.png')}/>
+              </View>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search students by name..."
+                placeholderTextColor="#95A5A6"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => setSearchQuery('')}
+                  style={styles.clearButton}
+                >
+                  <Text style={styles.clearButtonText}>✕</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <FlatList
-              data={modalData?.students || []}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item, index }) => (
-                <View style={styles.modalStudentItem}>
-                  <Text style={styles.modalStudentNumber}>{index + 1}.</Text>
-                  <Text style={styles.modalStudentName}>{item}</Text>
+              data={filteredStudents}
+              keyExtractor={(item) => item?.studentId || Math.random().toString()}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                <View style={styles.emptySearchContainer}>
+                  <Text style={styles.emptySearchText}>No students found</Text>
+                  <Text style={styles.emptySearchSubtext}>
+                    Try adjusting your search criteria
+                  </Text>
                 </View>
-              )}
+              }
+              renderItem={({ item, index }) => {
+                if (!item) return null;
+                return (
+                  <View style={styles.modalStudentItem}>
+                    <Text style={styles.modalStudentNumber}>{index + 1}.</Text>
+                    <View style={styles.modalStudentInfo}>
+                      <Text style={styles.modalStudentName}>{item.name || 'Unknown Student'}</Text>
+                      <View style={styles.modalMetricsGrid}>
+                        <View style={styles.modalMetric}>
+                          <Text style={styles.modalMetricLabel}>Average Accuracy</Text>
+                          <Text style={styles.modalMetricValue}>{item.averageAccuracy || 0}%</Text>
+                        </View>
+                        <View style={styles.modalMetric}>
+                          <Text style={styles.modalMetricLabel}>Average WPM</Text>
+                          <Text style={styles.modalMetricValue}>{item.averageWPM || 0}</Text>
+                        </View>
+                        <View style={styles.modalMetric}>
+                          <Text style={styles.modalMetricLabel}>Miscue Density</Text>
+                          <Text style={styles.modalMetricValue}>{item.miscueDensity || 0}%</Text>
+                        </View>
+                      </View>
+                      <View style={styles.modalFooter}>
+                        <View style={styles.modalTrend}>
+                          <TrendIcon trend={item.trend || 'stable'} />
+                          <Text style={styles.modalTrendText}>{item.trend || 'stable'}</Text>
+                        </View>
+                        <ConfidenceBadge confidence={item.confidence || 'low'} />
+                      </View>
+                    </View>
+                  </View>
+                );
+              }}
               style={styles.modalStudentList}
               contentContainerStyle={styles.modalStudentListContent}
             />
 
             <TouchableOpacity
               style={styles.modalCloseButton}
-              onPress={closeStudentModal}
+              onPress={() => {
+                setModalVisible(false);
+                setSearchQuery('');
+              }}
+              activeOpacity={0.8}
             >
               <Text style={styles.modalCloseButtonText}>Close</Text>
             </TouchableOpacity>
@@ -557,109 +503,36 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 20,
+    borderRadius: sw(15),
+    padding: sw(20),
     elevation: 3,
-    marginBottom: 20,
+    marginBottom: sh(20),
   },
   header: {
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   title: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontFamily: 'Satoshi-Bold',
     color: '#2C3E50',
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: sf(14),
     fontFamily: 'Satoshi-Medium',
     color: '#7F8C8D',
-  },
-  // New Filters Row Layout
-  filtersRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-    zIndex: 1000,
-  },
-  filterItem: {
-    flex: 1,
-    zIndex: 1000,
-  },
-  filterLabel: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Medium',
-    color: '#7F8C8D',
-    marginBottom: 6,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-  },
-  filterButtonText: {
-    fontSize: 14,
-    color: '#2C3E50',
-    fontFamily: 'Satoshi-Medium',
-    flex: 1,
-    marginRight: 8,
-  },
-  filterArrow: {
-    fontSize: 12,
-    color: '#4ECDC4',
-    fontFamily: 'Satoshi-Bold',
-  },
-  filterDropdownMenu: {
-    position: 'absolute',
-    top: 62,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-    maxHeight: 200,
-    elevation: 5,
-    zIndex: 2000,
-  },
-  filterDropdownScroll: {
-    maxHeight: 200,
-  },
-  filterDropdownOption: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F3F5',
-  },
-  filterDropdownOptionSelected: {
-    backgroundColor: '#E8F5F5',
-  },
-  filterDropdownOptionText: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
-    color: '#2C3E50',
-  },
-  filterDropdownOptionTextSelected: {
-    color: '#4ECDC4',
-    fontFamily: 'Satoshi-Bold',
   },
   filterStatusContainer: {
     backgroundColor: '#E8F5F5',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
+    borderRadius: sw(8),
+    paddingVertical: sh(8),
+    paddingHorizontal: sw(12),
+    marginBottom: sh(16),
     borderLeftWidth: 3,
     borderLeftColor: '#4ECDC4',
   },
   filterStatusText: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Satoshi-Medium',
     color: '#2C3E50',
   },
@@ -668,91 +541,105 @@ const styles = StyleSheet.create({
     color: '#4ECDC4',
   },
   loadingContainer: {
-    padding: 40,
+    padding: sw(40),
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: sh(10),
     fontFamily: 'Satoshi-Medium',
     color: '#7F8C8D',
   },
   errorContainer: {
-    padding: 40,
+    padding: sw(40),
     alignItems: 'center',
   },
   errorText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#F44336',
-    marginBottom: 8,
+    marginBottom: sh(8),
     fontFamily: 'Satoshi-Medium',
     textAlign: 'center',
   },
   errorSubtext: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#BDC3C7',
     fontFamily: 'Satoshi-Medium',
     textAlign: 'center',
   },
   noDataContainer: {
-    padding: 40,
+    padding: sw(40),
     alignItems: 'center',
   },
   noDataText: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#7F8C8D',
     fontFamily: 'Satoshi-Medium',
-    marginBottom: 8,
+    marginBottom: sh(8),
   },
   noDataSubtext: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#BDC3C7',
     fontFamily: 'Satoshi-Medium',
     textAlign: 'center',
   },
   classesContainer: {
-    maxHeight: 500,
+    maxHeight: sw(500),
   },
   classCard: {
     backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
+    borderRadius: sw(12),
+    padding: sw(16),
+    marginBottom: sh(10),
     borderWidth: 1,
     borderColor: '#E9ECEF',
   },
   classHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: sh(12),
   },
   classHeaderLeft: {
     flex: 1,
-    marginRight: 12,
+    marginRight: sw(12),
   },
   className: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
     color: '#2C3E50',
+    marginBottom: sh(4),
+  },
+  classMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(8),
   },
   classStats: {
-    fontSize: 12,
+    fontSize: sf(12),
     color: '#7F8C8D',
     fontFamily: 'Satoshi-Medium',
-    marginTop: 2,
+  },
+  participationBadge: {
+    paddingHorizontal: sw(8),
+    paddingVertical: sh(2),
+    borderRadius: sw(12),
+  },
+  participationText: {
+    fontSize: sf(10),
+    fontFamily: 'Satoshi-Bold',
   },
   expandIcon: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: '#4ECDC4',
     fontFamily: 'Satoshi-Medium',
     fontWeight: 'bold',
   },
   statusBarContainer: {
     flexDirection: 'row',
-    height: 20,
-    borderRadius: 10,
+    height: sw(20),
+    borderRadius: sw(10),
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   statusSegment: {
     height: '100%',
@@ -761,97 +648,172 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginBottom: sh(12),
   },
   percentageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '48%',
+    marginBottom: sh(8),
   },
   statusLegendsContainer: {
     flex: 1,
-    flexDirection: 'column',
-    marginLeft: 20,
-  },
-  statusLegends: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  statusLegends2: {
-    flex: 1,
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
-  statusLabel: {
-    fontSize: 12,
-    color: '#2C3E50',
-    fontFamily: 'Satoshi-Medium',
-    marginRight: 4,
-    flex: 1,
-  },
-  percentageValue: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Bold',
-    color: '#2C3E50',
-    marginRight: 4,
-  },
-  countValue: {
-    fontSize: 10,
-    fontFamily: 'Satoshi-Medium',
-    color: '#7F8C8D',
-  },
-  expandedDetails: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-  },
-  detailHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
   },
-  detailTitle: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
+  statusLegends: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
-  viewButton: {
-    backgroundColor: '#4ECDC4',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 6,
+  statusLegends2: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  viewButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontFamily: 'Satoshi-Medium',
+  statusDot: {
+    width: sw(10),
+    height: sw(10),
+    borderRadius: sw(5),
+    marginRight: sw(8),
   },
-  studentList: {
-    marginLeft: 8,
-  },
-  studentName: {
-    fontSize: 12,
+  statusLabel: {
+    fontSize: sf(12),
     color: '#2C3E50',
     fontFamily: 'Satoshi-Medium',
-    marginBottom: 2,
+    marginRight: sw(4),
   },
-  moreStudentsText: {
-    fontSize: 12,
+  percentageValue: {
+    fontSize: sf(12),
+    fontFamily: 'Satoshi-Bold',
+    color: '#2C3E50',
+    marginRight: sw(4),
+  },
+  countValue: {
+    fontSize: sf(10),
+    fontFamily: 'Satoshi-Medium',
+    color: '#7F8C8D',
+  },
+  dataQualityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: sh(8),
+  },
+  lastUpdated: {
+    fontSize: sf(11),
+    color: '#95A5A6',
+    fontFamily: 'Satoshi-Medium',
+  },
+  confidenceBadge: {
+    paddingHorizontal: sw(8),
+    paddingVertical: sh(2),
+    borderRadius: sw(12),
+  },
+  confidenceText: {
+    fontSize: sf(10),
+    fontFamily: 'Satoshi-Bold',
+    letterSpacing: sf(0.5),
+  },
+  actionBanner: {
+    backgroundColor: '#FFEBEE',
+    padding: sw(12),
+    marginBottom: sh(16),
+    borderRadius: sw(8),
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+  },
+  actionLabel: {
+    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(11),
+    color: '#C62828',
+    marginBottom: sh(4),
+    letterSpacing: sf(0.5),
+  },
+  actionText: {
+    fontFamily: 'Satoshi-Medium',
+    fontSize: sf(13),
+    color: '#8B3A3A',
+  },
+  expandedDetails: {
+    marginTop: sh(16),
+    paddingTop: sh(16),
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+  },
+  expandedSectionTitle: {
+    fontSize: sf(16),
+    fontFamily: 'Satoshi-Bold',
+    color: '#2C3E50',
+    marginBottom: sh(16),
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  categoryCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: sw(12),
+    padding: sw(10),
+    marginBottom: sh(12),
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(1) },
+    shadowOpacity: 0.05,
+    shadowRadius: sw(2),
+    elevation: 2,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: sh(12),
+  },
+  categoryDot: {
+    width: sw(12),
+    height: sw(12),
+    borderRadius: sw(6),
+    marginRight: sw(8),
+  },
+  categoryTitle: {
+    fontSize: sf(14),
+    fontFamily: 'Satoshi-Bold',
+  },
+  categoryStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: sh(12),
+  },
+  categoryCount: {
+    fontSize: sf(24),
+    fontFamily: 'Satoshi-Bold',
+    color: '#2C3E50',
+  },
+  categoryPercentage: {
+    fontSize: sf(14),
+    fontFamily: 'Satoshi-Medium',
+    color: '#7F8C8D',
+  },
+  viewAllRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: sh(12),
+    borderTopWidth: 1,
+    borderTopColor: '#F0F3F4',
+  },
+  viewAllCategoryText: {
+    fontSize: sf(12),
+    fontFamily: 'Satoshi-Medium',
     color: '#4ECDC4',
-    fontStyle: 'italic',
-    marginTop: 4,
   },
-  noStudentsText: {
-    fontSize: 12,
-    color: '#BDC3C7',
-    fontFamily: 'Satoshi-MediumItalic',
-    marginLeft: 8,
+  viewAllCategoryIcon: {
+    fontSize: sf(14),
+    color: '#4ECDC4',
   },
   modalOverlay: {
     flex: 1,
@@ -861,79 +823,162 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 20,
-    width: '85%',
-    maxHeight: '70%',
+    borderRadius: sw(15),
+    padding: sw(20),
+    width: '90%',
+    maxHeight: '80%',
     elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+    alignItems: 'flex-start',
+    marginBottom: sh(16),
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontFamily: 'Satoshi-Bold',
+    marginBottom: sh(4),
+  },
+  modalStudentCount: {
+    fontSize: sf(14),
+    fontFamily: 'Satoshi-Medium',
+    color: '#7F8C8D',
   },
   closeButton: {
-    width: 30,
-    height: 30,
+    width: sw(30),
+    height: sw(30),
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButtonText: {
-    fontSize: 24,
+    fontSize: sf(24),
     fontFamily: 'Satoshi-Bold',
     color: '#7F8C8D',
   },
-  modalSubheader: {
-    marginBottom: 15,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: sw(10),
+    marginBottom: sh(16),
+    paddingHorizontal: sw(12),
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
-  modalStudentCount: {
-    fontSize: 14,
+  searchIconContainer: {
+    marginRight: sw(8),
+  },
+  searchIcon: {
+    width: sw(16),
+    height: sw(16),
+  },
+  searchInput: {
+    flex: 1,
+    height: sw(44),
     fontFamily: 'Satoshi-Medium',
-    color: '#7F8C8D',
+    fontSize: sf(14),
+    color: '#2C3E50',
+    paddingVertical: sh(8),
+  },
+  clearButton: {
+    padding: sw(8),
+  },
+  clearButtonText: {
+    fontSize: sf(16),
+    color: '#95A5A6',
+    fontFamily: 'Satoshi-Medium',
+  },
+  emptySearchContainer: {
+    padding: sw(32),
+    alignItems: 'center',
+  },
+  emptySearchText: {
+    fontSize: sf(16),
+    fontFamily: 'Satoshi-Medium',
+    color: '#2C3E50',
+    marginBottom: sh(8),
+  },
+  emptySearchSubtext: {
+    fontSize: sf(14),
+    fontFamily: 'Satoshi-Medium',
+    color: '#95A5A6',
   },
   modalStudentList: {
-    maxHeight: 300,
+    maxHeight: sw(400),
   },
   modalStudentListContent: {
-    paddingBottom: 10,
+    paddingBottom: sh(10),
   },
   modalStudentItem: {
     flexDirection: 'row',
-    paddingVertical: 10,
-    paddingHorizontal: 5,
+    paddingVertical: sh(12),
+    paddingHorizontal: sw(5),
     borderBottomWidth: 1,
     borderBottomColor: '#F1F3F5',
   },
   modalStudentNumber: {
-    fontSize: 14,
+    fontSize: sf(14),
     color: '#7F8C8D',
-    marginRight: 10,
+    marginRight: sw(10),
     fontFamily: 'Satoshi-Medium',
+    width: sw(30),
+  },
+  modalStudentInfo: {
+    flex: 1,
   },
   modalStudentName: {
-    fontSize: 14,
+    fontSize: sf(15),
     color: '#2C3E50',
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Satoshi-Bold',
+    marginBottom: sh(8),
+  },
+  modalMetricsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: sh(8),
+  },
+  modalMetric: {
+    alignItems: 'center',
     flex: 1,
+  },
+  modalMetricLabel: {
+    fontSize: sf(10),
+    color: '#7F8C8D',
+    fontFamily: 'Satoshi-Medium',
+    marginBottom: sh(2),
+  },
+  modalMetricValue: {
+    fontSize: sf(14),
+    fontFamily: 'Satoshi-Bold',
+    color: '#2C3E50',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalTrend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(4),
+  },
+  modalTrendText: {
+    fontSize: sf(12),
+    color: '#7F8C8D',
+    fontFamily: 'Satoshi-Medium',
+    textTransform: 'capitalize',
   },
   modalCloseButton: {
     backgroundColor: '#4ECDC4',
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: sw(10),
+    padding: sw(12),
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: sh(15),
   },
   modalCloseButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: sf(16),
     fontFamily: 'Satoshi-Medium',
   },
 });

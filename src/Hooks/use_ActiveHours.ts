@@ -1,6 +1,7 @@
 // hooks/useFacultyActiveHours.ts
 import { useState, useEffect } from 'react';
 import { getForStudentsMiscueStats } from './use_ForStudentMiscueStats';
+import { FilterOptions } from '../Interfaces/miscue';
 
 interface ActiveHoursData {
   day: string;
@@ -9,6 +10,7 @@ interface ActiveHoursData {
 
 interface UseActiveHoursOptions {
   timeRange: 'week' | 'month' | 'year';
+  filter?: FilterOptions; 
 }
 
 export const useActiveHours = (
@@ -35,6 +37,7 @@ export const useActiveHours = (
         const data = await getActiveHours(
           facultyId,
           options.timeRange,
+          options.filter
         );
 
         setChartData(data);
@@ -48,7 +51,7 @@ export const useActiveHours = (
     };
 
     fetchActiveHours();
-  }, [facultyId, options.timeRange]);
+  }, [facultyId, options.timeRange, options.filter?.type, options.filter?.classId, options.filter?.acadYear]);
 
   return { chartData, loading, error };
 };
