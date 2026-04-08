@@ -276,7 +276,7 @@ const S = StyleSheet.create({
 
   // Body fills remaining height and spaces elements out
   body: {
-    flex: .9,
+    flex: 1,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
@@ -285,7 +285,7 @@ const S = StyleSheet.create({
 
   
   greetCard: {
-    // flex: 1,
+    flex: 1,
     height: SH * 0.40,
     backgroundColor: C.white,
     borderRadius: 28,
