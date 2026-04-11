@@ -27,6 +27,7 @@ import {
   arrayUnion,
   arrayRemove,
   updateDoc,
+  orderBy,
 } from '@react-native-firebase/firestore';
 import { StudentProgressResult } from '../Interfaces/miscue';
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
@@ -694,6 +695,7 @@ export const MiscueReportController = {
       const studentMiscueReport = query(
         reportRef,
         where('studentId', '==', studentId),
+        orderBy('createdAt', 'desc')
       );
 
       const studentReportSnapshot = await getDocs(studentMiscueReport);
@@ -759,6 +761,7 @@ export const MiscueReportController = {
       const alphabetQuery = query(
         collection(db, 'alphabetCompleted'),
         where('studentId', '==', studentId),
+        orderBy('createdAt', 'asc')
       );
       return onSnapshot(alphabetQuery, snapshot => {
         const alphabets = snapshot.docs.map(
@@ -791,6 +794,7 @@ export const MiscueReportController = {
       const wordQuery = query(
         collection(db, 'wordCompleted'),
         where('studentId', '==', studentId),
+        orderBy('createdAt', 'asc')
       );
       return onSnapshot(wordQuery, snapshot => {
         const words = snapshot.docs.map(

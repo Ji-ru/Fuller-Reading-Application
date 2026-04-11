@@ -1,6 +1,6 @@
 // User_SignIn_Screen.tsx
 // React Dependencies
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -34,7 +34,35 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
+  // Rate limiting & Network Resilience States
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
+  const isMounted = useRef(true);
+
   const { handleNextStep, handleReplaceStep, routeParams } = useNavigationHelper();
+
+  // ── Protection Against Unmounted Component State Updates ───────────────────
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // ── Lockout Timer Effect ───────────────────────────────────────────────────
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (lockoutTimer > 0) {
+      interval = setInterval(() => {
+        if (isMounted.current) {
+          setLockoutTimer((prev) => prev - 1);
+        }
+      }, 1000);
+    } else if (lockoutTimer === 0 && failedAttempts >= 3) {
+      if (isMounted.current) setFailedAttempts(0);
+    }
+    return () => clearInterval(interval);
+  }, [lockoutTimer, failedAttempts]);
 
   // ── Session Restoration Listener ───────────────────────────────────────────
   useEffect(() => {
@@ -42,7 +70,7 @@ export default function LoginScreen() {
     // onAuthStateChanged fires immediately with the current user state
     const unsubscribe = auth.onAuthStateChanged((user) => {
       // If a Firebase session already exists on the device, jump to Loading
-      if (user) {
+      if (user && isMounted.current) {
         handleReplaceStep('Loading');
       }
     });
@@ -51,7 +79,7 @@ export default function LoginScreen() {
   }, [handleReplaceStep]);
 
   useEffect(() => {
-    if (routeParams?.authError) {
+    if (routeParams?.authError && isMounted.current) {
       setAuthError(routeParams.authError);
     }
   }, [routeParams?.authError]);
@@ -61,39 +89,84 @@ export default function LoginScreen() {
     Keyboard.dismiss();
   };
 
+  const isValidEmail = (e: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  };
+
+  const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, operationName: string): Promise<T> => {
+    const timeoutPromise = new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`timeout-error:${operationName}`)), timeoutMs)
+    );
+    return Promise.race([promise, timeoutPromise]);
+  };
+
   /**
    * Handle verification of users credential stored in the firebase authentication
    */
   const handleLogin = async () => {
     dismissKeyboard();
+    if (!isMounted.current) return;
     setAuthError('');
 
+    if (lockoutTimer > 0) {
+      setAuthError(`Too many failed attempts. Try again in ${lockoutTimer} seconds.`);
+      return;
+    }
+
     if (!email.trim() || !password.trim()) {
-      setAuthError('Please enter both email and password');
+      setAuthError('Please enter both email and password.');
+      return;
+    }
+
+    if (!isValidEmail(email.trim())) {
+      setAuthError('Please enter a valid email address.');
+      return;
+    }
+
+    if (password.length > 128) {
+      setAuthError('Password is too long.');
       return;
     }
 
     try {
       setLoading(true);
-      const result = await loginUser(email.trim(), password);
-      if (result.success) {
+      // Adding a 60-second local timeout wrapper to prevent unbounded wait
+      const result = await withTimeout(
+        loginUser(email.trim(), password),
+        60000,
+        'Email Login'
+      );
+      if (result.success && isMounted.current) {
         handleReplaceStep('Loading');
       }
     } catch (error: any) {
-      let errorMessage = 'Login failed. Please try again.';
+      if (!isMounted.current) return;
 
-      if (error.message.includes('user-not-found')) errorMessage = 'No account found with this email.';
-      else if (error.message.includes('wrong-password')) errorMessage = 'Incorrect password. Please try again.';
-      else if (error.message.includes('too-many-requests')) errorMessage = 'Too many failed attempts. Please try again later.';
-      else if (error.message.includes('user-disabled')) errorMessage = 'This account has been disabled.';
-      else if (error.message.includes('invalid-email')) errorMessage = 'Invalid email address.';
-      else if (error.message.includes('network-request-failed')) errorMessage = 'Network error. Please check your internet connection.';
-      else if (error.message.includes('invalid-credential')) errorMessage = 'Invalid email or password. Please try again.';
+      let errorMessage = 'Login failed. Please try again.';
+      const newAttempts = failedAttempts + 1;
+
+      setFailedAttempts(newAttempts);
+      if (newAttempts >= 3) {
+        setLockoutTimer(15); // 15-second lockout
+      }
+
+      const rawMsg = error.message.toLowerCase();
+      if (rawMsg.includes('user-not-found')) errorMessage = 'No account found with this email.';
+      else if (rawMsg.includes('wrong-password')) errorMessage = 'Incorrect password. Please try again.';
+      else if (rawMsg.includes('too-many-requests')) {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+        if (newAttempts < 3) { setFailedAttempts(3); setLockoutTimer(30); } // Harder lockout if Firebase triggers
+      }
+      else if (rawMsg.includes('user-disabled')) errorMessage = 'This account has been disabled.';
+      else if (rawMsg.includes('invalid-email')) errorMessage = 'Invalid email address.';
+      else if (rawMsg.includes('network-request-failed')) errorMessage = 'Network error. Please check your internet connection.';
+      else if (rawMsg.includes('invalid-credential')) errorMessage = 'Invalid email or password. Please try again.';
+      else if (rawMsg.includes('timeout-error')) errorMessage = 'Connection timed out. Please check your internet connection and try again.';
       else errorMessage = error.message || 'Invalid email or password.';
 
       setAuthError(errorMessage);
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
 
@@ -106,16 +179,23 @@ export default function LoginScreen() {
    */
   const handleGoogleSignUp = async () => {
     dismissKeyboard();
+    if (!isMounted.current) return;
     setGoogleError('');
 
     try {
       setGoogleLoading(true);
-      const { email: googleEmail, userExists } = await initiateGoogleSignUp();
+      const result = await withTimeout(
+        initiateGoogleSignUp(),
+        60000,
+        'Google Login'
+      );
 
-      if (userExists) {
+      const { email: googleEmail, userExists } = result;
+
+      if (userExists && isMounted.current) {
         // User already has an account! Log them in automatically.
         handleReplaceStep('Loading');
-      } else {
+      } else if (isMounted.current) {
         // Navigate to ChooseRole, passing the Google credentials as params.
         // ChooseRole will forward them to SignUpOne → SignUpTwo.
         handleNextStep('ChooseRole', {
@@ -123,12 +203,18 @@ export default function LoginScreen() {
         });
       }
     } catch (error: any) {
+      if (!isMounted.current) return;
+
       // User deliberately dismissed the picker — show nothing
       if (error.message === 'CANCELLED') return;
 
-      setGoogleError('Google Sign-In failed. Please try again.');
+      if (error.message.includes('timeout-error')) {
+        setGoogleError('Connection timed out. Please check your internet connection.');
+      } else {
+        setGoogleError('Google Sign-In failed. Please try again.');
+      }
     } finally {
-      setGoogleLoading(false);
+      if (isMounted.current) setGoogleLoading(false);
     }
   };
 
@@ -229,16 +315,18 @@ export default function LoginScreen() {
               <TouchableOpacity
                 style={[
                   login.loginButton,
-                  loading && login.loginButtonDisabled,
+                  (loading || lockoutTimer > 0) && login.loginButtonDisabled,
                 ]}
                 onPress={handleLogin}
-                disabled={loading}
+                disabled={loading || lockoutTimer > 0}
                 activeOpacity={0.8}
               >
                 {loading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={login.loginButtonText}>Login</Text>
+                  <Text style={login.loginButtonText}>
+                    {lockoutTimer > 0 ? `Try again in ${lockoutTimer}s` : 'Login'}
+                  </Text>
                 )}
               </TouchableOpacity>
 

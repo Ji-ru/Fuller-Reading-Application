@@ -13,7 +13,7 @@ export interface StudentReadingData {
   uid: string;
   gradeLevel: number | null;
   classCode: string | null;
-  readingLevel: 'beginner' | 'intermediate' | 'advanced' | null;
+  readingLevel: 'beginner' | 'emerging' | 'intermediate' | 'advanced' | null;
 }
 
 export interface AdminClassOption {

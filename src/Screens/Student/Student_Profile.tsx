@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ImageSourcePropType
 } from 'react-native';
+import { TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
@@ -17,6 +18,7 @@ import {
   getCurrentUser,
   getClassByCode,
 } from '../../Controller/AuthenticationController';
+import { updateStudentBasicInfo } from '../../Controller/AuthenticationController';
 import { getAuth } from '@react-native-firebase/auth';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
@@ -81,6 +83,7 @@ export default function Profile() {
   /** Stores comprehensive reading statistics */
   const [readingStats, setReadingStats] = useState<StudentStats | null>(null);
 
+
   /** Stores progress data points for charts */
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
 
@@ -89,6 +92,19 @@ export default function Profile() {
 
   /** Error message for display if data fetching fails */
   const [error, setError] = useState<string | null>(null);
+
+  /** Active Tab State for segmented control layout (profile | performance | activity) */
+  const [activeTab, setActiveTab] = useState<'profile' | 'performance' | 'activity'>('profile');
+
+  // Edit states for Basic Information
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [sex, setSex] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
 
   /** Profile image set */
   // ========================================================================
@@ -135,6 +151,14 @@ export default function Profile() {
       // Fetch user profile
       const profile = await getUserProfile(currentUser.uid);
       setProfileData(profile);
+
+      if (profile) {
+        setFirstName(profile.firstName || '');
+        setMiddleName(profile.middleName || '');
+        setLastName(profile.lastName || '');
+        setSex(profile.sex || '');
+        setDateOfBirth(profile.studentData?.dateOfBirth || '');
+      }
 
       // Fetch class data if student has a class
       if (profile?.studentData?.classCode) {
@@ -199,6 +223,45 @@ export default function Profile() {
 
   const cancelLogout = () => {
     setLogoutVisible(false);
+  };
+
+  const handleSave = async () => {
+    if (!firstName.trim() || !lastName.trim() || !sex.trim()) {
+      Alert.alert('Validation Error', 'First Name, Last Name, and Sex are required.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const user = getCurrentUser();
+      if (user) {
+        await updateStudentBasicInfo(user.uid, {
+          firstName: firstName.trim(),
+          middleName: middleName.trim(),
+          lastName: lastName.trim(),
+          sex: sex.trim(),
+          dateOfBirth: dateOfBirth.trim(),
+        });
+        setIsEditing(false);
+        Alert.alert('Success', 'Profile updated successfully!');
+        fetchProfileData();
+      }
+    } catch (err: any) {
+      Alert.alert('Update Failed', err.message || 'An error occurred while updating.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    if (profileData) {
+      setFirstName(profileData.firstName || '');
+      setMiddleName(profileData.middleName || '');
+      setLastName(profileData.lastName || '');
+      setSex(profileData.sex || '');
+      setDateOfBirth(profileData.studentData?.dateOfBirth || '');
+    }
   };
 
   // ========================================================================
@@ -318,94 +381,199 @@ export default function Profile() {
             <Text style={styles.studentRole}>Student</Text>
           </View>
 
-          {/* BASIC INFORMATION */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Basic Information</Text>
-            <View style={styles.infoGrid}>
-              <InfoItem
-                label="First Name"
-                value={profileData?.firstName || 'N/A'}
-              />
-              <InfoItem
-                label="Middle Name"
-                value={profileData?.middleName || 'N/A'}
-              />
-              <InfoItem
-                label="Last Name"
-                value={profileData?.lastName || 'N/A'}
-              />
-              <InfoItem
-                label="Birthdate"
-                value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)}
-              />
-              <InfoItem
-                label="Sex"
-                value={
-                  profileData?.sex === 'male'
-                    ? 'Male'
-                    : profileData?.sex === 'female'
-                      ? 'Female'
-                      : 'N/A'
-                }
-              />
-            </View>
+          {/* NEW: TAB NAVIGATION CONTAINER */}
+          {/* Segmented controls allowing users to switch between Information, Performance, and Activity features */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity 
+              style={[styles.tabButton, activeTab === 'profile' && styles.activeTab]}
+              onPress={() => setActiveTab('profile')}
+            >
+              <Text style={[styles.tabText, activeTab === 'profile' && styles.activeTabText]}>Profile</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.tabButton, activeTab === 'performance' && styles.activeTab]}
+              onPress={() => setActiveTab('performance')}
+            >
+              <Text style={[styles.tabText, activeTab === 'performance' && styles.activeTabText]}>Performance</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.tabButton, activeTab === 'activity' && styles.activeTab]}
+              onPress={() => setActiveTab('activity')}
+            >
+              <Text style={[styles.tabText, activeTab === 'activity' && styles.activeTabText]}>Activity</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* ACADEMIC INFORMATION */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Academic Information</Text>
-            <View style={styles.infoGrid}>
-              <InfoItem
-                label="Grade Level"
-                value={`Grade ${profileData?.studentData?.gradeLevel || 'N/A'}`}
-              />
-              <InfoItem
-                label="Class"
-                value={classData?.className || 'Not assigned'}
-              />
-              <InfoItem
-                label="Reading Level"
-                value={getReadingLevelLabel(
-                  profileData?.studentData?.reading_Level,
+          {/* DYNAMIC CONTENT RENDER: Based on activeTab state */}
+          {activeTab === 'profile' && (
+            <>
+              {/* BASIC INFORMATION */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Basic Information</Text>
+                  {!isEditing ? (
+                    <TouchableOpacity onPress={() => setIsEditing(true)}>
+                      <Text style={styles.editButtonTextPrimary}>Edit</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+
+                {isEditing ? (
+                  <View style={styles.formContainer}>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>First Name</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={firstName}
+                        onChangeText={setFirstName}
+                      />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Middle Name <Text style={styles.optionalText}>(Optional)</Text></Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={middleName}
+                        onChangeText={setMiddleName}
+                      />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Last Name</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={lastName}
+                        onChangeText={setLastName}
+                      />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Birthdate (YYYY-MM-DD)</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={dateOfBirth}
+                        onChangeText={setDateOfBirth}
+                      />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Sex (male/female)</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={sex}
+                        onChangeText={setSex}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                    <View style={styles.actionRow}>
+                      <TouchableOpacity 
+                        style={styles.cancelButton} 
+                        onPress={handleCancel}
+                        disabled={isSaving}
+                      >
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity 
+                        style={styles.saveButton} 
+                        onPress={handleSave}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? (
+                          <ActivityIndicator color="#ffffff" size="small" />
+                        ) : (
+                          <Text style={styles.saveButtonText}>Save</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.infoGrid}>
+                    <InfoItem
+                      label="First Name"
+                      value={profileData?.firstName || 'N/A'}
+                    />
+                    <InfoItem
+                      label="Middle Name"
+                      value={profileData?.middleName || 'N/A'}
+                    />
+                    <InfoItem
+                      label="Last Name"
+                      value={profileData?.lastName || 'N/A'}
+                    />
+                    <InfoItem
+                      label="Birthdate"
+                      value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)}
+                    />
+                    <InfoItem
+                      label="Sex"
+                      value={
+                        profileData?.sex === 'male'
+                          ? 'Male'
+                          : profileData?.sex === 'female'
+                            ? 'Female'
+                            : 'N/A'
+                      }
+                    />
+                  </View>
                 )}
-              />
-            </View>
-          </View>
+              </View>
 
-          <View style={styles.section}>
-            {/* ALPHABET AND ACCURACY */}
-            <StudentAlphabetMastery studentId={auth.currentUser?.uid || ''} />
-          </View>
+              {/* ACADEMIC INFORMATION */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Academic Information</Text>
+                <View style={styles.infoGrid}>
+                  <InfoItem
+                    label="Grade Level"
+                    value={`Grade ${profileData?.studentData?.gradeLevel || 'N/A'}`}
+                  />
+                  <InfoItem
+                    label="Class"
+                    value={classData?.className || 'Not assigned'}
+                  />
+                  <InfoItem
+                    label="Reading Level"
+                    value={getReadingLevelLabel(
+                      profileData?.studentData?.reading_Level,
+                    )}
+                  />
+                </View>
+              </View>
+            </>
+          )}
 
-          <View style={styles.section}>
-            {/* WORD AND ACCURACY */}
-            <StudentWordMastery studentId={auth.currentUser?.uid || ''} />
-          </View>
+          {activeTab === 'performance' && (
+            <>
+              <View style={styles.section}>
+                {/* ALPHABET AND ACCURACY */}
+                <StudentAlphabetMastery studentId={auth.currentUser?.uid || ''} />
+              </View>
 
-          {/* READING STATISTICS */}
-          <View style={styles.section}>
+              <View style={styles.section}>
+                {/* WORD AND ACCURACY */}
+                <StudentWordMastery studentId={auth.currentUser?.uid || ''} />
+              </View>
 
-            {/* ACCURACY TRENDS */}
-            <StudentAccuracyTrendsChart studentId={auth.currentUser?.uid || ''} />
+              {/* READING STATISTICS */}
+              <View style={styles.section}>
+                {/* ACCURACY TRENDS */}
+                <StudentAccuracyTrendsChart studentId={auth.currentUser?.uid || ''} />
+              </View>
 
-          </View>
+              <View style={styles.section}>
+                {/* MISCUE TYPE CHART */}
+                <StudentMiscueAnalytics studentId={auth.currentUser?.uid || ''} />
+                {/* TOP MISCUED PASSAGE AND MOST COMMON MISCUE WORDS  */}
+                <StudentTopMiscuePassageAndWords studentId={auth.currentUser?.uid || ''} />
+              </View>
+            </>
+          )}
 
-          <View style={styles.section}>
-
-            {/* MISCUE TYPE CHART */}
-            <StudentMiscueAnalytics studentId={auth.currentUser?.uid || ''} />
-
-            {/* TOP MISCUED PASSAGE AND MOST COMMON MISCUE WORDS  */}
-            <StudentTopMiscuePassageAndWords studentId={auth.currentUser?.uid || ''} />
-
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Activity Tracking</Text>
-
-            {/* ACTIVITY TRACKING */}
-            <StudentActivityTrackingCard studentId={auth.currentUser?.uid || ''} />
-          </View>
+          {activeTab === 'activity' && (
+            <>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Activity Tracking</Text>
+                {/* ACTIVITY TRACKING */}
+                <StudentActivityTrackingCard studentId={auth.currentUser?.uid || ''} />
+              </View>
+            </>
+          )}
 
           {/* READING PROGRESS CHARTS */}
 
@@ -544,6 +712,77 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1e293b',
     marginBottom: sh(16),
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: sh(16),
+  },
+  editButtonTextPrimary: {
+    color: '#3b82f6',
+    fontSize: sf(16),
+    fontWeight: '600',
+  },
+  formContainer: {
+    marginTop: sh(8),
+  },
+  inputGroup: {
+    marginBottom: sh(16),
+  },
+  inputLabel: {
+    fontSize: sf(14),
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: sh(6),
+  },
+  optionalText: {
+    fontWeight: '400',
+    fontStyle: 'italic',
+    fontSize: sf(12),
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: sw(8),
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(10),
+    fontSize: sf(16),
+    color: '#1e293b',
+    backgroundColor: '#f8fafc',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: sh(16),
+    gap: sw(12),
+  },
+  cancelButton: {
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(20),
+    borderRadius: sw(8),
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#ffffff',
+  },
+  cancelButtonText: {
+    color: '#64748b',
+    fontSize: sf(14),
+    fontWeight: '600',
+  },
+  saveButton: {
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(24),
+    borderRadius: sw(8),
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: sw(80),
+  },
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: sf(14),
+    fontWeight: '600',
   },
   infoGrid: {
     flexDirection: 'row',
@@ -990,5 +1229,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#475569',
     marginBottom: sh(8),
+  },
+
+  // NEW STYLES: Tab Navigation
+  tabContainer: {
+    flexDirection: 'row',
+    marginHorizontal: sw(10),
+    marginTop: sh(16),
+    backgroundColor: '#fff',
+    borderRadius: sw(12),
+    padding: sw(6),
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(1) },
+    shadowOpacity: 0.1,
+    shadowRadius: sw(2),
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: sh(10),
+    alignItems: 'center',
+    borderRadius: sw(8),
+  },
+  activeTab: {
+    backgroundColor: '#3b82f6',
+  },
+  tabText: {
+    fontSize: sf(14),
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  activeTabText: {
+    color: '#ffffff',
   },
 });

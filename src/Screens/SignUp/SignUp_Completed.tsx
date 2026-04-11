@@ -15,18 +15,16 @@ export default function SignUpCompletedScreen() {
   const route = useRoute<SignUpCompleteRouteProp>();
   const { role } = route.params;
 
-  const navigation = useNavigation() as any;
-  
-  // Loads for 3 seconds
+  const { handleDesignatedUserPage }  = useNavigationHelper();
+
+  // Redirect after 5 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace('UserHome');
+      handleDesignatedUserPage(role);
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [navigation]);
-
-  const { handleDesignatedUserPage }  = useNavigationHelper();
+  }, [handleDesignatedUserPage, role]);
 
   return (
     <View style={signup.completeSignUpContainer}>
