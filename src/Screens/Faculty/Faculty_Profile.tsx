@@ -26,6 +26,7 @@ export default function FacultyProfile() {
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [sex, setSex] = useState('');
   const [profileData, setProfileData] = useState<UserDocument | null>(null);
   // ========================================================================
   // HOOKS  
@@ -53,6 +54,7 @@ export default function FacultyProfile() {
           setMiddleName(profile.middleName || '');
           setLastName(profile.lastName || '');
           setEmail(profile.email || '');
+          setSex(profile.sex || '');
         }
       }
     } catch (error) {
@@ -63,8 +65,8 @@ export default function FacultyProfile() {
   };
 
   const handleSave = async () => {
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      Alert.alert('Validation Error', 'First Name, Last Name, and Email are required.');
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !sex.trim()) {
+      Alert.alert('Validation Error', 'First Name, Last Name, Email, and Sex are required.');
       return;
     }
 
@@ -77,6 +79,7 @@ export default function FacultyProfile() {
           middleName: middleName.trim(),
           lastName: lastName.trim(),
           email: email.trim(),
+          sex: sex.trim(),
         });
         setIsEditing(false);
         Alert.alert('Success', 'Profile updated successfully!');
@@ -220,6 +223,21 @@ export default function FacultyProfile() {
                   onChangeText={setEmail}
                   editable={isEditing}
                   keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* SEX */}
+              <View style={facultyProfile.inputGroup}>
+                <Text style={facultyProfile.label}>Sex</Text>
+                <TextInput
+                  style={[
+                    facultyProfile.textInput,
+                    !isEditing && facultyProfile.textInputDisabled,
+                  ]}
+                  value={sex}
+                  onChangeText={setSex}
+                  editable={isEditing}
                   autoCapitalize="none"
                 />
               </View>

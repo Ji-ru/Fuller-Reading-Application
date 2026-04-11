@@ -14,7 +14,9 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import styles from '../../UI_Designs/StudentHistoryStyles';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import Svg, { Text as SvgText } from 'react-native-svg';
 import { getAuth } from '@react-native-firebase/auth';
 const auth = getAuth();
 /**
@@ -68,7 +70,7 @@ export default function ReadingHistoryScreen() {
   // HANDLE MENU
   const [menuVisible, setMenuVisible] = useState(false);
   // HANDLE LOGOUT
-  const { handleLogout, handleBackStep } = useNavigationHelper();
+  const { handleLogout, handleBackStep, handleNextStep } = useNavigationHelper();
 
   // HANDLE LOGOUT MODAL VISIBILITY
   const [logoutVisible, setLogoutVisible] = useState(false);
@@ -282,22 +284,25 @@ export default function ReadingHistoryScreen() {
   };
 
   /**
-   * Get miscue count for a specific type
+   * Compute summary stats across all reports
    */
-  const getMiscueCount = (report: ReportData, type: string): number => {
-    // First check legacy counts
-    switch (type) {
-      case 'substitution':
-        return report.substitutionCount || 0;
-      case 'omission':
-        return report.omissionCount || 0;
-      case 'insertion':
-        return report.insertionCount || 0;
-      case 'repetition':
-        return report.repetitionCount || 0;
-      default:
-        return 0;
-    }
+  const getTotalAttempts = (): number => {
+    return groupedReports.reduce((sum, g) => sum + g.reports.length, 0);
+  };
+
+  const getAverageAccuracy = (): string => {
+    const allReports = groupedReports.flatMap(g => g.reports);
+    if (allReports.length === 0) return '0';
+    const avg =
+      allReports.reduce((sum, r) => sum + r.accuracyRate, 0) /
+      allReports.length;
+    return avg.toFixed(1);
+  };
+
+  const getBestWPM = (): number => {
+    const allReports = groupedReports.flatMap(g => g.reports);
+    if (allReports.length === 0) return 0;
+    return Math.max(...allReports.map(r => r.wordPerMin || 0));
   };
 
   /**
@@ -305,12 +310,13 @@ export default function ReadingHistoryScreen() {
    */
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1 }}>
-        <View
-          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-        >
-          <ActivityIndicator size="large" />
-          <Text style={{ marginTop: 10 }}>Loading reading history...</Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.insideContainer}>
+          <BubbleBackground />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3B7FC9" />
+            <Text style={styles.loadingText}>Loading reading history...</Text>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -321,16 +327,100 @@ export default function ReadingHistoryScreen() {
    */
   if (groupedReports.length === 0) {
     return (
-      <SafeAreaView style={{ flex: 1 }}>
-        <View
-          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-        >
-          <Text style={{ fontSize: 18, color: '#666' }}>
-            No reading history yet
-          </Text>
-          <Text style={{ marginTop: 10, color: '#999' }}>
-            Start reading passages to see your progress!
-          </Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.insideContainer}>
+          <BubbleBackground />
+
+          {/* HEADER */}
+          <View>
+            <View style={upperNav.header}>
+              <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
+                <Image
+                  style={upperNav.backButtonIcon}
+                  source={require('../../../assets/icons/BackButton-icon.png')}
+                />
+              </TouchableOpacity>
+              <Svg height={60} width={200}>
+                <SvgText
+                  x={100}
+                  y={35}
+                  fontSize={21}
+                  fontFamily="Comfortaa-Bold"
+                  textAnchor="middle"
+                  fill="none"
+                  stroke="#D7E9FF"
+                  strokeWidth={8}
+                  strokeLinejoin="round"
+                >
+                  Reading History
+                </SvgText>
+                <SvgText
+                  x={100}
+                  y={35}
+                  fontSize={21}
+                  fontFamily="Comfortaa-Bold"
+                  textAnchor="middle"
+                  fill="#3B7FC9"
+                >
+                  Reading History
+                </SvgText>
+              </Svg>
+              <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
+                <Image
+                  style={upperNav.menuIcon}
+                  source={require('../../../assets/icons/Menu-icon.png')}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* DROPDOWN MENU */}
+          {menuVisible && (
+            <View style={upperNav.dropdownMenu}>
+              <TouchableOpacity
+                onPress={handleLogoutPress}
+                style={upperNav.logoutButton}
+              >
+                <Image
+                  source={require('../../../assets/icons/Logout-icon.png')}
+                  style={upperNav.logoutIcon}
+                />
+                <Text style={upperNav.logoutText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {menuVisible && (
+            <TouchableOpacity
+              style={upperNav.closeMenu}
+              onPress={() => setMenuVisible(false)}
+              activeOpacity={1}
+            />
+          )}
+
+          {/* EMPTY STATE */}
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconContainer}>
+              <Text style={styles.emptyIcon}>📚</Text>
+            </View>
+            <Text style={styles.emptyTitle}>No Reading History Yet</Text>
+            <Text style={styles.emptyMessage}>
+              You haven't completed any reading activities yet. Start reading passages to track your progress and see your improvement over time!
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => handleNextStep('StudentTabs' as any, { screen: 'StudentLibrary' } as any)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.emptyButtonText}>Start Reading</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* LOGOUT MODAL */}
+          <LogoutModal
+            visible={logoutVisible}
+            onCancel={cancelLogout}
+            onConfirm={confirmLogoout}
+          />
         </View>
       </SafeAreaView>
     );
@@ -340,278 +430,323 @@ export default function ReadingHistoryScreen() {
    * Main render
    */
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <ScrollView>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.insideContainer}>
         {/* BUBBLE DECORATIONS */}
         <BubbleBackground />
 
-
-        {/* HEADER (LOGO + MENU ICON) */}
-        <View>
-          <View style={upperNav.header}>
-            <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
-              <Image
-                style={upperNav.backButtonIcon}
-                source={require('../../../assets/icons/BackButton-icon.png')}
-              />
-            </TouchableOpacity>
-            <Image
-              style={upperNav.ciscLogo}
-              source={require('../../../assets/images/cisckids.png')}
-            />
-            <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-              <Image
-                style={upperNav.menuIcon}
-                source={require('../../../assets/icons/Menu-icon.png')}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* DROPDOWN MENU */}
-        {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
-            <TouchableOpacity
-              onPress={handleLogoutPress}
-              style={upperNav.logoutButton}
-            >
-              <Image
-                source={require('../../../assets/icons/Logout-icon.png')}
-                style={upperNav.logoutIcon}
-              />
-              <Text style={upperNav.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* OVERLAY TO CLOSE MENU */}
-        {menuVisible && (
-          <TouchableOpacity
-            style={upperNav.closeMenu}
-            onPress={() => setMenuVisible(false)}
-            activeOpacity={1}
-          />
-        )}
-
-        {/* Header */}
-        <View style={{ padding: 16 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>
-            Reading History
-          </Text>
-        </View>
-
-        {/* List of passages with their reports */}
-        {groupedReports.map((group, passageIndex) => {
-          const isExpanded = expandedPassages.has(passageIndex);
-
-          return (
-            <View
-              key={passageIndex}
-              style={{ marginBottom: 16, paddingHorizontal: 16 }}
-            >
-              {/* Passage Header - Clickable to expand/collapse */}
-              <TouchableOpacity
-                onPress={() => togglePassageExpansion(passageIndex)}
-                style={{
-                  padding: 16,
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: 8,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 18, fontWeight: '600' }}>
-                    {group.passageTitle}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-                    {group.reports.length} attempt
-                    {group.reports.length > 1 ? 's' : ''}
-                  </Text>
-                </View>
-
-                {/* Expand/Collapse indicator */}
-                <Text style={{ fontSize: 20 }}>{isExpanded ? '▼' : '▶'}</Text>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* HEADER (LOGO + MENU ICON) */}
+          <View>
+            <View style={upperNav.header}>
+              <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
+                <Image
+                  style={upperNav.backButtonIcon}
+                  source={require('../../../assets/icons/BackButton-icon.png')}
+                />
               </TouchableOpacity>
+              {/* SVG Title - styled like Reading Materials */}
+              <Svg height={60} width={220}>
+                <SvgText
+                  x={110}
+                  y={35}
+                  fontSize={23}
+                  fontFamily="DynaPuff-Bold"
+                  textAnchor="middle"
+                  fill="none"
+                  stroke="#D7E9FF"
+                  strokeWidth={8}
+                  strokeLinejoin="round"
+                >
+                  Reading History
+                </SvgText>
+                <SvgText
+                  x={110}
+                  y={35}
+                  fontSize={23}
+                  fontFamily="DynaPuff-Bold"
+                  textAnchor="middle"
+                  fill="#3B7FC9"
+                >
+                  Reading History
+                </SvgText>
+              </Svg>
+              <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
+                <Image
+                  style={upperNav.menuIcon}
+                  source={require('../../../assets/icons/Menu-icon.png')}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-              {/* Expanded content - List of reports for this passage */}
-              {isExpanded && (
-                <View style={{ marginTop: 8 }}>
-                  <ScrollView
-                    style={{ maxHeight: 400 }}
-                    nestedScrollEnabled={true}
+          {/* DROPDOWN MENU */}
+          {menuVisible && (
+            <View style={upperNav.dropdownMenu}>
+              <TouchableOpacity
+                onPress={handleLogoutPress}
+                style={upperNav.logoutButton}
+              >
+                <Image
+                  source={require('../../../assets/icons/Logout-icon.png')}
+                  style={upperNav.logoutIcon}
+                />
+                <Text style={upperNav.logoutText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* OVERLAY TO CLOSE MENU */}
+          {menuVisible && (
+            <TouchableOpacity
+              style={upperNav.closeMenu}
+              onPress={() => setMenuVisible(false)}
+              activeOpacity={1}
+            />
+          )}
+
+          {/* SUMMARY STATS BAR */}
+          <View style={styles.statsBar}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{groupedReports.length}</Text>
+              <Text style={styles.statLabel}>Passages</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{getTotalAttempts()}</Text>
+              <Text style={styles.statLabel}>Attempts</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{getAverageAccuracy()}%</Text>
+              <Text style={styles.statLabel}>Avg. Accuracy</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{getBestWPM()}</Text>
+              <Text style={styles.statLabel}>Best WPM</Text>
+            </View>
+          </View>
+
+          {/* SECTION LABEL */}
+          <View style={styles.contentContainer}>
+            <Text style={styles.sectionLabel}>Your Reading Sessions</Text>
+
+            {/* List of passages with their reports */}
+            {groupedReports.map((group, passageIndex) => {
+              const isExpanded = expandedPassages.has(passageIndex);
+
+              return (
+                <View
+                  key={passageIndex}
+                  style={[
+                    styles.passageCard,
+                    isExpanded && styles.passageCardExpanded,
+                  ]}
+                >
+                  {/* Passage Header - Clickable to expand/collapse */}
+                  <TouchableOpacity
+                    onPress={() => togglePassageExpansion(passageIndex)}
+                    style={styles.passageHeader}
+                    activeOpacity={0.7}
                   >
-                    {group.reports.map((report, reportIndex) => {
-                      const totalMiscues = getTotalMiscues(report);
+                    <View style={styles.passageIconContainer}>
+                      <Text style={styles.passageIconText}>📖</Text>
+                    </View>
 
-                      return (
-                        <View
-                          key={report.id}
-                          style={{
-                            padding: 16,
-                            backgroundColor: '#fff',
-                            borderRadius: 8,
-                            marginBottom: 8,
-                            borderWidth: 1,
-                            borderColor: '#e0e0e0',
-                          }}
-                        >
-                          {/* Report Date */}
-                          <Text
-                            style={{
-                              fontSize: 16,
-                              fontWeight: '600',
-                              marginBottom: 8,
-                            }}
-                          >
-                            {formatDate(report.timestamp)}
-                          </Text>
+                    <View style={styles.passageInfo}>
+                      <Text style={styles.passageTitle} numberOfLines={2}>
+                        {group.passageTitle}
+                      </Text>
+                      <Text style={styles.passageAttempts}>
+                        {group.reports.length} attempt
+                        {group.reports.length > 1 ? 's' : ''}
+                      </Text>
+                    </View>
 
-                          {/* Performance Metrics */}
-                          <View style={{ marginBottom: 8 }}>
-                            <Text style={{ fontSize: 14, marginBottom: 2 }}>
-                              <Text style={{ fontWeight: '500' }}>
-                                Accuracy:
-                              </Text>{' '}
-                              {report.accuracyRate.toFixed(1)}%
-                            </Text>
+                    {/* Expand/Collapse indicator */}
+                    <View style={styles.passageArrowContainer}>
+                      <Text style={styles.passageArrow}>
+                        {isExpanded ? '▼' : '▶'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
 
-                            <Text style={{ fontSize: 14, marginBottom: 2 }}>
-                              <Text style={{ fontWeight: '500' }}>
-                                Reading Speed:
-                              </Text>{' '}
-                              {report.wordPerMin} WPM
-                            </Text>
+                  {/* Expanded content - List of reports for this passage */}
+                  {isExpanded && (
+                    <View style={styles.reportsContainer}>
+                      <ScrollView
+                        style={styles.nestedScroll}
+                        nestedScrollEnabled={true}
+                        showsVerticalScrollIndicator={false}
+                      >
+                        {group.reports.map((report, reportIndex) => {
+                          const totalMiscues = getTotalMiscues(report);
 
-                            <Text style={{ fontSize: 14, marginBottom: 2 }}>
-                              <Text style={{ fontWeight: '500' }}>
-                                Duration:
-                              </Text>{' '}
-                              {formatDuration(report.recordingDuration)}
-                            </Text>
-
-                            <Text style={{ fontSize: 14, marginBottom: 2 }}>
-                              <Text style={{ fontWeight: '500' }}>
-                                Total Miscues:
-                              </Text>{' '}
-                              {totalMiscues}
-                            </Text>
-                          </View>
-
-                          {/* Miscue Details - Only show if there are miscues */}
-                          {totalMiscues > 0 && (
-                            <View
-                              style={{
-                                marginTop: 8,
-                                borderTopWidth: 1,
-                                borderTopColor: '#f0f0f0',
-                                paddingTop: 8,
-                              }}
-                            >
-                              <Text
-                                style={{ fontWeight: '600', marginBottom: 4 }}
-                              >
-                                Miscue Details:
-                              </Text>
-
-                              {/* Substitution */}
-                              {report.substitution !== 'None' && (
-                                <View style={{ marginBottom: 4 }}>
-                                  <Text style={{ fontWeight: '500' }}>
-                                    Substitution (
-                                    {getMiscueCount(report, 'substitution')}):
+                          return (
+                            <View key={report.id} style={styles.reportCard}>
+                              {/* Report Date & Attempt Badge */}
+                              <View style={styles.reportDateRow}>
+                                <Text style={styles.reportDate}>
+                                  {formatDate(report.timestamp)}
+                                </Text>
+                                <View style={styles.reportAttemptBadge}>
+                                  <Text style={styles.reportAttemptText}>
+                                    #{reportIndex + 1}
                                   </Text>
-                                  <Text
-                                    style={{ color: '#666', marginLeft: 8 }}
-                                  >
-                                    {report.substitution}
+                                </View>
+                              </View>
+
+                              {/* Performance Metrics Grid */}
+                              <View style={styles.metricsGrid}>
+                                <View style={styles.metricCard}>
+                                  <Text style={styles.metricValue}>
+                                    {report.accuracyRate.toFixed(1)}%
                                   </Text>
+                                  <Text style={styles.metricLabel}>Accuracy</Text>
+                                </View>
+
+                                <View style={styles.metricCard}>
+                                  <Text style={styles.metricValue}>
+                                    {report.wordPerMin}
+                                  </Text>
+                                  <Text style={styles.metricLabel}>
+                                    Words / Min
+                                  </Text>
+                                </View>
+
+                                <View style={styles.metricCard}>
+                                  <Text style={styles.metricValue}>
+                                    {formatDuration(report.recordingDuration)}
+                                  </Text>
+                                  <Text style={styles.metricLabel}>Duration</Text>
+                                </View>
+
+                                <View style={styles.metricCard}>
+                                  <Text style={styles.metricValue}>
+                                    {totalMiscues}
+                                  </Text>
+                                  <Text style={styles.metricLabel}>
+                                    Total Miscues
+                                  </Text>
+                                </View>
+                              </View>
+
+                              {/* Miscue Details - Only show if there are miscues */}
+                              {totalMiscues > 0 && (
+                                <View style={styles.miscueSection}>
+                                  <Text style={styles.miscueSectionTitle}>
+                                    Miscue Breakdown
+                                  </Text>
+
+                                  {/* Substitution */}
+                                  {report.substitution !== 'None' && (
+                                    <View style={styles.miscueRow}>
+                                      <View
+                                        style={[
+                                          styles.miscueTag,
+                                          styles.miscueTagSubstitution,
+                                        ]}
+                                      >
+                                        <Text style={styles.miscueTagText}>
+                                          Substitution
+                                        </Text>
+                                      </View>
+                                      <Text style={styles.miscueDetail}>
+                                        {report.substitution}
+                                      </Text>
+                                    </View>
+                                  )}
+
+                                  {/* Omission */}
+                                  {report.omission !== 'None' && (
+                                    <View style={styles.miscueRow}>
+                                      <View
+                                        style={[
+                                          styles.miscueTag,
+                                          styles.miscueTagOmission,
+                                        ]}
+                                      >
+                                        <Text style={styles.miscueTagText}>
+                                          Omission
+                                        </Text>
+                                      </View>
+                                      <Text style={styles.miscueDetail}>
+                                        {report.omission}
+                                      </Text>
+                                    </View>
+                                  )}
+
+                                  {/* Insertion */}
+                                  {report.insertion !== 'None' && (
+                                    <View style={styles.miscueRow}>
+                                      <View
+                                        style={[
+                                          styles.miscueTag,
+                                          styles.miscueTagInsertion,
+                                        ]}
+                                      >
+                                        <Text style={styles.miscueTagText}>
+                                          Insertion
+                                        </Text>
+                                      </View>
+                                      <Text style={styles.miscueDetail}>
+                                        {report.insertion}
+                                      </Text>
+                                    </View>
+                                  )}
+
+                                  {/* Repetition */}
+                                  {report.repetition !== 'None' && (
+                                    <View style={styles.miscueRow}>
+                                      <View
+                                        style={[
+                                          styles.miscueTag,
+                                          styles.miscueTagRepetition,
+                                        ]}
+                                      >
+                                        <Text style={styles.miscueTagText}>
+                                          Repetition
+                                        </Text>
+                                      </View>
+                                      <Text style={styles.miscueDetail}>
+                                        {report.repetition}
+                                      </Text>
+                                    </View>
+                                  )}
                                 </View>
                               )}
 
-                              {/* Omission */}
-                              {report.omission !== 'None' && (
-                                <View style={{ marginBottom: 4 }}>
-                                  <Text style={{ fontWeight: '500' }}>
-                                    Omission (
-                                    {getMiscueCount(report, 'omission')}):
-                                  </Text>
-                                  <Text
-                                    style={{ color: '#666', marginLeft: 8 }}
-                                  >
-                                    {report.omission}
-                                  </Text>
-                                </View>
-                              )}
-
-                              {/* Insertion */}
-                              {report.insertion !== 'None' && (
-                                <View style={{ marginBottom: 4 }}>
-                                  <Text style={{ fontWeight: '500' }}>
-                                    Insertion (
-                                    {getMiscueCount(report, 'insertion')}):
-                                  </Text>
-                                  <Text
-                                    style={{ color: '#666', marginLeft: 8 }}
-                                  >
-                                    {report.insertion}
-                                  </Text>
-                                </View>
-                              )}
-
-                              {/* Repetition */}
-                              {report.repetition !== 'None' && (
-                                <View style={{ marginBottom: 4 }}>
-                                  <Text style={{ fontWeight: '500' }}>
-                                    Repetition (
-                                    {getMiscueCount(report, 'repetition')}):
-                                  </Text>
-                                  <Text
-                                    style={{ color: '#666', marginLeft: 8 }}
-                                  >
-                                    {report.repetition}
+                              {/* No miscues message */}
+                              {totalMiscues === 0 && (
+                                <View style={styles.perfectBadge}>
+                                  <Text style={styles.perfectIcon}>🌟</Text>
+                                  <Text style={styles.perfectText}>
+                                    Perfect reading! No miscues detected.
                                   </Text>
                                 </View>
                               )}
                             </View>
-                          )}
+                          );
+                        })}
+                      </ScrollView>
 
-                          {/* No miscues message */}
-                          {totalMiscues === 0 && (
-                            <View style={{ marginTop: 8 }}>
-                              <Text
-                                style={{
-                                  color: '#4CAF50',
-                                  fontStyle: 'italic',
-                                }}
-                              >
-                                Perfect reading! No miscues detected.
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                      );
-                    })}
-                  </ScrollView>
-
-                  {/* View More indicator if there are many reports */}
-                  {group.reports.length > 5 && (
-                    <Text
-                      style={{
-                        textAlign: 'center',
-                        color: '#999',
-                        marginTop: 8,
-                      }}
-                    >
-                      -- View more --
-                    </Text>
+                      {/* View More indicator if there are many reports */}
+                      {group.reports.length > 5 && (
+                        <Text style={styles.viewMoreText}>
+                          Scroll to see more attempts
+                        </Text>
+                      )}
+                    </View>
                   )}
                 </View>
-              )}
-            </View>
-          );
-        })}
+              );
+            })}
+          </View>
+        </ScrollView>
 
         {/* LOGOUT MODAL */}
         <LogoutModal
@@ -619,7 +754,7 @@ export default function ReadingHistoryScreen() {
           onCancel={cancelLogout}
           onConfirm={confirmLogoout}
         />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
