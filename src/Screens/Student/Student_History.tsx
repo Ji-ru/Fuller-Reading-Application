@@ -17,6 +17,9 @@ import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import { StudentColors as C, Radii, Shadows, ACCENT_COLORS } from '../../Utilities/Theme';
+import { BounceIn, Skeleton } from '../../Components/GlobalUse/Animations';
+import { BookOpenIcon, StarIcon, TrophyIcon, ThumbsUpIcon, FlexIcon, ZapIcon, TimerIcon, AlertTriangleIcon, PartyIcon } from '../../Components/GlobalUse/Icons';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -43,68 +46,18 @@ interface ReportData {
   miscues?: any[];
 }
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
-const C = {
-  green:      '#2ecc71',
-  greenDark:  '#27ae60',
-  greenDeep:  '#1a7a45',
-  greenLight: '#d4f5e2',
-  greenPale:  '#f0faf4',
-  mint:       '#a8edce',
-  teal:       '#1abc9c',
-  yellow:     '#f9e04b',
-  orange:     '#f39c12',
-  red:        '#e74c3c',
-  white:      '#ffffff',
-  ink:        '#1b2e23',
-  inkLight:   '#4a6358',
-  slate:      '#8fafa0',
-  bg:         '#f0faf4',
-};
-
-// Passage card accent colours — cycle per passage
-const ACCENT_COLORS = [
-  C.green, C.teal, C.orange, '#9b59b6', '#3498db', '#e91e63',
-];
+// Palette and accent colors imported from Theme
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const accColor = (a: number) => a >= 90 ? C.green : a >= 75 ? C.orange : C.red;
-const accEmoji = (a: number) => a >= 90 ? '🌟' : a >= 75 ? '👍' : '💪';
 const accLabel = (a: number) => a >= 90 ? 'Mahusay!' : a >= 75 ? 'Magaling!' : 'Kaya mo!';
+const AccuracyFeedbackIcon = ({ accuracy, size = 18 }: { accuracy: number; size?: number }) => {
+  if (accuracy >= 90) return <TrophyIcon size={size} color={C.white} />;
+  if (accuracy >= 75) return <ThumbsUpIcon size={size} color={C.white} />;
+  return <FlexIcon size={size} color={C.white} />;
+};
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-function Skeleton({ w = '100%', h = 16, r = 8 }: { w?: any; h?: number; r?: number }) {
-  const anim = useRef(new Animated.Value(0.35)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(anim, { toValue: 1,    duration: 750, useNativeDriver: true }),
-        Animated.timing(anim, { toValue: 0.35, duration: 750, useNativeDriver: true }),
-      ]),
-    ).start();
-  }, []);
-  return (
-    <Animated.View
-      style={{ width: w, height: h, borderRadius: r, backgroundColor: C.mint, opacity: anim, marginBottom: 8 }}
-    />
-  );
-}
-
-// ─── BounceIn ─────────────────────────────────────────────────────────────────
-function BounceIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const scale   = useRef(new Animated.Value(0.75)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(delay),
-      Animated.parallel([
-        Animated.spring(scale,   { toValue: 1, useNativeDriver: true, tension: 65, friction: 7 }),
-        Animated.timing(opacity, { toValue: 1, duration: 220,         useNativeDriver: true }),
-      ]),
-    ]).start();
-  }, []);
-  return <Animated.View style={{ transform: [{ scale }], opacity }}>{children}</Animated.View>;
-}
+// Skeleton and BounceIn imported from Animations
 
 // ─── Miscue pill ─────────────────────────────────────────────────────────────
 function MiscuePill({ label, value, color }: { label: string; value: string; color: string }) {
@@ -156,21 +109,33 @@ function ReportCard({ report, index }: { report: ReportData; index: number }) {
       <TouchableOpacity onPress={toggle} activeOpacity={0.85} style={S.reportSummary}>
         {/* Accuracy badge */}
         <View style={[S.accBadge, { backgroundColor: color }]}>
-          <Text style={S.accBadgeEmoji}>{accEmoji(acc)}</Text>
+          <AccuracyFeedbackIcon accuracy={acc} size={18} />
           <Text style={S.accBadgeVal}>{acc.toFixed(1)}%</Text>
         </View>
 
         <View style={{ flex: 1, paddingLeft: 12 }}>
           <Text style={S.reportDate}>{formatDate(report.timestamp)}</Text>
           <View style={S.reportMetaRow}>
-            <Text style={S.reportMeta}>⚡ {report.wordPerMin} WPM</Text>
-            <Text style={S.reportMeta}>⏱ {formatDur(report.recordingDuration)}</Text>
-            <Text style={[S.reportMeta, { color: totalMiscues === 0 ? C.green : C.orange }]}>
-              ⚠️ {totalMiscues} mali
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <ZapIcon size={12} color={C.inkLight} />
+              <Text style={S.reportMeta}>{report.wordPerMin} WPM</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <TimerIcon size={12} color={C.inkLight} />
+              <Text style={S.reportMeta}>{formatDur(report.recordingDuration)}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <AlertTriangleIcon size={12} color={totalMiscues === 0 ? C.green : C.orange} />
+              <Text style={[S.reportMeta, { color: totalMiscues === 0 ? C.green : C.orange }]}>
+                {totalMiscues} mali
+              </Text>
+            </View>
           </View>
           {totalMiscues === 0 && (
-            <Text style={S.perfectText}>Walang pagkakamali! 🎉</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+              <PartyIcon size={14} color={C.green} />
+              <Text style={S.perfectText}>Walang pagkakamali!</Text>
+            </View>
           )}
         </View>
 
@@ -250,7 +215,7 @@ function PassageGroup({
           <Animated.View style={[S.passageHeader, { borderLeftColor: accent, transform: [{ scale: scaleAnim }] }]}>
             {/* Icon bubble */}
             <View style={[S.passageIconBubble, { backgroundColor: accent + '22' }]}>
-              <Text style={S.passageIcon}>📖</Text>
+              <BookOpenIcon size={22} color={accent} />
             </View>
 
             <View style={{ flex: 1 }}>
@@ -399,11 +364,11 @@ export default function ReadingHistoryScreen() {
           <View style={S.heroBanner}>
             <View>
               <Text style={S.heroSub}>Ang iyong</Text>
-              <Text style={S.heroTitle}>Kasaysayan ng{'\n'}Pagbabasa 📚</Text>
+              <Text style={S.heroTitle}>Kasaysayan ng{'\n'}Pagbabasa</Text>
             </View>
             <View style={S.heroStars}>
-              <Text style={S.heroStarBig}>⭐</Text>
-              <Text style={S.heroStarSm}>✨</Text>
+              <StarIcon size={36} color={C.yellow} />
+              <StarIcon size={20} color={C.orange} />
             </View>
           </View>
         </BounceIn>
@@ -424,7 +389,7 @@ export default function ReadingHistoryScreen() {
         {!isLoading && groupedReports.length === 0 && (
           <BounceIn delay={100}>
             <View style={S.emptyState}>
-              <Text style={S.emptyEmoji}>📖</Text>
+              <BookOpenIcon size={56} color={C.mint} />
               <Text style={S.emptyTitle}>Walang nakaraang pagbabasa</Text>
               <Text style={S.emptyHint}>Simulan ang pagbasa para makita ang iyong pag-unlad!</Text>
             </View>
@@ -488,18 +453,15 @@ const S = StyleSheet.create({
   // Hero
   heroBanner: {
     marginHorizontal: 16, marginTop: 10,
-    backgroundColor: C.white, borderRadius: 24,
+    backgroundColor: C.white, borderRadius: Radii.xl,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 18,
-    borderTopWidth: 5, borderTopColor: C.green,
-    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12, shadowRadius: 12, elevation: 6,
+    ...Shadows.cardLift,
   },
   heroSub:      { fontSize: 13, color: C.slate, fontWeight: '600' },
   heroTitle:    { fontSize: 22, fontWeight: '900', color: C.greenDeep, lineHeight: 28, marginTop: 2 },
-  heroStars:    { alignItems: 'center' },
-  heroStarBig:  { fontSize: 36 },
-  heroStarSm:   { fontSize: 20, marginTop: -4 },
+  heroStars:    { alignItems: 'center', gap: 4 },
+
 
   // Summary pills
   summaryRow: {
@@ -517,10 +479,9 @@ const S = StyleSheet.create({
 
   // Passage group
   passageGroup: {
-    backgroundColor: C.white, borderRadius: 20,
+    backgroundColor: C.white, borderRadius: Radii.lg,
     marginBottom: 14,
-    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.09, shadowRadius: 8, elevation: 4,
+    ...Shadows.card,
     overflow: 'hidden',
   },
   passageHeader: {
@@ -531,7 +492,7 @@ const S = StyleSheet.create({
     width: 48, height: 48, borderRadius: 24,
     justifyContent: 'center', alignItems: 'center',
   },
-  passageIcon:    { fontSize: 22 },
+
   passageTitle:   { fontSize: 15, fontWeight: '800', color: C.ink, lineHeight: 20, marginBottom: 6 },
   passageMeta:    { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   attemptBadge:   { borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3 },
@@ -558,7 +519,7 @@ const S = StyleSheet.create({
     width: 60, borderRadius: 12, paddingVertical: 8,
     alignItems: 'center', justifyContent: 'center',
   },
-  accBadgeEmoji: { fontSize: 18 },
+
   accBadgeVal:   { fontSize: 13, fontWeight: '800', color: C.white, marginTop: 2 },
   reportDate:    { fontSize: 11, color: C.slate, marginBottom: 4 },
   reportMetaRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
@@ -591,7 +552,7 @@ const S = StyleSheet.create({
   emptyState: {
     alignItems: 'center', paddingTop: 60, paddingHorizontal: 32,
   },
-  emptyEmoji: { fontSize: 56, marginBottom: 16 },
+
   emptyTitle: { fontSize: 18, fontWeight: '800', color: C.ink, textAlign: 'center', marginBottom: 8 },
   emptyHint:  { fontSize: 14, color: C.slate, textAlign: 'center', lineHeight: 21 },
 

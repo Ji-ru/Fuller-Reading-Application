@@ -23,6 +23,14 @@ import {
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
+import { BounceIn, Skeleton } from '../../Components/GlobalUse/Animations';
+import {
+  UserProfileIcon, CakeIcon, GenderIcon, MailIcon,
+  BarChartIcon, RepeatIcon, TargetIcon, ZapIcon, AlertTriangleIcon,
+  TrendUpIcon, TypeIcon, RefreshIcon, BookOpenIcon,
+  TrophyIcon, ThumbsUpIcon, FlexIcon, SproutIcon, RocketIcon, StarIcon,
+} from '../../Components/GlobalUse/Icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -41,59 +49,6 @@ interface ProgressData {
   passageTitle: string;
 }
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
-const C = {
-  green:      '#2ecc71',
-  greenDark:  '#27ae60',
-  greenDeep:  '#1a7a45',
-  greenLight: '#d4f5e2',
-  greenPale:  '#f0faf4',
-  mint:       '#a8edce',
-  teal:       '#1abc9c',
-  yellow:     '#f6d860',
-  orange:     '#f39c12',
-  red:        '#e74c3c',
-  white:      '#ffffff',
-  ink:        '#1b2e23',
-  inkLight:   '#4a6358',
-  slate:      '#8fafa0',
-  bg:         '#f0faf4',
-};
-
-// ─── Skeleton pulse ───────────────────────────────────────────────────────────
-function Skeleton({ w = '100%', h = 16, r = 8 }: { w?: any; h?: number; r?: number }) {
-  const anim = useRef(new Animated.Value(0.35)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(anim, { toValue: 1, duration: 750, useNativeDriver: true }),
-        Animated.timing(anim, { toValue: 0.35, duration: 750, useNativeDriver: true }),
-      ]),
-    ).start();
-  }, []);
-  return (
-    <Animated.View
-      style={{ width: w, height: h, borderRadius: r, backgroundColor: C.mint, opacity: anim }}
-    />
-  );
-}
-
-// ─── Bounce-in wrapper ────────────────────────────────────────────────────────
-function BounceIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const scale   = useRef(new Animated.Value(0.7)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(delay),
-      Animated.parallel([
-        Animated.spring(scale,   { toValue: 1, useNativeDriver: true, tension: 60, friction: 7 }),
-        Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-      ]),
-    ]).start();
-  }, []);
-  return <Animated.View style={{ transform: [{ scale }], opacity }}>{children}</Animated.View>;
-}
-
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 function DetailModal({
   visible,
@@ -104,7 +59,7 @@ function DetailModal({
 }: {
   visible: boolean;
   title: string;
-  emoji: string;
+  emoji: string; // kept for backwards compat but now we render an icon
   onClose: () => void;
   children: React.ReactNode;
 }) {
@@ -132,7 +87,13 @@ function DetailModal({
         <Animated.View style={[S.modalSheet, { transform: [{ translateY: slideY }] }]}>
           <View style={S.modalHandle} />
           <View style={S.modalHeader}>
-            <Text style={S.modalEmoji}>{emoji}</Text>
+            <View style={S.modalIconWrap}>
+              {title === 'Katumpakan' && <TargetIcon size={24} color={C.greenDeep} />}
+              {title === 'Bilis ng Pagbabasa (WPM)' && <ZapIcon size={24} color={C.orange} />}
+              {title === 'Mga Uri ng Pagkakamali' && <AlertTriangleIcon size={24} color={C.red} />}
+              {title === 'Mga Pagtatangka sa Talata' && <BookOpenIcon size={24} color={C.teal} />}
+              {title === 'Mga Salitang May Pagkakamali' && <TypeIcon size={24} color={C.orange} />}
+            </View>
             <Text style={S.modalTitle}>{title}</Text>
             <TouchableOpacity onPress={onClose} style={S.modalClose}>
               <Text style={S.modalCloseText}>✕</Text>
@@ -148,7 +109,12 @@ function DetailModal({
 // ─── Accuracy Ring ────────────────────────────────────────────────────────────
 function AccuracyRing({ value }: { value: number }) {
   const color = value >= 90 ? C.green : value >= 75 ? C.yellow : C.red;
-  const label = value >= 90 ? 'Mahusay! 🌟' : value >= 75 ? 'Magaling! 👍' : 'Kaya mo! 💪';
+  const LabelIcon = value >= 90
+    ? () => <TrophyIcon size={16} color={color} />
+    : value >= 75
+      ? () => <ThumbsUpIcon size={16} color={color} />
+      : () => <FlexIcon size={16} color={color} />;
+  const label = value >= 90 ? 'Mahusay!' : value >= 75 ? 'Magaling!' : 'Kaya mo!';
   return (
     <View style={S.ringContainer}>
       <View style={[S.ringOuter, { borderColor: C.greenLight }]}>
@@ -157,7 +123,10 @@ function AccuracyRing({ value }: { value: number }) {
           <Text style={S.ringUnit}>katumpakan</Text>
         </View>
       </View>
-      <Text style={[S.ringLabel, { color }]}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+        <LabelIcon />
+        <Text style={[S.ringLabel, { color }]}>{label}</Text>
+      </View>
     </View>
   );
 }
@@ -190,13 +159,15 @@ function MiniBarChart({
 // ─── Stat Tile (tappable) ─────────────────────────────────────────────────────
 function StatTile({
   emoji,
+  iconView,
   value,
   label,
   color,
   onPress,
   delay,
 }: {
-  emoji: string;
+  emoji: string; // kept for type compat
+  iconView?: React.ReactNode;
   value: string | number;
   label: string;
   color: string;
@@ -215,7 +186,9 @@ function StatTile({
     <BounceIn delay={delay}>
       <TouchableOpacity onPress={press} activeOpacity={0.85}>
         <Animated.View style={[S.statTile, { borderTopColor: color, transform: [{ scale }] }]}>
-          <Text style={S.statTileEmoji}>{emoji}</Text>
+          <View style={{ marginBottom: 6 }}>
+            {iconView || <StarIcon size={26} color={color} />}
+          </View>
           <Text style={[S.statTileValue, { color }]}>{value}</Text>
           <Text style={S.statTileLabel}>{label}</Text>
           <Text style={S.statTileTap}>i-tap para sa detalye</Text>
@@ -226,10 +199,10 @@ function StatTile({
 }
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
-function InfoPill({ icon, label, value }: { icon: string; label: string; value: string }) {
+function InfoPill({ iconView, label, value }: { iconView: React.ReactNode; label: string; value: string }) {
   return (
     <View style={S.infoPill}>
-      <Text style={S.infoPillIcon}>{icon}</Text>
+      <View style={{ marginRight: 2 }}>{iconView}</View>
       <View>
         <Text style={S.infoPillLabel}>{label}</Text>
         <Text style={S.infoPillValue} numberOfLines={1}>{value}</Text>
@@ -336,20 +309,22 @@ export default function Profile() {
   const bestAcc  = progressData.length ? Math.max(...progressData.map(d => d.accuracy)) : 0;
   const bestWpm  = progressData.length ? Math.max(...progressData.map(d => d.wpm)) : 0;
 
-  const getReadingLevelLabel = (level?: string) =>
-    ({
-      beginner:     'Baguhan 🌱',
-      intermediate: 'Gitna 📖',
-      advanced:     'Abante 🚀',
-      expert:       'Dalubhasa ⭐',
-    }[level || 'beginner'] ?? 'Baguhan 🌱');
+  const getReadingLevelLabel = (level?: string) => {
+    const map: Record<string, { label: string; Icon: React.FC<{ size?: number; color?: string }> }> = {
+      beginner:     { label: 'Baguhan',    Icon: SproutIcon },
+      intermediate: { label: 'Gitna',      Icon: BookOpenIcon },
+      advanced:     { label: 'Abante',     Icon: RocketIcon },
+      expert:       { label: 'Dalubhasa',  Icon: StarIcon },
+    };
+    return map[level || 'beginner'] ?? map.beginner;
+  };
 
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <SafeAreaView style={S.loadingBg}>
         <View style={S.loadingCard}>
-          <Text style={S.loadingEmoji}>📚</Text>
+          <BookOpenIcon size={48} color={C.teal} />
           <Text style={S.loadingTitle}>Naglo-load ang profile…</Text>
           <View style={{ gap: 10, marginTop: 16 }}>
             <Skeleton h={20} w="70%" />
@@ -365,7 +340,7 @@ export default function Profile() {
     return (
       <SafeAreaView style={S.loadingBg}>
         <View style={S.loadingCard}>
-          <Text style={{ fontSize: 40 }}>😕</Text>
+          <AlertTriangleIcon size={40} color={C.red} />
           <Text style={S.errorText}>{error}</Text>
           <TouchableOpacity style={S.retryBtn} onPress={fetchAll}>
             <Text style={S.retryText}>Subukan Ulit</Text>
@@ -431,7 +406,7 @@ export default function Profile() {
               />
               <View style={S.heroBadge}>
                 <Text style={S.heroBadgeText}>
-                  {getReadingLevelLabel(profileData?.studentData?.reading_Level)}
+                  {getReadingLevelLabel(profileData?.studentData?.reading_Level).label}
                 </Text>
               </View>
             </View>
@@ -448,13 +423,13 @@ export default function Profile() {
         {/* ── Personal Info ─────────────────────────────────────────────────── */}
         <BounceIn delay={120}>
           <View style={S.section}>
-            <Text style={S.sectionTitle}>👤 Impormasyon</Text>
+            <Text style={S.sectionTitle}><UserProfileIcon size={16} color={C.ink} /> Impormasyon</Text>
             <View style={S.infoRow}>
-              <InfoPill icon="🎂" label="Kaarawan" value={profileData?.studentData?.dateOfBirth ?? 'Hindi itinakda'} />
-              <InfoPill icon="⚧" label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
+              <InfoPill iconView={<CakeIcon size={18} color={C.teal} />} label="Kaarawan" value={profileData?.studentData?.dateOfBirth ?? 'Hindi itinakda'} />
+              <InfoPill iconView={<GenderIcon size={18} color={C.teal} />} label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
             </View>
             <View style={S.infoRow}>
-              <InfoPill icon="📧" label="Email" value={profileData?.email ?? '—'} />
+              <InfoPill iconView={<MailIcon size={18} color={C.teal} />} label="Email" value={profileData?.email ?? '—'} />
             </View>
           </View>
         </BounceIn>
@@ -462,12 +437,12 @@ export default function Profile() {
         {/* ── Stat Tiles ────────────────────────────────────────────────────── */}
         {readingStats && (
           <View style={S.section}>
-            <Text style={S.sectionTitle}>📊 Mga Istatistika</Text>
+            <Text style={S.sectionTitle}><BarChartIcon size={16} color={C.ink} /> Mga Istatistika</Text>
             <View style={S.tilesGrid}>
-              <StatTile emoji="🔁" value={readingStats.totalAttempts}      label="Pagtatangka"     color={C.teal}   delay={160} onPress={() => setModal('passages')} />
-              <StatTile emoji="🎯" value={`${readingStats.averageAccuracy}%`} label="Katumpakan"   color={C.green}  delay={200} onPress={() => setModal('accuracy')} />
-              <StatTile emoji="⚡" value={`${avgWpm}`}                      label="WPM"            color={C.orange} delay={240} onPress={() => setModal('wpm')} />
-              <StatTile emoji="⚠️" value={readingStats.topMiscueType}       label="Top Pagkakamali" color={C.red}   delay={280} onPress={() => setModal('miscues')} />
+              <StatTile emoji="" iconView={<RepeatIcon size={26} color={C.teal} />} value={readingStats.totalAttempts}      label="Pagtatangka"     color={C.teal}   delay={160} onPress={() => setModal('passages')} />
+              <StatTile emoji="" iconView={<TargetIcon size={26} color={C.green} />} value={`${readingStats.averageAccuracy}%`} label="Katumpakan"   color={C.green}  delay={200} onPress={() => setModal('accuracy')} />
+              <StatTile emoji="" iconView={<ZapIcon size={26} color={C.orange} />} value={`${avgWpm}`}                      label="WPM"            color={C.orange} delay={240} onPress={() => setModal('wpm')} />
+              <StatTile emoji="" iconView={<AlertTriangleIcon size={26} color={C.red} />} value={readingStats.topMiscueType}       label="Top Pagkakamali" color={C.red}   delay={280} onPress={() => setModal('miscues')} />
             </View>
           </View>
         )}
@@ -476,7 +451,7 @@ export default function Profile() {
         {progressData.length > 1 && (
           <BounceIn delay={320}>
             <View style={S.section}>
-              <Text style={S.sectionTitle}>📈 Pag-unlad</Text>
+              <Text style={S.sectionTitle}><TrendUpIcon size={16} color={C.ink} /> Pag-unlad</Text>
               <View style={S.trendRow}>
                 <TrendPill label="Katumpakan" from={firstAcc} to={lastAcc} delta={accDelta} suffix="%" />
                 <TrendPill label="WPM"        from={firstWpm} to={lastWpm} delta={wpmDelta} suffix="" />
@@ -494,7 +469,7 @@ export default function Profile() {
           <BounceIn delay={360}>
             <TouchableOpacity style={S.section} onPress={() => setModal('words')} activeOpacity={0.85}>
               <View style={S.sectionHeaderRow}>
-                <Text style={S.sectionTitle}>🔤 Mga Salitang May Pagkakamali</Text>
+                <Text style={S.sectionTitle}><TypeIcon size={16} color={C.ink} /> Mga Salitang May Pagkakamali</Text>
                 <Text style={S.seeMore}>Tingnan lahat ›</Text>
               </View>
               <View style={S.wordChips}>
@@ -515,7 +490,10 @@ export default function Profile() {
         {/* Refresh */}
         <BounceIn delay={400}>
           <TouchableOpacity style={S.refreshBtn} onPress={fetchAll} activeOpacity={0.8}>
-            <Text style={S.refreshText}>🔄  I-refresh ang Data</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <RefreshIcon size={18} color={C.white} />
+              <Text style={S.refreshText}>I-refresh ang Data</Text>
+            </View>
           </TouchableOpacity>
         </BounceIn>
 
@@ -552,9 +530,9 @@ export default function Profile() {
           <View style={S.gradeGuide}>
             <Text style={S.gradeGuideTitle}>Gabay sa Grado</Text>
             {[
-              { range: '90–100%', label: 'Mahusay 🌟',            color: C.green  },
-              { range: '75–89%',  label: 'Magaling 👍',            color: C.yellow },
-              { range: '0–74%',   label: 'Kailangan ng Tulong 💪', color: C.red    },
+              { range: '90–100%', label: 'Mahusay',            color: C.green  },
+              { range: '75–89%',  label: 'Magaling',            color: C.yellow },
+              { range: '0–74%',   label: 'Kailangan ng Tulong', color: C.red    },
             ].map(g => (
               <View key={g.range} style={[S.gradeRow, { borderLeftColor: g.color }]}>
                 <Text style={S.gradeRange}>{g.range}</Text>
@@ -591,9 +569,9 @@ export default function Profile() {
           <View style={S.gradeGuide}>
             <Text style={S.gradeGuideTitle}>Pamantayan para sa Grade 1–3</Text>
             {[
-              { range: '60+ WPM',    label: 'Mabilis 🚀',     color: C.green  },
-              { range: '40–59 WPM',  label: 'Katamtaman 📖',  color: C.yellow },
-              { range: 'Wala sa 40', label: 'Baguhan 🌱',     color: C.red    },
+              { range: '60+ WPM',    label: 'Mabilis',     color: C.green  },
+              { range: '40–59 WPM',  label: 'Katamtaman',  color: C.yellow },
+              { range: 'Wala sa 40', label: 'Baguhan',     color: C.red    },
             ].map(g => (
               <View key={g.range} style={[S.gradeRow, { borderLeftColor: g.color }]}>
                 <Text style={S.gradeRange}>{g.range}</Text>
@@ -697,8 +675,8 @@ export default function Profile() {
 const S = StyleSheet.create({
   bg:           { flex: 1, backgroundColor: C.bg },
   loadingBg:    { flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
-  loadingCard:  { backgroundColor: C.white, borderRadius: 20, padding: 32, alignItems: 'center', width: SCREEN_WIDTH * 0.8 },
-  loadingEmoji: { fontSize: 48, marginBottom: 12 },
+  loadingCard:  { backgroundColor: C.white, borderRadius: Radii.lg, padding: 32, alignItems: 'center', width: SCREEN_WIDTH * 0.8 },
+
   loadingTitle: { fontSize: 18, fontWeight: '700', color: C.greenDeep, marginBottom: 4 },
   errorText:    { fontSize: 15, color: C.red, textAlign: 'center', marginVertical: 12 },
   retryBtn:     { backgroundColor: C.green, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 24, marginTop: 8 },
@@ -706,9 +684,8 @@ const S = StyleSheet.create({
 
   heroCard: {
     backgroundColor: C.white, marginHorizontal: 16, marginTop: 12,
-    borderRadius: 24, alignItems: 'center', paddingVertical: 28, paddingHorizontal: 20,
-    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 6,
-    borderTopWidth: 5, borderTopColor: C.green,
+    borderRadius: Radii.lg, alignItems: 'center', paddingVertical: 28, paddingHorizontal: 20,
+    ...Shadows.cardLift,
   },
   heroAvatarWrap: { position: 'relative', marginBottom: 14 },
   heroAvatar: { width: 96, height: 96, borderRadius: 48, borderWidth: 4, borderColor: C.green },
@@ -730,8 +707,8 @@ const S = StyleSheet.create({
 
   section: {
     backgroundColor: C.white, marginHorizontal: 16, marginTop: 14,
-    borderRadius: 20, padding: 18,
-    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    borderRadius: Radii.lg, padding: 18,
+    ...Shadows.card,
   },
   sectionTitle:     { fontSize: 16, fontWeight: '800', color: C.ink, marginBottom: 14 },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
@@ -739,7 +716,7 @@ const S = StyleSheet.create({
 
   infoRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
   infoPill:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.greenPale, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, flex: 1 },
-  infoPillIcon:  { fontSize: 18 },
+
   infoPillLabel: { fontSize: 11, color: C.slate },
   infoPillValue: { fontSize: 14, fontWeight: '700', color: C.ink },
 
@@ -748,7 +725,7 @@ const S = StyleSheet.create({
     width: (SCREEN_WIDTH - 68) / 2, backgroundColor: C.greenPale,
     borderRadius: 18, padding: 16, alignItems: 'center', borderTopWidth: 4,
   },
-  statTileEmoji: { fontSize: 26, marginBottom: 6 },
+
   statTileValue: { fontSize: 22, fontWeight: '800', marginBottom: 2 },
   statTileLabel: { fontSize: 12, color: C.inkLight, textAlign: 'center' },
   statTileTap:   { fontSize: 10, color: C.slate, marginTop: 6 },
@@ -784,7 +761,7 @@ const S = StyleSheet.create({
   },
   modalHandle:    { width: 40, height: 5, borderRadius: 3, backgroundColor: C.mint, alignSelf: 'center', marginBottom: 14 },
   modalHeader:    { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  modalEmoji:     { fontSize: 28, marginRight: 10 },
+  modalIconWrap: { marginRight: 10 },
   modalTitle:     { flex: 1, fontSize: 20, fontWeight: '800', color: C.ink },
   modalClose:     { padding: 6, backgroundColor: C.greenPale, borderRadius: 20 },
   modalCloseText: { fontSize: 14, color: C.inkLight, fontWeight: '700' },

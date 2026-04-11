@@ -1,9 +1,10 @@
 import { StyleSheet } from "react-native";
+import { FacultyColors as F, Radii, Shadows } from '../Utilities/Theme';
 
 const facultyDashboard = StyleSheet.create({
     safeArea: {
       flex: 1,
-      backgroundColor: '#F8F9FA',
+      backgroundColor: F.bg,
     },
     container: {
       padding: 5,
@@ -12,39 +13,41 @@ const facultyDashboard = StyleSheet.create({
       padding: 10,
     },
     dashboardTitle: {
-      fontSize: 28,
-      fontFamily: 'Satoshi-Black',
-      color: '#333',
-      marginBottom: 8,
+      fontSize: 26,
+      fontWeight: '900',
+      color: F.ink,
+      marginBottom: 6,
     },
     dashboardSubtitle: {
-      fontSize: 16,
-      color: '#666',
+      fontSize: 14,
+      color: F.slate,
+      fontWeight: '600',
       marginBottom: 24,
     },
     statsContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       marginBottom: 15,
+      gap: 10,
     },
     statCard: {
       flex: 1,
-      backgroundColor: 'white',
-      padding: 15,
-      borderRadius: 12,
+      backgroundColor: F.white,
+      padding: 18,
+      borderRadius: Radii.lg,
       alignItems: 'center',
-      marginHorizontal: 5,
-      elevation: 3,
+      ...Shadows.card,
     },
     statValue: {
       fontSize: 24,
-      fontWeight: 'bold',
-      color: '#4ECDC4',
+      fontWeight: '900',
+      color: F.primary,
     },
     statLabel: {
       fontSize: 12,
-      color: '#666',
-      marginTop: 4,
+      color: F.slate,
+      fontWeight: '600',
+      marginTop: 6,
     },
     loadingContainer: {
       padding: 40,
@@ -52,37 +55,38 @@ const facultyDashboard = StyleSheet.create({
     },
     loadingText: {
       marginTop: 10,
-      color: '#666',
+      color: F.slate,
+      fontWeight: '600',
     },
     errorContainer: {
       padding: 40,
-      backgroundColor: '#FFE5E5',
-      borderRadius: 12,
+      backgroundColor: '#FFF0F0',
+      borderRadius: Radii.md,
       alignItems: 'center',
     },
     errorText: {
-      color: '#FF6B6B',
-      fontWeight: 'bold',
+      color: F.red,
+      fontWeight: '700',
       marginBottom: 8,
     },
     errorSubtext: {
-      color: '#666',
+      color: F.slate,
       textAlign: 'center',
     },
     noDataContainer: {
       padding: 40,
-      backgroundColor: '#F0F0F0',
-      borderRadius: 12,
+      backgroundColor: F.primaryPale,
+      borderRadius: Radii.md,
       alignItems: 'center',
     },
     noDataText: {
       fontSize: 18,
-      fontWeight: 'bold',
-      color: '#666',
+      fontWeight: '800',
+      color: F.ink,
       marginBottom: 8,
     },
     noDataSubtext: {
-      color: '#888',
+      color: F.slate,
       textAlign: 'center',
     },
     iconContainer:{

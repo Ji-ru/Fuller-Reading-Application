@@ -1,79 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
   Animated,
-  StyleSheet,
   Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import bubbles from '../../UI_Designs/BubblesDesign';
-import { useNavigationHelper } from '../../Controller/NavigationController';
+import { BounceIn, FloatingImage } from '../../Components/GlobalUse/Animations';
+import { BookIcon, HistoryIcon, StarIcon, UserProfileIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import { getCurrentUser, getUserProfile } from '../../Controller/AuthenticationController';
+import { useNavigationHelper } from '../../Controller/NavigationController';
+import bubbles from '../../UI_Designs/BubblesDesign';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
-const C = {
-  green:      '#2ecc71',
-  greenDark:  '#27ae60',
-  greenDeep:  '#1a7a45',
-  greenLight: '#d4f5e2',
-  greenPale:  '#f0faf4',
-  mint:       '#a8edce',
-  teal:       '#1abc9c',
-  yellow:     '#f9e04b',
-  yellowDark: '#e6c820',
-  orange:     '#f39c12',
-  white:      '#ffffff',
-  ink:        '#1b2e23',
-  inkLight:   '#4a6358',
-  slate:      '#8fafa0',
-  bg:         '#f0faf4',
-};
-
-// ─── BounceIn ─────────────────────────────────────────────────────────────────
-function BounceIn({ children, delay = 0, flex = false }: { children: React.ReactNode; delay?: number; flex?: boolean }) {
-  const scale   = useRef(new Animated.Value(0.75)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(delay),
-      Animated.parallel([
-        Animated.spring(scale,   { toValue: 1, useNativeDriver: true, tension: 65, friction: 7 }),
-        Animated.timing(opacity, { toValue: 1, duration: 220,         useNativeDriver: true }),
-      ]),
-    ]).start();
-  }, []);
-  return <Animated.View style={[{ transform: [{ scale }], opacity }, flex && { flex: 1 }]}>{children}</Animated.View>;
-}
-
-// ─── Floating animation for the image ─────────────────────────────────────────
-function FloatingImage({ source, style }: { source: any; style: any }) {
-  const floatY = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatY, { toValue: -10, duration: 1800, useNativeDriver: true }),
-        Animated.timing(floatY, { toValue:   0, duration: 1800, useNativeDriver: true }),
-      ]),
-    ).start();
-  }, []);
-  return (
-    <Animated.Image
-      source={source}
-      style={[style, { transform: [{ translateY: floatY }] }]}
-      resizeMode="contain"
-    />
-  );
-}
-
 // ─── Nav Button (main CTAs) ───────────────────────────────────────────────────
 function NavButton({
-  emoji,
+  iconView,
   label,
   sublabel,
   bgColor,
@@ -83,7 +32,7 @@ function NavButton({
   delay,
   large,
 }: {
-  emoji: string;
+  iconView: React.ReactNode;
   label: string;
   sublabel?: string;
   bgColor: string;
@@ -98,7 +47,7 @@ function NavButton({
   const press = () => {
     Animated.sequence([
       Animated.timing(scale, { toValue: 0.94, duration: 80, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1,    useNativeDriver: true, tension: 80 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 80 }),
     ]).start();
     onPress();
   };
@@ -116,7 +65,9 @@ function NavButton({
           {/* Shine */}
           <View style={S.navBtnShine} />
 
-          <Text style={[S.navBtnEmoji, large && { fontSize: 34 }]}>{emoji}</Text>
+          <View style={S.navBtnIconContainer}>
+            {iconView}
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={[S.navBtnLabel, large && { fontSize: 18 }, labelColor ? { color: labelColor } : {}]}>{label}</Text>
             {sublabel && <Text style={[S.navBtnSublabel, labelColor ? { color: labelColor, opacity: 0.7 } : {}]}>{sublabel}</Text>}
@@ -132,10 +83,28 @@ function NavButton({
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function UserHomeScreen() {
-  const [menuVisible,   setMenuVisible]   = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
+  const [firstName, setFirstName] = useState('Mag-aaral');
 
   const { handleLogout, handleNextStep } = useNavigationHelper();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = getCurrentUser();
+        if (user) {
+          const profile = await getUserProfile(user.uid);
+          if (profile && profile.firstName) {
+            setFirstName(profile.firstName);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      }
+    };
+    fetchUser();
+  }, []);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -201,9 +170,12 @@ export default function UserHomeScreen() {
           <View style={S.greetCard}>
             <View style={S.greetText}>
               <Text style={S.greetHi}>Kamusta,</Text>
-              <Text style={S.greetName}>Mag-aaral! 👋</Text>
+              <View style={S.nameRow}>
+                <Text style={S.greetName}>{firstName}!</Text>
+              </View>
               <View style={S.greetPill}>
-                <Text style={S.greetPillText}>✨ Handa ka na bang magbasa?</Text>
+                <StarIcon size={16} color={C.greenDeep} />
+                <Text style={[S.greetPillText, { marginLeft: 6 }]}>Handa ka na bang magbasa?</Text>
               </View>
             </View>
             <FloatingImage
@@ -213,20 +185,10 @@ export default function UserHomeScreen() {
           </View>
         </BounceIn>
 
-        {/* Quote banner */}
-        <BounceIn delay={100}>
-          <View style={S.quoteBanner}>
-            <Text style={S.quoteEmoji}>💬</Text>
-            <Text style={S.quoteText}>
-              Sa bawat buklat, may bagong kwentong naghihintay!
-            </Text>
-          </View>
-        </BounceIn>
-
         {/* Buttons */}
         <View style={S.btnsContainer}>
           <NavButton
-            emoji="📖"
+            iconView={<BookIcon size={30} color={C.white} />}
             label="Magsimulang Magbasa"
             sublabel="Pumili ng alpabeto, salita, o talata"
             bgColor={C.green}
@@ -236,7 +198,7 @@ export default function UserHomeScreen() {
             large
           />
           <NavButton
-            emoji="📜"
+            iconView={<HistoryIcon size={30} color={C.teal} />}
             label="Kasaysayan ng Pagbabasa"
             sublabel="Tingnan ang iyong mga nakaraang pagbabasa"
             bgColor={C.white}
@@ -247,7 +209,7 @@ export default function UserHomeScreen() {
             large
           />
           <NavButton
-            emoji="👤"
+            iconView={<UserProfileIcon size={30} color={C.orange} />}
             label="Aking Profile"
             sublabel="Tingnan ang iyong pag-unlad at istatistika"
             bgColor={C.white}
@@ -283,30 +245,26 @@ const S = StyleSheet.create({
     paddingBottom: 16,
   },
 
-  
   greetCard: {
     flex: 1,
     height: SH * 0.40,
     backgroundColor: C.white,
-    borderRadius: 28,
+    borderRadius: Radii.xl,
     flexDirection: 'column',
     alignItems: 'center',
     paddingLeft: 20,
     paddingVertical: 20,
-    borderTopWidth: 5,
-    borderTopColor: C.green,
-    shadowColor: C.greenDark,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.13,
-    shadowRadius: 14,
-    elevation: 7,
+    ...Shadows.cardLift,
     overflow: 'hidden',
     marginBottom: 12,
   },
-  greetText:  { flex: 1 },
-  greetHi:    { fontSize: 17, color: C.slate, fontWeight: '800' },
-  greetName:  { fontSize: 27, fontWeight: '900', color: C.greenDeep, lineHeight: 34, marginBottom: 12 },
-  greetPill:  {
+  greetText: { flex: 1 },
+  greetHi: { fontSize: 17, color: C.slate, fontWeight: '800' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  greetName: { fontSize: 27, fontWeight: '900', color: C.greenDeep, lineHeight: 34 },
+  greetPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: C.greenLight,
     borderRadius: 20,
@@ -318,26 +276,22 @@ const S = StyleSheet.create({
     flex: 1,
     width: SW * 0.75,
     height: SW * 0.75,
-    // marginRight: -8,
   },
 
   // Quote banner
   quoteBanner: {
-    backgroundColor: C.greenLight,
-    borderRadius: 18,
+    backgroundColor: C.white,
+    borderRadius: 22,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     gap: 10,
-    shadowColor: C.yellowDark,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 4,
+    ...Shadows.subtle,
+    borderWidth: 1,
+    borderColor: C.greenLight,
     marginBottom: 12,
   },
-  quoteEmoji: { fontSize: 22 },
   quoteText: {
     flex: 1,
     fontSize: 13,
@@ -354,16 +308,12 @@ const S = StyleSheet.create({
   navBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 20,
-    borderWidth: 2.5,
+    borderRadius: Radii.lg,
+    borderWidth: 1.5,
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 7,
-    elevation: 4,
+    ...Shadows.button,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -379,9 +329,9 @@ const S = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
-  navBtnEmoji:   { fontSize: 26 },
-  navBtnLabel:   { fontSize: 15, fontWeight: '800', color: C.white },
-  navBtnSublabel:{ fontSize: 11, color: 'rgba(255,255,255,0.82)', marginTop: 2 },
+  navBtnIconContainer: { justifyContent: 'center', alignItems: 'center', marginRight: 4 },
+  navBtnLabel: { fontSize: 15, fontWeight: '800', color: C.white },
+  navBtnSublabel: { fontSize: 11, color: 'rgba(255,255,255,0.82)', marginTop: 2 },
   navBtnArrow: {
     width: 34,
     height: 34,

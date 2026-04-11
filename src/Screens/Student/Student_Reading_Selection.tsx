@@ -17,6 +17,9 @@ import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial
 import { Alphabet, Contrasts, Passage, Word } from '../../Interfaces/passage';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import { StudentColors as C, Radii, Shadows, ACCENT_COLORS as LETTER_COLORS } from '../../Utilities/Theme';
+import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { BookOpenIcon, TypeIcon, QuoteIcon, PencilIcon, SearchIcon } from '../../Components/GlobalUse/Icons';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -25,32 +28,8 @@ const alphabetData: Alphabet[] = readingMaterialData?.Alphabet || [];
 const passages: Passage[]      = readingMaterialData?.Passages || [];
 const wordsData: Word[]        = readingMaterialData?.Words    || [];
 
-// ─── Palette (same green system as Profile) ───────────────────────────────────
-const C = {
-  green:      '#2ecc71',
-  greenDark:  '#27ae60',
-  greenDeep:  '#1a7a45',
-  greenLight: '#d4f5e2',
-  greenPale:  '#f0faf4',
-  mint:       '#a8edce',
-  teal:       '#1abc9c',
-  yellow:     '#f9e04b',
-  yellowDark: '#e6c820',
-  orange:     '#f39c12',
-  coral:      '#e74c3c',
-  sky:        '#3498db',
-  white:      '#ffffff',
-  ink:        '#1b2e23',
-  inkLight:   '#4a6358',
-  slate:      '#8fafa0',
-  bg:         '#f0faf4',
-};
-
-// Letter background colours — cycle through for rainbow effect
-const LETTER_COLORS = [
-  C.green, C.teal, C.sky, C.yellow, C.orange, C.coral,
-  '#9b59b6', '#e91e63', '#00bcd4', '#8bc34a',
-];
+// Palette & accent colors imported from Theme
+// BounceIn imported from Animations
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const shuffleArray = <T,>(arr: T[]): T[] => {
@@ -61,22 +40,6 @@ const shuffleArray = <T,>(arr: T[]): T[] => {
   }
   return a;
 };
-
-// ─── Bounce-in wrapper (reused from Profile) ──────────────────────────────────
-function BounceIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const scale   = useRef(new Animated.Value(0.75)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(delay),
-      Animated.parallel([
-        Animated.spring(scale,   { toValue: 1, useNativeDriver: true, tension: 65, friction: 7 }),
-        Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
-      ]),
-    ]).start();
-  }, []);
-  return <Animated.View style={{ transform: [{ scale }], opacity }}>{children}</Animated.View>;
-}
 
 // ─── Alphabet Tile ────────────────────────────────────────────────────────────
 function AlphabetTile({
@@ -163,7 +126,7 @@ function PassageCard({
           <View style={[S.passageAccentBar, { backgroundColor: accent }]} />
           <View style={S.passageCardInner}>
             <View style={[S.passageEmojiBubble, { backgroundColor: accent + '22' }]}>
-              <Text style={S.passageEmoji}>📖</Text>
+              <BookOpenIcon size={22} color={accent} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={S.passageCardTitle} numberOfLines={2}>{item.title}</Text>
@@ -182,12 +145,12 @@ function PassageCard({
 // ─── Tab Button ───────────────────────────────────────────────────────────────
 function TabBtn({
   label,
-  emoji,
+  iconView,
   active,
   onPress,
 }: {
   label: string;
-  emoji: string;
+  iconView: React.ReactNode;
   active: boolean;
   onPress: () => void;
 }) {
@@ -210,7 +173,9 @@ function TabBtn({
           { transform: [{ scale }] },
         ]}
       >
-        <Text style={S.tabEmoji}>{emoji}</Text>
+        <View style={S.tabIconWrapper}>
+          {iconView}
+        </View>
         <Text style={[S.tabLabel, active && S.tabLabelActive]}>{label}</Text>
         {active && <View style={S.tabDot} />}
       </Animated.View>
@@ -364,7 +329,7 @@ export default function PageSelectionScreen() {
           <View style={S.heroBanner}>
             <View style={S.heroText}>
               <Text style={S.heroSub}>Piliin ang iyong</Text>
-              <Text style={S.heroTitle}>BABASAHIN! 📚</Text>
+              <Text style={S.heroTitle}>BABASAHIN!</Text>
               <Text style={S.heroHint}>I-tap ang gusto mong basahin</Text>
             </View>
             <Image
@@ -378,19 +343,19 @@ export default function PageSelectionScreen() {
         <BounceIn delay={100}>
           <View style={S.tabRow}>
             <TabBtn
-              emoji="🔤"
+              iconView={<TypeIcon size={20} color={activeTab === 'alphabet' ? C.white : C.inkLight} />}
               label="Alpabeto"
               active={activeTab === 'alphabet'}
               onPress={() => setActiveTab('alphabet')}
             />
             <TabBtn
-              emoji="💬"
+              iconView={<QuoteIcon size={20} color={activeTab === 'word' ? C.white : C.inkLight} />}
               label="Salita"
               active={activeTab === 'word'}
               onPress={() => setActiveTab('word')}
             />
             <TabBtn
-              emoji="📖"
+              iconView={<BookOpenIcon size={20} color={activeTab === 'passage' ? C.white : C.inkLight} />}
               label="Talata"
               active={activeTab === 'passage'}
               onPress={() => setActiveTab('passage')}
@@ -405,9 +370,9 @@ export default function PageSelectionScreen() {
           {activeTab === 'alphabet' && (
             <>
               <BounceIn delay={140}>
-                <View style={S.sublabelRow}>
-                  <Text style={S.sublabelEmoji}>✏️</Text>
-                  <Text style={S.sublabel}>Pumili ng letra na pagsasanayan:</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <PencilIcon size={16} color={C.inkLight} />
+                    <Text style={S.sublabel}>Pumili ng letra na pagsasanayan:</Text>
                 </View>
               </BounceIn>
               <FlatList
@@ -426,9 +391,9 @@ export default function PageSelectionScreen() {
           {activeTab === 'word' && (
             <>
               <BounceIn delay={140}>
-                <View style={S.sublabelRow}>
-                  <Text style={S.sublabelEmoji}>💬</Text>
-                  <Text style={S.sublabel}>Pumili ng salita na pagsasanayan:</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <QuoteIcon size={16} color={C.inkLight} />
+                    <Text style={S.sublabel}>Pumili ng salita na pagsasanayan:</Text>
                 </View>
               </BounceIn>
               {prepareWordsData.length > 0 ? (
@@ -443,7 +408,7 @@ export default function PageSelectionScreen() {
                 />
               ) : (
                 <View style={S.emptyState}>
-                  <Text style={S.emptyEmoji}>🔍</Text>
+                    <SearchIcon size={48} color={C.mint} />
                   <Text style={S.emptyText}>Walang salita ang nahanap</Text>
                 </View>
               )}
@@ -454,9 +419,9 @@ export default function PageSelectionScreen() {
           {activeTab === 'passage' && (
             <>
               <BounceIn delay={140}>
-                <View style={S.sublabelRow}>
-                  <Text style={S.sublabelEmoji}>📖</Text>
-                  <Text style={S.sublabel}>Pumili ng talata na pagsasanayan:</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <BookOpenIcon size={16} color={C.inkLight} />
+                    <Text style={S.sublabel}>Pumili ng talata na pagsasanayan:</Text>
                 </View>
               </BounceIn>
               {passages.length > 0 ? (
@@ -469,7 +434,7 @@ export default function PageSelectionScreen() {
                 />
               ) : (
                 <View style={S.emptyState}>
-                  <Text style={S.emptyEmoji}>🔍</Text>
+                    <SearchIcon size={48} color={C.mint} />
                   <Text style={S.emptyText}>Walang talata ang nahanap</Text>
                 </View>
               )}
@@ -497,18 +462,12 @@ const S = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 10,
     backgroundColor: C.white,
-    borderRadius: 24,
+    borderRadius: Radii.xl,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    borderTopWidth: 5,
-    borderTopColor: C.green,
-    shadowColor: C.greenDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
+    ...Shadows.cardLift,
     overflow: 'hidden',
   },
   heroText:  { flex: 1 },
@@ -548,6 +507,7 @@ const S = StyleSheet.create({
     elevation: 5,
   },
   tabEmoji:      { fontSize: 20 },
+  tabIconWrapper: { marginBottom: 2 },
   tabLabel:      { fontSize: 12, fontWeight: '700', color: C.inkLight, textAlign: 'center' },
   tabLabelActive:{ color: C.white },
   tabDot: {
@@ -562,7 +522,6 @@ const S = StyleSheet.create({
 
   // Sublabel
   sublabelRow:  { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, paddingHorizontal: 4 },
-  sublabelEmoji:{ fontSize: 16 },
   sublabel:     { fontSize: 14, fontWeight: '700', color: C.inkLight },
 
   // Content area
@@ -695,7 +654,7 @@ const S = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  passageEmoji: { fontSize: 22 },
+
   passageCardTitle: {
     fontSize: 15,
     fontWeight: '800',
@@ -728,6 +687,6 @@ const S = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: 60,
   },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
+
   emptyText:  { fontSize: 16, color: C.slate, fontWeight: '600' },
 });

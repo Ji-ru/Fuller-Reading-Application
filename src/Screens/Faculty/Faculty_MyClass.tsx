@@ -24,6 +24,7 @@ import myClass from '../../UI_Designs/MyClassStyles';
 import { createCustomClass } from '../../Controller/AuthenticationController';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
 import { getAcademicYearOptions } from '../../Utilities/acadYearUtils';
+import { BookOpenIcon, LightBulbIcon } from '../../Components/GlobalUse/Icons';
 
 export default function MyClass() {
   // ========================================================================
@@ -283,7 +284,7 @@ export default function MyClass() {
       <View style={myClass.classCardContent}>
         {/* Class Icon */}
         <View style={myClass.classIconContainer}>
-          <Text style={myClass.classIcon}>📚</Text>
+          <Text style={myClass.classIcon}><BookOpenIcon size={22} color="#2ecc71" /></Text>
         </View>
 
         {/* Class Info */}
@@ -492,7 +493,7 @@ export default function MyClass() {
                 />
               ) : (
                 <View style={myClass.emptyContainer}>
-                  <Text style={myClass.emptyIcon}>📖</Text>
+                  <BookOpenIcon size={22} color="#8fafa0" />
                   <Text style={myClass.emptyTitle}>No classes yet</Text>
                   <Text style={myClass.emptyText}>
                     Create your first class to get started
@@ -539,7 +540,7 @@ export default function MyClass() {
                   </View>
 
                   <View style={myClass.modalInfoBox}>
-                    <Text style={myClass.modalInfoTitle}>💡 Quick Info</Text>
+                    <Text style={myClass.modalInfoTitle}><LightBulbIcon size={16} color="#f39c12" /> Quick Info</Text>
                     <Text style={myClass.modalInfoText}>
                       • A unique class code will be generated
                     </Text>
