@@ -8,7 +8,7 @@
 //   • googleEmail is still read from userInfo to render the pre-filled badge.
 //   • Everything else (email path, modal, animations) is unchanged.
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -25,6 +25,7 @@ import {
 } from '../../Controller/AuthenticationController';
 import LottieView from 'lottie-react-native';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
 import { sw, sh, sf } from '../../Utils/responsive';
 
 export default function SignUpTwoScreen() {
@@ -40,7 +41,7 @@ export default function SignUpTwoScreen() {
   const isGoogleSignUp = Boolean(googleEmail);
 
   const [currentStep] = useState(2);
-  const { handleDesignatedUserPage, handleCancelRegistration } = useNavigationHelper();
+  const { handleDesignatedUserPage, handleCancelRegistration, handleCompletedRegistration } = useNavigationHelper();
 
   // Email pre-filled for Google users, empty for email users
   const [email, setEmail] = useState(googleEmail ?? '');
@@ -48,30 +49,72 @@ export default function SignUpTwoScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isParentConfirmed, setIsParentConfirmed] = useState(false);
 
-  // Modal states
+  // Custom Alert Modal State
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: '', message: '' });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertData({ title, message });
+    setAlertVisible(true);
+  };
+
+  // Modal states (Loading / Success)
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'loading' | 'success'>('loading');
   const [modalMessage, setModalMessage] = useState('');
+
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const isValidEmail = (e: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  };
+
+  const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, operationName: string): Promise<T> => {
+    const timeoutPromise = new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`timeout-error:${operationName}`)), timeoutMs)
+    );
+    return Promise.race([promise, timeoutPromise]);
+  };
 
   const congratulationsRef = useRef<LottieView>(null);
   const confettiRef = useRef<LottieView>(null);
 
   // ── Registration ──────────────────────────────────────────────────────────
   const handleRegister = async () => {
+    if (!isMounted.current) return;
+
     // Password validation only applies to the email/password path
     if (!isGoogleSignUp) {
-      if (!email || !password || !confirmPassword) {
-        return Alert.alert('Error', 'Please fill out all fields.');
+      if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
+        showAlert('Error', 'Please fill out all fields.');
+        return;
+      }
+      if (!isValidEmail(email.trim())) {
+        showAlert('Error', 'Please enter a valid email address.');
+        return;
+      }
+      if (password.length > 128) {
+        showAlert('Error', 'Password is too long.');
+        return;
       }
       if (password !== confirmPassword) {
-        return Alert.alert('Error', 'Passwords do not match.');
+        showAlert('Error', 'Passwords do not match.');
+        return;
       }
     }
     if (role === 'student' && !isParentConfirmed) {
-      return Alert.alert(
+      showAlert(
         'Consent Required',
-        'A parent or guardian must confirm consent before registration.',
+        'A parent or guardian must confirm consent before registration.'
       );
+      return;
     }
 
     try {
@@ -85,96 +128,106 @@ export default function SignUpTwoScreen() {
         // email and password are passed for signature compatibility but are
         // ignored by the function — it uses currentUser.email internally.
         if (personalInfo.role === 'student') {
-          await GoogleSignUpUserCredentials(email, {
-            role: personalInfo.role!,
-            firstName: personalInfo.firstName!,
-            middleName: personalInfo.middleName,
-            lastName: personalInfo.lastName!,
-            sex: personalInfo.sex!,
-            profileImageUrl: personalInfo?.profileImageUrl,
-            gradeLevel: personalInfo.studentData?.gradeLevel,
-            dateOfBirth: personalInfo.studentData?.dateOfBirth,
-            assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
-            parentConsent: {
-              confirmed: isParentConfirmed,
-            },
-          });
+          await withTimeout(
+            GoogleSignUpUserCredentials(email, {
+              role: personalInfo.role!,
+              firstName: personalInfo.firstName!,
+              middleName: personalInfo.middleName,
+              lastName: personalInfo.lastName!,
+              sex: personalInfo.sex!,
+              profileImageUrl: personalInfo?.profileImageUrl,
+              gradeLevel: personalInfo.studentData?.gradeLevel,
+              dateOfBirth: personalInfo.studentData?.dateOfBirth,
+              assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
+              parentConsent: {
+                confirmed: isParentConfirmed,
+              },
+            }), 60000, 'Google Sign Up'
+          );
         } else if (personalInfo.role === 'faculty') {
-          await GoogleSignUpUserCredentials(email, {
-            role: personalInfo.role!,
-            firstName: personalInfo.firstName!,
-            middleName: personalInfo.middleName,
-            lastName: personalInfo.lastName!,
-            sex: personalInfo.sex!,
-            profileImageUrl: personalInfo?.profileImageUrl,
-            assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
-          });
+          await withTimeout(
+            GoogleSignUpUserCredentials(email, {
+              role: personalInfo.role!,
+              firstName: personalInfo.firstName!,
+              middleName: personalInfo.middleName,
+              lastName: personalInfo.lastName!,
+              sex: personalInfo.sex!,
+              profileImageUrl: personalInfo?.profileImageUrl,
+              assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
+            }), 60000, 'Google Sign Up'
+          );
         }
-        // else if (personalInfo.role === 'admin') {
-        //   await GoogleSignUpUserCredentials(email, {
-        //     role: personalInfo.role!,
-        //     firstName: personalInfo.firstName!,
-        //     middleName: personalInfo.middleName,
-        //     lastName: personalInfo.lastName!,
-        //     sex: personalInfo.sex!,
-        //     profileImageUrl: personalInfo?.profileImageUrl,
-        //   });
-        // }
       } else {
         // ── Email / password path (unchanged from original) ─────────────
         if (personalInfo.role === 'student') {
-          await SignUpUserCredentials(email, password, {
-            role: personalInfo.role!,
-            firstName: personalInfo.firstName!,
-            middleName: personalInfo.middleName,
-            lastName: personalInfo.lastName!,
-            sex: personalInfo.sex!,
-            profileImageUrl: personalInfo?.profileImageUrl,
-            gradeLevel: personalInfo.studentData?.gradeLevel,
-            dateOfBirth: personalInfo.studentData?.dateOfBirth,
-            parentConsent: {
-              confirmed: isParentConfirmed,
-            },
-          });
+          await withTimeout(
+            SignUpUserCredentials(email, password, {
+              role: personalInfo.role!,
+              firstName: personalInfo.firstName!,
+              middleName: personalInfo.middleName,
+              lastName: personalInfo.lastName!,
+              sex: personalInfo.sex!,
+              profileImageUrl: personalInfo?.profileImageUrl,
+              gradeLevel: personalInfo.studentData?.gradeLevel,
+              dateOfBirth: personalInfo.studentData?.dateOfBirth,
+              parentConsent: {
+                confirmed: isParentConfirmed,
+              },
+            }), 60000, 'Email Sign Up'
+          );
         } else if (personalInfo.role === 'faculty') {
-          await SignUpUserCredentials(email, password, {
-            role: personalInfo.role!,
-            firstName: personalInfo.firstName!,
-            middleName: personalInfo.middleName,
-            lastName: personalInfo.lastName!,
-            sex: personalInfo.sex!,
-            profileImageUrl: personalInfo?.profileImageUrl,
-            assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
-          });
+          await withTimeout(
+            SignUpUserCredentials(email, password, {
+              role: personalInfo.role!,
+              firstName: personalInfo.firstName!,
+              middleName: personalInfo.middleName,
+              lastName: personalInfo.lastName!,
+              sex: personalInfo.sex!,
+              profileImageUrl: personalInfo?.profileImageUrl,
+              assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
+            }), 60000, 'Email Sign Up'
+          );
         } else if (personalInfo.role === 'admin') {
-          await SignUpUserCredentials(email, password, {
-            role: personalInfo.role!,
-            firstName: personalInfo.firstName!,
-            middleName: personalInfo.middleName,
-            lastName: personalInfo.lastName!,
-            sex: personalInfo.sex!,
-            profileImageUrl: personalInfo?.profileImageUrl,
-          });
+          await withTimeout(
+            SignUpUserCredentials(email, password, {
+              role: personalInfo.role!,
+              firstName: personalInfo.firstName!,
+              middleName: personalInfo.middleName,
+              lastName: personalInfo.lastName!,
+              sex: personalInfo.sex!,
+              profileImageUrl: personalInfo?.profileImageUrl,
+            }), 60000, 'Email Sign Up'
+          );
         }
       }
 
       // ── Success ──────────────────────────────────────────────────────────
+      if (!isMounted.current) return;
       setModalType('success');
       setModalMessage('Account created successfully!');
 
       setTimeout(() => {
-        confettiRef.current?.play();
-        congratulationsRef.current?.play();
+        if (isMounted.current) {
+          confettiRef.current?.play();
+          congratulationsRef.current?.play();
+        }
       }, 500);
 
       setTimeout(() => {
-        setModalVisible(false);
-        handleDesignatedUserPage(personalInfo.role!);
+        if (isMounted.current) {
+          setModalVisible(false);
+          handleCompletedRegistration(personalInfo.role!);
+        }
       }, 2000);
 
     } catch (error: any) {
+      if (!isMounted.current) return;
       setModalVisible(false);
-      Alert.alert('Registration Error', error.message);
+      if (error.message && error.message.includes('timeout-error')) {
+        showAlert('Registration Error', 'Connection timed out. Please check your internet connection.');
+      } else {
+        showAlert('Registration Error', error.message);
+      }
     }
   };
 
@@ -348,6 +401,13 @@ export default function SignUpTwoScreen() {
           </View>
         </View>
       </Modal>
+
+      <AlertModal
+        visible={alertVisible}
+        title={alertData.title}
+        message={alertData.message}
+        onClose={() => setAlertVisible(false)}
+      />
     </SafeAreaView>
   );
 }

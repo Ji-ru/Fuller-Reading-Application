@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
+import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 import selection from '../../UI_Designs/PassageSelectionStyles';
 import { Alphabet, Passage, Word } from '../../Interfaces/passage';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
