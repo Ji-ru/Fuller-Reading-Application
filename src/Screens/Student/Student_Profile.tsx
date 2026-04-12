@@ -7,21 +7,22 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
-  ImageSourcePropType
+  TextInput,
 } from 'react-native';
-import { TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
 import {
   getUserProfile,
   getCurrentUser,
   getClassByCode,
+  updateStudentBasicInfo,
 } from '../../Controller/AuthenticationController';
-import { updateStudentBasicInfo } from '../../Controller/AuthenticationController';
 import { getAuth } from '@react-native-firebase/auth';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
+import facultyProfile from '../../UI_Designs/FacultyProfile';
 import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
 import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Status/Student_Accuracy_Chart';
 import StudentMiscueAnalytics from '../../Components/Faculty/StudentView_Status/Student_MiscueChart';
@@ -68,45 +69,37 @@ export default function Profile() {
   // STATE MANAGEMENT
   // ========================================================================
 
-  /** Controls visibility of dropdown menu */
   const [menuVisible, setMenuVisible] = useState(false);
-
-  /** Controls visibility of logout confirmation modal */
   const [logoutVisible, setLogoutVisible] = useState(false);
 
-  /** Stores current user's profile data from Firestore */
+  // Alert Modal states
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
   const [profileData, setProfileData] = useState<UserDocument | null>(null);
-
-  /** Stores class information if student is enrolled */
   const [classData, setClassData] = useState<ClassDocument | null>(null);
-
-  /** Stores comprehensive reading statistics */
   const [readingStats, setReadingStats] = useState<StudentStats | null>(null);
-
-
-  /** Stores progress data points for charts */
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
-
-  /** Loading state for async data fetching */
   const [loading, setLoading] = useState(true);
-
-  /** Error message for display if data fetching fails */
   const [error, setError] = useState<string | null>(null);
-
-  /** Active Tab State for segmented control layout (profile | performance | activity) */
   const [activeTab, setActiveTab] = useState<'profile' | 'performance' | 'activity'>('profile');
 
   // Edit states for Basic Information
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
   const [firstName, setFirstName] = useState('');
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
   const [sex, setSex] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
 
-  /** Profile image set */
   // ========================================================================
   // HOOKS
   // ========================================================================
@@ -227,7 +220,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !sex.trim()) {
-      Alert.alert('Validation Error', 'First Name, Last Name, and Sex are required.');
+      showAlert('Validation Error', 'First Name, Last Name, and Sex are required.');
       return;
     }
 
@@ -243,11 +236,11 @@ export default function Profile() {
           dateOfBirth: dateOfBirth.trim(),
         });
         setIsEditing(false);
-        Alert.alert('Success', 'Profile updated successfully!');
+        showAlert('Success', 'Profile updated successfully!');
         fetchProfileData();
       }
     } catch (err: any) {
-      Alert.alert('Update Failed', err.message || 'An error occurred while updating.');
+      showAlert('Update Failed', err.message || 'An error occurred while updating.');
     } finally {
       setIsSaving(false);
     }
@@ -302,101 +295,87 @@ export default function Profile() {
   // ========================================================================
   // MAIN RENDER
   // ========================================================================
-  console.log("The current user: " + getCurrentUser);
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.innerContainer}>
+    <SafeAreaView style={facultyProfile.container}>
+      <View style={facultyProfile.insideContainer}>
 
-          {/* BUBBLE DECORATIONS */}
-          <BubbleBackground />
+        {/* BUBBLE DECORATIONS */}
+        <BubbleBackground />
 
+        {/* HEADER */}
+        <View style={upperNav.header}>
+          <TouchableOpacity
+            style={upperNav.touchable}
+            onPress={() => handleBackStep()}
+          >
+            <Image
+              style={upperNav.backButtonIcon}
+              source={require('../../../assets/icons/BackButton-icon.png')}
+            />
+          </TouchableOpacity>
 
-          {/* HEADER */}
-          <View style={styles.header}>
-            <View style={upperNav.header}>
-              <TouchableOpacity
-                style={upperNav.touchable}
-                onPress={() => handleBackStep()}
-              >
-                <Image
-                  style={upperNav.backButtonIcon}
-                  source={require('../../../assets/icons/BackButton-icon.png')}
-                />
-              </TouchableOpacity>
+          <Image
+            style={upperNav.ciscLogo}
+            source={require('../../../assets/images/cisckids.png')}
+          />
+          <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
+            <Image
+              style={upperNav.menuIcon}
+              source={require('../../../assets/icons/Menu-icon.png')}
+            />
+          </TouchableOpacity>
+        </View>
 
+        {/* DROPDOWN MENU */}
+        {menuVisible && (
+          <View style={upperNav.dropdownMenu}>
+            <TouchableOpacity
+              onPress={handleLogoutPress}
+              style={upperNav.logoutButton}
+            >
               <Image
-                style={upperNav.ciscLogo}
-                source={require('../../../assets/images/cisckids.png')}
+                source={require('../../../assets/icons/Logout-icon.png')}
+                style={upperNav.logoutIcon}
               />
-              <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-                <Image
-                  style={upperNav.menuIcon}
-                  source={require('../../../assets/icons/Menu-icon.png')}
-                />
-              </TouchableOpacity>
-            </View>
+              <Text style={upperNav.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-            {/* DROPDOWN MENU */}
-            {menuVisible && (
-              <View style={upperNav.dropdownMenu}>
-                <TouchableOpacity
-                  onPress={handleLogoutPress}
-                  style={styles.logoutButton}
-                >
-                  <Image
-                    source={require('../../../assets/icons/Logout-icon.png')}
-                    style={upperNav.logoutIcon}
-                  />
-                  <Text style={upperNav.logoutText}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+        {/* OVERLAY TO CLOSE MENU */}
+        {menuVisible && (
+          <TouchableOpacity
+            style={upperNav.closeMenu}
+            onPress={() => setMenuVisible(false)}
+            activeOpacity={1}
+          />
+        )}
 
-            {/* OVERLAY TO CLOSE MENU */}
-            {menuVisible && (
-              <TouchableOpacity
-                style={upperNav.closeMenu}
-                onPress={() => setMenuVisible(false)}
-                activeOpacity={1}
-              />
-            )}
+        {/* MAIN SCROLL CONTENT */}
+        <ScrollView
+          contentContainerStyle={facultyProfile.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={facultyProfile.titleGroup}>
+            <Text style={facultyProfile.screenTitle}>My Profile</Text>
           </View>
 
-          {/* PROFILE HEADER */}
-          <View style={styles.profileHeader}>
-            <View style={styles.profileImageContainer}>
-              <Image
-                source={
-                  profileData?.profileImageUrl
-                    ? { uri: profileData.profileImageUrl } : profileData?.sex === 'male' ?
-                      require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png')
-                }
-                style={styles.profileImage}
-              />
-            </View>
-            <Text style={styles.studentName}>
-              {profileData?.firstName} {profileData?.lastName}
-            </Text>
-            <Text style={styles.studentRole}>Student</Text>
-          </View>
-
-          {/* NEW: TAB NAVIGATION CONTAINER */}
-          {/* Segmented controls allowing users to switch between Information, Performance, and Activity features */}
+          {/* TAB NAVIGATION */}
           <View style={styles.tabContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tabButton, activeTab === 'profile' && styles.activeTab]}
               onPress={() => setActiveTab('profile')}
             >
               <Text style={[styles.tabText, activeTab === 'profile' && styles.activeTabText]}>Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tabButton, activeTab === 'performance' && styles.activeTab]}
               onPress={() => setActiveTab('performance')}
             >
               <Text style={[styles.tabText, activeTab === 'performance' && styles.activeTabText]}>Performance</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tabButton, activeTab === 'activity' && styles.activeTab]}
               onPress={() => setActiveTab('activity')}
             >
@@ -404,189 +383,203 @@ export default function Profile() {
             </TouchableOpacity>
           </View>
 
-          {/* DYNAMIC CONTENT RENDER: Based on activeTab state */}
+          {/* ── PROFILE TAB ── */}
           {activeTab === 'profile' && (
-            <>
-              {/* BASIC INFORMATION */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Basic Information</Text>
-                  {!isEditing ? (
-                    <TouchableOpacity onPress={() => setIsEditing(true)}>
-                      <Text style={styles.editButtonTextPrimary}>Edit</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
+            <View style={facultyProfile.profileCard}>
 
-                {isEditing ? (
-                  <View style={styles.formContainer}>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>First Name</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={firstName}
-                        onChangeText={setFirstName}
-                      />
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Middle Name <Text style={styles.optionalText}>(Optional)</Text></Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={middleName}
-                        onChangeText={setMiddleName}
-                      />
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Last Name</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={lastName}
-                        onChangeText={setLastName}
-                      />
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Birthdate (YYYY-MM-DD)</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={dateOfBirth}
-                        onChangeText={setDateOfBirth}
-                      />
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Sex (male/female)</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={sex}
-                        onChangeText={setSex}
-                        autoCapitalize="none"
-                      />
-                    </View>
-                    <View style={styles.actionRow}>
-                      <TouchableOpacity 
-                        style={styles.cancelButton} 
-                        onPress={handleCancel}
-                        disabled={isSaving}
-                      >
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={styles.saveButton} 
-                        onPress={handleSave}
-                        disabled={isSaving}
-                      >
-                        {isSaving ? (
-                          <ActivityIndicator color="#ffffff" size="small" />
-                        ) : (
-                          <Text style={styles.saveButtonText}>Save</Text>
-                        )}
-                      </TouchableOpacity>
-                    </View>
+              {/* Floating Avatar */}
+              <View style={facultyProfile.avatarContainer}>
+                <Image
+                  source={
+                    profileData?.profileImageUrl
+                      ? { uri: profileData.profileImageUrl }
+                      : profileData?.sex === 'male'
+                        ? require('../../../assets/images/Male-profile.png')
+                        : require('../../../assets/images/Female-profile.png')
+                  }
+                  style={facultyProfile.avatarIcon}
+                />
+              </View>
+
+              {/* Student name banner */}
+              <Text style={styles.cardName}>
+                {profileData?.firstName} {profileData?.lastName}
+              </Text>
+              <Text style={styles.cardRole}>Student</Text>
+
+              {/* ── BASIC INFORMATION ── */}
+              <View style={styles.cardSectionHeader}>
+                <Text style={styles.cardSectionTitle}>Basic Information</Text>
+              </View>
+
+              {isEditing ? (
+                <>
+                  {/* FIRST NAME */}
+                  <View style={facultyProfile.inputGroup}>
+                    <Text style={facultyProfile.label}>First Name</Text>
+                    <TextInput
+                      style={facultyProfile.textInput}
+                      value={firstName}
+                      onChangeText={setFirstName}
+                    />
                   </View>
-                ) : (
+
+                  {/* MIDDLE NAME */}
+                  <View style={facultyProfile.inputGroup}>
+                    <Text style={facultyProfile.label}>Middle Name</Text>
+                    <TextInput
+                      style={facultyProfile.textInput}
+                      value={middleName}
+                      onChangeText={setMiddleName}
+                      placeholder="Optional"
+                      placeholderTextColor="#A0A0A0"
+                    />
+                  </View>
+
+                  {/* LAST NAME */}
+                  <View style={facultyProfile.inputGroup}>
+                    <Text style={facultyProfile.label}>Last Name</Text>
+                    <TextInput
+                      style={facultyProfile.textInput}
+                      value={lastName}
+                      onChangeText={setLastName}
+                    />
+                  </View>
+
+                  {/* BIRTHDATE */}
+                  <View style={facultyProfile.inputGroup}>
+                    <Text style={facultyProfile.label}>Birthdate (YYYY-MM-DD)</Text>
+                    <TextInput
+                      style={facultyProfile.textInput}
+                      value={dateOfBirth}
+                      onChangeText={setDateOfBirth}
+                    />
+                  </View>
+
+                  {/* SEX */}
+                  <View style={facultyProfile.inputGroup}>
+                    <Text style={facultyProfile.label}>Sex</Text>
+                    <TextInput
+                      style={facultyProfile.textInput}
+                      value={sex}
+                      onChangeText={setSex}
+                      autoCapitalize="none"
+                    />
+                  </View>
+
+                  {/* ACTION BUTTONS */}
+                  <View style={facultyProfile.actionRow}>
+                    <TouchableOpacity
+                      style={facultyProfile.cancelButton}
+                      onPress={handleCancel}
+                      disabled={isSaving}
+                    >
+                      <Text style={facultyProfile.cancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={facultyProfile.saveButton}
+                      onPress={handleSave}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <Text style={facultyProfile.saveButtonText}>Save</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : (
+                <>
                   <View style={styles.infoGrid}>
-                    <InfoItem
-                      label="First Name"
-                      value={profileData?.firstName || 'N/A'}
-                    />
-                    <InfoItem
-                      label="Middle Name"
-                      value={profileData?.middleName || 'N/A'}
-                    />
-                    <InfoItem
-                      label="Last Name"
-                      value={profileData?.lastName || 'N/A'}
-                    />
-                    <InfoItem
-                      label="Birthdate"
-                      value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)}
-                    />
+                    <InfoItem label="First Name" value={profileData?.firstName || 'N/A'} />
+                    <InfoItem label="Middle Name" value={profileData?.middleName || 'N/A'} />
+                    <InfoItem label="Last Name" value={profileData?.lastName || 'N/A'} />
+                    <InfoItem label="Birthdate" value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)} />
                     <InfoItem
                       label="Sex"
                       value={
-                        profileData?.sex === 'male'
-                          ? 'Male'
-                          : profileData?.sex === 'female'
-                            ? 'Female'
-                            : 'N/A'
+                        profileData?.sex === 'male' ? 'Male'
+                          : profileData?.sex === 'female' ? 'Female' : 'N/A'
                       }
                     />
                   </View>
-                )}
+
+                  {/* Edit button */}
+                  <View style={facultyProfile.actionRow}>
+                    <TouchableOpacity
+                      style={facultyProfile.editButton}
+                      onPress={() => setIsEditing(true)}
+                    >
+                      <Text style={facultyProfile.editButtonText}>Edit Profile</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+
+              {/* ── ACADEMIC INFORMATION ── */}
+              <View style={[styles.cardSectionHeader, { marginTop: sh(24) }]}>
+                <Text style={styles.cardSectionTitle}>Academic Information</Text>
+              </View>
+              <View style={styles.infoGrid}>
+                <InfoItem
+                  label="Grade Level"
+                  value={`Grade ${profileData?.studentData?.gradeLevel || 'N/A'}`}
+                />
+                <InfoItem
+                  label="Class"
+                  value={classData?.className || 'Not assigned'}
+                />
+                <InfoItem
+                  label="Reading Level"
+                  value={getReadingLevelLabel(profileData?.studentData?.reading_Level)}
+                />
               </View>
 
-              {/* ACADEMIC INFORMATION */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Academic Information</Text>
-                <View style={styles.infoGrid}>
-                  <InfoItem
-                    label="Grade Level"
-                    value={`Grade ${profileData?.studentData?.gradeLevel || 'N/A'}`}
-                  />
-                  <InfoItem
-                    label="Class"
-                    value={classData?.className || 'Not assigned'}
-                  />
-                  <InfoItem
-                    label="Reading Level"
-                    value={getReadingLevelLabel(
-                      profileData?.studentData?.reading_Level,
-                    )}
-                  />
-                </View>
-              </View>
-            </>
+            </View>
           )}
 
           {activeTab === 'performance' && (
             <>
               <View style={styles.section}>
-                {/* ALPHABET AND ACCURACY */}
                 <StudentAlphabetMastery studentId={auth.currentUser?.uid || ''} />
               </View>
-
               <View style={styles.section}>
-                {/* WORD AND ACCURACY */}
                 <StudentWordMastery studentId={auth.currentUser?.uid || ''} />
               </View>
-
-              {/* READING STATISTICS */}
               <View style={styles.section}>
-                {/* ACCURACY TRENDS */}
                 <StudentAccuracyTrendsChart studentId={auth.currentUser?.uid || ''} />
               </View>
-
               <View style={styles.section}>
-                {/* MISCUE TYPE CHART */}
                 <StudentMiscueAnalytics studentId={auth.currentUser?.uid || ''} />
-                {/* TOP MISCUED PASSAGE AND MOST COMMON MISCUE WORDS  */}
                 <StudentTopMiscuePassageAndWords studentId={auth.currentUser?.uid || ''} />
               </View>
             </>
           )}
 
           {activeTab === 'activity' && (
-            <>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Activity Tracking</Text>
-                {/* ACTIVITY TRACKING */}
-                <StudentActivityTrackingCard studentId={auth.currentUser?.uid || ''} />
-              </View>
-            </>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Activity Tracking</Text>
+              <StudentActivityTrackingCard studentId={auth.currentUser?.uid || ''} />
+            </View>
           )}
 
-          {/* READING PROGRESS CHARTS */}
+        </ScrollView>
 
-        </View>
+        {/* LOGOUT MODAL */}
+        <LogoutModal
+          visible={logoutVisible}
+          onCancel={cancelLogout}
+          onConfirm={confirmLogout}
+        />
 
-      </ScrollView>
-
-      {/* LOGOUT MODAL */}
-      <LogoutModal
-        visible={logoutVisible}
-        onCancel={cancelLogout}
-        onConfirm={confirmLogout}
-      />
+        <AlertModal
+          visible={alertVisible}
+          title={alertTitle}
+          message={alertMessage}
+          onClose={() => setAlertVisible(false)}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -612,24 +605,17 @@ const InfoItem = ({ label, value }: { label: string; value: string }) => (
 );
 
 
+
 // ============================================================================
 // STYLES
 // ============================================================================
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  innerContainer: {
-    flexGrow: 1,
-    paddingBottom: sh(24),
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ECFBFF',
   },
   loadingText: {
     marginTop: sh(12),
@@ -654,64 +640,52 @@ const styles = StyleSheet.create({
     fontSize: sf(16),
     fontWeight: '600',
   },
-  header: {
-    position: 'relative',
-    zIndex: 100,
+  // Card name / role inside profile card
+  cardName: {
+    fontSize: sf(22),
+    fontFamily: 'DynaPuff-Bold',
+    color: '#3B7FC9',
+    textAlign: 'center',
+    marginBottom: sh(2),
+    marginTop: sh(8),
   },
-  logoutButton: {
+  cardRole: {
+    fontSize: sf(14),
+    fontFamily: 'Satoshi-Medium',
+    color: '#38B6FF',
+    textAlign: 'center',
+    marginBottom: sh(20),
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  cardSectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: sw(16),
-    borderRadius: sw(12),
+    marginBottom: sh(14),
   },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: sh(24),
-    backgroundColor: 'white',
-    marginHorizontal: sw(16),
-    marginTop: sh(16),
-    borderRadius: sw(16),
-    elevation: 4,
-  },
-  profileImageContainer: {
-    width: sw(100),
-    height: sw(100),
-    borderRadius: sw(50),
-    backgroundColor: '#e2e8f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: sh(12),
-    borderWidth: 3,
-    borderColor: '#3b82f6',
-  },
-  profileImage: {
-    width: sw(94),
-    height: sw(94),
-    borderRadius: sw(47),
-  },
-  studentName: {
-    fontSize: sf(24),
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: sh(4),
-  },
-  studentRole: {
+  cardSectionTitle: {
     fontSize: sf(16),
-    color: '#64748b',
+    fontFamily: 'Satoshi-Bold',
+    color: '#1E293B',
+  },
+  cardEditLink: {
+    fontSize: sf(15),
+    color: '#38B6FF',
+    fontFamily: 'Satoshi-Bold',
   },
   section: {
     backgroundColor: 'white',
-    marginHorizontal: sw(10),
     marginTop: sh(16),
     padding: sw(20),
     borderRadius: sw(16),
     elevation: 4,
   },
   sectionTitle: {
-    fontSize: sf(20),
-    fontWeight: 'bold',
+    fontSize: sf(18),
+    fontFamily: 'Satoshi-Bold',
     color: '#1e293b',
-    marginBottom: sh(16),
+    marginBottom: sh(14),
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -720,9 +694,9 @@ const styles = StyleSheet.create({
     marginBottom: sh(16),
   },
   editButtonTextPrimary: {
-    color: '#3b82f6',
-    fontSize: sf(16),
-    fontWeight: '600',
+    color: '#38B6FF',
+    fontSize: sf(15),
+    fontFamily: 'Satoshi-Bold',
   },
   formContainer: {
     marginTop: sh(8),
@@ -732,9 +706,11 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: sf(14),
-    fontWeight: '600',
-    color: '#64748b',
+    fontFamily: 'Satoshi-Bold',
+    color: '#3B7FC9',
     marginBottom: sh(6),
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   optionalText: {
     fontWeight: '400',
@@ -742,14 +718,15 @@ const styles = StyleSheet.create({
     fontSize: sf(12),
   },
   textInput: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: sw(8),
-    paddingHorizontal: sw(12),
-    paddingVertical: sh(10),
+    backgroundColor: '#F4F9FF',
+    borderWidth: 1.5,
+    borderColor: '#B8E8F8',
+    borderRadius: sw(15),
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(12),
     fontSize: sf(16),
-    color: '#1e293b',
-    backgroundColor: '#f8fafc',
+    fontFamily: 'Satoshi-Medium',
+    color: '#2C2C2C',
   },
   actionRow: {
     flexDirection: 'row',
@@ -760,29 +737,34 @@ const styles = StyleSheet.create({
   cancelButton: {
     paddingVertical: sh(10),
     paddingHorizontal: sw(20),
-    borderRadius: sw(8),
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderRadius: sw(20),
+    borderWidth: 2,
+    borderColor: '#FF7043',
     backgroundColor: '#ffffff',
   },
   cancelButtonText: {
-    color: '#64748b',
+    color: '#FF7043',
+    fontFamily: 'Satoshi-Bold',
     fontSize: sf(14),
-    fontWeight: '600',
   },
   saveButton: {
     paddingVertical: sh(10),
     paddingHorizontal: sw(24),
-    borderRadius: sw(8),
-    backgroundColor: '#3b82f6',
+    borderRadius: sw(20),
+    backgroundColor: '#38B6FF',
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: sw(80),
+    elevation: 4,
+    shadowColor: '#38B6FF',
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.3,
+    shadowRadius: sw(6),
   },
   saveButtonText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
+    fontFamily: 'Satoshi-Bold',
     fontSize: sf(14),
-    fontWeight: '600',
   },
   infoGrid: {
     flexDirection: 'row',
@@ -794,13 +776,16 @@ const styles = StyleSheet.create({
     marginBottom: sh(16),
   },
   infoLabel: {
-    fontSize: sf(14),
-    color: '#64748b',
+    fontSize: sf(13),
+    fontFamily: 'Satoshi-Bold',
+    color: '#3B7FC9',
     marginBottom: sh(4),
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   infoValue: {
-    fontSize: sf(16),
-    fontWeight: '600',
+    fontSize: sf(15),
+    fontFamily: 'Satoshi-Medium',
     color: '#1e293b',
   },
   statsGrid: {
@@ -1231,35 +1216,39 @@ const styles = StyleSheet.create({
     marginBottom: sh(8),
   },
 
-  // NEW STYLES: Tab Navigation
+  // Tab Navigation
   tabContainer: {
     flexDirection: 'row',
-    marginHorizontal: sw(10),
     marginTop: sh(16),
-    backgroundColor: '#fff',
-    borderRadius: sw(12),
-    padding: sw(6),
+    backgroundColor: '#E8F4FF',
+    borderRadius: sw(20),
+    padding: sw(5),
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.1,
-    shadowRadius: sw(2),
+    shadowColor: '#3B7FC9',
+    shadowOffset: { width: 0, height: sw(2) },
+    shadowOpacity: 0.15,
+    shadowRadius: sw(4),
   },
   tabButton: {
     flex: 1,
     paddingVertical: sh(10),
     alignItems: 'center',
-    borderRadius: sw(8),
+    borderRadius: sw(16),
   },
   activeTab: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#38B6FF',
+    elevation: 3,
+    shadowColor: '#38B6FF',
+    shadowOffset: { width: 0, height: sw(2) },
+    shadowOpacity: 0.3,
+    shadowRadius: sw(4),
   },
   tabText: {
     fontSize: sf(14),
-    fontWeight: '600',
-    color: '#64748b',
+    fontFamily: 'Satoshi-Bold',
+    color: '#3B7FC9',
   },
   activeTabText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
   },
 });

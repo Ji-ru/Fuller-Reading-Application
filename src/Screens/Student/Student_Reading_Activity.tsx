@@ -122,7 +122,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
+  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, processAudioWithWav2Vec2, processAudioWithWhisper, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
 
   // Access Global Music Context
   const { playMusic, pauseMusic } = useGlobalMusic();
@@ -299,15 +299,17 @@ export default function ReadingActivityScreenPage() {
       }
       // const transcription = await processAudioWithGoogle(audioFile);
       // const transcription = await processAudioWithAssemblyAI(audioFile);
-      const transcription = await processAudioWithDeepgram(audioFile);
-      setSpokenText(transcription.fulltext);
-      console.log('THIS IS THE SPOKEN: ' + transcription.fulltext);
-      console.log('THIS IS THE UTTERANCES: ' + transcription.utterances);
+      // const transcription = await processAudioWithDeepgram(audioFile);
+      // const transcription = await processAudioWithWav2Vec2(audioFile);
+      const transcription = await processAudioWithWhisper(audioFile);
+      setSpokenText(transcription);
+      console.log('THIS IS THE SPOKEN: ' + transcription);
+      console.log('THIS IS THE UTTERANCES: ' + transcription);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      await analyzeReading(transcription.fulltext, duration);
+      await analyzeReading(transcription, duration);
       setIsReadingCompleted(true);
     } catch (error) {
       // Fallback on error: 0% accuracy instead of 100% simulated response
@@ -319,7 +321,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithAssemblyAI, getSimulatedResponse, targetText]);
+  }, [processAudioWithWhisper, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:
