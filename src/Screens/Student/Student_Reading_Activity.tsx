@@ -70,7 +70,11 @@ function NavArrow({ direction, disabled, isFinish, onPress }: { direction: 'left
         colors={['#ffffff', '#f0faf4']}
         style={{ width: '100%', height: '100%', borderRadius: 28, justifyContent: 'center', alignItems: 'center' }}
       >
-        <ChevronIcon direction={direction} color="#1a7a45" />
+        {isFinish ? (
+          <FinishCheckmark color="#1a7a45" />
+        ) : (
+          <ChevronIcon direction={direction} color="#1a7a45" />
+        )}
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -299,6 +303,9 @@ export default function ReadingActivityScreenPage() {
           console.error('Failed to store alphabet attempt:', error);
         }
       }
+      
+      // Store detailed trial report
+      if (!hasStoredReport) storeMiscueReport(accuracyNum, duration, [], 0);
     } else if (type === 'passage' && isPassage(readingMaterial)) {
       const detectedMiscues = MiscueAnalysisService.detectMiscues(readingMaterial.text, transcription);
       const calculatedAccuracy = MiscueAnalysisService.calculateAccuracy(readingMaterial.text, transcription);
@@ -327,6 +334,9 @@ export default function ReadingActivityScreenPage() {
           console.error('Failed to store word attempt:', error);
         }
       }
+
+      // Store detailed trial report
+      if (!hasStoredReport) storeMiscueReport(accuracyNum, duration, [], 0);
     }
 
     if (!hasShownModalForCurrentAttempt) {

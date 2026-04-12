@@ -89,49 +89,61 @@ export const MiscueReportController = {
   // ================= FETCH STUDENT REPORTS =================
   async getStudentReports(studentId: string): Promise<MiscueReportDocument[]> {
     try {
-      const reportRef = collection(db, 'miscueReports');
-      const q = query(reportRef, where('studentId', '==', studentId), orderBy('timestamp', 'desc'));
-      const snapshot = await getDocs(q);
+      const db = firestore();
+      
+      // 1. Fetch real detailed trials
+      const reportSnap = await db.collection('miscueReports')
+        .where('studentId', '==', studentId)
+        .orderBy('timestamp', 'desc')
+        .get();
+      
+      const realReports = reportSnap.docs.map(doc => ({
+        reportId: doc.id,
+        ...doc.data(),
+      })) as MiscueReportDocument[];
 
-      if (!snapshot.empty) {
-        // Return the stored miscueReports if they exist
-        return snapshot.docs.map((doc: { id: any; data: () => any; }) => ({
-          reportId: doc.id,
-          ...doc.data(),
-        })) as MiscueReportDocument[];
-      }
+      // 2. Fetch Alphabet Completions (Synthesize legacy if missing from reports)
+      const alphaSnap = await db.collection('alphabetCompleted').where('studentId', '==', studentId).get();
+      const synthesizedAlpha = alphaSnap.docs
+        .filter(doc => !realReports.some(r => r.passageTitle === `Alphabet - ${doc.data().letter}`))
+        .map(doc => {
+          const data = doc.data();
+          return {
+            reportId: `syn-a-${doc.id}`,
+            studentId,
+            passageTitle: `Alphabet - ${data.letter}`,
+            timestamp: data.createdAt || new Date(),
+            accuracyRate: 100,
+            wordPerMin: 0,
+            totalWords: 1,
+            totalMiscues: 0,
+            miscues: [],
+          } as unknown as MiscueReportDocument;
+        });
 
-      // If no miscueReports exist, dynamically generate "report-like" data from completed words
-      const wordSnapshot = await getDocs(
-        query(
-          collection(db, 'wordCompleted'),
-          where('studentId', '==', studentId),
-          orderBy('createdAt', 'desc')
-        )
-      );
+      // 3. Fetch Word Completions (Synthesize legacy if missing from reports)
+      const wordSnap = await db.collection('wordCompleted').where('studentId', '==', studentId).get();
+      const synthesizedWords = wordSnap.docs
+        .filter(doc => !realReports.some(r => r.passageTitle === `Words for ${doc.data().letter}`))
+        .map(doc => {
+          const data = doc.data();
+          return {
+            reportId: `syn-w-${doc.id}`,
+            studentId,
+            passageTitle: `Words for ${data.letter}`,
+            timestamp: data.createdAt || new Date(),
+            accuracyRate: 100,
+            wordPerMin: 0,
+            totalWords: 1,
+            totalMiscues: 0,
+            miscues: [],
+          } as unknown as MiscueReportDocument;
+        });
 
-      return wordSnapshot.docs.map((doc: { data: () => any; }) => {
-        const data = doc.data();
-        return {
-          reportId: data.wordId,
-          studentId: studentId,
-          passageTitle: data.letter || 'Unknown Passage',
-          timestamp: data.createdAt || new Date(),
-          accuracyRate: 100, // assume correct if wordCompleted
-          wordPerMin: 0,
-          recordingDuration: null,
-          substitution: 'None',
-          omission: 'None',
-          insertion: 'None',
-          repetition: 'None',
-          miscues: [],
-          substitutionCount: 0,
-          omissionCount: 0,
-          insertionCount: 0,
-          repetitionCount: 0,
-          totalWords: 1,
-          totalMiscues: 0,
-        } as unknown as MiscueReportDocument;
+      return [...realReports, ...synthesizedAlpha, ...synthesizedWords].sort((a, b) => {
+        const A = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
+        const B = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
+        return B.getTime() - A.getTime();
       });
     } catch (error) {
       console.error('FETCH ERROR:', error);

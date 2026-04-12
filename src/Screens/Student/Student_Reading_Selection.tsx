@@ -8,7 +8,8 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Alert,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
@@ -157,6 +158,7 @@ export default function PageSelectionScreen() {
   const [completedWordsMap, setCompletedWordsMap] = useState<Record<string, Set<string>>>({});
   const [completedPassages, setCompletedPassages] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [lockModalVisible, setLockModalVisible] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -213,11 +215,7 @@ export default function PageSelectionScreen() {
 
   const handleLessonSelect = (index: number) => {
     if (index > 0 && !isLessonMastered(index - 1)) {
-      Alert.alert(
-        "Naka-lock pa ang Aralin!",
-        "Kailangan mo munang tapusin ang nakaraang Aralin bago mo ito mabuksan. Ipagpatuloy ang pag-aaral! 💪🏆",
-        [{ text: "Sige po!", style: "default" }]
-      );
+      setLockModalVisible(true);
       return;
     }
     setSelectedAralin(index);
@@ -508,7 +506,58 @@ export default function PageSelectionScreen() {
         onCancel={() => setLogoutVisible(false)}
         onConfirm={async () => { setLogoutVisible(false); await handleLogout(); }}
       />
+
+      <LockedLessonModal
+        visible={lockModalVisible}
+        onClose={() => setLockModalVisible(false)}
+      />
     </SafeAreaView>
+  );
+}
+
+// ─── Locked Modal ────────────────────────────────────────────────────────────
+function LockedLessonModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fade, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(slide, { toValue: 0, tension: 80, friction: 8, useNativeDriver: true }),
+      ]).start();
+    } else {
+      fade.setValue(0);
+      slide.setValue(20);
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible={visible} animationType="none">
+      <View style={S.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+        <Animated.View style={[S.lockModalContent, { opacity: fade, transform: [{ translateY: slide }] }]}>
+           <View style={S.lockModalIconBox}>
+             <LockIcon size={48} color={C.teal} />
+           </View>
+           
+           <Text style={S.lockModalTitle}>Naka-lock ang Aralin</Text>
+           <Text style={S.lockModalDesc}>
+             Kailangan mo munang tapusin ang nakaraang Aralin bago mo ito mabuksan.
+           </Text>
+           
+           <TouchableOpacity 
+             style={S.lockModalBtn} 
+             onPress={onClose} 
+             activeOpacity={0.8}
+           >
+             <Text style={S.lockModalBtnText}>Naintindihan ko</Text>
+           </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </Modal>
   );
 }
 
@@ -517,7 +566,7 @@ const S = StyleSheet.create({
   root: { flex: 1 },
   bg: { flex: 1, backgroundColor: C.bg },
   headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8, zIndex: 100 },
-  headerLogo: { width: 140, height: 48 },
+  headerLogo: { width: 100, height: 90 },
   headerMenuBtn: {
     width: 44, height: 44, borderRadius: 14, backgroundColor: C.white,
     justifyContent: 'center', alignItems: 'center', ...Shadows.subtle,
@@ -843,7 +892,61 @@ const S = StyleSheet.create({
   },
 
   // ── Legacy / kept for sub-components ───────────────────────────────────
-  sublabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, paddingHorizontal: 4 },
   sublabel: { fontSize: 16, fontWeight: '800', color: C.inkLight },
+
+  // ── Lock Modal Styles ──────────────────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  lockModalContent: {
+    width: '100%',
+    backgroundColor: C.white,
+    borderRadius: 28,
+    padding: 28,
+    alignItems: 'center',
+    ...Shadows.cardLift,
+  },
+  lockModalIconBox: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: C.teal + '12',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  lockModalTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: C.ink,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  lockModalDesc: {
+    fontSize: 15,
+    color: C.slate,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+    paddingHorizontal: 10,
+  },
+  lockModalBtn: {
+    width: '100%',
+    backgroundColor: C.teal,
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    ...Shadows.card,
+  },
+  lockModalBtnText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: C.white,
+    letterSpacing: 0.5,
+  },
 });
 

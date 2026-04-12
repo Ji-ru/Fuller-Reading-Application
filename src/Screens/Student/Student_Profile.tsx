@@ -414,7 +414,7 @@ function DotsLoading() {
             <TouchableOpacity style={S.headerMenuBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
               <BackArrow />
             </TouchableOpacity>
-            <Image style={S.headerLogo} source={require('../../../assets/images/cisckids.png')} />
+            <Image style={S.headerLogo} source={require('../../../assets/images/cisckids.png')} resizeMode="contain" />
             <TouchableOpacity style={S.headerMenuBtn} onPress={() => setMenuVisible(v => !v)} activeOpacity={0.7}>
               <MenuBars />
             </TouchableOpacity>
@@ -724,7 +724,7 @@ const S = StyleSheet.create({
     paddingVertical: 8,
     zIndex: 100,
   },
-  headerLogo: { width: 140, height: 48 },
+  headerLogo: { width: 100, height: 90 },
   headerMenuBtn: {
     width: 44,
     height: 44,

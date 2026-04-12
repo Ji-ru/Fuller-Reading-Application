@@ -507,8 +507,8 @@ const readingStyles = StyleSheet.create({
   // ── Completion Indicator ───────────────────────────────────────────
   completionBadge: {
     position: 'absolute',
-    top: -12,
-    right: -12,
+    top: 12,
+    right: 12,
     backgroundColor: '#1a7a45',
     width: 32,
     height: 32,
