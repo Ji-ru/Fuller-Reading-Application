@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Miscue } from '../../../Interfaces/miscue';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MiscueAnalysisService } from '../../../Controller/MiscueAnalysisServiceController';
+import { Miscue } from '../../../Interfaces/miscue';
 import readingStyles from '../../../UI_Designs/ReadingActivityStyles';
 
 interface ReadingFeedbackProps {
@@ -26,8 +26,6 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
   isTextCorrect,
 }) => {
   if (type === 'alphabet') {
-    // FOR ALPHABET ANALYSIS
-    // Use passed accuracy/feedback or calculate if not provided
     const alphabetAccuracy =
       passedAccuracy ||
       MiscueAnalysisService.checkAlphabetPhonemeAccuracy(targetText, spokenText)
@@ -37,35 +35,12 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
       MiscueAnalysisService.checkAlphabetPhonemeAccuracy(targetText, spokenText)
         .feedback;
     const isCorrect = alphabetAccuracy == '100';
+    
     return (
-      <View>
-        <View
-          style={[
-            readingStyles.calculationContainer,
-            isCorrect
-              ? readingStyles.correctContainer
-              : readingStyles.incorrectContainer,
-          ]}
-        >
-          <Text style={readingStyles.calculationText}>
-            {isCorrect ? '✓ Tama!' : '✗ Mali'}
-          </Text>
-        </View>
+      <View style={localStyles.container}>
 
-        <Text style={readingStyles.feedbackLabel}>Kalabasan</Text>
+
         <View style={readingStyles.feedbackContainer}>
-          <Text style={readingStyles.feedbackText}>
-            Inaasahan:{' '}
-            <Text style={readingStyles.boldText}>
-              {targetText.toUpperCase()}
-            </Text>
-          </Text>
-          <Text style={readingStyles.feedbackText}>
-            Iyong bigkas:{' '}
-            <Text style={readingStyles.boldText}>
-              {spokenText || '(walang natukoy)'}
-            </Text>
-          </Text>
           <Text
             style={[
               readingStyles.feedbackText,
@@ -76,95 +51,67 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={readingStyles.tryAgainButton}
-          onPress={onTryAgain}
-        >
-          <Text style={readingStyles.tryAgainText}>Ulitin</Text>
-        </TouchableOpacity>
+        {!isCorrect && (
+          <TouchableOpacity
+            style={readingStyles.tryAgainButton}
+            onPress={onTryAgain}
+            activeOpacity={0.8}
+          >
+            <Text style={readingStyles.tryAgainText}>Ulitin</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   } else if (type === 'word') {
     return (
-      <View style={readingStyles.feedbackContainer}>
-        <View style={readingStyles.waFeedbackWordBox}>
-          {/* Message */}
-          <Text style={readingStyles.waFeedbackMessage}>
-            {isTextCorrect
-              ? 'Tama ang iyong pag bigkas!'
-              : 'Subukan muli!.'}
-          </Text>
-        </View>
+      <View style={localStyles.container}>
 
-        {/* Actions */}
-        <TouchableOpacity
-          style={readingStyles.tryAgainButton}
-          onPress={onTryAgain}
-        >
-          <Text style={readingStyles.tryAgainText}>Subukan Muli</Text>
-        </TouchableOpacity>
+
+        {!isTextCorrect && (
+          <TouchableOpacity
+            style={readingStyles.tryAgainButton}
+            onPress={onTryAgain}
+            activeOpacity={0.8}
+          >
+            <Text style={readingStyles.tryAgainText}>Subukan Muli</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
 
-  // FOR THE PASSAGE ANALYSIS
+  // PASSAGE ANALYSIS
   const accuracy = MiscueAnalysisService.calculateAccuracy(
     targetText,
     spokenText,
   );
   const feedback = MiscueAnalysisService.getAccuracyFeedback(accuracy);
 
-  const categorizedMiscues = {
-    substitution: miscues.filter(m => m.type === 'substitution'),
-    omission: miscues.filter(m => m.type === 'omission'),
-    insertion: miscues.filter(m => m.type === 'insertion'),
-    repetition: miscues.filter(m => m.type === 'repetition'),
-  };
 
   return (
-    <View>
+    <View style={localStyles.container}>
       <View style={readingStyles.calculationContainer}>
         <Text style={readingStyles.calculationText}>
-          {feedback} - {accuracy}%
+          {feedback} • {accuracy}% Accuracy
         </Text>
       </View>
 
-      <Text style={readingStyles.feedbackLabel}>Paguulat ng Katugunan</Text>
-      <View style={readingStyles.feedbackContainer}>
-        <Text
-          style={[readingStyles.feedbackText, readingStyles.substitutionText]}
+      {!isTextCorrect && (
+        <TouchableOpacity
+          style={readingStyles.tryAgainButton}
+          onPress={onTryAgain}
+          activeOpacity={0.8}
         >
-          Pagpapalit:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.substitution,
-          )}
-        </Text>
-        <Text style={[readingStyles.feedbackText, readingStyles.omissionText]}>
-          Kaligtaan:{' '}
-          {MiscueAnalysisService.formatMiscueWords(categorizedMiscues.omission)}
-        </Text>
-        <Text style={[readingStyles.feedbackText, readingStyles.insertionText]}>
-          Pagsingit:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.insertion,
-          )}
-        </Text>
-        <Text
-          style={[readingStyles.feedbackText, readingStyles.repetitionText]}
-        >
-          Pag-uulit:{' '}
-          {MiscueAnalysisService.formatMiscueWords(
-            categorizedMiscues.repetition,
-          )}
-        </Text>
-      </View>
-
-      <TouchableOpacity
-        style={readingStyles.tryAgainButton}
-        onPress={onTryAgain}
-      >
-        <Text style={readingStyles.tryAgainText}>Subukan Muli</Text>
-      </TouchableOpacity>
+          <Text style={readingStyles.tryAgainText}>Subukan Muli</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
+
+const localStyles = StyleSheet.create({
+  container: {
+    width: '100%',
+    paddingBottom: 24,
+  }
+});

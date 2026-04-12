@@ -2,6 +2,8 @@ export interface Passage {
   title: string;
   author: string;
   category: string;
+  letter: string;
+  aralin: number;
   image: string;
   text: string;
 }

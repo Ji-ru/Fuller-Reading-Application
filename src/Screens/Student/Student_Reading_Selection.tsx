@@ -1,111 +1,113 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
+  Animated,
+  Dimensions,
+  FlatList,
+  Image,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  Image,
-  FlatList,
-  SectionList,
-  Animated,
-  StyleSheet,
-  Dimensions,
+  View,
+  Alert,
 } from 'react-native';
-import { useNavigationHelper } from '../../Controller/NavigationController';
-import bubbles from '../../UI_Designs/BubblesDesign';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
-import { Alphabet, Contrasts, Passage, Word } from '../../Interfaces/passage';
-import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import upperNav from '../../UI_Designs/UpperNavigation';
 import { StudentColors as C, Radii, Shadows, ACCENT_COLORS as LETTER_COLORS } from '../../Utilities/Theme';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { BookOpenIcon, TypeIcon, QuoteIcon, PencilIcon, SearchIcon } from '../../Components/GlobalUse/Icons';
+import { 
+  CheckCircleIcon, 
+  BookOpenIcon, 
+  QuoteIcon, 
+  LockIcon 
+} from '../../Components/GlobalUse/Icons';
+import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import { useNavigationHelper } from '../../Controller/NavigationController';
+import { getAuth } from '@react-native-firebase/auth';
+import { MiscueReportController } from '../../Controller/MiscueReportController';
+import { Alphabet, Contrasts, Passage, Word } from '../../Interfaces/passage';
+import bubbles from '../../UI_Designs/BubblesDesign';
 
 const { width: SW } = Dimensions.get('window');
 
+// ─── Header Icons ────────────────────────────────────────────────────────────
+function BackArrow({ color = C.ink }: { color?: string }) {
+  return (
+    <View style={{ width: 12, height: 12, borderLeftWidth: 2.5, borderTopWidth: 2.5, borderColor: color, transform: [{ rotate: '-45deg' }] }} />
+  );
+}
+
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const alphabetData: Alphabet[] = readingMaterialData?.Alphabet || [];
-const passages: Passage[]      = readingMaterialData?.Passages || [];
-const wordsData: Word[]        = readingMaterialData?.Words    || [];
+const passages: Passage[] = readingMaterialData?.Passages || [];
+const wordsData: Word[] = readingMaterialData?.Words || [];
 
-// Palette & accent colors imported from Theme
-// BounceIn imported from Animations
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const shuffleArray = <T,>(arr: T[]): T[] => {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
-
-// ─── Alphabet Tile ────────────────────────────────────────────────────────────
-function AlphabetTile({
-  item,
-  index,
-  onPress,
-}: {
-  item: Alphabet;
-  index: number;
-  onPress: (a: Alphabet) => void;
+// ─── Word Card (grid version) ──────────────────────────────────────────────────
+function WordCard({ 
+  item, 
+  index, 
+  isMastered,
+  onPress 
+}: { 
+  item: string; 
+  index: number; 
+  isMastered: boolean;
+  onPress: (w: string) => void 
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const bg    = LETTER_COLORS[index % LETTER_COLORS.length];
+  const accent = LETTER_COLORS[index % LETTER_COLORS.length];
+  
+  const cardWidth = (SW - 32 - 24) / 4; // 32 margins, 24 gaps
 
   const press = () => {
     Animated.sequence([
-      Animated.timing(scale, { toValue: 0.88, duration: 70, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 80 }),
+      Animated.timing(scale, { toValue: 0.92, duration: 60, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 120, friction: 6 }),
     ]).start();
     onPress(item);
   };
 
   return (
-    <BounceIn delay={index * 28}>
-      <TouchableOpacity onPress={press} activeOpacity={0.85}>
-        <Animated.View style={[S.alphaTile, { backgroundColor: bg, transform: [{ scale }] }]}>
-          {/* shine dot */}
-          <View style={S.alphaTileShine} />
-          <Text style={S.alphaTileLetter}>{item.letter}</Text>
+    <BounceIn delay={index * 30}>
+      <TouchableOpacity onPress={press} activeOpacity={0.85} style={{ marginBottom: 8 }}>
+        <Animated.View style={[S.wordGridCard, { width: cardWidth, transform: [{ scale }] }]}>
+          {/* Decorative shapes */}
+          <View style={[S.heroCircle, { backgroundColor: accent + '12', top: -10, right: -10, width: 40, height: 40 }]} />
+          <View style={[S.heroCircle, { backgroundColor: accent + '06', bottom: -5, left: -5, width: 30, height: 30 }]} />
+          
+          <View style={[S.wordCardAccentBar, { backgroundColor: accent }]} />
+          
+          <View style={S.wordGridCardBody}>
+             <Text 
+               style={S.wordGridText} 
+               numberOfLines={2} 
+               adjustsFontSizeToFit 
+               minimumFontScale={0.7}
+             >
+               {item}
+             </Text>
+
+             {isMastered && (
+               <View style={S.wordGridMastery}>
+                 <CheckCircleIcon size={14} color={C.green} />
+               </View>
+             )}
+          </View>
         </Animated.View>
       </TouchableOpacity>
     </BounceIn>
   );
 }
 
-// ─── Word Row ─────────────────────────────────────────────────────────────────
-function WordRow({ item, onPress }: { item: string; onPress: (w: string) => void }) {
-  const scale = useRef(new Animated.Value(1)).current;
-  const press = () => {
-    Animated.sequence([
-      Animated.timing(scale, { toValue: 0.96, duration: 60, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
-    ]).start();
-    onPress(item);
-  };
-  return (
-    <TouchableOpacity onPress={press} activeOpacity={0.85}>
-      <Animated.View style={[S.wordRow, { transform: [{ scale }] }]}>
-        <View style={S.wordDot} />
-        <Text style={S.wordText}>{item}</Text>
-        <View style={S.wordArrow}>
-          <Text style={S.wordArrowText}>→</Text>
-        </View>
-      </Animated.View>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Passage Card ─────────────────────────────────────────────────────────────
+// ─── Passage Card (modernized) ───────────────────────────────────────────────
 function PassageCard({
   item,
   index,
+  isMastered,
   onPress,
 }: {
   item: Passage;
   index: number;
+  isMastered: boolean;
   onPress: (p: Passage) => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
@@ -114,7 +116,7 @@ function PassageCard({
   const press = () => {
     Animated.sequence([
       Animated.timing(scale, { toValue: 0.96, duration: 70, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 100, friction: 7 }),
     ]).start();
     onPress(item);
   };
@@ -122,19 +124,21 @@ function PassageCard({
   return (
     <BounceIn delay={index * 60}>
       <TouchableOpacity onPress={press} activeOpacity={0.85}>
-        <Animated.View style={[S.passageCard, { borderLeftColor: accent, transform: [{ scale }] }]}>
-          <View style={[S.passageAccentBar, { backgroundColor: accent }]} />
+        <Animated.View style={[S.passageCard, { borderLeftColor: accent, transform: [{ scale }], overflow: 'hidden' }]}>
+          {/* Decorative shapes to match Hero */}
+          <View style={[S.heroCircle, { backgroundColor: accent + '12', top: -20, right: -20, width: 80, height: 80 }]} />
+          <View style={[S.heroCircle, { backgroundColor: accent + '06', bottom: -15, left: -15, width: 50, height: 50 }]} />
+
           <View style={S.passageCardInner}>
-            <View style={[S.passageEmojiBubble, { backgroundColor: accent + '22' }]}>
-              <BookOpenIcon size={22} color={accent} />
-            </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingVertical: 4 }}>
               <Text style={S.passageCardTitle} numberOfLines={2}>{item.title}</Text>
-              <Text style={S.passageCardAuthor}>ni {item.author}</Text>
+              {!!item.author && <Text style={S.passageCardAuthor}>ni {item.author}</Text>}
             </View>
-            <View style={[S.passageGoBtn, { backgroundColor: accent }]}>
-              <Text style={S.passageGoBtnText}>→</Text>
-            </View>
+            {isMastered ? (
+              <View style={[S.passageGoBtn, { backgroundColor: C.green + '18' }]}>
+                <CheckCircleIcon size={20} color={C.green} />
+              </View>
+            ) : null}
           </View>
         </Animated.View>
       </TouchableOpacity>
@@ -142,145 +146,209 @@ function PassageCard({
   );
 }
 
-// ─── Tab Button ───────────────────────────────────────────────────────────────
-function TabBtn({
-  label,
-  iconView,
-  active,
-  onPress,
-}: {
-  label: string;
-  iconView: React.ReactNode;
-  active: boolean;
-  onPress: () => void;
-}) {
-  const scale = useRef(new Animated.Value(active ? 1 : 0.95)).current;
-  useEffect(() => {
-    Animated.spring(scale, {
-      toValue: active ? 1 : 0.95,
-      useNativeDriver: true,
-      tension: 80,
-      friction: 8,
-    }).start();
-  }, [active]);
-
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={{ flex: 1 }}>
-      <Animated.View
-        style={[
-          S.tabBtn,
-          active && S.tabBtnActive,
-          { transform: [{ scale }] },
-        ]}
-      >
-        <View style={S.tabIconWrapper}>
-          {iconView}
-        </View>
-        <Text style={[S.tabLabel, active && S.tabLabelActive]}>{label}</Text>
-        {active && <View style={S.tabDot} />}
-      </Animated.View>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Section Header for Words ─────────────────────────────────────────────────
-function WordSectionHeader({ letter, index }: { letter: string; index: number }) {
-  const bg = LETTER_COLORS[index % LETTER_COLORS.length];
-  return (
-    <View style={[S.sectionHeader, { backgroundColor: bg }]}>
-      <Text style={S.sectionHeaderText}>{letter}</Text>
-    </View>
-  );
-}
-
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function PageSelectionScreen() {
-  const { handleLogout, handleBackStep, handleReadingNext } = useNavigationHelper();
+  const { handleLogout, handleBackStep: navBackStep, handleReadingNext } = useNavigationHelper();
 
-  const [menuVisible,   setMenuVisible]   = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<'alphabet' | 'passage' | 'word'>('alphabet');
 
-  // Section-header index map so each letter keeps its colour
-  const letterIndexMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    wordsData.forEach((w, i) => { map[w.letter] = i; });
-    return map;
+  const [selectedAralin, setSelectedAralin] = useState<number | null>(null);
+  const [completedAlpha, setCompletedAlpha] = useState<Set<string>>(new Set());
+  const [completedWordsMap, setCompletedWordsMap] = useState<Record<string, Set<string>>>({});
+  const [completedPassages, setCompletedPassages] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMastery = async () => {
+      try {
+        const user = getAuth().currentUser;
+        if (user) {
+          const { completedAlpha: alpha, completedWords: words, completedPassages: passages } = 
+            await MiscueReportController.getStudentDetailedCompletion(user.uid);
+          if (isMounted) {
+            setCompletedAlpha(alpha);
+            setCompletedWordsMap(words);
+            setCompletedPassages(passages);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch mastery:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchMastery();
+    return () => { isMounted = false; };
   }, []);
 
-  const handleAlphabetSelect = (alphabet: Alphabet) =>
-    handleReadingNext(alphabet, 'alphabet');
-
-  const handleWordSelect = (wordText: string) => {
-    const wordData = wordsData.find((w: Word) =>
-      w.contrasts.some((c: Contrasts) => c.words.includes(wordText)),
+  const getTotalWordsForLetter = (letter: string) => {
+    const subset = wordsData.filter(w => w.letter === letter);
+    const allWords = subset.flatMap(w => w.contrasts.flatMap(c => c.words));
+    const letterLower = letter.toLowerCase();
+    const uniqueWords = Array.from(new Set(allWords)).filter(
+      word => word.trim().toLowerCase() !== letterLower
     );
-    if (!wordData) return;
-    const filteredWord: Word = {
-      letter: wordData.letter,
-      contrasts: wordData.contrasts
-        .map(c => ({
-          ...c,
-          words: c.words.filter(
-            w => w.trim().toLowerCase() === wordText.trim().toLowerCase(),
-          ),
-        }))
-        .filter(c => c.words.length > 0),
-    };
-    handleReadingNext(filteredWord, 'word');
+    return uniqueWords.length;
   };
 
-  const handlePassageSelect = (passage: Passage) =>
-    handleReadingNext(passage, 'passage');
+  const handleCustomBack = () => {
+    if (selectedAralin !== null) {
+      setSelectedAralin(null);
+    } else {
+      navBackStep();
+    }
+  };
 
-  const prepareWordsData = useMemo(() =>
-    wordsData.map((wordData: Word) => {
-      const allWords: string[] = [];
-      wordData.contrasts.forEach((c: Contrasts) => {
-        allWords.push(...shuffleArray(c.words).slice(0, 5));
+  const isLessonMastered = (idx: number) => {
+    if (idx < 0) return true;
+    const item = alphabetData[idx];
+    if (!item) return false;
+    const letter = item.letter;
+    const isAlphaDone = completedAlpha.has(letter);
+    const totalWords = getTotalWordsForLetter(letter);
+    const completedWordsCount = completedWordsMap[letter]?.size || 0;
+    return isAlphaDone && (totalWords === 0 || completedWordsCount >= totalWords);
+  };
+
+  const handleLessonSelect = (index: number) => {
+    if (index > 0 && !isLessonMastered(index - 1)) {
+      Alert.alert(
+        "Naka-lock pa ang Aralin!",
+        "Kailangan mo munang tapusin ang nakaraang Aralin bago mo ito mabuksan. Ipagpatuloy ang pag-aaral! 💪🏆",
+        [{ text: "Sige po!", style: "default" }]
+      );
+      return;
+    }
+    setSelectedAralin(index);
+  };
+
+  const handleAlphabetSelect = (alphabet: Alphabet) => {
+    handleReadingNext(alphabet, 'alphabet', [alphabet], 0);
+  };
+
+  const handleWordSelect = (wordText: string) => {
+    if (!currentLetterInfo) return;
+    
+    const allAralinWords: Word[] = [];
+    currentWordsData.forEach(w => {
+      w.contrasts.forEach(c => {
+        c.words.forEach(word => {
+          if (word.trim().toLowerCase() !== currentLetterInfo.letter.toLowerCase()) {
+            allAralinWords.push({
+              letter: w.letter,
+              contrasts: [{ ...c, words: [word] }]
+            });
+          }
+        });
       });
-      return { letter: wordData.letter, data: allWords };
-    }), []);
+    });
 
-  // ── Renderers ────────────────────────────────────────────────────────────────
+    const index = allAralinWords.findIndex(w => 
+      w.contrasts[0].words[0].trim().toLowerCase() === wordText.trim().toLowerCase()
+    );
 
-  const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => (
-    <AlphabetTile item={item} index={index} onPress={handleAlphabetSelect} />
-  );
+    if (index !== -1) {
+      handleReadingNext(allAralinWords[index], 'word', allAralinWords, index);
+    }
+  };
 
-  const renderWordItem = ({ item }: { item: string }) => (
-    <WordRow item={item} onPress={handleWordSelect} />
-  );
+  const handlePassageSelect = (passage: Passage) => {
+    const index = currentPassages.findIndex(p => p.title === passage.title);
+    handleReadingNext(passage, 'passage', currentPassages, index);
+  };
 
-  const renderSectionHeader = ({
-    section,
-  }: {
-    section: { letter: string; data: string[] };
-  }) => (
-    <WordSectionHeader
-      letter={section.letter}
-      index={letterIndexMap[section.letter] ?? 0}
-    />
-  );
+  const currentLetterInfo = selectedAralin !== null ? alphabetData[selectedAralin] : null;
+  const currentWordsData = currentLetterInfo ? wordsData.filter(w => w.letter === currentLetterInfo.letter) : [];
+  const currentPassages = currentLetterInfo ? passages.filter(p => p.aralin === (selectedAralin ?? 0) + 1) : [];
 
-  const renderPassageItem = ({ item, index }: { item: Passage; index: number }) => (
-    <PassageCard item={item} index={index} onPress={handlePassageSelect} />
-  );
+  const prepareWordsData = useMemo(() => {
+    if (!currentLetterInfo) return [];
+    const letterLower = currentLetterInfo.letter.toLowerCase();
+    return currentWordsData.map((w: Word) => {
+      const allWords = w.contrasts.flatMap((c: Contrasts) => c.words);
+      const filtered = Array.from(new Set(allWords)).filter(
+        word => word.trim().toLowerCase() !== letterLower,
+      );
+      return { title: w.letter, data: filtered };
+    }).filter(sec => sec.data.length > 0);
+  }, [currentWordsData, currentLetterInfo]);
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  const lessonAccent = selectedAralin !== null ? LETTER_COLORS[selectedAralin % LETTER_COLORS.length] : C.green;
+
+  const aralinProgress = useMemo(() => {
+    if (selectedAralin === null || !currentLetterInfo) return 0;
+    
+    const letter = currentLetterInfo.letter;
+    const isAlphaDone = completedAlpha.has(letter) ? 1 : 0;
+    const wordCount = completedWordsMap[letter]?.size || 0;
+    const totalWords = getTotalWordsForLetter(letter);
+    const passageCount = currentPassages.filter(p => completedPassages.has(p.title)).length;
+    const totalPassages = currentPassages.length;
+
+    const total = 1 + totalWords + totalPassages;
+    const mastered = isAlphaDone + wordCount + passageCount;
+    
+    return total > 0 ? mastered / total : 0;
+  }, [selectedAralin, currentLetterInfo, completedAlpha, completedWordsMap, completedPassages, currentPassages]);
+
+  const progressPercent = Math.round(aralinProgress * 100);
+
+  const renderLessonTile = ({ item, index }: { item: Alphabet; index: number }) => {
+    const isAlphaDone = completedAlpha.has(item.letter);
+    const completedWordsCount = completedWordsMap[item.letter]?.size || 0;
+    const totalWordsCount = getTotalWordsForLetter(item.letter);
+    
+    const isFullyMastered = isAlphaDone && (totalWordsCount === 0 || completedWordsCount >= totalWordsCount);
+    const isLocked = index > 0 && !isLessonMastered(index - 1);
+    const bg = isLocked ? '#dfe6e9' : LETTER_COLORS[index % LETTER_COLORS.length];
+
+    return (
+      <View style={S.lessonTileWrapper}>
+        <BounceIn delay={index * 35}>
+          <TouchableOpacity
+            onPress={() => handleLessonSelect(index)}
+            activeOpacity={isLocked ? 1 : 0.8}
+            style={[S.lessonTile, { backgroundColor: bg, opacity: isLocked ? 0.7 : 1 }]}
+          >
+            {!isLocked && (
+              <>
+                <View style={S.tileShine} />
+                <View style={S.tileShine2} />
+              </>
+            )}
+
+            {isFullyMastered && !isLocked && (
+              <View style={S.masteredBadge}>
+                <CheckCircleIcon size={16} color="#fff" />
+              </View>
+            )}
+
+            {isLocked && (
+              <View style={S.lockWrapper}>
+                <LockIcon size={32} color={C.slate} />
+              </View>
+            )}
+
+            <Text style={[S.tileLetter, { color: isLocked ? C.slate : C.white }]}>{item.letter}</Text>
+
+            <View style={[S.tileRibbon, { backgroundColor: isLocked ? C.slate + '44' : 'rgba(0,0,0,0.1)' }]}>
+              <Text style={[S.tileRibbonText, { color: isLocked ? C.slate : C.white }]}>Aralin {index + 1}</Text>
+            </View>
+          </TouchableOpacity>
+        </BounceIn>
+      </View>
+    );
+  };
+
   return (
-    <SafeAreaView style={S.bg}>
-      <View style={S.root}>
-
-        {/* Bubbles */}
-        <View style={bubbles.bubblesContainer} pointerEvents="none">
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
+    <SafeAreaView style={S.root} edges={['top', 'bottom']}>
+      <View style={S.bg}>
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
           <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
           <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
           <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
           <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
           <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
@@ -292,153 +360,145 @@ export default function PageSelectionScreen() {
           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
         </View>
 
-        {/* Nav */}
         <View style={{ zIndex: 100 }}>
-          <View style={upperNav.header}>
-            <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
-              <Image source={require('../../../assets/icons/BackButton-icon.png')} />
+          <View style={S.headerBar}>
+            <TouchableOpacity style={S.headerMenuBtn} onPress={handleCustomBack} activeOpacity={0.7}>
+              <BackArrow />
             </TouchableOpacity>
-            <Image style={upperNav.ciscLogo} source={require('../../../assets/images/cisckids.png')} />
-            <TouchableOpacity style={upperNav.touchable} onPress={() => setMenuVisible(v => !v)}>
-              <Image style={upperNav.menuIcon} source={require('../../../assets/icons/Menu-icon.png')} />
-            </TouchableOpacity>
+            <Image style={S.headerLogo} source={require('../../../assets/images/cisckids.png')} resizeMode="contain" />
+            <View style={{ width: 44 }} />
           </View>
-
-          {menuVisible && (
-            <View style={upperNav.dropdownMenu}>
-              <TouchableOpacity
-                onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
-                style={upperNav.logoutButton}
-              >
-                <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
-                <Text style={upperNav.logoutText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          {menuVisible && (
-            <TouchableOpacity
-              style={upperNav.closeMenu}
-              onPress={() => setMenuVisible(false)}
-              activeOpacity={1}
-            />
-          )}
         </View>
 
-        {/* ── Hero Banner ─────────────────────────────────────────────────── */}
-        <BounceIn delay={40}>
-          <View style={S.heroBanner}>
-            <View style={S.heroText}>
-              <Text style={S.heroSub}>Piliin ang iyong</Text>
-              <Text style={S.heroTitle}>BABASAHIN!</Text>
-              <Text style={S.heroHint}>I-tap ang gusto mong basahin</Text>
-            </View>
-            <Image
-              style={S.heroImage}
-              source={require('../../../assets/images/Abc-Reading.png')}
-            />
-          </View>
-        </BounceIn>
-
-        {/* ── Tabs ────────────────────────────────────────────────────────── */}
-        <BounceIn delay={100}>
-          <View style={S.tabRow}>
-            <TabBtn
-              iconView={<TypeIcon size={20} color={activeTab === 'alphabet' ? C.white : C.inkLight} />}
-              label="Alpabeto"
-              active={activeTab === 'alphabet'}
-              onPress={() => setActiveTab('alphabet')}
-            />
-            <TabBtn
-              iconView={<QuoteIcon size={20} color={activeTab === 'word' ? C.white : C.inkLight} />}
-              label="Salita"
-              active={activeTab === 'word'}
-              onPress={() => setActiveTab('word')}
-            />
-            <TabBtn
-              iconView={<BookOpenIcon size={20} color={activeTab === 'passage' ? C.white : C.inkLight} />}
-              label="Talata"
-              active={activeTab === 'passage'}
-              onPress={() => setActiveTab('passage')}
-            />
-          </View>
-        </BounceIn>
-
-        {/* ── Content ─────────────────────────────────────────────────────── */}
         <View style={S.contentArea}>
-
-          {/* ALPHABET */}
-          {activeTab === 'alphabet' && (
+          {loading ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ fontSize: 16, color: C.inkLight, fontWeight: '600' }}>Inaayos ang mga Aralin...</Text>
+            </View>
+          ) : selectedAralin === null ? (
             <>
-              <BounceIn delay={140}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <PencilIcon size={16} color={C.inkLight} />
-                    <Text style={S.sublabel}>Pumili ng letra na pagsasanayan:</Text>
+              <BounceIn delay={40}>
+                <View style={S.heroBanner}>
+                  <View style={S.heroText}>
+                    <Text style={S.heroSub}>Piliin ang iyong</Text>
+                    <Text style={S.heroTitle}>ARALIN!</Text>
+                    <Text style={S.heroHint}>Simulan mula sa simula</Text>
+                  </View>
+                  <Image style={S.heroImage} source={require('../../../assets/images/Abc-Reading.png')} />
                 </View>
               </BounceIn>
+
               <FlatList
                 data={alphabetData}
-                renderItem={renderAlphabetItem}
+                renderItem={renderLessonTile}
                 keyExtractor={item => item.letter}
-                numColumns={4}
-                columnWrapperStyle={S.alphaRow}
+                numColumns={3}
+                columnWrapperStyle={{ justifyContent: 'space-between' }}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={S.alphaListPad}
+                contentContainerStyle={{ paddingBottom: 40, paddingTop: 16 }}
               />
             </>
-          )}
+          ) : (
+            <View style={{ flex: 1 }}>
+              <View style={{ paddingHorizontal: 4, marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.slate }}>Lesson Progress</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: lessonAccent }}>{progressPercent}%</Text>
+                </View>
+                <View style={{ height: 6, backgroundColor: C.greenLight + '30', borderRadius: 3, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', width: `${progressPercent}%`, backgroundColor: lessonAccent, borderRadius: 3 }} />
+                </View>
+              </View>
 
-          {/* WORDS */}
-          {activeTab === 'word' && (
-            <>
-              <BounceIn delay={140}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <QuoteIcon size={16} color={C.inkLight} />
-                    <Text style={S.sublabel}>Pumili ng salita na pagsasanayan:</Text>
-                </View>
-              </BounceIn>
-              {prepareWordsData.length > 0 ? (
-                <SectionList
-                  sections={prepareWordsData}
-                  renderItem={renderWordItem}
-                  renderSectionHeader={renderSectionHeader}
-                  keyExtractor={(item, index) => `${item}-${index}`}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ paddingBottom: 32 }}
-                  stickySectionHeadersEnabled
-                />
-              ) : (
-                <View style={S.emptyState}>
-                    <SearchIcon size={48} color={C.mint} />
-                  <Text style={S.emptyText}>Walang salita ang nahanap</Text>
-                </View>
-              )}
-            </>
-          )}
+              <FlatList
+                data={[]}
+                renderItem={() => null}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 48 }}
+                ListHeaderComponent={
+                  <View>
+                    <BounceIn delay={40}>
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => currentLetterInfo && handleAlphabetSelect(currentLetterInfo)}
+                        style={[S.lessonHeroCard, { backgroundColor: lessonAccent }]}
+                      >
+                        <View style={[S.heroCircle, { backgroundColor: 'rgba(255,255,255,0.10)', top: -20, right: -20, width: 100, height: 100 }]} />
+                        <View style={[S.heroCircle, { backgroundColor: 'rgba(255,255,255,0.06)', bottom: -30, left: -10, width: 80, height: 80 }]} />
 
-          {/* PASSAGES */}
-          {activeTab === 'passage' && (
-            <>
-              <BounceIn delay={140}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <BookOpenIcon size={16} color={C.inkLight} />
-                    <Text style={S.sublabel}>Pumili ng talata na pagsasanayan:</Text>
-                </View>
-              </BounceIn>
-              {passages.length > 0 ? (
-                <FlatList
-                  data={passages}
-                  renderItem={renderPassageItem}
-                  keyExtractor={(_, index) => index.toString()}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ paddingBottom: 32 }}
-                />
-              ) : (
-                <View style={S.emptyState}>
-                    <SearchIcon size={48} color={C.mint} />
-                  <Text style={S.emptyText}>Walang talata ang nahanap</Text>
-                </View>
-              )}
-            </>
+                        <View style={S.lessonHeroInner}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={S.lessonHeroLetter}>
+                              {currentLetterInfo?.letter}
+                            </Text>
+                            <Text style={S.lessonHeroTapHint}>I-tap para pakinggan at bigkasin</Text>
+                          </View>
+                          
+                          <View style={S.lessonHeroLetterBig}>
+                            {currentLetterInfo && completedAlpha.has(currentLetterInfo.letter) ? (
+                               <CheckCircleIcon size={48} color={C.white} />
+                            ) : (
+                               <Text style={S.lessonHeroLetterShadow}>
+                                 {currentLetterInfo?.letter}
+                               </Text>
+                            )}
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    </BounceIn>
+
+                    {prepareWordsData.length > 0 && (
+                      <BounceIn delay={100}>
+                        <View style={S.sectionWrap}>
+                          <View style={S.sectionHeaderRow}>
+                            <View style={[S.wordBubble, { backgroundColor: lessonAccent + '15', width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
+                               <QuoteIcon size={16} color={lessonAccent} />
+                            </View>
+                            <Text style={S.sectionTitle}>Mga Salita</Text>
+                            <View style={S.sectionLine} />
+                          </View>
+                          
+                          <View style={S.wordGridContainer}>
+                            {prepareWordsData[0].data.map((wordText, i) => (
+                              <WordCard
+                                key={`${wordText}-${i}`}
+                                item={wordText}
+                                index={i}
+                                isMastered={currentLetterInfo ? !!completedWordsMap[currentLetterInfo.letter]?.has(wordText) : false}
+                                onPress={(w) => handleWordSelect(w)}
+                              />
+                            ))}
+                          </View>
+                        </View>
+                      </BounceIn>
+                    )}
+
+                    {currentPassages.length > 0 && (
+                      <BounceIn delay={140}>
+                        <View style={S.sectionWrap}>
+                          <View style={S.sectionHeaderRow}>
+                            <View style={[S.passageEmojiBubble, { backgroundColor: lessonAccent + '15', width: 32, height: 32 }]}>
+                               <BookOpenIcon size={16} color={lessonAccent} />
+                            </View>
+                            <Text style={S.sectionTitle}>Mga Talata</Text>
+                            <View style={S.sectionLine} />
+                          </View>
+                          {currentPassages.map((p, i) => (
+                            <PassageCard
+                              key={`passage-${i}`}
+                              item={p}
+                              index={i}
+                              isMastered={completedPassages.has(p.title)}
+                              onPress={handlePassageSelect}
+                            />
+                          ))}
+                        </View>
+                      </BounceIn>
+                    )}
+                  </View>
+                }
+              />
+            </View>
           )}
         </View>
       </View>
@@ -454,21 +514,21 @@ export default function PageSelectionScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = StyleSheet.create({
-  bg:   { flex: 1, backgroundColor: C.bg },
   root: { flex: 1 },
+  bg: { flex: 1, backgroundColor: C.bg },
+  headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8, zIndex: 100 },
+  headerLogo: { width: 140, height: 48 },
+  headerMenuBtn: {
+    width: 44, height: 44, borderRadius: 14, backgroundColor: C.white,
+    justifyContent: 'center', alignItems: 'center', ...Shadows.subtle,
+  },
 
-  // Hero
+  // ── Hero Banner ────────────────────────────────────────────────────────
   heroBanner: {
-    marginHorizontal: 16,
-    marginTop: 10,
-    backgroundColor: C.white,
-    borderRadius: Radii.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    ...Shadows.cardLift,
-    overflow: 'hidden',
+    backgroundColor: C.white, borderRadius: Radii.xl,
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 16,
+    ...Shadows.cardLift, overflow: 'hidden',
   },
   heroText:  { flex: 1 },
   heroSub:   { fontSize: 13, color: C.slate, fontWeight: '600', marginBottom: 2 },
@@ -476,170 +536,195 @@ const S = StyleSheet.create({
   heroHint:  { fontSize: 12, color: C.slate, marginTop: 6 },
   heroImage: { width: 90, height: 90, resizeMode: 'contain' },
 
-  // Tabs
-  tabRow: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginTop: 14,
-    gap: 8,
-  },
-  tabBtn: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 18,
-    backgroundColor: C.white,
-    borderWidth: 2,
-    borderColor: C.greenLight,
-    shadowColor: C.greenDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-    gap: 4,
-    position: 'relative',
-  },
-  tabBtnActive: {
-    backgroundColor: C.green,
-    borderColor: C.greenDark,
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  tabEmoji:      { fontSize: 20 },
-  tabIconWrapper: { marginBottom: 2 },
-  tabLabel:      { fontSize: 12, fontWeight: '700', color: C.inkLight, textAlign: 'center' },
-  tabLabelActive:{ color: C.white },
-  tabDot: {
-    position: 'absolute',
-    bottom: 6,
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: C.white,
-    opacity: 0.7,
-  },
+  contentArea: { flex: 1, marginHorizontal: 16, marginTop: 12 },
 
-  // Sublabel
-  sublabelRow:  { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, paddingHorizontal: 4 },
-  sublabel:     { fontSize: 14, fontWeight: '700', color: C.inkLight },
-
-  // Content area
-  contentArea: {
-    flex: 1,
-    marginHorizontal: 16,
-    marginTop: 14,
-  },
-
-  // Alphabet grid
-  alphaRow:     { justifyContent: 'space-between', marginBottom: 10 },
-  alphaListPad: { paddingBottom: 32 },
-  alphaTile: {
-    width: (SW - 60) / 4,
-    aspectRatio: 1,
-    borderRadius: 18,
+  // ── Lesson Grid Tiles ──────────────────────────────────────────────────
+  lessonTileWrapper: { width: (SW - 48) / 3, marginBottom: 14 },
+  lessonTile: {
+    width: '100%',
+    aspectRatio: 0.95,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 5,
+    ...Shadows.card,
     position: 'relative',
     overflow: 'hidden',
   },
-  alphaTileShine: {
+  tileShine: {
     position: 'absolute',
-    top: 6,
-    right: 8,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.35)',
+    top: 8,
+    right: 10,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: 'rgba(255,255,255,0.28)',
   },
-  alphaTileLetter: {
-    fontSize: 30,
+  tileShine2: {
+    position: 'absolute',
+    top: 14,
+    right: 20,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  tileLetter: {
+    fontSize: 32,
     fontWeight: '900',
     color: C.white,
-    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowColor: 'rgba(0,0,0,0.18)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-
-  // Words
-  sectionHeader: {
-    flexDirection: 'row',
+  tileRibbon: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+    paddingVertical: 5,
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
-    marginBottom: 6,
-    marginTop: 4,
   },
-  sectionHeaderText: {
-    fontSize: 18,
-    fontWeight: '900',
+  tileRibbonText: {
+    fontSize: 10,
+    fontWeight: '800',
     color: C.white,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
-  wordRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.white,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 8,
-    shadowColor: C.greenDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 5,
-    elevation: 2,
-    gap: 12,
-  },
-  wordDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: C.green,
-  },
-  wordText: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: '700',
-    color: C.ink,
-  },
-  wordArrow: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: C.greenLight,
+  masteredBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  wordArrowText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: C.greenDeep,
+  lockWrapper: {
+    position: 'absolute', top: '25%', alignSelf: 'center', opacity: 0.5,
   },
 
-  // Passages
+  // ── Lesson Detail – Hero Card ──────────────────────────────────────────
+  lessonHeroCard: {
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 24,
+    overflow: 'hidden',
+    ...Shadows.cardLift,
+  },
+  heroCircle: { position: 'absolute', borderRadius: 999 },
+  lessonHeroInner: { flexDirection: 'row', alignItems: 'center' },
+  lessonHeroLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.85)',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  lessonHeroLetter: {
+    fontSize: 48,
+    fontWeight: '900',
+    color: C.white,
+    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 6,
+    lineHeight: 56,
+  },
+  lessonHeroTapHint: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.70)',
+    marginTop: 6,
+  },
+  lessonHeroLetterBig: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  lessonHeroLetterShadow: {
+    fontSize: 42,
+    fontWeight: '900',
+    color: 'rgba(255,255,255,0.35)',
+  },
+
+  // ── Section Wrapper ────────────────────────────────────────────────────
+  sectionWrap: { marginBottom: 20 },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    gap: 8,
+  },
+  sectionDot: { width: 8, height: 8, borderRadius: 4 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: C.ink,
+    letterSpacing: 0.3,
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: C.greenLight,
+    marginLeft: 6,
+  },
+
+  // ── Word Cards ─────────────────────────────────────────────────────────
+  wordCard: {
+    backgroundColor: C.white,
+    borderRadius: 16,
+    marginBottom: 10,
+    ...Shadows.card,
+    overflow: 'hidden',
+  },
+  wordAccentLine: { height: 3, width: '100%' },
+  wordCardBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  wordBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wordCardText: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.ink,
+    letterSpacing: 0.2,
+  },
+  wordGoBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wordGoBtnText: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+
+  // ── Passage Cards ──────────────────────────────────────────────────────
   passageCard: {
     backgroundColor: C.white,
     borderRadius: 18,
     marginBottom: 12,
-    borderLeftWidth: 5,
-    shadowColor: C.greenDark,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    borderLeftWidth: 4,
+    ...Shadows.card,
     overflow: 'hidden',
-  },
-  passageAccentBar: {
-    height: 4,
-    width: '100%',
-    opacity: 0.4,
   },
   passageCardInner: {
     flexDirection: 'row',
@@ -648,18 +733,17 @@ const S = StyleSheet.create({
     gap: 12,
   },
   passageEmojiBubble: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   passageCardTitle: {
     fontSize: 15,
     fontWeight: '800',
     color: C.ink,
-    marginBottom: 4,
+    marginBottom: 3,
     lineHeight: 20,
   },
   passageCardAuthor: {
@@ -680,13 +764,86 @@ const S = StyleSheet.create({
     fontWeight: '800',
   },
 
-  // Empty state
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
+  // ── (kept for backwards compat, used by AlphabetTile inside detail) ─
+  alphaTile: {
+    width: (SW - 60) / 3,
+    aspectRatio: 1,
+    borderRadius: 18,
     justifyContent: 'center',
-    paddingTop: 60,
+    alignItems: 'center',
+    ...Shadows.card,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  alphaTileShine: {
+    position: 'absolute',
+    top: 6,
+    right: 8,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  alphaTileLetter: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: C.white,
+    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
 
-  emptyText:  { fontSize: 16, color: C.slate, fontWeight: '600' },
+  // ── Word Grid Layout ───────────────────────────────────────────────────
+  wordGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'flex-start',
+    marginTop: 4,
+  },
+  wordGridCard: {
+    backgroundColor: C.white,
+    borderRadius: 16,
+    aspectRatio: 1,
+    ...Shadows.card,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  wordCardAccentBar: {
+    height: 3,
+    width: '100%',
+  },
+  wordGridCardBody: {
+    padding: 8,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wordIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  wordGridText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: C.ink,
+    textAlign: 'center',
+  },
+  wordGridMastery: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: C.green + '15',
+    borderRadius: 8,
+    padding: 2,
+  },
+
+  // ── Legacy / kept for sub-components ───────────────────────────────────
+  sublabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, paddingHorizontal: 4 },
+  sublabel: { fontSize: 16, fontWeight: '800', color: C.inkLight },
 });
+

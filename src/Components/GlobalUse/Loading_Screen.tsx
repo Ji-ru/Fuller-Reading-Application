@@ -13,75 +13,67 @@ export default function LoadingScreen() {
 
   useEffect(() => {
     console.log('LoadingScreen: Starting verification...');
-    
-    const verifyUserAndNavigate = async () => {
+    let isMounted = true;
+
+    // Firebase Auth restores the persisted session asynchronously.
+    // onAuthStateChanged fires once it's ready (user or null).
+    const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
+      if (!isMounted) return;
+
       try {
-        // Check authentication
-        const currentUser = auth().currentUser;
-        
         if (!currentUser) {
           console.log('LoadingScreen: No user found, going to Login');
           setStatusMessage('No user found. Redirecting...');
-          setTimeout(() => {
-            handleReplaceStep('Login');
-          }, 1000);
+          setTimeout(() => { if (isMounted) handleReplaceStep('Login'); }, 800);
           return;
         }
 
         console.log('LoadingScreen: User found, checking profile...');
         setStatusMessage('Checking profile...');
-        
-        // Check user profile
+
         const userDoc = await firestore()
           .collection('users')
           .doc(currentUser.uid)
           .get();
+
+        if (!isMounted) return;
 
         if (!userDoc.exists) {
           console.log('LoadingScreen: Profile not found, going to Login');
           setStatusMessage('Profile not found. Redirecting...');
           setTimeout(() => {
             auth().signOut();
-            handleReplaceStep('Login');
-          }, 1000);
+            if (isMounted) handleReplaceStep('Login');
+          }, 800);
           return;
         }
 
         const userData = userDoc.data();
         const role = userData?.role;
-        
-        console.log(`LoadingScreen: User verified as ${role}, going to UserHome`);
+
+        console.log(`LoadingScreen: User verified as ${role}`);
         setStatusMessage(`Welcome ${userData?.firstName || ''}!`);
 
-        // Success - navigate to UserHome
         setTimeout(() => {
+          if (!isMounted) return;
           if (role === 'student') {
             handleReplaceStep('UserHome');
           } else if (role === 'faculty') {
             handleReplaceStep('FacultyDashboard');
           }
-          
         }, 500);
-
       } catch (error) {
         console.error('LoadingScreen: Error during verification:', error);
         setStatusMessage('Error. Redirecting...');
-        setTimeout(() => {
-          handleReplaceStep('Login');
-        }, 1000);
+        setTimeout(() => { if (isMounted) handleReplaceStep('Login'); }, 800);
       }
-    };
+    });
 
-    // Set a timeout to prevent infinite loading
+    // Safety timeout — if onAuthStateChanged never fires within 5s, go to Login
     const timeoutId = setTimeout(() => {
       console.log('LoadingScreen: Timeout reached, going to Login');
-      handleReplaceStep('Login');
-    }, 3500);
-
-    // Start verification after a short delay
-    const verifyTimer = setTimeout(() => {
-      verifyUserAndNavigate();
-    }, 500);
+      if (isMounted) handleReplaceStep('Login');
+    }, 5000);
 
     // Progress bar animation
     const progressInterval = setInterval(() => {
@@ -90,14 +82,15 @@ export default function LoadingScreen() {
           clearInterval(progressInterval);
           return 100;
         }
-        return prev + 1.43; // 100% over 3.5 seconds
+        return prev + 1; // ~100% over 5 seconds
       });
     }, 50);
 
     return () => {
       console.log('LoadingScreen: Cleanup');
+      isMounted = false;
+      unsubscribe();
       clearTimeout(timeoutId);
-      clearTimeout(verifyTimer);
       clearInterval(progressInterval);
     };
   }, []);

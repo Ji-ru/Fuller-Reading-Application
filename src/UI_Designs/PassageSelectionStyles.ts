@@ -14,10 +14,11 @@ const selection = StyleSheet.create({
     zIndex: 1, 
   },
   label: {
-    fontSize: 35,
+    fontSize: 32,
     fontFamily: 'Satoshi-Bold',
-    elevation: 5,
     textAlign: 'center',
+    color: '#1b2e23',
+    marginVertical: 12,
   },
   sublabel: {
     fontFamily: 'Satoshi-Bold',

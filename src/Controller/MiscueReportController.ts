@@ -217,6 +217,59 @@ export const MiscueReportController = {
     return snapshot.empty ? null : snapshot.docs[0].id;
   },
 
+  // ================= MASTERY CHECK =================
+  async getStudentMasteredLessons(studentId: string): Promise<string[]> {
+    try {
+      const { completedAlpha, completedWords } = await this.getStudentDetailedCompletion(studentId);
+
+      // A lesson is "mastered" if the user has completed its alphabet step AND at least one of its words
+      // (Legacy logic for compatibility, though frontend will now use detailed counts)
+      const lettersWithWords = Object.keys(completedWords);
+      return Array.from(completedAlpha).filter(letter => lettersWithWords.includes(letter));
+    } catch (error) {
+      console.error('MASTERY FETCH ERROR:', error);
+      return [];
+    }
+  },
+
+  async getStudentDetailedCompletion(studentId: string): Promise<{ 
+    completedAlpha: Set<string>; 
+    completedWords: Record<string, Set<string>>; 
+    completedPassages: Set<string>;
+  }> {
+    try {
+      const [alphaSnap, wordsSnap, reportSnap] = await Promise.all([
+        firestore().collection('alphabetCompleted').where('studentId', '==', studentId).get(),
+        firestore().collection('wordCompleted').where('studentId', '==', studentId).get(),
+        firestore().collection('miscueReports').where('studentId', '==', studentId).get(),
+      ]);
+
+      const completedAlpha = new Set(alphaSnap.docs.map(d => d.data().letter as string));
+      
+      const completedWords: Record<string, Set<string>> = {};
+      wordsSnap.docs.forEach(doc => {
+        const data = doc.data();
+        const letter = data.letter as string;
+        const word = data.word as string;
+        if (!completedWords[letter]) completedWords[letter] = new Set();
+        completedWords[letter].add(word);
+      });
+
+      const completedPassages = new Set<string>();
+      reportSnap.docs.forEach(doc => {
+        const data = doc.data();
+        if ((data.accuracyRate || 0) >= 90) {
+          completedPassages.add(data.passageTitle as string);
+        }
+      });
+
+      return { completedAlpha, completedWords, completedPassages };
+    } catch (error) {
+      console.error('DETAILED COMPLETION FETCH ERROR:', error);
+      return { completedAlpha: new Set(), completedWords: {}, completedPassages: new Set() };
+    }
+  },
+
   // ================= DEBUG HELPER =================
   async debugCheckReports(studentId: string) {
     const snapshot = await firestore()

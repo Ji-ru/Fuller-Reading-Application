@@ -34,6 +34,23 @@ import {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// ─── Header Icons ────────────────────────────────────────────────────────────
+function BackArrow({ color = C.ink }: { color?: string }) {
+  return (
+    <View style={{ width: 12, height: 12, borderLeftWidth: 2.5, borderTopWidth: 2.5, borderColor: color, transform: [{ rotate: '-45deg' }] }} />
+  );
+}
+ 
+function MenuBars({ color = C.ink }: { color?: string }) {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: color }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: color }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: color }} />
+    </View>
+  );
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface StudentStats {
   totalAttempts: number;
@@ -319,19 +336,45 @@ export default function Profile() {
     return map[level || 'beginner'] ?? map.beginner;
   };
 
+// ─── Jumping Dots Loading ───────────────────────────────────────────────────
+function DotsLoading() {
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animate = (anim: Animated.Value, delay: number) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: -10, duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0,   duration: 400, useNativeDriver: true }),
+          Animated.delay(800 - delay),
+        ])
+      );
+    };
+    Animated.parallel([
+      animate(dot1, 0),
+      animate(dot2, 200),
+      animate(dot3, 400),
+    ]).start();
+  }, []);
+
+  return (
+    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginVertical: 20 }}>
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#1a7a45', transform: [{ translateY: dot1 }] }} />
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#3ccf7e', transform: [{ translateY: dot2 }] }} />
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#d4f5e2', transform: [{ translateY: dot3 }] }} />
+    </View>
+  );
+}
+
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <SafeAreaView style={S.loadingBg}>
-        <View style={S.loadingCard}>
-          <BookOpenIcon size={48} color={C.teal} />
-          <Text style={S.loadingTitle}>Naglo-load ang profile…</Text>
-          <View style={{ gap: 10, marginTop: 16 }}>
-            <Skeleton h={20} w="70%" />
-            <Skeleton h={14} w="50%" />
-            <Skeleton h={14} w="60%" />
-          </View>
-        </View>
+        <DotsLoading />
+        <Text style={S.loadingTitle}>Naglo-load ang profile…</Text>
       </SafeAreaView>
     );
   }
@@ -367,13 +410,13 @@ export default function Profile() {
 
         {/* Nav */}
         <View style={{ zIndex: 100 }}>
-          <View style={upperNav.header}>
-            <TouchableOpacity style={upperNav.touchable} onPress={() => handleBackStep()}>
-              <Image source={require('../../../assets/icons/BackButton-icon.png')} />
+          <View style={S.headerBar}>
+            <TouchableOpacity style={S.headerMenuBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
+              <BackArrow />
             </TouchableOpacity>
-            <Image style={upperNav.ciscLogo} source={require('../../../assets/images/cisckids.png')} />
-            <TouchableOpacity style={upperNav.touchable} onPress={() => setMenuVisible(v => !v)}>
-              <Image style={upperNav.menuIcon} source={require('../../../assets/icons/Menu-icon.png')} />
+            <Image style={S.headerLogo} source={require('../../../assets/images/cisckids.png')} />
+            <TouchableOpacity style={S.headerMenuBtn} onPress={() => setMenuVisible(v => !v)} activeOpacity={0.7}>
+              <MenuBars />
             </TouchableOpacity>
           </View>
           {menuVisible && (
@@ -425,7 +468,6 @@ export default function Profile() {
           <View style={S.section}>
             <Text style={S.sectionTitle}><UserProfileIcon size={16} color={C.ink} /> Impormasyon</Text>
             <View style={S.infoRow}>
-              <InfoPill iconView={<CakeIcon size={18} color={C.teal} />} label="Kaarawan" value={profileData?.studentData?.dateOfBirth ?? 'Hindi itinakda'} />
               <InfoPill iconView={<GenderIcon size={18} color={C.teal} />} label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
             </View>
             <View style={S.infoRow}>
@@ -674,6 +716,25 @@ export default function Profile() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = StyleSheet.create({
   bg:           { flex: 1, backgroundColor: C.bg },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    zIndex: 100,
+  },
+  headerLogo: { width: 140, height: 48 },
+  headerMenuBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: C.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.subtle,
+  },
+  menuIcon: { width: 22, height: 22, tintColor: C.ink },
   loadingBg:    { flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
   loadingCard:  { backgroundColor: C.white, borderRadius: Radii.lg, padding: 32, alignItems: 'center', width: SCREEN_WIDTH * 0.8 },
 
@@ -722,7 +783,7 @@ const S = StyleSheet.create({
 
   tilesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statTile: {
-    width: (SCREEN_WIDTH - 68) / 2, backgroundColor: C.greenPale,
+    width: (SCREEN_WIDTH - 68 - 10) / 2, backgroundColor: C.greenPale,
     borderRadius: 18, padding: 16, alignItems: 'center', borderTopWidth: 4,
   },
 

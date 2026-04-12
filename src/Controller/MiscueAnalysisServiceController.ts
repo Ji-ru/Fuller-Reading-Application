@@ -280,10 +280,10 @@ export class MiscueAnalysisService {
 
   static getAccuracyFeedback(accuracy: string): string {
     const accuracyNum = parseFloat(accuracy);
-    if (accuracyNum >= 95) return 'Excellent Reading! 🎉';
-    if (accuracyNum >= 90) return 'Great Job!';
-    if (accuracyNum >= 80) return 'Good Effort!';
-    if (accuracyNum >= 70) return 'Keep Practicing!';
+    if (accuracyNum >= 95) return 'Napakahusay! 🎉';
+    if (accuracyNum >= 90) return 'Magaling!';
+    if (accuracyNum >= 80) return 'Mabuti!';
+    if (accuracyNum >= 70) return 'Mag-ensayo pa!';
     return "Subukan Muli!";
   }
 
@@ -342,9 +342,7 @@ export class MiscueAnalysisService {
     return {
       isCorrect,
       accuracy: isCorrect ? '100' : '0',
-      feedback: isCorrect
-        ? `✓ Perfect! You said the letter "${normalizedTarget}" correctly.`
-        : `✗ Try again. Say just the letter "${normalizedTarget}". You said: "${normalizedSpoken}"`,
+      feedback: isCorrect ? 'Mahusay!' : 'Maling Bigkas',
     };
   }
 
@@ -395,9 +393,7 @@ export class MiscueAnalysisService {
     return {
       isCorrect: allMatch,
       accuracy: allMatch ? '100' : '0',
-      feedback: allMatch
-        ? `✓ Tama! Nabigkas mo ang salitang "${cleanTarget}"`
-        : `✗ Ulitin. Inaaasahan: "${cleanTarget}", ang iyong nabigkas: "${cleanSpoken}"`,
+      feedback: allMatch ? 'Mahusay!' : 'Maling Bigkas',
     };
   }
 }

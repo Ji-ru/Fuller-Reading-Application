@@ -1,33 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
-import user from '../../../UI_Designs/UserStyle';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import LogoutModal from '../../GlobalUse/Logout_Modal';
 import upperNav from '../../../UI_Designs/UpperNavigation';
 
 interface ReadingHeaderProps {
   onBack: () => void;
-  onMenuToggle: () => void;
   onLogout: () => void;
-  menuVisible: boolean;
+}
+
+function BackArrow({ color = '#1b2e23' }: { color?: string }) {
+  return (
+    <View style={{ width: 12, height: 12, borderLeftWidth: 2.5, borderTopWidth: 2.5, borderColor: color, transform: [{ rotate: '-45deg' }] }} />
+  );
 }
 
 export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
   onBack,
-  onMenuToggle,
   onLogout,
-  menuVisible,
 }) => {
 
   const [logoutVisible, setLogoutModalVisible] = useState(false);
 
   const handleLogoutPress = () => {
-    onMenuToggle();
     setLogoutModalVisible(true);
   };
 
   const confirmLogout = () => {
     setLogoutModalVisible(false);
-    onLogout(); // Call parent's logout function
+    onLogout(); 
   };
 
   const cancelLogout = () => {
@@ -36,48 +36,20 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
 
   return (
     <>
-      <View style={upperNav.header}>
-        <TouchableOpacity style={upperNav.touchable} onPress={onBack}>
-          <Image
-            source={require('../../../../assets/icons/BackButton-icon.png')}
-          />
+      <View style={localStyles.headerRow}>
+        <TouchableOpacity style={localStyles.backBtn} onPress={onBack} activeOpacity={0.7}>
+          <BackArrow />
         </TouchableOpacity>
+
         <Image
-          style={upperNav.ciscLogo}
+          style={localStyles.logo}
           source={require('../../../../assets/images/cisckids.png')}
+          resizeMode="contain"
         />
-        <TouchableOpacity style={upperNav.touchable} onPress={onMenuToggle}>
-          <Image
-            style={upperNav.menuIcon}
-            source={require('../../../../assets/icons/Menu-icon.png')}
-          />
-        </TouchableOpacity>
+
+        <View style={{ width: 44 }} />
       </View>
-
-      {menuVisible && (
-        <View style={upperNav.dropdownMenu}>
-          <TouchableOpacity
-            onPress={handleLogoutPress}
-            style={upperNav.logoutButton}
-          >
-            <Image
-              source={require('../../../../assets/icons/Logout-icon.png')}
-              style={upperNav.logoutIcon}
-            />
-            <Text style={upperNav.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {menuVisible && (
-        <TouchableOpacity
-          style={upperNav.closeMenu}
-          onPress={onMenuToggle}
-          activeOpacity={1}
-        />
-      )}
       
-      {/* Logout Modal */}
       <LogoutModal
         visible={logoutVisible}
         onCancel={cancelLogout}
@@ -86,3 +58,49 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
     </>
   );
 };
+
+const localStyles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  menuBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  menuIcon: {
+    width: 22,
+    height: 22,
+    tintColor: '#1b2e23',
+    resizeMode: 'contain',
+  },
+  logo: {
+    width: 120,
+    height: 40,
+  },
+});

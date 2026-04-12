@@ -272,21 +272,6 @@ export default function LoginScreen() {
                 </View>
                 <View>
                   <TouchableOpacity
-                    style={login.signupwithgooglebutton}
-                    onPress={() => {
-                      dismissKeyboard();
-                      handleNextStep('SignUpOne');
-                    }}
-                    activeOpacity={0.7}
-                    disabled={loading}
-                  >
-                    <Image
-                      style={login.googleimage}
-                      source={require('../../assets/images/Google-icon.png')}
-                    />
-                    <Text style={login.registerText}>Sign Up with Google</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
                     style={login.signupwithemailbutton}
                     onPress={() => {
                       dismissKeyboard();

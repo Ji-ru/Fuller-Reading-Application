@@ -1,15 +1,19 @@
 import React from 'react';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import chooseRole from '../../UI_Designs/ChooseRoleStyle';
 import bubbles from '../../UI_Designs/BubblesDesign';
-import user from '../../UI_Designs/UserStyle';
 import buttons from '../../UI_Designs/ButtonStyles';
-import upperNav from '../../UI_Designs/UpperNavigation';
+
+function BackArrow({ color = '#1b2e23' }: { color?: string }) {
+  return (
+    <View style={{ width: 12, height: 12, borderLeftWidth: 2.5, borderTopWidth: 2.5, borderColor: color, transform: [{ rotate: '-45deg' }] }} />
+  );
+}
 
 export default function ChooseRole() {
-  const { handleRoleSelection } = useNavigationHelper();
+  const { handleRoleSelection, handleBackStep } = useNavigationHelper();
 
   return (
     <SafeAreaView style={chooseRole.container}>
@@ -37,15 +41,20 @@ export default function ChooseRole() {
           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
         </View>
 
-        {/* HEADER (LOGO + MENU ICON) */}
-        <View>
-          <View style={upperNav.header}>
-            <Image
-              style={upperNav.ciscLogo}
-              source={require('../../../assets/images/cisckids.png')}
-            />
-          </View>
+        {/* HEADER WITH BACK BUTTON */}
+        <View style={localStyles.headerRow}>
+          <TouchableOpacity style={localStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
+            <BackArrow />
+          </TouchableOpacity>
+          <Image
+            style={localStyles.logo}
+            source={require('../../../assets/images/cisckids.png')}
+            resizeMode="contain"
+          />
+          {/* Spacer to balance the row */}
+          <View style={{ width: 44 }} />
         </View>
+
         {/* TITLE */}
         <Text style={chooseRole.title}>Welcome! Choose your role.</Text>
 
@@ -62,10 +71,37 @@ export default function ChooseRole() {
                 <Text style={buttons.nextPageText}>I am a Student</Text>
             </TouchableOpacity>
             <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('faculty')}>
-                <Text style={buttons.nextPageText}>I am a Teacher</Text>
+                <Text style={[buttons.nextPageText, { color: '#1a7a45' }]}>I am a Teacher</Text>
             </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  logo: {
+    width: 140,
+    height: 48,
+  },
+});

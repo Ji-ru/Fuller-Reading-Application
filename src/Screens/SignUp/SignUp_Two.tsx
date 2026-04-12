@@ -10,6 +10,10 @@ import {
   Alert,
   Modal,
   ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
 } from 'react-native';
 import signup from '../../UI_Designs/SignUpStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -27,7 +31,7 @@ export default function SignUpTwoScreen() {
   const [currentStep, setCurrentStep] = useState(2);
 
   // Handles Navigation After Registration
-  const { handleDesignatedUserPage, handleCancelRegistration } = useNavigationHelper();
+  const { handleDesignatedUserPage, handleCancelRegistration, handleBackStep } = useNavigationHelper();
 
   // User Account Credential States
   const [email, setEmail] = useState('');
@@ -67,8 +71,8 @@ export default function SignUpTwoScreen() {
           lastName: personalInfo.lastName!,
           sex: personalInfo.sex!,
           profileImageUrl: personalInfo?.profileImageUrl,
-          gradeLevel: personalInfo.studentData?.gradeLevel,
-          dateOfBirth: personalInfo.studentData?.dateOfBirth,
+          gradeLevel: (personalInfo as any).gradeLevel,
+          dateOfBirth: (personalInfo as any).dateOfBirth,
         });        
       } else if (personalInfo.role! === 'faculty') {
         await SignUpUserCredentials(email, password, {
@@ -119,12 +123,28 @@ export default function SignUpTwoScreen() {
 
   return (
     <SafeAreaView style={signup.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+      >
       <View>
-        {/* CISC KIDS TITLE */}
-        <Image
-          source={require('../../../assets/images/cisckids.png')}
-          style={signup.ciscLogo}
-        />
+        {/* HEADER WITH BACK BUTTON */}
+        <View style={localStyles.headerRow}>
+          <TouchableOpacity style={localStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
+            <View style={localStyles.backArrow} />
+          </TouchableOpacity>
+          <Image
+            source={require('../../../assets/images/cisckids.png')}
+            style={localStyles.logo}
+            resizeMode="contain"
+          />
+          <View style={{ width: 44 }} />
+        </View>
         {/* BUBBLE DECORATIONS */}
         <View style={bubbles.bubblesContainer} pointerEvents="none">
           {/* Top Bubbles */}
@@ -220,6 +240,8 @@ export default function SignUpTwoScreen() {
           <Text style={buttons.cancelText}>Cancel</Text>
         </TouchableOpacity>
       </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* LOADING MODAL */}
       <Modal
@@ -271,3 +293,38 @@ export default function SignUpTwoScreen() {
     </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  backArrow: {
+    width: 12,
+    height: 12,
+    borderLeftWidth: 2.5,
+    borderTopWidth: 2.5,
+    borderColor: '#1b2e23',
+    transform: [{ rotate: '-45deg' }],
+  },
+  logo: {
+    width: 140,
+    height: 48,
+  },
+});

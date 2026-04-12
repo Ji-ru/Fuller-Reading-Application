@@ -30,6 +30,8 @@ export type RootStackParamList = {
   ReadingActivity: {
     readingMaterial: ReadingMaterial;
     type: 'alphabet' | 'passage' | 'word';
+    items?: ReadingMaterial[];
+    initialIndex?: number;
   };
 
   ReadingHistory: undefined;
@@ -191,8 +193,10 @@ export const useNavigationHelper = () => {
   const handleReadingNext = (
     readingMaterial: ReadingMaterial,
     type: 'alphabet' | 'passage' | 'word',
+    items?: ReadingMaterial[],
+    initialIndex?: number,
   ) => {
-    navigation.navigate('ReadingActivity', { readingMaterial, type });
+    navigation.navigate('ReadingActivity', { readingMaterial, type, items, initialIndex });
   };
 
   const handleHistoryNext = () => {

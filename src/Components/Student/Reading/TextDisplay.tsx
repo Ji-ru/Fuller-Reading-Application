@@ -16,16 +16,30 @@ interface PassageDisplayProps {
   type: 'alphabet' | 'passage' | 'word';
   spokenText: string;
   isRecording: boolean;
-  // ADDED: miscues prop to access detected miscues for coloring
   miscues?: Miscue[];
+  isCompleted?: boolean;
 }
+
+const CheckmarkBadge = () => (
+  <View style={readingStyles.completionBadge}>
+    <View style={{ 
+      width: 14, 
+      height: 8, 
+      borderLeftWidth: 3, 
+      borderBottomWidth: 3, 
+      borderColor: '#fff', 
+      transform: [{ rotate: '-45deg' }, { translateY: -1 }] 
+    }} />
+  </View>
+);
 
 export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   material,
   type,
   spokenText,
   isRecording,
-  miscues = [], // ADDED: default to empty array
+  miscues = [], 
+  isCompleted = false,
 }) => {
   // Function to highlight letter in text
   const highlightLetterInText = (text: string, letter: string) => {
@@ -43,13 +57,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     });
   };
 
-  // Function to get passage image
-  const getPassageImage = (imageName: string) => {
-    const images: { [key: string]: any } = {
-      Hickory: require('../../../../assets/ReadingMaterial/PassageImages/Hickory.png'),
-    };
-    return images[imageName] || require('../../../../assets/icons/Empty-icon.png');
-  };
+
 
   // Format passage text with line breaks
   const formatText = (text: string) => {
@@ -60,14 +68,6 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     ));
   };
 
-  /**
-   * Extract punctuation from a word
-   * Returns an object with the clean word and any trailing punctuation
-   *
-   * Example: "hello," -> { word: "hello", punctuation: "," }
-   *          "world!"  -> { word: "world", punctuation: "!" }
-   *          "test"    -> { word: "test", punctuation: "" }
-   */
   const extractPunctuation = (
     word: string,
   ): { word: string; punctuation: string } => {
@@ -81,60 +81,13 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     return { word, punctuation: '' };
   };
 
-  /**
-   * Renders text with colored miscues, preserving punctuation
-   *
-   * This function processes the target text and applies color coding based on detected miscues.
-   *
-   * Color scheme:
-   * - Substitution: Red (#FF2726) - colors the target word that was substituted
-   * - Omission: Yellow (#FF941A) - colors the target word that was omitted
-   * - Insertion: Blue (#1A81FF) - shows inserted word(s) BEFORE the target word
-   * - Repetition: Purple (#BF00DD) - shows repeated word in purple
-   *
-   * DISPLAY LOGIC:
-   * - Substitution: Color the target word at that position (word was said wrong)
-   * - Omission: Color the target word at that position (word was skipped)
-   * - Insertion: Show inserted word(s) in blue BEFORE the normal target word
-   * - Repetition: Show the repeated spoken word in purple at that position
-   *
-   * PUNCTUATION HANDLING:
-   * - Original passage text with punctuation is preserved
-   * - Miscue detection uses words without punctuation (for matching)
-   * - Display shows words with their original punctuation intact
-   *
-   * Example:
-   *   Target: "Hello, world!"
-   *   Spoken: "Hello there world"
-   *   Display: "Hello, there world!" (there in blue, punctuation preserved)
-   */
   const renderTextWithMiscues = () => {
     if (!isPassage(material)) return null;
 
-    /**
-     * Parse the original text to extract words WITH their punctuation
-     * This preserves the original formatting of the passage
-     */
     const originalWords = material.text
       .split(/\s+/)
       .filter(word => word.length > 0);
 
-    /**
-     * Also get clean words (without punctuation) for matching with miscues
-     * This matches the logic in MiscueAnalysisService which strips punctuation
-     */
-    const cleanWords = material.text
-      .toLowerCase()
-      .replace(/[^\w\s]/g, '')
-      .split(/\s+/)
-      .filter(word => word.length > 0);
-
-    /**
-     * Organize miscues by type for proper rendering
-     *
-     * IMPORTANT: Multiple miscues can occur at the same position!
-     * For example, if a word is substituted AND there's an insertion before it.
-     */
     const miscuesByPosition = new Map<
       number,
       {
@@ -145,7 +98,6 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       }
     >();
 
-    // Initialize structure for each position
     miscues.forEach(miscue => {
       if (!miscuesByPosition.has(miscue.position)) {
         miscuesByPosition.set(miscue.position, { insertions: [] });
@@ -169,20 +121,13 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       }
     });
 
-    // Build the rendered text with colors
     const renderedWords: JSX.Element[] = [];
-    let keyCounter = 0; // Counter for unique keys
+    let keyCounter = 0;
 
     originalWords.forEach((originalWord, index) => {
-      // Extract the clean word and punctuation from original
       const { word: cleanWord, punctuation } = extractPunctuation(originalWord);
-
       const posData = miscuesByPosition.get(index);
 
-      /**
-       * STEP 1: Render any INSERTIONS that occurred BEFORE this target word position
-       * Insertions are extra words, so they appear before the actual target word
-       */
       if (posData?.insertions && posData.insertions.length > 0) {
         posData.insertions.forEach(insertion => {
           renderedWords.push(
@@ -192,26 +137,13 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
               </Text>
             </Text>,
           );
-          // Add space after insertion
           renderedWords.push(
             <Text key={`space-insert-${keyCounter++}`}> </Text>,
           );
         });
       }
 
-      /**
-       * STEP 2: Render the TARGET WORD at this position with appropriate styling
-       *
-       * Priority order (only one can apply to the target word itself):
-       * 1. Repetition (replaces target word display with spoken repetition)
-       * 2. Substitution (colors target word red)
-       * 3. Omission (colors target word yellow)
-       * 4. No miscue (normal text)
-       *
-       * IMPORTANT: Preserve punctuation in all cases
-       */
       if (posData?.repetition) {
-        // Repetition: Show the repeated SPOKEN word in purple, with punctuation
         renderedWords.push(
           <Text key={`word-${index}`}>
             <Text style={{ color: '#BF00DD', fontWeight: 'bold' }}>
@@ -221,7 +153,6 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
           </Text>,
         );
       } else if (posData?.substitution) {
-        // Substitution: Color the TARGET word red, with punctuation
         renderedWords.push(
           <Text key={`word-${index}`}>
             <Text style={{ color: '#FF2726', fontWeight: 'bold' }}>
@@ -231,7 +162,6 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
           </Text>,
         );
       } else if (posData?.omission) {
-        // Omission: Color the TARGET word yellow, with punctuation
         renderedWords.push(
           <Text key={`word-${index}`}>
             <Text style={{ color: '#FF941A', fontWeight: 'bold' }}>
@@ -241,11 +171,9 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
           </Text>,
         );
       } else {
-        // No miscue - render normal text with original casing and punctuation
         renderedWords.push(<Text key={`word-${index}`}>{originalWord}</Text>);
       }
 
-      // Add space between words (except for last word)
       if (index < originalWords.length - 1) {
         renderedWords.push(<Text key={`space-${keyCounter++}`}> </Text>);
       }
@@ -253,18 +181,12 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
     return <Text style={readingStyles.textLine}>{renderedWords}</Text>;
   };
-  /**
-   * MODIFIED: Updated to use colored miscue rendering when not recording
-   * - During recording: shows target text (original passage)
-   * - After recording: shows target text with colored miscues
-   */
+
   const renderTextContent = () => {
     if (isPassage(material)) {
-      // After recording is complete and miscues are detected, show colored version
       if (!isRecording && miscues && miscues.length > 0) {
         return renderTextWithMiscues();
       }
-      // During recording OR no miscues detected, show original formatted text
       return formatText(material.text);
     }
     return null;
@@ -274,14 +196,18 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   if (type === 'alphabet' && isAlphabet(material)) {
     return (
       <View style={readingStyles.wordCardContainer}>
-        <View style={readingStyles.wordCard}>
+        <View style={[readingStyles.wordCard, isCompleted && readingStyles.completedCard]}>
+          <View style={readingStyles.clipContainer}>
+            {/* Decorative shapes to match Hero */}
+            <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
+            <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.03)', bottom: -15, left: -15, width: 60, height: 60 }]} />
+          </View>
+          
+          {isCompleted && <CheckmarkBadge />}
           <Text style={readingStyles.wordCardText}>
             {material.letter}
           </Text>
         </View>
-        <Text style={readingStyles.wordCardInstruction}>
-          Basahin ang titik
-        </Text>
       </View>
     );
   }
@@ -292,10 +218,16 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   
     return (
       <View style={readingStyles.wordCardContainer}>
-        <View style={readingStyles.wordCard}>
+        <View style={[readingStyles.wordCard, isCompleted && readingStyles.completedCard]}>
+          <View style={readingStyles.clipContainer}>
+            {/* Decorative shapes to match Hero */}
+            <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
+            <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.03)', bottom: -15, left: -15, width: 60, height: 60 }]} />
+          </View>
+
+          {isCompleted && <CheckmarkBadge />}
           <Text style={readingStyles.wordCardText}>{allWords[0]}</Text>
         </View>
-        <Text style={readingStyles.wordCardInstruction}>Basahin ang salita</Text>
       </View>
     );
   }
@@ -305,43 +237,30 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   if(type === 'passage' && isPassage(material)){
     return (
       <View style={readingStyles.insideContainer}>
-        <Image
-          style={readingStyles.readingImage}
-          source={getPassageImage(material.image)}
-        />
-        <View
-          style={
-            !isRecording
-              ? readingStyles.passageContainerFeedback
-              : readingStyles.passageContainer
-          }
-        >
+        <View style={readingStyles.passageHeader}>
           <Text style={readingStyles.passageTitle}>{material.title}</Text>
-          <Text style={readingStyles.passageAuthor}>By {material.author}</Text>
-          <View style={readingStyles.textContainer}>
-            {/* MODIFIED: Now uses renderTextContent which shows colored miscues */}
-            <View style={readingStyles.wordCardContainer}>
-              <View style={readingStyles.passageCard}>
-                
-                <Text style={readingStyles.passageTitle}>
-                  {material.title}
-                </Text>
+          <Text style={readingStyles.passageAuthor}>{material.author}</Text>
+        </View>
 
-                <Text style={readingStyles.passageAuthor}>
-                  By {material.author}
-                </Text>
-
-                
-                <ScrollView
-                  style={readingStyles.passageScroll}
-                  showsVerticalScrollIndicator={true}
-                >
-                  {renderTextContent()}
-                </ScrollView>
-
-              </View>
-            </View>
+        <View style={[
+          !isRecording ? readingStyles.passageContainerFeedback : readingStyles.passageContainer,
+          isCompleted && readingStyles.completedCard
+        ]}>
+          <View style={readingStyles.clipContainer}>
+             {/* Decorative shapes to match Hero */}
+             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
           </View>
+
+          {isCompleted && <CheckmarkBadge />}
+          
+          <ScrollView
+            style={readingStyles.passageScroll}
+            showsVerticalScrollIndicator={true}
+          >
+            <View style={readingStyles.textContainer}>
+              {renderTextContent()}
+            </View>
+          </ScrollView>
         </View>
       </View>
     );

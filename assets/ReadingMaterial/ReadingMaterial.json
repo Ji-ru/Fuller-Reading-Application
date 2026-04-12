@@ -1,20 +1,92 @@
 {
   "Alphabet": [
-    {"letter": "M"}, {"letter": "S"}, {"letter": "A"}, {"letter": "Ang"}, {"letter": "I"},
-    {"letter": "O"}, {"letter": "Ay"}, {"letter": "E"}, {"letter": "U"}, {"letter": "B"},
-    {"letter": "T"}, {"letter": "K"}, {"letter": "L"}, {"letter": "Y"}, {"letter": "Mga"},
-    {"letter": "N"}, {"letter": "G"}, {"letter": "R"}, {"letter": "P"}, {"letter": "Ng"}, 
-    {"letter": "D"}, {"letter": "H"}, {"letter": "W"}, {"letter": "-ng"}, {"letter": "ng-"}
+    {
+      "letter": "M"
+    },
+    {
+      "letter": "S"
+    },
+    {
+      "letter": "A"
+    },
+    {
+      "letter": "Ang"
+    },
+    {
+      "letter": "I"
+    },
+    {
+      "letter": "O"
+    },
+    {
+      "letter": "Ay"
+    },
+    {
+      "letter": "E"
+    },
+    {
+      "letter": "U"
+    },
+    {
+      "letter": "B"
+    },
+    {
+      "letter": "T"
+    },
+    {
+      "letter": "K"
+    },
+    {
+      "letter": "L"
+    },
+    {
+      "letter": "Y"
+    },
+    {
+      "letter": "Mga"
+    },
+    {
+      "letter": "N"
+    },
+    {
+      "letter": "G"
+    },
+    {
+      "letter": "R"
+    },
+    {
+      "letter": "P"
+    },
+    {
+      "letter": "Ng"
+    },
+    {
+      "letter": "D"
+    },
+    {
+      "letter": "H"
+    },
+    {
+      "letter": "W"
+    },
+    {
+      "letter": "-ng"
+    },
+    {
+      "letter": "ng-"
+    }
   ],
-
   "Words": [
-    { 
+    {
       "letter": "M",
       "contrasts": [
         {
           "phoneme": "m_sound",
           "ipa": "/m/",
-          "words": ["M", "m"]
+          "words": [
+            "M",
+            "m"
+          ]
         }
       ]
     },
@@ -24,7 +96,10 @@
         {
           "phoneme": "s_sound",
           "ipa": "/s/",
-          "words": ["S", "s"]
+          "words": [
+            "S",
+            "s"
+          ]
         }
       ]
     },
@@ -34,22 +109,42 @@
         {
           "phoneme": "a_sound",
           "ipa": "/a/",
-          "words": ["A", "a"]
+          "words": [
+            "A",
+            "a"
+          ]
         },
         {
           "phoneme": "a_combine_m",
           "ipa": "/a/",
-          "words": ["Ma", "Am", "am", "ma", "ama", "mama"]
+          "words": [
+            "ma",
+            "ama",
+            "mama"
+          ]
         },
         {
           "phoneme": "a_combine_s",
           "ipa": "/a/",
-          "words": ["Sa", "sa", "asa", "aasa"]
+          "words": [
+            "sa",
+            "asa",
+            "aasa"
+          ]
         },
         {
           "phoneme": "asm_combine",
           "ipa": "/a/",
-          "words": ["sama", "masa", "sasama", "sa ama", "sa masa", "sa mama", "masama", "masasama", "sama-sama"]
+          "words": [
+            "sama",
+            "masa",
+            "sasama",
+            "sa ama",
+            "sa masa",
+            "sa mama",
+            "masama",
+            "masasama"
+          ]
         }
       ]
     },
@@ -59,12 +154,21 @@
         {
           "phoneme": "ang_article",
           "ipa": "/aŋ/",
-          "words": ["Ang", "ang"]
+          "words": [
+            "ang"
+          ]
         },
         {
           "phoneme": "ang_phrases",
           "ipa": "/aŋ/",
-          "words": ["ang ama", "ang masa", "ang sasama", "ang mama", "ang aasa", "ang sama"]
+          "words": [
+            "ang ama",
+            "ang masa",
+            "ang sasama",
+            "ang mama",
+            "ang aasa",
+            "ang sama"
+          ]
         }
       ]
     },
@@ -74,17 +178,35 @@
         {
           "phoneme": "i_sound",
           "ipa": "/ɪ/",
-          "words": ["I","i"]
+          "words": [
+            "i"
+          ]
         },
         {
           "phoneme": "i_syllables",
           "ipa": "/ɪ/",
-          "words": ["Mi", "mi", "Si", "si"]
+          "words": [
+            "mi",
+            "si"
+          ]
         },
         {
           "phoneme": "i_syllables",
           "ipa": "/ɪ/",
-          "words": ["isa", "misa", "mais", "sisi", "iisa", "isama", "sa misa", "ang mais", "Ami", "Mimi", "si Ami", "si Mimi"]
+          "words": [
+            "isa",
+            "misa",
+            "mais",
+            "sisi",
+            "iisa",
+            "isama",
+            "sa misa",
+            "ang mais",
+            "Ami",
+            "Mimi",
+            "si Ami",
+            "si Mimi"
+          ]
         }
       ]
     },
@@ -94,32 +216,58 @@
         {
           "phoneme": "o_sound",
           "ipa": "/o/",
-          "words": ["O","o"]
+          "words": [
+            "o"
+          ]
         },
         {
           "phoneme": "o_syllables",
           "ipa": "/o/",
-          "words": ["Mo", "mo", "So", "so"]
+          "words": [
+            "mo",
+            "so"
+          ]
         },
         {
           "phoneme": "o_syllables",
           "ipa": "/o/",
-          "words": ["oo", "aso", "oso", "amo", "Siso", "maso", "aamo", "miso", "ang aso", "ang oso", "maamo", "ang miso"]
+          "words": [
+            "oo",
+            "aso",
+            "oso",
+            "amo",
+            "Siso",
+            "maso",
+            "aamo",
+            "miso",
+            "ang aso",
+            "ang oso",
+            "maamo",
+            "ang miso"
+          ]
         }
       ]
     },
-    { 
+    {
       "letter": "Ay",
       "contrasts": [
         {
           "phoneme": "ay_linking",
           "ipa": "/aɪ/",
-          "words": ["Ay", "ay"]
+          "words": [
+            "ay"
+          ]
         },
         {
           "phoneme": "ay_phrases",
           "ipa": "/aɪ/",
-          "words": ["ay aso", "ay sasama", "ang oso ay", "ang amo ay", "si Mimi ay"]
+          "words": [
+            "ay aso",
+            "ay sasama",
+            "ang oso ay",
+            "ang amo ay",
+            "si Mimi ay"
+          ]
         }
       ]
     },
@@ -129,17 +277,29 @@
         {
           "phoneme": "e_sound",
           "ipa": "/ɛ/",
-          "words": ["E", "e"]
+          "words": [
+            "e"
+          ]
         },
         {
           "phoneme": "e_syllables",
           "ipa": "/ɛ/",
-          "words": ["Me", "me", "Se", "se"]
+          "words": [
+            "me",
+            "se"
+          ]
         },
         {
           "phoneme": "e_syllables",
           "ipa": "/ɛ/",
-          "words": ["mesa", "Ema", "Emi", "memo", "ang mesa", "si Emi ay"]
+          "words": [
+            "mesa",
+            "Ema",
+            "Emi",
+            "memo",
+            "ang mesa",
+            "si Emi ay"
+          ]
         }
       ]
     },
@@ -149,17 +309,32 @@
         {
           "phoneme": "u_sound",
           "ipa": "/u/",
-          "words": ["U","u"]
+          "words": [
+            "u"
+          ]
         },
         {
           "phoneme": "u_syllables",
           "ipa": "/u/",
-          "words": ["Mu", "mu", "Su", "su"]
+          "words": [
+            "mu",
+            "su"
+          ]
         },
         {
           "phoneme": "u_syllables",
           "ipa": "/u/",
-          "words": ["usa", "uso", "musa", "susi", "umasa", "usisa", "ang susi", "sumama", "mausisa"]
+          "words": [
+            "usa",
+            "uso",
+            "musa",
+            "susi",
+            "umasa",
+            "usisa",
+            "ang susi",
+            "sumama",
+            "mausisa"
+          ]
         }
       ]
     },
@@ -169,17 +344,35 @@
         {
           "phoneme": "b_sound",
           "ipa": "/b/",
-          "words": ["B", "b"]
+          "words": [
+            "b"
+          ]
         },
         {
           "phoneme": "b_vowels",
           "ipa": "/b/",
-          "words": ["ba", "be", "bi", "bo", "bu"]
+          "words": [
+            "ba",
+            "be",
+            "bi",
+            "bo",
+            "bu"
+          ]
         },
         {
           "phoneme": "b_syllables",
           "ipa": "/b/",
-          "words": ["aba", "iba", "babae", "bibo", "baso", "saba", "ang bao", "sa ibaba", "mababa"]
+          "words": [
+            "aba",
+            "iba",
+            "babae",
+            "bibo",
+            "baso",
+            "saba",
+            "ang bao",
+            "sa ibaba",
+            "mababa"
+          ]
         }
       ]
     },
@@ -189,17 +382,38 @@
         {
           "phoneme": "t_sound",
           "ipa": "/t/",
-          "words": ["T","t"]
+          "words": [
+            "t"
+          ]
         },
         {
           "phoneme": "t_vowels",
           "ipa": "/t/",
-          "words": ["ta", "te", "ti", "to", "tu"]
+          "words": [
+            "ta",
+            "te",
+            "ti",
+            "to",
+            "tu"
+          ]
         },
         {
           "phoneme": "t_syllables",
           "ipa": "/t/",
-          "words": ["tao", "tasa", "tama", "tabo", "tabi", "tito", "tutubi", "mataba", "ang tuta", "sa itaas", "sa tabi", "si tita"]
+          "words": [
+            "tao",
+            "tasa",
+            "tama",
+            "tabo",
+            "tabi",
+            "tito",
+            "tutubi",
+            "mataba",
+            "ang tuta",
+            "sa itaas",
+            "sa tabi",
+            "si tita"
+          ]
         }
       ]
     },
@@ -209,17 +423,38 @@
         {
           "phoneme": "k_sound",
           "ipa": "/k/",
-          "words": ["K","k"]
+          "words": [
+            "k"
+          ]
         },
         {
           "phoneme": "k_vowels",
           "ipa": "/k/",
-          "words": ["ka", "ke", "ki", "ko", "ku"]
+          "words": [
+            "ka",
+            "ke",
+            "ki",
+            "ko",
+            "ku"
+          ]
         },
         {
           "phoneme": "k_syllables",
           "ipa": "/k/",
-          "words": ["ka", "ko", "ako", "sako", "kama", "kami", "kasi", "kasama", "kabibe", "bituka", "butiki", "may keso"]
+          "words": [
+            "ka",
+            "ko",
+            "ako",
+            "sako",
+            "kama",
+            "kami",
+            "kasi",
+            "kasama",
+            "kabibe",
+            "bituka",
+            "butiki",
+            "may keso"
+          ]
         }
       ]
     },
@@ -229,17 +464,38 @@
         {
           "phoneme": "l_sound",
           "ipa": "/l/",
-          "words": ["L", "l"]
+          "words": [
+            "l"
+          ]
         },
         {
           "phoneme": "l_vowels",
           "ipa": "/l/",
-          "words": ["la", "le", "li", "lo", "lu"]
+          "words": [
+            "la",
+            "le",
+            "li",
+            "lo",
+            "lu"
+          ]
         },
         {
           "phoneme": "l_syllables",
           "ipa": "/l/",
-          "words": ["lola", "lata", "laso", "lobo", "ulo", "luma", "lalaki", "lamesa", "ulila", "alila", "malakas", "balita"]
+          "words": [
+            "lola",
+            "lata",
+            "laso",
+            "lobo",
+            "ulo",
+            "luma",
+            "lalaki",
+            "lamesa",
+            "ulila",
+            "alila",
+            "malakas",
+            "balita"
+          ]
         }
       ]
     },
@@ -249,17 +505,38 @@
         {
           "phoneme": "y_sound",
           "ipa": "/j/",
-          "words": ["Y", "y"]
+          "words": [
+            "y"
+          ]
         },
         {
           "phoneme": "y_vowels",
           "ipa": "/j/",
-          "words": ["ya", "ye", "yi", "yo", "yu"]
+          "words": [
+            "ya",
+            "ye",
+            "yi",
+            "yo",
+            "yu"
+          ]
         },
         {
           "phoneme": "y_syllables",
           "ipa": "/j/",
-          "words": ["yaya", "iyo", "kayo", "yoyo", "tayo", "kuya", "saya", "kaya", "malayo", "biyaya", "may yoyo", "kay kuya"]
+          "words": [
+            "yaya",
+            "iyo",
+            "kayo",
+            "yoyo",
+            "tayo",
+            "kuya",
+            "saya",
+            "kaya",
+            "malayo",
+            "biyaya",
+            "may yoyo",
+            "kay kuya"
+          ]
         }
       ]
     },
@@ -269,12 +546,20 @@
         {
           "phoneme": "mga_plural",
           "ipa": "/maŋa/",
-          "words": ["Mga", "mga"]
+          "words": [
+            "mga"
+          ]
         },
         {
           "phoneme": "mga_phrases",
           "ipa": "/maŋa/",
-          "words": ["ang mga susi", "ang mga kasama", "may mga yoyo", "ang mga kamay mo", "ang mga laso at lobo"]
+          "words": [
+            "ang mga susi",
+            "ang mga kasama",
+            "may mga yoyo",
+            "ang mga kamay mo",
+            "ang mga laso at lobo"
+          ]
         }
       ]
     },
@@ -284,17 +569,38 @@
         {
           "phoneme": "n_sound",
           "ipa": "/n/",
-          "words": ["N", "n"]
+          "words": [
+            "n"
+          ]
         },
         {
           "phoneme": "n_vowels",
           "ipa": "/n/",
-          "words": ["na", "ne", "ni", "no", "nu"]
+          "words": [
+            "na",
+            "ne",
+            "ni",
+            "no",
+            "nu"
+          ]
         },
         {
           "phoneme": "n_syllables",
           "ipa": "/n/",
-          "words": ["ina", "una", "sana", "sino", "noo", "nanalo", "nasaan", "kanin", "anim", "ang unan", "ang nanay", "bintana"]
+          "words": [
+            "ina",
+            "una",
+            "sana",
+            "sino",
+            "noo",
+            "nanalo",
+            "nasaan",
+            "kanin",
+            "anim",
+            "ang unan",
+            "ang nanay",
+            "bintana"
+          ]
         }
       ]
     },
@@ -304,17 +610,38 @@
         {
           "phoneme": "g_sound",
           "ipa": "/g/",
-          "words": ["G", "g"]
+          "words": [
+            "g"
+          ]
         },
         {
           "phoneme": "g_syllables",
           "ipa": "/g/",
-          "words": ["ga", "ge", "gi", "go", "gu"]
+          "words": [
+            "ga",
+            "ge",
+            "gi",
+            "go",
+            "gu"
+          ]
         },
         {
           "phoneme": "g_syllable",
           "ipa": "/g/",
-          "words": ["gugo", "gabi", "gaya", "gasa", "goto", "gusali", "gamot", "gatas", "kagabi", "gansa", "ilog", "malusog"]
+          "words": [
+            "gugo",
+            "gabi",
+            "gaya",
+            "gasa",
+            "goto",
+            "gusali",
+            "gamot",
+            "gatas",
+            "kagabi",
+            "gansa",
+            "ilog",
+            "malusog"
+          ]
         }
       ]
     },
@@ -324,17 +651,38 @@
         {
           "phoneme": "r_sound",
           "ipa": "/r/",
-          "words": ["R", "r"]
+          "words": [
+            "r"
+          ]
         },
         {
           "phoneme": "r_vowels",
           "ipa": "/r/",
-          "words": ["ra", "re", "ri", "ro", "ru"]
+          "words": [
+            "ra",
+            "re",
+            "ri",
+            "ro",
+            "ru"
+          ]
         },
         {
           "phoneme": "r_syllables",
           "ipa": "/r/",
-          "words": ["relo", "Rosa", "tara", "bara", "laro", "regalo", "raketa", "robot", "guro", "marami", "si Remi", "ang oras"]
+          "words": [
+            "relo",
+            "Rosa",
+            "tara",
+            "bara",
+            "laro",
+            "regalo",
+            "raketa",
+            "robot",
+            "guro",
+            "marami",
+            "si Remi",
+            "ang oras"
+          ]
         }
       ]
     },
@@ -344,17 +692,38 @@
         {
           "phoneme": "p_sound",
           "ipa": "/p/",
-          "words": ["P", "p"]
+          "words": [
+            "p"
+          ]
         },
         {
           "phoneme": "p_syllables",
           "ipa": "/p/",
-          "words": ["pa", "pe", "pi", "po", "pu"]
+          "words": [
+            "pa",
+            "pe",
+            "pi",
+            "po",
+            "pu"
+          ]
         },
         {
           "phoneme": "p_syllables",
           "ipa": "/p/",
-          "words": ["apa", "paa", "pusa", "piso", "pito", "pera", "piso", "papaya", "pipino", "paborito", "usap", "si Pepito"]
+          "words": [
+            "apa",
+            "paa",
+            "pusa",
+            "piso",
+            "pito",
+            "pera",
+            "piso",
+            "papaya",
+            "pipino",
+            "paborito",
+            "usap",
+            "si Pepito"
+          ]
         }
       ]
     },
@@ -364,12 +733,20 @@
         {
           "phoneme": "ng_sound",
           "ipa": "/ŋ/",
-          "words": ["Ng", "ng"]
+          "words": [
+            "ng"
+          ]
         },
         {
           "phoneme": "ng_phrases",
           "ipa": "/ŋ/",
-          "words": ["ng nanay", "ng aso", "ng maya", "amo ng aso", "ulo ng usa"]
+          "words": [
+            "ng nanay",
+            "ng aso",
+            "ng maya",
+            "amo ng aso",
+            "ulo ng usa"
+          ]
         }
       ]
     },
@@ -379,18 +756,39 @@
         {
           "phoneme": "d_sound",
           "ipa": "/d/",
-          "words": ["D", "d"]
+          "words": [
+            "d"
+          ]
         },
         {
           "phoneme": "d_vowels",
           "ipa": "/d/",
-          "words": ["da", "de", "di", "do", "du"]
+          "words": [
+            "da",
+            "de",
+            "di",
+            "do",
+            "du"
+          ]
         },
         {
           "phoneme": "d_syllables",
           "ipa": "/d/",
-          "words": ["daga", "damo", "dala", "dila", "dapa", "dako", "dito", "dalaga", "dampa", "ang dagat", "sa dulo", "may daan"]
-        } 
+          "words": [
+            "daga",
+            "damo",
+            "dala",
+            "dila",
+            "dapa",
+            "dako",
+            "dito",
+            "dalaga",
+            "dampa",
+            "ang dagat",
+            "sa dulo",
+            "may daan"
+          ]
+        }
       ]
     },
     {
@@ -399,17 +797,38 @@
         {
           "phoneme": "h_sound",
           "ipa": "/h/",
-          "words": ["H", "h"]
+          "words": [
+            "h"
+          ]
         },
         {
           "phoneme": "h_vowels",
           "ipa": "/h/",
-          "words": ["ha", "he", "hi", "ho", "hu"]
+          "words": [
+            "ha",
+            "he",
+            "hi",
+            "ho",
+            "hu"
+          ]
         },
         {
           "phoneme": "h_syllables",
           "ipa": "/h/",
-          "words": ["haba", "halo", "heto", "hita", "baha", "kaha", "haligi", "husay", "hipon", "harap", "ang holen", "ni Helen"]
+          "words": [
+            "haba",
+            "halo",
+            "heto",
+            "hita",
+            "baha",
+            "kaha",
+            "haligi",
+            "husay",
+            "hipon",
+            "harap",
+            "ang holen",
+            "ni Helen"
+          ]
         }
       ]
     },
@@ -419,17 +838,38 @@
         {
           "phoneme": "w_sound",
           "ipa": "/w/",
-          "words": ["W", "w"]
+          "words": [
+            "w"
+          ]
         },
         {
           "phoneme": "w_vowels",
           "ipa": "/w/",
-          "words": ["wa", "we", "wi", "wo", "wu"]
+          "words": [
+            "wa",
+            "we",
+            "wi",
+            "wo",
+            "wu"
+          ]
         },
         {
           "phoneme": "wa_syllable",
           "ipa": "/wa/",
-          "words": ["wala", "wika", "walo", "kawa", "kawali", "sawali", "uuwi", "kawawa", "naawa", "sa wakas", "si Wowi", "may walis"]
+          "words": [
+            "wala",
+            "wika",
+            "walo",
+            "kawa",
+            "kawali",
+            "sawali",
+            "uuwi",
+            "kawawa",
+            "naawa",
+            "sa wakas",
+            "si Wowi",
+            "may walis"
+          ]
         }
       ]
     },
@@ -439,12 +879,29 @@
         {
           "phoneme": "-ng_vowels",
           "ipa": "/ŋ/",
-          "words": ["ang", "eng", "ing", "ong", "ung"]
+          "words": [
+            "ang",
+            "eng",
+            "ing",
+            "ong",
+            "ung"
+          ]
         },
         {
           "phoneme": "-ng_syllables",
           "ipa": "/ŋ/",
-          "words": ["isang", "lamang", "tapang", "singsing", "saging", "bangka", "langka", "sungka", "lungga", "kangkong"]
+          "words": [
+            "isang",
+            "lamang",
+            "tapang",
+            "singsing",
+            "saging",
+            "bangka",
+            "langka",
+            "sungka",
+            "lungga",
+            "kangkong"
+          ]
         }
       ]
     },
@@ -454,21 +911,37 @@
         {
           "phoneme": "ng-_vowels",
           "ipa": "/ŋ/",
-          "words": ["nga", "nge", "ngi", "ngo", "ngu"]
+          "words": [
+            "nga",
+            "nge",
+            "ngi",
+            "ngo",
+            "ngu"
+          ]
         },
         {
           "phoneme": "ng-_syllables",
           "ipa": "/ŋ/",
-          "words": ["nganga", "nguso", "ngongo", "ngayon", "ngipin", "banga", "sanga", "bungi", "pango", "tainga"]
+          "words": [
+            "nganga",
+            "nguso",
+            "ngongo",
+            "ngayon",
+            "ngipin",
+            "banga",
+            "sanga",
+            "bungi",
+            "pango",
+            "tainga"
+          ]
         }
       ]
     }
   ],
-
   "Passages": [
     {
       "title": "Ang Ama",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "Ang",
       "aralin": 4,
@@ -477,7 +950,7 @@
     },
     {
       "title": "Sa Misa",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "I",
       "aralin": 5,
@@ -486,7 +959,7 @@
     },
     {
       "title": "Ang Amo",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "O",
       "aralin": 6,
@@ -495,7 +968,7 @@
     },
     {
       "title": "Maamo",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "Ay",
       "aralin": 7,
@@ -504,7 +977,7 @@
     },
     {
       "title": "Mais sa Mesa",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "E",
       "aralin": 8,
@@ -513,7 +986,7 @@
     },
     {
       "title": "Usa",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "U",
       "aralin": 9,
@@ -522,7 +995,7 @@
     },
     {
       "title": "Bibo ang Bibe",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "B",
       "aralin": 10,
@@ -531,7 +1004,7 @@
     },
     {
       "title": "Tutubi at Tuta",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "T",
       "aralin": 11,
@@ -540,7 +1013,7 @@
     },
     {
       "title": "Ako ay May Keso",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "K",
       "aralin": 12,
@@ -549,7 +1022,7 @@
     },
     {
       "title": "Si Lili",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "L",
       "aralin": 13,
@@ -558,7 +1031,7 @@
     },
     {
       "title": "Si Kuya",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "Y",
       "aralin": 14,
@@ -567,7 +1040,7 @@
     },
     {
       "title": "May Mga Susi",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "Mga",
       "aralin": 15,
@@ -576,7 +1049,7 @@
     },
     {
       "title": "Nasaan ang Unan?",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "N",
       "aralin": 16,
@@ -585,7 +1058,7 @@
     },
     {
       "title": "Ang Gansa si Gibo",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "G",
       "aralin": 17,
@@ -594,7 +1067,7 @@
     },
     {
       "title": "Si Rosa R. Romero",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "R",
       "aralin": 18,
@@ -603,7 +1076,7 @@
     },
     {
       "title": "Pusa ni Pepito",
-      "author": "Filipino Reading Material",
+      "author": "",
       "category": "beginner",
       "letter": "P",
       "aralin": 19,
