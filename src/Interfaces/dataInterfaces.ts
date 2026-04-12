@@ -105,6 +105,11 @@ export interface MiscueReportDocument {
   accuracyRate: number;
   wordPerMin: number;
   recordingDuration?: string;
+  totalMiscues?: number;
+  substitutionCount?: number;
+  omissionCount?: number;
+  insertionCount?: number;
+  repetitionCount?: number;
 
   // Creation from Firestore Timestamp
   timestamp: any;

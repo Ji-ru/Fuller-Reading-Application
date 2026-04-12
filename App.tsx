@@ -30,6 +30,7 @@ import StudentProfile from './src/Screens/Student/Student_Profile';
 import FacultyDashboard from './src/Screens/Faculty/Faculty_Dashboard';
 import FacultyProfile from './src/Screens/Faculty/Faculty_Profile';
 import MyClass from './src/Screens/Faculty/Faculty_MyClass';
+import MyArchive from './src/Screens/Faculty/Faculty_MyArchive';
 import MyStudents from './src/Screens/Faculty/Faculty_MyStudents';
 import StudentViewProfile from './src/Screens/Faculty/Student_View_Profile';
 
@@ -63,6 +64,7 @@ function App() {
               <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
               <Stack.Screen name="FacultyProfile" component={FacultyProfile} />
               <Stack.Screen name="MyClass" component={MyClass} />
+              <Stack.Screen name="Archive" component={MyArchive} />
               <Stack.Screen name="MyStudents" component={MyStudents} />
               <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
               {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}

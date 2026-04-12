@@ -29,16 +29,22 @@ export const getFacultyClasses_Student = {
    * @param facultyId - registered facultyId of the Faculty
    * @returns all the classes existed of the faculty
    */
-  async getFacultyClasses(facultyId: string): Promise<ClassDocument[]> {
+  async getFacultyClasses(facultyId: string, isActive: boolean = true): Promise<ClassDocument[]> {
     try {
       const classesRef = collection(db, 'classes');
       const q = query(classesRef, where('facultyId', '==', facultyId));
       const querySnapshot = await getDocs(q);
 
-      return querySnapshot.docs.map((doc: any) => ({
+      const all = querySnapshot.docs.map((doc: any) => ({
         ...doc.data(),
         classId: doc.id,
       })) as ClassDocument[];
+
+      // In-memory filtering allows us to handle legacy documents where isActive is missing (defaults to true)
+      return all.filter(c => {
+        const isClassActive = (c.isActive === undefined || c.isActive === true);
+        return isClassActive === isActive;
+      });
     } catch (error: any) {
       throw new Error("Failed to fetch faculty's classes. " + error.message);
     }
@@ -228,6 +234,25 @@ export const getFacultyClasses_Student = {
       };
     } catch (error: any) {
       throw new Error(`Failed to delete class: ${error.message}`);
+    }
+  },
+
+  /**
+   * Archive/Restore Class
+   */
+  async archiveClass(classId: string, archive: boolean = true): Promise<{ success: boolean; message: string }> {
+    try {
+      const classRef = doc(db, 'classes', classId);
+      await updateDoc(classRef, {
+        isActive: !archive,
+        updatedAt: serverTimestamp(),
+      });
+      return {
+        success: true,
+        message: `Class successfully ${archive ? 'archived' : 'restored'}.`,
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to archive class: ${error.message}`);
     }
   },
 };

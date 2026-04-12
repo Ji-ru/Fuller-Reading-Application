@@ -1,25 +1,30 @@
 // FacultyDashboard.tsx (Updated with TypeScript)
+import { getAuth } from '@react-native-firebase/auth';
+import { useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Image,
   ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigationHelper } from '../../Controller/NavigationController';
-import bubbles from '../../UI_Designs/BubblesDesign';
-import upperNav from '../../UI_Designs/UpperNavigation';
-import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import BottomNav from '../../Components/Faculty/NavigationBar/BottomNav';
-import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
-import { getAuth } from '@react-native-firebase/auth';
-import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
-import ActiveHoursChart from '../../Components/Faculty/Dashboard/ActiveHoursChart';
+import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
 import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
-import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus'; 
+import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
+import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { BookOpenIcon, HistoryIcon, TrophyIcon, UsersIcon } from '../../Components/GlobalUse/Icons';
+import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import { useNavigationHelper } from '../../Controller/NavigationController';
+import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
+import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
+import { ClassDocument } from '../../Interfaces/dataInterfaces';
+import bubbles from '../../UI_Designs/BubblesDesign';
+import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
+import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
 
 export default function FacultyDashboard() {
   // ========================================================================
@@ -28,18 +33,25 @@ export default function FacultyDashboard() {
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
   const [logoutVisible, setLogoutVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [userName, setUserName] = useState<string>('Guro');
   const [stats, setStats] = useState<{
     classCount: number;
     studentCount: number;
-  }>({ classCount: 0, studentCount: 0 });
+    reportCount: number;
+    avgAccuracy: number;
+  }>({ classCount: 0, studentCount: 0, reportCount: 0, avgAccuracy: 0 });
+  const [classes, setClasses] = useState<ClassDocument[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string>('all');
+  const [showClassPicker, setShowClassPicker] = useState<boolean>(false);
   // ========================================================================
   // HOOKS
   // ========================================================================
   const { handleLogout } = useNavigationHelper();
   const auth = getAuth();
-  const { getNumberOfClasses, getNumbersOfAllStudents } =
-  getForStudentsMiscueStats();
-  
+  const route = useRoute();
+  const { getNumberOfClasses, getNumbersOfAllStudents, getOverallAverageWPMandAccuracy } =
+    getForStudentsMiscueStats();
+
 
   // ========================================================================
   // DATA FETCHING
@@ -48,23 +60,36 @@ export default function FacultyDashboard() {
   const fetchStats = async () => {
     try {
       const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('No authenticated user found');
 
-      if (!currentUser) {
-        throw new Error('No authenticated user found');
+      // Fetch Profile for name
+      try {
+        const { getUserProfile } = require('../../Controller/AuthenticationController');
+        const profile = await getUserProfile(currentUser.uid);
+        if (profile?.firstName) {
+          setUserName(profile.firstName);
+        }
+      } catch (err) {
+        console.log('Name fetch error:', err);
       }
 
-      // Fetch both counts in parallel for better performance
-      const [classCount, studentCount] = await Promise.all([
+      const [classCount, studentCount, averages] = await Promise.all([
         getNumberOfClasses(currentUser.uid),
         getNumbersOfAllStudents(currentUser.uid),
+        getOverallAverageWPMandAccuracy(currentUser.uid, { type: 'overall' }),
       ]);
 
       setStats({
-        classCount: classCount,
-        studentCount: studentCount,
+        classCount,
+        studentCount,
+        reportCount: averages.totalReports,
+        avgAccuracy: averages.averageAccuracy,
       });
+
+      const facultyClasses = await getFacultyClasses_Student.getFacultyClasses(currentUser.uid);
+      setClasses(facultyClasses);
     } catch (error: any) {
-      throw new Error('Failed to fetch stats: ' + error.message);
+      console.log('Stats error:', error);
     } finally {
       setLoading(false);
     }
@@ -118,30 +143,26 @@ export default function FacultyDashboard() {
     }
 
     return (
-      <View style={facultyDashboard.statsContainer}>
-        <View style={facultyDashboard.statCard}>
-          <View style={facultyDashboard.iconContainer}>
-            <Image
-              style={facultyDashboard.icons}
-              source={require('../../../assets/icons/Class-icon.png')}
-            />
-            <Text style={facultyDashboard.statValue}>{stats.classCount}</Text>
-          </View>
-          <Text style={facultyDashboard.statLabel}>
-            Total Class{stats.classCount !== 1 ? 'es' : ''}
-          </Text>
+      <View style={S.summaryGrid}>
+        <View style={S.sumCard}>
+          <BookOpenIcon size={20} color={F.primary} />
+          <Text style={S.sumVal}>{stats.classCount}</Text>
+          <Text style={S.sumLabel}>Mga Klase</Text>
         </View>
-        <View style={facultyDashboard.statCard}>
-        <View style={facultyDashboard.iconContainer}>
-        <Image
-              style={facultyDashboard.icons}
-              source={require('../../../assets/icons/Student-icon.png')}
-            />
-          <Text style={facultyDashboard.statValue}>{stats.studentCount}</Text>
-          </View>
-          <Text style={facultyDashboard.statLabel}>
-            Total Student{stats.studentCount !== 1 ? 's' : ''}
-          </Text>
+        <View style={S.sumCard}>
+          <UsersIcon size={20} color={F.primary} />
+          <Text style={S.sumVal}>{stats.studentCount}</Text>
+          <Text style={S.sumLabel}>Mag-aaral</Text>
+        </View>
+        <View style={S.sumCard}>
+          <HistoryIcon size={20} color={F.primary} />
+          <Text style={S.sumVal}>{stats.reportCount}</Text>
+          <Text style={S.sumLabel}>Mga Ulat</Text>
+        </View>
+        <View style={S.sumCard}>
+          <TrophyIcon size={20} color={F.primary} />
+          <Text style={S.sumVal}>{stats.avgAccuracy.toFixed(0)}%</Text>
+          <Text style={S.sumLabel}>Mastery</Text>
         </View>
       </View>
     );
@@ -171,44 +192,19 @@ export default function FacultyDashboard() {
             <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
           </View>
 
-          {/* HEADER */}
-          <View style={upperNav.header}>
-            <Image
-              style={upperNav.ciscLogo}
-              source={require('../../../assets/images/cisckids.png')}
-            />
-            <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-              <Image
-                style={upperNav.menuIcon}
-                source={require('../../../assets/icons/Menu-icon.png')}
-              />
+          <View style={S.headerRow}>
+            <TouchableOpacity style={S.menuBtn} onPress={toggleMenu}>
+              <View style={S.menuDotLine} />
+              <View style={[S.menuDotLine, { width: 14 }]} />
+              <View style={S.menuDotLine} />
             </TouchableOpacity>
-          </View>
-
-          {/* DROPDOWN MENU */}
-          {menuVisible && (
-            <View style={upperNav.dropdownMenu}>
-              <TouchableOpacity
-                onPress={handleLogoutPress}
-                style={upperNav.logoutButton}
-              >
-                <Image
-                  source={require('../../../assets/icons/Logout-icon.png')}
-                  style={upperNav.logoutIcon}
-                />
-                <Text style={upperNav.logoutText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* OVERLAY TO CLOSE MENU */}
-          {menuVisible && (
-            <TouchableOpacity
-              style={upperNav.closeMenu}
-              onPress={() => setMenuVisible(false)}
-              activeOpacity={1}
+            <Image
+              style={S.logo}
+              source={require('../../../assets/images/cisckids.png')}
+              resizeMode="contain"
             />
-          )}
+            <View style={{ width: 44 }} />
+          </View>
 
           {/* LOGOUT MODAL */}
           <LogoutModal
@@ -219,25 +215,133 @@ export default function FacultyDashboard() {
 
           {/* MAIN CONTENT */}
           <View style={facultyDashboard.content}>
-            <Text style={facultyDashboard.dashboardTitle}>Faculty Dashboard</Text>
-            <Text style={facultyDashboard.dashboardSubtitle}>
-              Reading Performance Overview
-            </Text>
+            <BounceIn delay={100}>
+              <View style={S.heroCard}>
+                <View>
+                  <Text style={S.heroSubtitle}>Magandang araw, {userName}!</Text>
+                  <Text style={S.heroTitle}>Faculty Dashboard</Text>
+                </View>
+                <TrophyIcon size={48} color={F.primaryLight} />
+              </View>
+            </BounceIn>
 
-            {/* STATS SUMMARY */}
-            {renderStatsSection()}
+            <View style={{ marginBottom: 20 }}>
+              <Text style={S.sectionLabel}>Dashboard Overview</Text>
+              {renderStatsSection()}
+            </View>
 
-            <ClassReadingStatus facultyId={auth.currentUser?.uid} />
-            
-            <ActiveHoursChart facultyId={auth.currentUser?.uid} />
-            
-            <MiscueAnalytics facultyId={auth.currentUser?.uid} />
+            <View style={{ marginBottom: 3 }}>
+              <Text style={S.sectionLabel}>Class</Text>
+              <ClassReadingStatus facultyId={auth.currentUser?.uid} />
+            </View>
 
+            <View style={{ marginBottom: 24 }}>
+              <TouchableOpacity
+                style={S.classSelectBtn}
+                onPress={() => setShowClassPicker(!showClassPicker)}
+              >
+                <View style={S.classSelectLeft}>
+                  <View style={S.filterCircle}>
+                    <UsersIcon size={16} color={F.primary} />
+                  </View>
+                  <Text style={S.classSelectText}>
+                    {selectedClassId === 'all'
+                      ? 'Mga Klase'
+                      : classes.find(c => c.classId === selectedClassId)?.className || 'Select Class'}
+                  </Text>
+                </View>
+                <Text style={S.chevron}>{showClassPicker ? '▲' : '▼'}</Text>
+              </TouchableOpacity>
+
+              {showClassPicker && (
+                <View style={S.classOptions}>
+                  <TouchableOpacity
+                    style={S.optionItem}
+                    onPress={() => { setSelectedClassId('all'); setShowClassPicker(false); }}
+                  >
+                    <Text style={[S.optionText, selectedClassId === 'all' && S.optionTextActive]}>Mga Klase</Text>
+                  </TouchableOpacity>
+                  {classes.map(c => (
+                    <TouchableOpacity
+                      key={c.classId}
+                      style={S.optionItem}
+                      onPress={() => { setSelectedClassId(c.classId); setShowClassPicker(false); }}
+                    >
+                      <Text style={[S.optionText, selectedClassId === c.classId && S.optionTextActive]}>
+                        {c.className} ({c.classCode})
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <Text style={S.sectionLabel}>Error Analytics</Text>
+              <MiscueAnalytics
+                facultyId={auth.currentUser?.uid}
+                classId={selectedClassId === 'all' ? undefined : selectedClassId}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>
-      <BottomNav />
+      <FacultySideMenu
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onLogout={handleLogoutPress}
+        currentRoute={route.name}
+      />
     </SafeAreaView>
   );
 }
 
+const S = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: 10, marginBottom: 10
+  },
+  logo: { width: 100, height: 90 },
+  menuBtn: {
+    width: 44, height: 44, borderRadius: 14, backgroundColor: F.white,
+    justifyContent: 'center', alignItems: 'center', gap: 4, ...Shadows.subtle
+  },
+  menuDotLine: { width: 22, height: 2.5, borderRadius: 2, backgroundColor: F.ink },
+
+  heroCard: {
+    backgroundColor: F.primary, borderRadius: Radii.xl,
+    padding: 24, marginBottom: 24, flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'space-between',
+    ...Shadows.cardLift
+  },
+  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4 },
+  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white },
+
+  sectionLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, marginLeft: 4 },
+
+  summaryGrid: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  sumCard: {
+    flex: 1, minWidth: '45%', backgroundColor: F.white, borderRadius: Radii.lg,
+    padding: 16, alignItems: 'center', ...Shadows.card, marginBottom: 10
+  },
+  sumVal: { fontSize: 22, fontWeight: '900', color: F.ink, marginVertical: 4 },
+  sumLabel: { fontSize: 11, fontWeight: '700', color: F.slate, textTransform: 'uppercase' },
+
+  classSelectBtn: {
+    backgroundColor: F.white, borderRadius: Radii.lg, padding: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    ...Shadows.card
+  },
+  classSelectLeft: { flexDirection: 'row', alignItems: 'center' },
+  filterCircle: { width: 32, height: 32, borderRadius: 10, backgroundColor: F.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  classSelectText: { fontSize: 15, fontWeight: '800', color: F.ink },
+  chevron: { fontSize: 12, color: F.slate, fontWeight: '800' },
+
+  classOptions: {
+    backgroundColor: F.white, borderRadius: Radii.lg, marginTop: 8,
+    padding: 8, ...Shadows.cardLift, borderTopWidth: 1, borderTopColor: '#f1f1f1'
+  },
+  optionItem: { padding: 12, borderRadius: 8 },
+  optionText: { fontSize: 14, fontWeight: '600', color: F.slate },
+  optionTextActive: { color: F.primary, fontWeight: '800' },
+});

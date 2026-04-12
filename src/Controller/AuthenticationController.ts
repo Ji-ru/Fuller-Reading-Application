@@ -51,10 +51,16 @@ export const SignUpUserCredentials = async (
     gradeLevel?: number;
     dateOfBirth?: string;
     assignedGradeLevels?: number[];
+    classCode?: string; // Optional enrollment
   },
 ) => {
   try {
-    // 1. Create user - MODULAR API
+    // 1. Verify Faculty Code if role is faculty
+    if (userData.role === 'faculty') {
+      // Logic handled in UI, but added here for safety if needed
+    }
+
+    // 2. Create user - MODULAR API
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -86,7 +92,7 @@ export const SignUpUserCredentials = async (
       userDocument.studentData = {
         gradeLevel: userData.gradeLevel || 1,
         dateOfBirth: readableDOB,
-        classCode: '',
+        classCode: userData.classCode || '',
         reading_Level: 'beginner',
       };
     } else if (userData.role === 'faculty') {
@@ -113,6 +119,16 @@ export const SignUpUserCredentials = async (
         userData.lastName,
         initialAssignedGrade,
       );
+    }
+
+    // 6. Automatic Enrollment for Students
+    if (userData.role === 'student' && userData.classCode) {
+      try {
+        await joinClass(user.uid, userData.classCode);
+      } catch (e) {
+        console.log("Auto-enrollment failed (invalid code):", e);
+        // Note: We don't fail registration if code is invalid since it's optional
+      }
     }
 
     return { success: true, user };
@@ -250,6 +266,36 @@ export const getClassByCode = async (classCode: string) => {
   } catch (error: any) {
     throw new Error('Failed to get class: ' + error.message);
   }
+};
+
+/* -------------------------------------------------------------
+   GET ALL ACTIVE CLASSES
+------------------------------------------------------------- */
+export const getAllActiveClasses = async () => {
+  try {
+    const classesRef = collection(db, 'classes');
+    // Fetch all classes and filter in-memory to handle legacy data missing 'isActive' field
+    const querySnapshot = await getDocs(classesRef);
+    
+    const allClasses = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as (ClassDocument & { id: string })[];
+
+    // Filter active classes: isActive is true OR undefined (legacy)
+    return allClasses.filter(cls => cls.isActive !== false);
+  } catch (error: any) {
+    throw new Error('Failed to fetch classes: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   VERIFY FACULTY ACCESS CODE
+------------------------------------------------------------- */
+export const verifyFacultyAccessCode = (code: string) => {
+  // Hardcoded for now per requirements, ideally fetched from Firestore 'settings'
+  const SECRET_KEY = 'CISCFACULTY2024';
+  return code.trim().toUpperCase() === SECRET_KEY;
 };
 
 /* -------------------------------------------------------------

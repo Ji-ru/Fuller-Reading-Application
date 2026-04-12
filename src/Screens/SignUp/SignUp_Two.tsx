@@ -20,7 +20,7 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import buttons from '../../UI_Designs/ButtonStyles';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { RootStackParamList } from '../../Controller/NavigationController';
-import { SignUpUserCredentials } from '../../Controller/AuthenticationController';
+import { SignUpUserCredentials, verifyFacultyAccessCode, getClassByCode } from '../../Controller/AuthenticationController';
 import LottieView from 'lottie-react-native';
 export default function SignUpTwoScreen() {
   // Access the studentInfo passed from SignUpOne
@@ -64,6 +64,15 @@ export default function SignUpTwoScreen() {
 
       // Call with correct parameters - using non-null assertion since we validated above
       if (personalInfo.role! === 'student') {
+        const classCode = (personalInfo as any).classCode;
+        if (classCode) {
+           const classExists = await getClassByCode(classCode);
+           if (!classExists) {
+             setModalVisible(false);
+             return Alert.alert('Error', 'Ang ibinigay na Class Code ay hindi wasto.');
+           }
+        }
+
         await SignUpUserCredentials(email, password, {
           role: personalInfo.role!,
           firstName: personalInfo.firstName!,
@@ -73,8 +82,15 @@ export default function SignUpTwoScreen() {
           profileImageUrl: personalInfo?.profileImageUrl,
           gradeLevel: (personalInfo as any).gradeLevel,
           dateOfBirth: (personalInfo as any).dateOfBirth,
+          classCode: classCode || '',
         });        
       } else if (personalInfo.role! === 'faculty') {
+        const fCode = (personalInfo as any).facultyCode;
+        if (!verifyFacultyAccessCode(fCode)) {
+           setModalVisible(false);
+           return Alert.alert('Access Denied', 'Invalid Faculty Access Code. Please contact your administrator.');
+        }
+
         await SignUpUserCredentials(email, password, {
           role: personalInfo.role!,
           firstName: personalInfo.firstName!,
@@ -82,7 +98,7 @@ export default function SignUpTwoScreen() {
           lastName: personalInfo.lastName!,
           sex: personalInfo.sex!,
           profileImageUrl: personalInfo?.profileImageUrl,
-          assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
+          assignedGradeLevels: (personalInfo as any).assignedGradeLevels || [],
         });  
       }
 

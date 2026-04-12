@@ -40,6 +40,7 @@ interface AralinGroupedData {
   letter: string;
   accent: string;
   activities: ActivityGroup[];
+  latestTime?: number;
 }
 
 interface ActivityGroup {
@@ -55,15 +56,15 @@ interface ReportData {
   wordPerMin: number;
   totalWords: number;
   recordingDuration?: string;
-  totalMiscues?: number;
+  totalMiscues: number;
   substitution: string;
   omission: string;
   insertion: string;
   repetition: string;
-  substitutionCount?: number;
-  omissionCount?: number;
-  insertionCount?: number;
-  repetitionCount?: number;
+  substitutionCount: number;
+  omissionCount: number;
+  insertionCount: number;
+  repetitionCount: number;
   miscues?: any[];
 }
 
@@ -338,7 +339,18 @@ export default function ReadingHistoryScreen() {
         }
       }
 
-      // 3. Catch-all for unknown passages (Put in Aralin 1 or find any aralin index)
+      const cleanLetter = t.replace(/[^a-z]/g, '').trim().toUpperCase();
+      const alphaIdx = alphabetData.findIndex(a => a.letter.toUpperCase() === cleanLetter);
+      if (alphaIdx !== -1) {
+        return { 
+          idx: alphaIdx, 
+          type: t.length <= 2 ? 'Titik' : 'Talata', // Heuristic
+          letter: cleanLetter,
+          title: t.length <= 2 ? `Titik ${cleanLetter}` : title
+        };
+      }
+
+      // 4. Catch-all for unknown passages (Put in Aralin 1 or find any aralin index)
       return { idx: 0, type: 'Talata' as const, letter: '', title };
     };
 
@@ -375,11 +387,11 @@ export default function ReadingHistoryScreen() {
         insertion: r.insertion ?? 'None',
         repetition: r.repetition ?? 'None',
         miscues: r.miscues ?? [],
-        totalMiscues: (r as any).totalMiscues,
-        substitutionCount: (r as any).substitutionCount,
-        omissionCount: (r as any).omissionCount,
-        insertionCount: (r as any).insertionCount,
-        repetitionCount: (r as any).repetitionCount,
+        totalMiscues: r.totalMiscues ?? (r.miscues?.length || 0),
+        substitutionCount: r.substitutionCount || 0,
+        omissionCount: r.omissionCount || 0,
+        insertionCount: r.insertionCount || 0,
+        repetitionCount: r.repetitionCount || 0,
       });
     });
 
@@ -505,7 +517,9 @@ export default function ReadingHistoryScreen() {
                     const all = groupedReports.flatMap(g => 
                       g.activities.flatMap(a => a.reports.map(r => r.accuracyRate))
                     );
-                    return all.length ? (all.reduce((s, v) => s + v, 0) / all.length).toFixed(0) + '%' : '—';
+                    if (all.length === 0) return '—';
+                    const avg = all.reduce((s, v) => s + v, 0) / all.length;
+                    return avg.toFixed(0) + '%';
                   })()}
                 </Text>
                 <Text style={[S.sumLabel, { color: 'rgba(255,255,255,0.8)' }]}>Galing</Text>

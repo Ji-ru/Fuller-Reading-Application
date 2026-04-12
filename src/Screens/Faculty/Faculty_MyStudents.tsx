@@ -7,55 +7,43 @@ import {
   ActivityIndicator,
   FlatList,
   TextInput,
+  StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
-import myStudents from '../../UI_Designs/MyStudentsStyle';
 import bubbles from '../../UI_Designs/BubblesDesign';
-import upperNav from '../../UI_Designs/UpperNavigation';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
+import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
+import { UsersIcon, SearchIcon, ChevronRightIcon, BookOpenIcon, HistoryIcon } from '../../Components/GlobalUse/Icons';
+import { BounceIn } from '../../Components/GlobalUse/Animations';
+
+const { width: SW } = Dimensions.get('window');
 
 type MyStudentsRouteProp = RouteProp<RootStackParamList, 'MyStudents'>;
 
 export default function MyStudents() {
-  // ========================================================================
-  // GET NAVIGATION PARAMETERS
-  // ========================================================================
   const route = useRoute<MyStudentsRouteProp>();
   const { classId, className, classCode, acadYear } = route.params;
 
-  // ========================================================================
-  // STATE MANAGEMENT
-  // ========================================================================
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [logoutVisible, setLogoutVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<UserDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredStudents, setFilteredStudents] = useState<UserDocument[]>([]);
 
-  // ========================================================================
-  // HOOKS
-  // ========================================================================
-  const { handleBackStep, handleLogout, handleStudentViewStats } = useNavigationHelper();
+  const { handleBackStep, handleStudentViewStats } = useNavigationHelper();
 
-  // ========================================================================
-  // FETCH STUDENTS
-  // ========================================================================
   const fetchFacultyStudents = useCallback(async () => {
     try {
       setLoading(true);
-      const studentList = await getFacultyClasses_Student.getStudentsInClass(
-        classCode,
-      );
+      const studentList = await getFacultyClasses_Student.getStudentsInClass(classCode);
       setStudents(studentList);
       setFilteredStudents(studentList);
     } catch (error: any) {
-      throw new Error('Failed to fetch students. ' + error.message);
+      console.log('Fetch students error:', error);
     } finally {
       setLoading(false);
     }
@@ -65,9 +53,6 @@ export default function MyStudents() {
     fetchFacultyStudents();
   }, [fetchFacultyStudents]);
 
-  // ========================================================================
-  // SEARCH FILTER
-  // ========================================================================
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredStudents(students);
@@ -80,261 +65,176 @@ export default function MyStudents() {
     }
   }, [searchQuery, students]);
 
-  // ========================================================================
-  // RENDER STUDENT ITEM
-  // ========================================================================
   const renderStudentItem = ({ item, index }: { item: UserDocument; index: number }) => (
-    <TouchableOpacity
-      style={[myStudents.studentCard, { marginTop: index === 0 ? 0 : 12 }]}
-      onPress={() =>
-        handleStudentViewStats({
-          studentId: item.uid,
-          studentName: `${item.firstName} ${item.middleName ?? ''} ${
-            item.lastName
-          }`.trim(),
-          readingLevel: item.studentData?.reading_Level || 'N/A',
-        })
-      }
-      activeOpacity={0.7}
-    >
-      <View style={myStudents.studentCardContent}>
-        {/* Profile Image/Initial */}
-        {item.profileImageUrl ? (
-          <Image
-            source={{ uri: item.profileImageUrl }}
-            style={myStudents.profileImage}
-          />
-        ) : (
-          <View style={myStudents.defaultProfile}>
-            <Text style={myStudents.defaultProfileText}>
-              {item.firstName?.charAt(0)}
-              {item.lastName?.charAt(0)}
-            </Text>
-          </View>
-        )}
-
-        {/* Student Info */}
-        <View style={myStudents.studentInfo}>
-          <Text style={myStudents.studentName} numberOfLines={1}>
-            {item.firstName} {item.middleName} {item.lastName}
-          </Text>
-          <View style={myStudents.detailsRow}>
-            <View style={myStudents.detailChip}>
-              <Text style={myStudents.detailLabel}>Grade</Text>
-              <Text style={myStudents.detailValue}>
-                {item.studentData?.gradeLevel || 'N/A'}
-              </Text>
-            </View>
-            <View style={myStudents.detailChip}>
-              <Text style={myStudents.detailLabel}>Reading Level</Text>
-              <Text style={myStudents.detailValue}>
-                {item.studentData?.reading_Level || 'N/A'}
-              </Text>
-            </View>
-          </View>
+    <BounceIn delay={index * 50}>
+      <TouchableOpacity
+        style={S.studentCard}
+        onPress={() =>
+          handleStudentViewStats({
+            studentId: item.uid,
+            studentName: `${item.firstName} ${item.lastName}`.trim(),
+            readingLevel: item.studentData?.reading_Level || 'N/A',
+          })
+        }
+        activeOpacity={0.8}
+      >
+        <View style={S.cardMain}>
+           <View style={S.avatarBox}>
+              <Text style={S.avatarText}>{item.firstName?.charAt(0)}{item.lastName?.charAt(0)}</Text>
+           </View>
+           <View style={S.studentInfo}>
+              <Text style={S.studentName} numberOfLines={1}>{item.firstName} {item.lastName}</Text>
+              <View style={S.levelBadge}>
+                 <Text style={S.levelText}>{item.studentData?.reading_Level || 'Beginner'}</Text>
+              </View>
+           </View>
+           <ChevronRightIcon size={20} color={F.slate} />
         </View>
-
-        {/* Arrow Icon */}
-        <View style={myStudents.arrowContainer}>
-          <Text style={myStudents.arrowIcon}>›</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </BounceIn>
   );
 
-  // ========================================================================
-  // EVENT HANDLERS
-  // ========================================================================
-  const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
-  };
-
-  const handleLogoutPress = () => {
-    setMenuVisible(false);
-    setLogoutVisible(true);
-  };
-
-  const confirmLogout = async () => {
-    setLogoutVisible(false);
-    await handleLogout();
-  };
-
-  const cancelLogout = () => {
-    setLogoutVisible(false);
-  };
-
-  // ========================================================================
-  // RENDER LOADING STATES
-  // ========================================================================
-  if (loading) {
-    return (
-      <SafeAreaView style={myStudents.container}>
-        <View style={myStudents.centerContent}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <Text style={myStudents.loadingText}>Loading students...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={myStudents.container}>
-      <View style={myStudents.insideContainer}>
+    <SafeAreaView style={S.safeArea}>
+      <View style={S.container}>
         {/* BUBBLE DECORATIONS */}
         <View style={bubbles.bubblesContainer} pointerEvents="none">
           <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
           <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
           <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
         </View>
 
         {/* HEADER */}
-        <View style={upperNav.header}>
-          <TouchableOpacity
-            style={upperNav.touchable}
-            onPress={handleBackStep}
-          >
-            <Image
-              source={require('../../../assets/icons/BackButton-icon.png')}
-            />
-          </TouchableOpacity>
-          <Image
-            style={upperNav.ciscLogo}
-            source={require('../../../assets/images/cisckids.png')}
-          />
-          <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-            <Image
-              style={upperNav.menuIcon}
-              source={require('../../../assets/icons/Menu-icon.png')}
-            />
-          </TouchableOpacity>
+        <View style={S.header}>
+           <TouchableOpacity style={S.backBtn} onPress={handleBackStep}>
+              <View style={S.backArrow} />
+           </TouchableOpacity>
+           <Image
+             style={S.logo}
+             source={require('../../../assets/images/cisckids.png')}
+             resizeMode="contain"
+           />
+           <View style={{ width: 44 }} /> 
         </View>
 
-        {/* DROPDOWN MENU */}
-        {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
-            <TouchableOpacity
-              onPress={handleLogoutPress}
-              style={upperNav.logoutButton}
-            >
-              <Image
-                source={require('../../../assets/icons/Logout-icon.png')}
-                style={upperNav.logoutIcon}
-              />
-              <Text style={upperNav.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* OVERLAY TO CLOSE MENU */}
-        {menuVisible && (
-          <TouchableOpacity
-            style={upperNav.closeMenu}
-            onPress={() => setMenuVisible(false)}
-            activeOpacity={1}
-          />
-        )}
-
-        {/* LOGOUT MODAL */}
-        <LogoutModal
-          visible={logoutVisible}
-          onCancel={cancelLogout}
-          onConfirm={confirmLogout}
-        />
-
-        {/* MAIN CONTENT */}
-        <View style={myStudents.content}>
-          {/* CLASS INFO HEADER */}
-          <View style={myStudents.classInfoHeader}>
-            <View style={myStudents.classInfoMain}>
-              <Text style={myStudents.className} numberOfLines={2}>
-                {className || 'Class Details'}
-              </Text>
-              <View style={myStudents.classMetaRow}>
-                <View style={myStudents.classMetaItem}>
-                  <Text style={myStudents.classMetaLabel}>Academic Year</Text>
-                  <Text style={myStudents.classMetaValue}>{acadYear}</Text>
-                </View>
-                {classCode && (
-                  <View style={myStudents.classMetaItem}>
-                    <Text style={myStudents.classMetaLabel}>Class Code</Text>
-                    <Text style={myStudents.classMetaValue}>{classCode}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-
-          {/* SEARCH BAR */}
-          <View style={myStudents.searchContainer}>
-            <Image
-              source={require('../../../assets/icons/Search-icon.png')}
-              style={myStudents.searchIcon}
-            />
-            <TextInput
-              style={myStudents.searchInput}
-              placeholder="Search students..."
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Text style={myStudents.clearButton}>✕</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* STUDENT COUNT */}
-          <View style={myStudents.studentCountContainer}>
-            <Text style={myStudents.studentCount}>
-              {filteredStudents.length} Student{filteredStudents.length !== 1 ? 's' : ''}
-            </Text>
-            {searchQuery.length > 0 && filteredStudents.length !== students.length && (
-              <Text style={myStudents.studentCountSubtext}>
-                of {students.length} total
-              </Text>
-            )}
-          </View>
-
-          {/* STUDENTS LIST */}
-          <View style={myStudents.studentListWrapper}>
-            {filteredStudents.length > 0 ? (
-              <FlatList
+        {loading ? (
+           <View style={S.loadingBox}>
+              <ActivityIndicator size="large" color={F.primary} />
+              <Text style={S.loadingText}>Kinukuha ang listahan ng mga mag-aaral...</Text>
+           </View>
+        ) : (
+          <View style={S.content}>
+             <FlatList
                 data={filteredStudents}
                 renderItem={renderStudentItem}
                 keyExtractor={item => item.uid}
+                ListHeaderComponent={
+                   <BounceIn delay={100}>
+                      <View style={S.heroCard}>
+                         <View style={S.heroLeft}>
+                            <Text style={S.heroLabel}>Class Records</Text>
+                            <Text style={S.heroTitle} numberOfLines={2}>{className}</Text>
+                            <View style={S.heroCodeBox}>
+                               <Text style={S.heroCodeLabel}>Class Code:</Text>
+                               <Text style={S.heroCodeVal}>{classCode}</Text>
+                            </View>
+                         </View>
+                         <UsersIcon size={48} color={F.primaryLight} />
+                      </View>
+
+                      {/* SEARCH */}
+                      <View style={S.searchBox}>
+                         <SearchIcon size={20} color={F.slate} />
+                         <TextInput 
+                           style={S.searchInput}
+                           placeholder="Maghanap ng pangalan..."
+                           placeholderTextColor="#999"
+                           value={searchQuery}
+                           onChangeText={setSearchQuery}
+                         />
+                      </View>
+
+                      <View style={S.listHeaderRow}>
+                         <Text style={S.listLabel}>MGA MAG-AARAL ({filteredStudents.length})</Text>
+                         <Text style={S.yearText}>{acadYear}</Text>
+                      </View>
+                   </BounceIn>
+                }
+                contentContainerStyle={S.listContent}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={myStudents.listContent}
-              />
-            ) : (
-              <View style={myStudents.emptyContainer}>
-                <Text style={myStudents.emptyIcon}>🔍</Text>
-                <Text style={myStudents.emptyTitle}>
-                  {searchQuery ? 'No students found' : 'No students enrolled'}
-                </Text>
-                <Text style={myStudents.emptyText}>
-                  {searchQuery
-                    ? 'Try adjusting your search terms'
-                    : 'Students will appear here once they join this class'}
-                </Text>
-              </View>
-            )}
+                ListEmptyComponent={
+                   <View style={S.emptyBox}>
+                      <UsersIcon size={64} color={F.slate} />
+                      <Text style={S.emptyTitle}>Walang nahanap</Text>
+                      <Text style={S.emptySub}>Subukan ang ibang pangalan o hintaying{'\n'}mag-enroll ang mga estudyante.</Text>
+                   </View>
+                }
+             />
           </View>
-        </View>
+        )}
       </View>
     </SafeAreaView>
   );
 }
+
+const S = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: F.bg },
+  container: { flex: 1 },
+  header: { 
+     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
+     paddingHorizontal: 20, paddingTop: 10, marginBottom: 10 
+  },
+  logo: { width: 100, height: 90 },
+  backBtn: {
+     width: 44, height: 44, borderRadius: 14, backgroundColor: F.white,
+     justifyContent: 'center', alignItems: 'center', ...Shadows.subtle
+  },
+  backArrow: { 
+     width: 12, height: 12, borderLeftWidth: 3, borderTopWidth: 3, 
+     borderColor: F.primaryDeep, transform: [{ rotate: '-45deg' }],
+     marginLeft: 4
+  },
+
+  content: { flex: 1 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 40 },
+
+  heroCard: {
+     backgroundColor: F.primaryDeep, borderRadius: Radii.xl, padding: 24,
+     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+     marginBottom: 20, ...Shadows.cardLift
+  },
+  heroLeft: { flex: 1, marginRight: 16 },
+  heroLabel: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4 },
+  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white, marginBottom: 12 },
+  heroCodeBox: { flexDirection: 'row', alignItems: 'center', opacity: 0.9 },
+  heroCodeLabel: { fontSize: 12, color: F.white, fontWeight: '600' },
+  heroCodeVal: { fontSize: 13, color: F.white, fontWeight: '900', marginLeft: 6, textTransform: 'uppercase' },
+
+  searchBox: {
+     backgroundColor: F.white, borderRadius: Radii.lg, paddingHorizontal: 16,
+     height: 56, flexDirection: 'row', alignItems: 'center', marginBottom: 24, ...Shadows.card
+  },
+  searchInput: { flex: 1, marginLeft: 12, fontSize: 16, color: F.ink, fontWeight: '600' },
+
+  listHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingHorizontal: 4 },
+  listLabel: { fontSize: 13, fontWeight: '800', color: F.slate, letterSpacing: 1 },
+  yearText: { fontSize: 12, fontWeight: '700', color: F.primaryDeep, backgroundColor: F.primary + '15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+
+  studentCard: {
+     backgroundColor: F.white, borderRadius: Radii.xl, padding: 16, marginBottom: 12, ...Shadows.card
+  },
+  cardMain: { flexDirection: 'row', alignItems: 'center' },
+  avatarBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: F.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  avatarText: { fontSize: 18, fontWeight: '900', color: F.primaryDeep },
+  studentInfo: { flex: 1 },
+  studentName: { fontSize: 17, fontWeight: '800', color: F.ink, marginBottom: 4 },
+  levelBadge: { backgroundColor: '#f5f7f9', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, alignSelf: 'flex-start' },
+  levelText: { fontSize: 11, fontWeight: '700', color: F.slate, textTransform: 'capitalize' },
+
+  loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 16, color: F.slate, fontWeight: '600' },
+
+  emptyBox: { alignItems: 'center', marginTop: 60, opacity: 0.5 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: F.ink, marginTop: 16 },
+  emptySub: { fontSize: 14, color: F.slate, textAlign: 'center', marginTop: 8 },
+});

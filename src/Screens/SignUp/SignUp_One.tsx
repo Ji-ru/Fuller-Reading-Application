@@ -28,6 +28,7 @@ import { RootStackParamList } from '../../Controller/NavigationController';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { getCurrentAcademicYear } from '../../Utilities/acadYearUtils';
 import AcademicYearDropDownSelection from '../../Components/SignUp/Buttons/AcademicYearDropdown';
+import ClassSelectionButton from '../../Components/SignUp/Buttons/ClassSelectionButton';
 
 type SignUpOneRouteProp = RouteProp<RootStackParamList, 'SignUpOne'>;
 
@@ -48,13 +49,14 @@ export default function SignUpOneScreen() {
   const [firstName, setFirstName] = useState('');
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [gradeLevel, setGradeLevel] = useState(0);
+  const [gradeLevel, setGradeLevel] = useState(1); // Default to 1 to match UI default of dropdown
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
 
   // Set user sex
   const [gender, setGender] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
 
   const onChange = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
@@ -177,31 +179,6 @@ export default function SignUpOneScreen() {
           />
           <View style={{ width: 44 }} />
         </View>
-        {/* SCREEN TITLE */}
-        <Text style={signup.label}>Register</Text>
-
-        {/* STEPS INDICATOR */}
-        <View style={signup.stepsContainer}>
-          <View
-            style={[
-              signup.stepCircle,
-              currentStep == 1 ? signup.activateStep : signup.inactivateStep,
-            ]}
-          >
-            <Text style={signup.number}>1</Text>
-          </View>
-
-          <View style={signup.stepLine} />
-
-          <View
-            style={[
-              signup.stepCircle,
-              currentStep == 2 ? signup.activateStep : signup.inactivateStep,
-            ]}
-          >
-            <Text>2</Text>
-          </View>
-        </View>
 
         {/* PROFILE PICTURE WITH CHANGE BUTTON */}
         <View style={{ position: 'relative', alignSelf: 'center' }}>
@@ -226,26 +203,17 @@ export default function SignUpOneScreen() {
 
         {/* PERSONAL INFORMATION */}
         <View>
-          <Text style={signup.subLabel}>Personal Information</Text>
           {/* FIRST NAME */}
-          <Text style={signup.textform}>First Name</Text>
+          <Text style={signup.textform}>Pangalan</Text>
           <TextInput
             style={signup.textInputForm}
             placeholder="e.g Juan "
             value={firstName}
             onChangeText={setFirstName}
           />
-          {/* MIDDLE NAME */}
-          <Text style={signup.textform}>Middle Name</Text>
-          <TextInput
-            style={signup.textInputForm}
-            placeholder="e.g Marasigan"
-            value={middleName}
-            onChangeText={setMiddleName}
-          />
 
           {/* LAST NAME */}
-          <Text style={signup.textform}>Last Name</Text>
+          <Text style={signup.textform}>Apelyido</Text>
           <TextInput
             style={signup.textInputForm}
             placeholder="e.g Campus"
@@ -254,11 +222,11 @@ export default function SignUpOneScreen() {
           />
 
           {/* SEX */}
-          <Text style={signup.textform}>Select Gender:</Text>
+          <Text style={signup.textform}>Kasarian</Text>
           <GenderSelection onGenderSelect={setGender} />
 
           {/* DATE OF BIRTH */}
-          <Text style={signup.textform}>Date of Birth</Text>
+          <Text style={signup.textform}>Petsa ng Kapanganakan</Text>
           <TouchableOpacity
             style={signup.dateInput}
             onPress={() => setShowPicker(true)}
@@ -284,14 +252,33 @@ export default function SignUpOneScreen() {
           />
 
           <Text style={signup.textform}>
-            {role === 'student' ? 'Grade Level' : 'Assigned Grade Level'}
+            {role === 'student' ? 'Antas ng Baitang' : 'Assigned Grade Level'}
           </Text>
           <GradeLevelDropDownSelection
             onSelect={value => setGradeLevel(value)}
           />
+
+          {/* VERIFICATION CODE */}
+          <Text style={signup.textform}>
+            {role === 'student' ? 'Klase' : 'Faculty Access Code'}
+          </Text>
+          
+          {role === 'student' ? (
+             <ClassSelectionButton 
+               gradeLevel={gradeLevel} 
+               onSelect={setVerificationCode} 
+             />
+          ) : (
+            <TextInput
+              style={signup.textInputForm}
+              placeholder='Enter Secret Code'
+              value={verificationCode}
+              onChangeText={setVerificationCode}
+              autoCapitalize="characters"
+            />
+          )}
         </View>
 
-        {/* NEXT PAGE */}
         <TouchableOpacity
           style={buttons.nextPageButton}
           onPress={() => {
@@ -306,8 +293,14 @@ export default function SignUpOneScreen() {
                 sex: gender,
                 gradeLevel,
                 dateOfBirth: formatDateToReadable(date),
+                classCode: verificationCode.trim(),
               });
             } else if (role === 'faculty') {
+              // Basic requirement check for faculty code - detailed check in SignUp_Two
+              if (!verificationCode.trim()) {
+                return Alert.alert('Error', 'Pakilagay ang iyong Faculty Access Code.');
+              }
+
               handleSignUpNavigationWithData({
                 profileImageUrl: profileImage || '',
                 firstName: firstName.trim(),
@@ -317,11 +310,12 @@ export default function SignUpOneScreen() {
                 role,
                 sex: gender,
                 assignedGradeLevels: [gradeLevel],
+                facultyCode: verificationCode.trim(),
               });
             }
           }}
         >
-          <Text style={buttons.nextPageText}>Next</Text>
+          <Text style={buttons.nextPageText}>Kasunod</Text>
         </TouchableOpacity>
 
         {/* CANCEL */}
@@ -329,7 +323,7 @@ export default function SignUpOneScreen() {
           style={buttons.cancelButton}
           onPress={handleCancelRegistration}
         >
-          <Text style={buttons.cancelText}>Cancel</Text>
+          <Text style={buttons.cancelText}>I-kansela</Text>
         </TouchableOpacity>
       </View>
       </ScrollView>

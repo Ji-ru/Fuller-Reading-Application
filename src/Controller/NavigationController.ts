@@ -42,6 +42,7 @@ export type RootStackParamList = {
   FacultyDashboard: undefined;
   FacultyProfile: undefined;
   MyClass: undefined;
+  Archive: undefined;
   MyStudents: {
     classId: string;
     className?: string;
@@ -100,7 +101,8 @@ export const useNavigationHelper = () => {
     sex,
     gradeLevel,
     dateOfBirth,
-    assignedGradeLevels,
+    classCode,
+    facultyCode,
   }: {
     profileImageUrl?: string;
     firstName: string;
@@ -112,6 +114,8 @@ export const useNavigationHelper = () => {
     gradeLevel?: number;
     dateOfBirth?: string;
     assignedGradeLevels?: number[];
+    classCode?: string;
+    facultyCode?: string;
   }) => {
     // Basic validation
     if (!firstName || !lastName) {
@@ -139,7 +143,7 @@ export const useNavigationHelper = () => {
     }
 
     // Build StudentInformation object
-    const userInfo: Partial<UserDocument> = {
+    const userInfo: any = { // Use any briefly to allow dynamic fields passed to step 2
       profileImageUrl: profileImageUrl || '',
       firstName,
       middleName,
@@ -147,6 +151,8 @@ export const useNavigationHelper = () => {
       email: '',
       role,
       sex,
+      classCode,
+      facultyCode,
     };
     // Add role-specific data
     if (role === 'student') {

@@ -13,6 +13,7 @@ import {
 import { useFetchClassReadingHealth } from '../../../Hooks/use_ReadingStudentStats';
 import { ClassReadingHealth } from '../../../Interfaces/miscue';
 import { getAcademicYearOptions } from '../../../Utilities/acadYearUtils';
+import { FacultyColors as F, Radii, Shadows } from '../../../Utilities/Theme';
 
 interface Props {
   facultyId?: string;
@@ -72,15 +73,15 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
   const getStatusColor = (status: StatusType) => {
     switch (status) {
       case 'fluent':
-        return '#4CAF50';
+        return '#00B894'; // Professional Green
       case 'developing':
-        return '#FFC107';
+        return '#FDCB6E'; // Professional Gold
       case 'emerging':
-        return '#FF9800';
+        return '#E17055'; // Professional Orange
       case 'atRisk':
-        return '#F44336';
+        return '#D63031'; // Professional Red
       default:
-        return '#9E9E9E';
+        return F.slate;
     }
   };
 
@@ -196,9 +197,11 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
             {classItem.lastUpdated.toLocaleDateString()}
           </Text>
         </View>
-        <Text style={styles.expandIcon}>
-          {expandedClass === classItem.classId ? '▲' : '▼'}
-        </Text>
+        <View style={[styles.expandIndicator, expandedClass === classItem.classId && styles.expandIndicatorActive]}>
+          <Text style={[styles.expandIndicatorText, expandedClass === classItem.classId && styles.expandIndicatorTextActive]}>
+             {expandedClass === classItem.classId ? '−' : '+'}
+          </Text>
+        </View>
       </View>
 
       {renderStatusBar(classItem.readingHealth)}
@@ -298,18 +301,7 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
     }
 
     if (filteredClassHealthData.length === 0) {
-      return (
-        <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>
-            No reading health data available
-          </Text>
-          <Text style={styles.noDataSubtext}>
-            {academicYear
-              ? `No classes found for academic year ${academicYear}`
-              : 'Students need to complete reading assessments first'}
-          </Text>
-        </View>
-      );
+      return null;
     }
 
     if (selectedView === 'overall') {
@@ -344,6 +336,10 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
       value: classItem.classId,
     })),
   ];
+
+  if (!loading && filteredClassHealthData.length === 0) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
@@ -556,25 +552,25 @@ const ClassReadingStatus: React.FC<Props> = ({ facultyId = null }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
+    backgroundColor: F.white,
+    borderRadius: Radii.xl,
     padding: 20,
-    elevation: 3,
+    ...Shadows.card,
     marginBottom: 20,
   },
   header: {
     marginBottom: 16,
   },
   title: {
-    fontSize: 20,
-    fontFamily: 'Satoshi-Bold',
-    color: '#2C3E50',
+    fontSize: 18,
+    fontWeight: '900',
+    color: F.ink,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
-    fontFamily: 'Satoshi-Medium',
-    color: '#7F8C8D',
+    fontSize: 13,
+    color: F.slate,
+    fontWeight: '600',
   },
   // New Filters Row Layout
   filtersRow: {
@@ -713,12 +709,12 @@ const styles = StyleSheet.create({
     maxHeight: 500,
   },
   classCard: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    backgroundColor: '#F8FAFB',
+    borderRadius: Radii.lg,
     padding: 16,
-    marginBottom: 10,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: '#E8EDF1',
   },
   classHeader: {
     flexDirection: 'row',
@@ -731,21 +727,29 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   className: {
-    fontSize: 18,
-    fontFamily: 'Satoshi-Bold',
-    color: '#2C3E50',
+    fontSize: 16,
+    fontWeight: '800',
+    color: F.ink,
   },
   classStats: {
-    fontSize: 12,
-    color: '#7F8C8D',
-    fontFamily: 'Satoshi-Medium',
+    fontSize: 11,
+    color: F.slate,
+    fontWeight: '600',
     marginTop: 2,
   },
-  expandIcon: {
-    fontSize: 16,
-    color: '#4ECDC4',
-    fontFamily: 'Satoshi-Medium',
-    fontWeight: 'bold',
+  expandIndicator: {
+    width: 28, height: 28, borderRadius: 10,
+    backgroundColor: '#E8F5F5', justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandIndicatorActive: {
+    backgroundColor: F.primary,
+  },
+  expandIndicatorText: {
+    fontSize: 18, fontWeight: '900', color: F.primary, lineHeight: 22
+  },
+  expandIndicatorTextActive: {
+    color: F.white
   },
   statusBarContainer: {
     flexDirection: 'row',
