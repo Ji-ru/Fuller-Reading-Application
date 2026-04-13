@@ -33,6 +33,15 @@ const CheckmarkBadge = () => (
   </View>
 );
 
+const ErrorBadge = () => (
+  <View style={[readingStyles.completionBadge, { backgroundColor: '#e74c3c' }]}>
+    <View style={{ position: 'relative', width: 14, height: 14, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ position: 'absolute', width: 2, height: 14, backgroundColor: '#fff', transform: [{ rotate: '45deg' }] }} />
+      <View style={{ position: 'absolute', width: 2, height: 14, backgroundColor: '#fff', transform: [{ rotate: '-45deg' }] }} />
+    </View>
+  </View>
+);
+
 export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   material,
   type,
@@ -40,6 +49,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   isRecording,
   miscues = [], 
   isCompleted = false,
+  isCorrect = true,
 }) => {
   // Function to highlight letter in text
   const highlightLetterInText = (text: string, letter: string) => {
@@ -196,14 +206,17 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   if (type === 'alphabet' && isAlphabet(material)) {
     return (
       <View style={readingStyles.wordCardContainer}>
-        <View style={[readingStyles.wordCard, isCompleted && readingStyles.completedCard]}>
+        <View style={[
+          readingStyles.wordCard, 
+          isCompleted && isCorrect && readingStyles.completedCard,
+          isCompleted && !isCorrect && readingStyles.errorCard
+        ]}>
           <View style={readingStyles.clipContainer}>
             {/* Decorative shapes to match Hero */}
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.03)', bottom: -15, left: -15, width: 60, height: 60 }]} />
           </View>
           
-          {isCompleted && <CheckmarkBadge />}
           <Text style={readingStyles.wordCardText}>
             {material.letter}
           </Text>
@@ -218,14 +231,17 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   
     return (
       <View style={readingStyles.wordCardContainer}>
-        <View style={[readingStyles.wordCard, isCompleted && readingStyles.completedCard]}>
+        <View style={[
+          readingStyles.wordCard, 
+          isCompleted && isCorrect && readingStyles.completedCard,
+          isCompleted && !isCorrect && readingStyles.errorCard
+        ]}>
           <View style={readingStyles.clipContainer}>
             {/* Decorative shapes to match Hero */}
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.03)', bottom: -15, left: -15, width: 60, height: 60 }]} />
           </View>
 
-          {isCompleted && <CheckmarkBadge />}
           <Text style={readingStyles.wordCardText}>{allWords[0]}</Text>
         </View>
       </View>
@@ -244,14 +260,13 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
         <View style={[
           !isRecording ? readingStyles.passageContainerFeedback : readingStyles.passageContainer,
-          isCompleted && readingStyles.completedCard
+          isCompleted && isCorrect && readingStyles.completedCard,
+          isCompleted && !isCorrect && readingStyles.errorCard
         ]}>
           <View style={readingStyles.clipContainer}>
              {/* Decorative shapes to match Hero */}
              <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
           </View>
-
-          {isCompleted && <CheckmarkBadge />}
           
           <ScrollView
             style={readingStyles.passageScroll}

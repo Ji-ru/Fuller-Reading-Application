@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  Modal,
 } from 'react-native';
 import signup from '../../UI_Designs/SignUpStyles';
 import DatePicker from 'react-native-date-picker';
@@ -57,6 +58,12 @@ export default function SignUpOneScreen() {
   // Set user sex
   const [gender, setGender] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+
+  // Cancel Modal State
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  // Validation State
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const onChange = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
@@ -125,10 +132,23 @@ export default function SignUpOneScreen() {
     }
   };
 
-  // Helper function to format date as "7 December 2025"
+  // Tagalog month names
+  const tagalogMonths = [
+    'Enero', 'Pebrero', 'Marso', 'Abril', 'Mayo', 'Hunyo',
+    'Hulyo', 'Agosto', 'Setyembre', 'Oktubre', 'Nobyembre', 'Disyembre'
+  ];
+
+  const formatDateTagalog = (dateObj: Date): string => {
+    const day = dateObj.getDate();
+    const month = tagalogMonths[dateObj.getMonth()];
+    const year = dateObj.getFullYear();
+    return `${month} ${day}, ${year}`;
+  };
+
+  // Helper function to format date as "7 Pebrero 2025"
   const formatDateToReadable = (dateObj: Date): string => {
     const day = dateObj.getDate();
-    const month = dateObj.toLocaleString('default', { month: 'long' });
+    const month = tagalogMonths[dateObj.getMonth()];
     const year = dateObj.getFullYear();
     return `${day} ${month} ${year}`;
   };
@@ -204,52 +224,101 @@ export default function SignUpOneScreen() {
         {/* PERSONAL INFORMATION */}
         <View>
           {/* FIRST NAME */}
-          <Text style={signup.textform}>Pangalan</Text>
+          <Text style={signup.textform}>
+            Pangalan {isSubmitted && !firstName.trim() && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
+          </Text>
           <TextInput
-            style={signup.textInputForm}
+            style={[signup.textInputForm, isSubmitted && !firstName.trim() ? { borderColor: '#e74c3c' } : null]}
             placeholder="e.g Juan "
             value={firstName}
             onChangeText={setFirstName}
           />
 
           {/* LAST NAME */}
-          <Text style={signup.textform}>Apelyido</Text>
+          <Text style={signup.textform}>
+            Apelyido {isSubmitted && !lastName.trim() && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
+          </Text>
           <TextInput
-            style={signup.textInputForm}
+            style={[signup.textInputForm, isSubmitted && !lastName.trim() ? { borderColor: '#e74c3c' } : null]}
             placeholder="e.g Campus"
             value={lastName}
             onChangeText={setLastName}
           />
 
           {/* SEX */}
-          <Text style={signup.textform}>Kasarian</Text>
+          <Text style={signup.textform}>
+            Kasarian {isSubmitted && !gender && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
+          </Text>
           <GenderSelection onGenderSelect={setGender} />
 
           {/* DATE OF BIRTH */}
           <Text style={signup.textform}>Petsa ng Kapanganakan</Text>
           <TouchableOpacity
-            style={signup.dateInput}
+            style={[
+              signup.textInputForm,
+              {
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingHorizontal: 16,
+              }
+            ]}
+            activeOpacity={0.7}
             onPress={() => setShowPicker(true)}
           >
-            <Text style={signup.dateText}>{date.toDateString()}</Text>
+            <Text style={{ fontSize: 15, color: '#1b2e23', fontFamily: 'Satoshi-Medium' }}>
+              {formatDateTagalog(date)}
+            </Text>
             <Image
               source={require('../../../assets/icons/Calendar-icon.png')}
-              style={signup.icon}
+              style={{ width: 18, height: 18, tintColor: '#8fafa0' }}
             />
           </TouchableOpacity>
 
-          <DatePicker
-            modal
-            mode="date"
-            open={showPicker}
-            date={date}
-            maximumDate={new Date()}
-            onConfirm={date => {
-              setShowPicker(false);
-              setDate(date);
-            }}
-            onCancel={() => setShowPicker(false)}
-          />
+          {/* Custom Date Picker Bottom Sheet */}
+          <Modal
+            visible={showPicker}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowPicker(false)}
+          >
+            <TouchableOpacity
+              style={localStyles.dateOverlay}
+              activeOpacity={1}
+              onPress={() => setShowPicker(false)}
+            >
+              <View style={localStyles.dateModal}>
+                <View style={localStyles.dateIndicator} />
+                <Text style={localStyles.dateModalTitle}>Pumili ng Petsa</Text>
+
+                <DatePicker
+                  date={date}
+                  mode="date"
+                  maximumDate={new Date()}
+                  onDateChange={setDate}
+                  locale="fil"
+                  theme="light"
+                  dividerColor="#d4f5e2"
+                  style={{ alignSelf: 'center' }}
+                />
+
+                <View style={localStyles.dateActions}>
+                  <TouchableOpacity
+                    style={localStyles.dateCancelBtn}
+                    onPress={() => setShowPicker(false)}
+                  >
+                    <Text style={localStyles.dateCancelText}>I-kansela</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={localStyles.dateConfirmBtn}
+                    onPress={() => setShowPicker(false)}
+                  >
+                    <Text style={localStyles.dateConfirmText}>Piliin</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </Modal>
 
           <Text style={signup.textform}>
             {role === 'student' ? 'Antas ng Baitang' : 'Assigned Grade Level'}
@@ -260,7 +329,8 @@ export default function SignUpOneScreen() {
 
           {/* VERIFICATION CODE */}
           <Text style={signup.textform}>
-            {role === 'student' ? 'Klase' : 'Faculty Access Code'}
+            {role === 'student' ? 'Klase ' : 'Faculty Access Code '}
+            {isSubmitted && !verificationCode.trim() && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
           </Text>
           
           {role === 'student' ? (
@@ -270,7 +340,7 @@ export default function SignUpOneScreen() {
              />
           ) : (
             <TextInput
-              style={signup.textInputForm}
+              style={[signup.textInputForm, isSubmitted && !verificationCode.trim() ? { borderColor: '#e74c3c' } : null]}
               placeholder='Enter Secret Code'
               value={verificationCode}
               onChangeText={setVerificationCode}
@@ -282,6 +352,13 @@ export default function SignUpOneScreen() {
         <TouchableOpacity
           style={buttons.nextPageButton}
           onPress={() => {
+            setIsSubmitted(true);
+            
+            // Check if required fields are filled to bypass the Alert popup in NavigationController
+            if (!firstName.trim() || !lastName.trim() || !gender || !verificationCode.trim()) {
+              return;
+            }
+
             if (role === 'student') {
               handleSignUpNavigationWithData({
                 profileImageUrl: profileImage || '',
@@ -296,11 +373,6 @@ export default function SignUpOneScreen() {
                 classCode: verificationCode.trim(),
               });
             } else if (role === 'faculty') {
-              // Basic requirement check for faculty code - detailed check in SignUp_Two
-              if (!verificationCode.trim()) {
-                return Alert.alert('Error', 'Pakilagay ang iyong Faculty Access Code.');
-              }
-
               handleSignUpNavigationWithData({
                 profileImageUrl: profileImage || '',
                 firstName: firstName.trim(),
@@ -321,13 +393,51 @@ export default function SignUpOneScreen() {
         {/* CANCEL */}
         <TouchableOpacity
           style={buttons.cancelButton}
-          onPress={handleCancelRegistration}
+          onPress={() => setShowCancelModal(true)}
         >
           <Text style={buttons.cancelText}>I-kansela</Text>
         </TouchableOpacity>
       </View>
       </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Cancel Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showCancelModal}
+        onRequestClose={() => setShowCancelModal(false)}
+      >
+        <View style={localStyles.modalOverlay}>
+          <View style={localStyles.modalContainer}>
+             {/* ICON BOX */}
+             <View style={localStyles.modalIconBox}>
+                <Text style={{ fontSize: 32 }}>⚠️</Text>
+             </View>
+
+             {/* TEXT CONTENT */}
+             <Text style={localStyles.modalTitle}>I-kansela ang Pagrehistro?</Text>
+             <Text style={localStyles.modalMessage}>Sigurado ka ba na gusto mong kanselahin? Mawawala ang iyong mga nailagay na impormasyon.</Text>
+
+             {/* BUTTONS */}
+             <View style={localStyles.modalButtonRow}>
+                <TouchableOpacity style={localStyles.modalCancelBtn} onPress={() => setShowCancelModal(false)}>
+                   <Text style={localStyles.modalCancelBtnText}>Ipagpatuloy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                   style={localStyles.modalConfirmBtn} 
+                   onPress={() => {
+                     setShowCancelModal(false);
+                     // Navigate back to Login
+                     handleBackStep(); // or handleCancelRegistration if it resets to login
+                   }}
+                >
+                   <Text style={localStyles.modalConfirmBtnText}>I-discard</Text>
+                </TouchableOpacity>
+             </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -362,7 +472,158 @@ const localStyles = StyleSheet.create({
     transform: [{ rotate: '-45deg' }],
   },
   logo: {
-    width: 140,
-    height: 48,
+    width: 100,
+    height: 90,
+  },
+
+  // Date Picker Bottom Sheet
+  dateOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-end',
+  },
+  dateModal: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  dateIndicator: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#eee',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  dateModalTitle: {
+    fontSize: 18,
+    fontFamily: 'Satoshi-Bold',
+    color: '#1b2e23',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  datePreview: {
+    backgroundColor: '#f0faf4',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  datePreviewText: {
+    fontSize: 16,
+    fontFamily: 'Satoshi-Bold',
+    color: '#1a7a45',
+    textAlign: 'center',
+  },
+  dateActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 12,
+  },
+  dateCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#d4f5e2',
+    alignItems: 'center',
+  },
+  dateCancelText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Bold',
+    color: '#8fafa0',
+  },
+  dateConfirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#1a7a45',
+    alignItems: 'center',
+  },
+  dateConfirmText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Bold',
+    color: '#fff',
+  },
+
+  // Modal Styles (Cancel Registration)
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  modalIconBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: '#fff5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Satoshi-Black',
+    color: '#1b2e23',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Medium',
+    color: '#8fafa0',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelBtnText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Bold',
+    color: '#8fafa0',
+  },
+  modalConfirmBtn: {
+    flex: 1.5,
+    backgroundColor: '#e74c3c',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#e74c3c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  modalConfirmBtnText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Bold',
+    color: '#fff',
   },
 });

@@ -1,10 +1,10 @@
 import React from 'react';
-import { useNavigationHelper } from '../../Controller/NavigationController';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import chooseRole from '../../UI_Designs/ChooseRoleStyle';
+import { useNavigationHelper } from '../../Controller/NavigationController';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import buttons from '../../UI_Designs/ButtonStyles';
+import chooseRole from '../../UI_Designs/ChooseRoleStyle';
 
 function BackArrow({ color = '#1b2e23' }: { color?: string }) {
   return (
@@ -56,8 +56,7 @@ export default function ChooseRole() {
         </View>
 
         {/* TITLE */}
-        <Text style={chooseRole.title}>Welcome! Choose your role.</Text>
-
+        <Text style={chooseRole.title}>Maligayang pagdating! Pumili ng role.</Text>
         {/* IMAGE */}
         <View style={chooseRole.imageContainer}>
           <Image
@@ -67,12 +66,12 @@ export default function ChooseRole() {
         </View>
 
         <View>
-            <TouchableOpacity style={buttons.studentButton} onPress={() => handleRoleSelection('student')}>
-                <Text style={buttons.nextPageText}>I am a Student</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('faculty')}>
-                <Text style={[buttons.nextPageText, { color: '#1a7a45' }]}>I am a Teacher</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={buttons.studentButton} onPress={() => handleRoleSelection('student')}>
+            <Text style={buttons.nextPageText}>Ako ay Estudyante</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('faculty')}>
+            <Text style={[buttons.nextPageText, { color: '#1a7a45' }]}>Ako ay Guro</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -101,7 +100,7 @@ const localStyles = StyleSheet.create({
     elevation: 3,
   },
   logo: {
-    width: 140,
-    height: 48,
+    width: 100,
+    height: 90,
   },
 });

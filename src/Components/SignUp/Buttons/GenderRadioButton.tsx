@@ -13,12 +13,12 @@ const GenderSelection = ({ onGenderSelect }: GenderSelectionProps) => {
   const radioButtons = [
     {
       id: '1',
-      label: 'Male',
+      label: 'Lalaki',
       value: 'male',
     },
     {
       id: '2',
-      label: 'Female',
+      label: 'Babae',
       value: 'female',
     },
   ];

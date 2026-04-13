@@ -285,12 +285,12 @@ export default function PageSelectionScreen() {
     const totalPassages = currentPassages.length;
 
     const total = 1 + totalWords + totalPassages;
-    const mastered = isAlphaDone + wordCount + passageCount;
+    const masteredCapped = isAlphaDone + Math.min(wordCount, totalWords) + Math.min(passageCount, totalPassages);
     
-    return total > 0 ? mastered / total : 0;
+    return total > 0 ? Math.min(masteredCapped / total, 1) : 0;
   }, [selectedAralin, currentLetterInfo, completedAlpha, completedWordsMap, completedPassages, currentPassages]);
 
-  const progressPercent = Math.round(aralinProgress * 100);
+  const progressPercent = Math.min(Math.round(aralinProgress * 100), 100);
 
   const renderLessonTile = ({ item, index }: { item: Alphabet; index: number }) => {
     const isAlphaDone = completedAlpha.has(item.letter);
@@ -429,7 +429,7 @@ export default function PageSelectionScreen() {
                             <Text style={S.lessonHeroLetter}>
                               {currentLetterInfo?.letter}
                             </Text>
-                            <Text style={S.lessonHeroTapHint}>I-tap para pakinggan at bigkasin</Text>
+                            <Text style={S.lessonHeroTapHint}>I-tap para bigkasin</Text>
                           </View>
                           
                           <View style={S.lessonHeroLetterBig}>

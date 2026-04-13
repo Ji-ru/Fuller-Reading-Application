@@ -33,7 +33,7 @@ import { Buffer } from 'buffer';
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Provider = 'whisper' | 'custom';
-const ACTIVE_PROVIDER = 'whisper' as Provider;
+const ACTIVE_PROVIDER = 'custom' as Provider;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ENDPOINT CONFIGURATION
@@ -51,7 +51,7 @@ const ENDPOINTS = {
    * Could be a HF Space URL, your own FastAPI server, etc.
    * Example: 'https://your-org-cisc-asr.hf.space/run/predict'
    */
-  custom: '',
+  custom: 'https://jayac0r30-marungko.hf.space/transcribe',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,18 +99,6 @@ export const useSpeechToText = () => {
 
   // ── PROVIDER: Whisper via HF Inference API ─────────────────────────────────
 
-  /**
-   * Send the WAV file to Whisper (large-v3) on Hugging Face.
-   *
-   * HF Inference API for ASR:
-   *   - Accepts raw audio bytes in the request body
-   *   - Returns { text: "transcription" }
-   *
-   * We pass `language` and `initial_prompt` as query parameters.
-   * `initial_prompt` is the key quality lever — giving Whisper the passage text
-   * primes its language model toward words it is likely to hear, reducing
-   * hallucinations on Tagalog proper nouns and uncommon vocabulary.
-   */
   const transcribeWithWhisper = useCallback(
     async (
       audioFilePath: string,
@@ -126,13 +114,6 @@ export const useSpeechToText = () => {
       const base64 = await readFile(audioFilePath, 'base64');
       const binary  = Buffer.from(base64, 'base64');
 
-      /**
-       * Build a short initial_prompt from the target text.
-       * Whisper uses this as a soft prior — it doesn't force the output
-       * to match, but it greatly reduces errors on domain-specific words.
-       * We cap it at 224 tokens (Whisper's limit) by taking the first
-       * 800 characters, which is well within limits for typical passages.
-       */
       const prompt = options.targetText.slice(0, 800);
 
       const params = `language=fil&initial_prompt=${encodeURIComponent(prompt)}`;
@@ -175,21 +156,6 @@ export const useSpeechToText = () => {
 
   // ── PROVIDER: Your custom model ────────────────────────────────────────────
 
-  /**
-   * ─────────────────────────────────────────────────────────────────────────
-   * CUSTOM MODEL INTEGRATION POINT
-   * ─────────────────────────────────────────────────────────────────────────
-   * When your Filipino ASR model is deployed, implement this function.
-   *
-   * Steps:
-   *  1. Set CUSTOM_MODEL_URL to your endpoint.
-   *  2. Adjust the request body to match your server's expected format.
-   *  3. Adjust parseCustomResponse() to extract the transcript string.
-   *  4. Set ACTIVE_PROVIDER = 'custom' at the top of this file.
-   *
-   * Everything else — recording, analysis, Firestore storage — stays the same.
-   * ─────────────────────────────────────────────────────────────────────────
-   */
   const transcribeWithCustomModel = useCallback(
     async (
       audioFilePath: string,
@@ -201,45 +167,37 @@ export const useSpeechToText = () => {
         );
       }
 
-      const base64 = await readFile(audioFilePath, 'base64');
+      const formData = new FormData();
+      
+      const fileUri = audioFilePath.startsWith("file://") ? audioFilePath : "file://" + audioFilePath;
 
-      /**
-       * ADJUST THIS REQUEST to match your model's expected input format.
-       *
-       * Common patterns:
-       *  A) Gradio Space (predict endpoint):
-       *       body: JSON.stringify({ data: [`data:audio/wav;base64,${base64}`] })
-       *       response: result.data[0]
-       *
-       *  B) FastAPI / Flask server:
-       *       body: JSON.stringify({ audio: base64, language: 'fil' })
-       *       response: result.transcript
-       *
-       *  C) HF Inference Endpoint (same as Whisper above):
-       *       body: binary bytes, Content-Type: audio/wav
-       *       response: result.text
-       */
+      formData.append("file", {
+        uri: fileUri,
+        name: "recording.wav", 
+        type: "audio/wav",     
+      } as any);
+
       const response = await fetch(ENDPOINTS.custom, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          audio: base64,
-          language: 'fil',
-          prompt: options.targetText.slice(0, 800),
-        }),
+        body: formData,
+        headers: {
+          "Accept": "application/json",
+        },
       });
 
+      const responseText = await response.text();
+      
       if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`Custom model error ${response.status}: ${body}`);
+        throw new Error(`Custom model error ${response.status}: ${responseText.substring(0, 50)}...`);
       }
 
-      const result = await response.json();
+      // We expect JSON back from your HF Space FastAPI endpoint.
+      const result = JSON.parse(responseText);
 
       // ADJUST THIS to match your model's response shape
-      const transcript = parseCustomResponse(result);
+      const transcript = parseCustomResponse(result) || result.transcript || result.text || responseText;
 
-      if (!transcript.trim()) {
+      if (!transcript || !transcript.trim()) {
         throw new Error('Walang natukoy na pagbigkas!');
       }
 

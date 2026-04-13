@@ -1,31 +1,30 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, Alert, TouchableOpacity } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import {
   RootStackParamList,
   useNavigationHelper,
 } from '../../Controller/NavigationController';
-import readingStyles from '../../UI_Designs/ReadingActivityStyles';
 import bubbles from '../../UI_Designs/BubblesDesign';
-import selection from '../../UI_Designs/PassageSelectionStyles';
+import readingStyles from '../../UI_Designs/ReadingActivityStyles';
 
-import { useAudioRecording } from '../../Controller/AudioRecordingController';
-import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
-import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceController';
-import { ReadingHeader } from '../../Components/Student/Reading/ReadingHeader';
-import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
-import { RecordingControls } from '../../Components/Student/Reading/RecordingControls';
-import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
-import { Miscue } from '../../Interfaces/miscue';
-import { MiscueReportController } from '../../Controller/MiscueReportController';
-import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
-import { FeedbackModal } from '../../Components/Student/Reading/FeedbackModal';
 import { getAuth } from '@react-native-firebase/auth';
+import { transcribeAudio as transcribeAudioAPI } from '../../../api';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
+import { ReadingHeader } from '../../Components/Student/Reading/ReadingHeader';
+import { RecordingControls } from '../../Components/Student/Reading/RecordingControls';
+import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
+import { useAudioRecording } from '../../Controller/AudioRecordingController';
+import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceController';
+import { MiscueReportController } from '../../Controller/MiscueReportController';
+import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
+import { Miscue } from '../../Interfaces/miscue';
+import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
 import { ACCENT_COLORS } from '../../Utilities/Theme';
 
 type ReadingActivityScreenRouteProp = RouteProp<
@@ -35,24 +34,24 @@ type ReadingActivityScreenRouteProp = RouteProp<
 
 const ChevronIcon = ({ direction, color }: { direction: 'left' | 'right', color: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-    <Path 
-      d={direction === 'left' ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} 
-      stroke={color} 
-      strokeWidth="3.5" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
+    <Path
+      d={direction === 'left' ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}
+      stroke={color}
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </Svg>
 );
 
 const FinishCheckmark = ({ color }: { color: string }) => (
   <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-    <Path 
-      d="M20 6L9 17l-5-5" 
-      stroke={color} 
-      strokeWidth="3.5" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
+    <Path
+      d="M20 6L9 17l-5-5"
+      stroke={color}
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </Svg>
 );
@@ -61,12 +60,12 @@ function NavArrow({ direction, disabled, isFinish, onPress }: { direction: 'left
   if (disabled && !isFinish) return <View style={[readingStyles.navArrow, readingStyles.navArrowHidden]} />;
 
   return (
-    <TouchableOpacity 
-      style={readingStyles.navArrow} 
+    <TouchableOpacity
+      style={readingStyles.navArrow}
       onPress={onPress}
       activeOpacity={0.7}
     >
-       <LinearGradient
+      <LinearGradient
         colors={['#ffffff', '#f0faf4']}
         style={{ width: '100%', height: '100%', borderRadius: 28, justifyContent: 'center', alignItems: 'center' }}
       >
@@ -79,6 +78,61 @@ function NavArrow({ direction, disabled, isFinish, onPress }: { direction: 'left
     </TouchableOpacity>
   );
 }
+
+// Custom animated wave component for loading state
+const WaveLoading = () => {
+  const [dotText, setDotText] = useState('.');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotText((prev) => (prev.length < 3 ? prev + '.' : '.'));
+    }, 400);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+      {/* 
+        You can replace this text-based wave with a true animated pulsing set of elements
+        but using these textual waves gives a nice lightweight effect that matches 'wave' 
+      */}
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#1a7a45', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#2CA96A', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#1a7a45', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#1a7a45', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#2CA96A', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#1a7a45', fontWeight: 'bold' }}>~</Text>
+    </View>
+  );
+};
+
+// Retry button using same size/spot as microphone
+const RetryButton = ({ onPress }: { onPress: () => void }) => (
+  <View style={{ alignItems: 'center', justifyContent: 'center', width: 180 }}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+      <LinearGradient
+        colors={['#1a7a45', '#2ecc71']}
+        style={readingStyles.microphone}
+      >
+        <Svg width={42} height={42} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C14.5113 4 16.756 5.1554 18.2361 6.9583"
+            stroke="#ffffff"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+          <Path
+            d="M14 7H19V2"
+            stroke="#ffffff"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      </LinearGradient>
+    </TouchableOpacity>
+  </View>
+);
 
 export default function ReadingActivityScreenPage() {
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,6 +153,9 @@ export default function ReadingActivityScreenPage() {
     'congratulations' | 'tryAgain' | 'passageSuccess' | 'goodJob'
   >('congratulations');
   const [totalWords, setTotalWords] = useState(0);
+
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [finalTagalogText, setFinalTagalogText] = useState('');
 
   const [hasShownModalForCurrentAttempt, setHasShownModalForCurrentAttempt] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -188,19 +245,25 @@ export default function ReadingActivityScreenPage() {
   }, []);
 
   const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
+    setIsTranscribing(true);
+    setFinalTagalogText('');
     try {
-      const transcription = await transcribeAudio(audioFile, type, targetText);
+      const transcription = await transcribeAudioAPI(audioFile);
+      setFinalTagalogText(transcription);
       setSpokenText(transcription);
       setRecordingDuration(duration);
       analyzeReading(transcription, duration);
       setIsReadingCompleted(true);
     } catch (error) {
+      console.error(error);
       const simulatedResponse = getSimulatedResponse(targetText);
       setSpokenText(simulatedResponse);
       analyzeReading(simulatedResponse, 0);
       setIsReadingCompleted(true);
+    } finally {
+      setIsTranscribing(false);
     }
-  }, [transcribeAudio, getSimulatedResponse, targetText]);
+  }, [getSimulatedResponse, targetText]);
 
   const handleRecordToggle = useCallback(async () => {
     if (isRecording) {
@@ -240,6 +303,7 @@ export default function ReadingActivityScreenPage() {
     setRecordingDuration(0);
     setAlreadyCompleted(false);
     setHasCheckedExisting(false);
+    setFinalTagalogText('');
   }, []);
 
   const handleNext = () => {
@@ -303,7 +367,7 @@ export default function ReadingActivityScreenPage() {
           console.error('Failed to store alphabet attempt:', error);
         }
       }
-      
+
       // Store detailed trial report
       if (!hasStoredReport) storeMiscueReport(accuracyNum, duration, [], 0);
     } else if (type === 'passage' && isPassage(readingMaterial)) {
@@ -383,7 +447,8 @@ export default function ReadingActivityScreenPage() {
               spokenText={spokenText}
               isRecording={isRecording}
               miscues={miscues}
-              isCompleted={isReadingCompleted && isCorrectAttempt}
+              isCompleted={isReadingCompleted}
+              isCorrect={isCorrectAttempt}
             />
           </BounceIn>
 
@@ -393,27 +458,36 @@ export default function ReadingActivityScreenPage() {
               {items.map((_, index) => {
                 const dotColor = type === 'word' ? ACCENT_COLORS[index % ACCENT_COLORS.length] : undefined;
                 return (
-                  <View 
-                    key={index} 
+                  <View
+                    key={index}
                     style={[
                       readingStyles.progressDot,
                       dotColor ? { backgroundColor: dotColor, opacity: 0.2 } : null,
                       currentIndex === index && readingStyles.progressDotActive,
                       currentIndex === index && dotColor ? { backgroundColor: dotColor, opacity: 1 } : null
-                    ]} 
+                    ]}
                   />
                 );
               })}
             </View>
           )}
 
-          {isLoading && (
+
+          {(isLoading || isTranscribing) && (
             <View style={readingStyles.loadingContainer}>
-              <Text style={readingStyles.loadingText}>Inaayos ang iyong record...</Text>
+              <Text style={readingStyles.loadingText}>Sinusuri..</Text>
             </View>
           )}
 
-          {!isLoading && isReadingCompleted && (type !== 'alphabet' || !isCorrectAttempt) && (
+          {isReadingCompleted && isCorrectAttempt && (type === 'alphabet' || type === 'word') && finalTagalogText.trim() !== '' && (
+            <View style={{ marginVertical: 10, alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, color: '#888', fontStyle: 'italic', textAlign: 'center' }}>
+                {`"${finalTagalogText}"`}
+              </Text>
+            </View>
+          )}
+
+          {!isLoading && !isTranscribing && isReadingCompleted && (type === 'passage' || !isCorrectAttempt) && (
             <FeedbackResult
               targetText={targetText}
               spokenText={spokenText}
@@ -433,28 +507,30 @@ export default function ReadingActivityScreenPage() {
           (type === 'passage' || type === 'alphabet') && { justifyContent: 'center' }
         ]}>
           {(type !== 'passage' && type !== 'alphabet') && (
-            <NavArrow 
-              direction="left" 
-              disabled={currentIndex === 0 || isRecording} 
-              onPress={handlePrevious} 
+            <NavArrow
+              direction="left"
+              disabled={currentIndex === 0 || isRecording}
+              onPress={handlePrevious}
             />
           )}
 
-          {!isReadingCompleted && (
+          {!isReadingCompleted ? (
             <RecordingControls
               isRecording={isRecording}
-              isLoading={isLoading}
+              isLoading={isLoading || isTranscribing}
               hasPermission={hasPermission}
               onRecordToggle={handleRecordToggle}
             />
+          ) : (
+            !isCorrectAttempt && <RetryButton onPress={resetAll} />
           )}
 
           {(type !== 'passage' && type !== 'alphabet') && (
-            <NavArrow 
-              direction="right" 
-              isFinish={currentIndex === items.length - 1} 
+            <NavArrow
+              direction="right"
+              isFinish={currentIndex === items.length - 1}
               disabled={isRecording}
-              onPress={handleNext} 
+              onPress={handleNext}
             />
           )}
         </View>

@@ -8,14 +8,15 @@ const chooseRole = StyleSheet.create({
   },
   title: {
     fontFamily: 'Satoshi-Bold',
-    fontSize: 35,
-    margin: 40,
+    fontSize: 30,
+    margin: 30,
   },
   image: {
-    width: 200,
-    height: 220,
+    width: 180,
+    height: 200,
     maxWidth: 200,
-    maxHeight: 220
+    maxHeight: 220,
+    marginBottom: 20,
   },
   imageContainer: {
     alignItems: 'center',

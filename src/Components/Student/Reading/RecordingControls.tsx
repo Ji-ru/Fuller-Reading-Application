@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { View, TouchableOpacity, Image, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Animated, Easing } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import readingStyles from '../../../UI_Designs/ReadingActivityStyles';
 
 interface RecordingControlsProps {
@@ -67,14 +68,6 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
   return (
     <View style={styles.proMicWrapper}>
        {/* Instruction text always takes space to prevent jumping */}
-       <View style={styles.labelContainer}>
-          {isRecording && (
-            <Animated.Text style={[styles.listeningText, { opacity: pulse1.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0.4, 1] }) }]}>
-              Nakikinig...
-            </Animated.Text>
-          )}
-       </View>
-
       <View style={readingStyles.pulseContainer}>
         {isRecording && (
           <>
@@ -103,17 +96,35 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
             style={isRecording ? readingStyles.microphoneRecording : readingStyles.microphone}
           >
             <View style={styles.micInnerGlow}>
-              <Image
-                source={
-                  isRecording
-                    ? require('../../../../assets/icons/MicrophoneSlash-icon.png')
-                    : require('../../../../assets/icons/Microphone-icon.png')
-                }
-                style={[
-                  styles.micIcon,
-                  isLoading && { opacity: 0.5 }
-                ]}
-              />
+              {isRecording ? (
+                /* Premium "Stop" icon for recording state */
+                <Svg width={30} height={30} viewBox="0 0 24 24" fill="none">
+                  <Rect
+                    x="5" y="5" width="14" height="14" rx="2"
+                    fill="#ffffff"
+                  />
+                </Svg>
+              ) : (
+                /* Premium Microphone SVG */
+                <Svg width={38} height={38} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+                    fill="#ffffff"
+                  />
+                  <Path
+                    d="M19 10v2a7 7 0 0 1-14 0v-2"
+                    stroke="#ffffff"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                  <Path
+                    d="M12 19v4M8 23h8"
+                    stroke="#ffffff"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </Svg>
+              )}
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -140,7 +151,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#e74c3c',
     letterSpacing: 1.2,
-    textTransform: 'uppercase',
   },
   hintText: {
     fontFamily: 'Satoshi-Bold',

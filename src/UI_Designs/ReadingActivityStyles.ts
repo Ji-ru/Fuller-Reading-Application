@@ -527,6 +527,12 @@ const readingStyles = StyleSheet.create({
 
   completedCard: {
     borderColor: '#1a7a45',
+    borderWidth: 3,
+  },
+
+  errorCard: {
+    borderColor: '#e74c3c',
+    borderWidth: 3,
   },
 
   loadingText: {

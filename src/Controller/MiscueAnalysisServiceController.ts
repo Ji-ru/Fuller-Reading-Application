@@ -350,8 +350,8 @@ export class MiscueAnalysisService {
   // WORD ACCURACY (More tolerant)
   // ==============================
   static checkWordAccuracy(
-  targetWord: string,
-  spokenText: string,
+    targetWord: string,
+    spokenText: string,
   ): {
     isCorrect: boolean;
     accuracy: string;

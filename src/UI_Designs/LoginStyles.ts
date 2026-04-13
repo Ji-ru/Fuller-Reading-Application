@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 
 const login = StyleSheet.create({
   safeAreaContainer: {
+    flex: 1,
     backgroundColor: '#f0faf4',
   },
   container: {

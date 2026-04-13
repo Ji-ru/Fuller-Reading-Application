@@ -1,19 +1,18 @@
 import auth from '@react-native-firebase/auth';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Animated,
   Dimensions,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { AlertTriangleIcon, BarChartIcon, BookOpenIcon, FileTextIcon, FlexIcon, HistoryIcon, LockIcon, PartyIcon, StarIcon, ThumbsUpIcon, TimerIcon, TrendUpIcon, TrophyIcon, TypeIcon, ZapIcon } from '../../Components/GlobalUse/Icons';
+import { BookOpenIcon, FlexIcon, HistoryIcon, PartyIcon, StarIcon, ThumbsUpIcon, TimerIcon, TrophyIcon, ZapIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -120,7 +119,7 @@ function TalataDetailItem({ report, index, accent }: { report: ReportData; index
   const acc = report.accuracyRate;
   const color = accColor(acc);
   const totalMiscues = report.totalMiscues ?? report.miscues?.length ?? 0;
-  
+
   const formatDate = (ts: any) => {
     try {
       const d = ts?.toDate ? ts.toDate() : new Date(ts);
@@ -138,43 +137,43 @@ function TalataDetailItem({ report, index, accent }: { report: ReportData; index
 
   return (
     <View style={[S.talataItem, { borderLeftColor: color }]}>
-       <View style={S.talataTopInfo}>
-          <View style={S.talataTimeBox}>
-            <TimerIcon size={12} color={C.slate} />
-            <Text style={S.talataDate}>{formatDate(report.timestamp)}</Text>
-          </View>
-          <View style={[S.statusBadge, { backgroundColor: color + '12' }]}>
-             <Text style={[S.statusBadgeText, { color }]}>{getStatus(acc)}</Text>
-          </View>
-       </View>
+      <View style={S.talataTopInfo}>
+        <View style={S.talataTimeBox}>
+          <TimerIcon size={12} color={C.slate} />
+          <Text style={S.talataDate}>{formatDate(report.timestamp)}</Text>
+        </View>
+        <View style={[S.statusBadge, { backgroundColor: color + '12' }]}>
+          <Text style={[S.statusBadgeText, { color }]}>{getStatus(acc)}</Text>
+        </View>
+      </View>
 
-       <View style={S.talataStatsRow}>
-         <View style={S.statBox}>
-           <View style={{ flexDirection: 'row', gap: 2, marginBottom: 4 }}>
-             {[...Array(3)].map((_, i) => (
-                <StarIcon key={i} size={10} color={i < stars ? '#f1c40f' : '#bdc3c7'} />
-             ))}
-           </View>
-           <Text style={[S.statVal, { color }]}>{acc.toFixed(0)}%</Text>
-           <Text style={S.statLab}>Galing</Text>
-         </View>
-         <View style={S.statDivider} />
-         <View style={S.statBox}>
-           <TimerIcon size={14} color={C.slate} style={{ marginBottom: 4 }} />
-           <Text style={S.statVal}>{report.recordingDuration || '0:00'}</Text>
-           <Text style={S.statLab}>Tagal</Text>
-         </View>
-         <View style={S.statDivider} />
-         <View style={S.statBox}>
-           <ZapIcon size={14} color={C.slate} style={{ marginBottom: 4 }} />
-           <Text style={S.statVal}>{report.wordPerMin}</Text>
-           <Text style={S.statLab}>Bilis</Text>
-         </View>
-       </View>
+      <View style={S.talataStatsRow}>
+        <View style={S.statBox}>
+          <View style={{ flexDirection: 'row', gap: 2, marginBottom: 4 }}>
+            {[...Array(3)].map((_, i) => (
+              <StarIcon key={i} size={10} color={i < stars ? '#f1c40f' : '#bdc3c7'} />
+            ))}
+          </View>
+          <Text style={[S.statVal, { color }]}>{acc.toFixed(0)}%</Text>
+          <Text style={S.statLab}>Galing</Text>
+        </View>
+        <View style={S.statDivider} />
+        <View style={S.statBox}>
+          <TimerIcon size={14} color={C.slate} style={{ marginBottom: 4 }} />
+          <Text style={S.statVal}>{report.recordingDuration || '0:00'}</Text>
+          <Text style={S.statLab}>Tagal</Text>
+        </View>
+        <View style={S.statDivider} />
+        <View style={S.statBox}>
+          <ZapIcon size={14} color={C.slate} style={{ marginBottom: 4 }} />
+          <Text style={S.statVal}>{report.wordPerMin}</Text>
+          <Text style={S.statLab}>Bilis</Text>
+        </View>
+      </View>
 
-       <View style={S.miscueZone}>
-         <MiscueIcons report={report} />
-       </View>
+      <View style={S.miscueZone}>
+        <MiscueIcons report={report} />
+      </View>
     </View>
   );
 }
@@ -182,7 +181,7 @@ function TalataDetailItem({ report, index, accent }: { report: ReportData; index
 // ─── Aralin Mastery Card ─────────────────────────────────────────────────────
 function AralinMasteryCard({ group }: { group: AralinGroupedData }) {
   const accent = group.accent;
-  
+
   // Calculate aggregate stats for this Aralin
   const titikAttempts = group.activities.find(a => a.type === 'Titik')?.reports.length || 0;
   const salitaAttempts = group.activities.find(a => a.type === 'Salita')?.reports.length || 0;
@@ -192,28 +191,28 @@ function AralinMasteryCard({ group }: { group: AralinGroupedData }) {
     <BounceIn delay={group.aralinIndex * 50}>
       <View style={[S.aralinCard, { borderTopColor: accent }]}>
         <View style={S.aralinHeader}>
-           <View style={[S.aralinIconCircle, { backgroundColor: accent + '12' }]}>
-             <Text style={[S.aralinLetter, { color: accent }]}>{group.letter}</Text>
-           </View>
-           <View style={{ flex: 1, marginLeft: 16 }}>
-             <Text style={[S.aralinLabelText, { color: accent }]}>{group.aralinLabel}</Text>
-             <Text style={S.aralinTitleText}>Titik {group.letter.toUpperCase()}</Text>
-             
-             <View style={[S.aralinSummaryPills, { marginTop: 8 }]}>
-               {titikAttempts > 0 && (
-                 <View style={[S.miniPill, { backgroundColor: accent + '10' }]}>
-                   <BookOpenIcon size={12} color={accent} />
-                   <Text style={[S.miniPillText, { color: accent }]}>{titikAttempts} Subok</Text>
-                 </View>
-               )}
-               {salitaAttempts > 0 && (
-                 <View style={[S.miniPill, { backgroundColor: accent + '10' }]}>
-                   <ZapIcon size={12} color={accent} />
-                   <Text style={[S.miniPillText, { color: accent }]}>{salitaAttempts} Subok</Text>
-                 </View>
-               )}
-             </View>
-           </View>
+          <View style={[S.aralinIconCircle, { backgroundColor: accent + '12' }]}>
+            <Text style={[S.aralinLetter, { color: accent }]}>{group.letter}</Text>
+          </View>
+          <View style={{ flex: 1, marginLeft: 16 }}>
+            <Text style={[S.aralinLabelText, { color: accent }]}>{group.aralinLabel}</Text>
+            <Text style={S.aralinTitleText}>Titik {group.letter.toUpperCase()}</Text>
+
+            <View style={[S.aralinSummaryPills, { marginTop: 8 }]}>
+              {titikAttempts > 0 && (
+                <View style={[S.miniPill, { backgroundColor: accent + '10' }]}>
+                  <BookOpenIcon size={12} color={accent} />
+                  <Text style={[S.miniPillText, { color: accent }]}>{titikAttempts} Subok</Text>
+                </View>
+              )}
+              {salitaAttempts > 0 && (
+                <View style={[S.miniPill, { backgroundColor: accent + '10' }]}>
+                  <ZapIcon size={12} color={accent} />
+                  <Text style={[S.miniPillText, { color: accent }]}>{salitaAttempts} Subok</Text>
+                </View>
+              )}
+            </View>
+          </View>
         </View>
 
         {talataActivities.length > 0 && (
@@ -227,11 +226,11 @@ function AralinMasteryCard({ group }: { group: AralinGroupedData }) {
                   <Text style={S.talataAttemptCount}>{act.reports.length} subok</Text>
                 </View>
                 {act.reports.map((rep, ri) => (
-                  <TalataDetailItem 
-                    key={rep.id} 
-                    report={rep} 
-                    index={ri} 
-                    accent={accent} 
+                  <TalataDetailItem
+                    key={rep.id}
+                    report={rep}
+                    index={ri}
+                    accent={accent}
                   />
                 ))}
               </View>
@@ -279,10 +278,10 @@ export default function ReadingHistoryScreen() {
         // Heuristic: Not an alphabet sound or word list, and exists in material or is long enough
         return !t.includes('alphabet') && !t.includes('words for') && (t.length > 3);
       });
-      
+
       const uniquePassages = new Set(allPassages.map(p => p.passageTitle));
       setTalataCount(uniquePassages.size);
-      
+
       if (allPassages.length > 0) {
         setLastPassage(allPassages[0].passageTitle || '—');
       }
@@ -303,7 +302,7 @@ export default function ReadingHistoryScreen() {
 
     const getReportAralin = (title: string) => {
       const t = title.toLowerCase();
-      
+
       // 1. Exact Passage Title Check
       const p = readingMaterialData.Passages.find(p => p.title.toLowerCase() === t);
       if (p) return { idx: (p.aralin ?? 1) - 1, type: 'Talata' as const, letter: '', title: p.title };
@@ -311,7 +310,7 @@ export default function ReadingHistoryScreen() {
       // 2. Format Detection (Alphabet - M, Words for M)
       let letter = '';
       let type: 'Titik' | 'Salita' = 'Titik';
-      
+
       if (t.includes('alphabet')) {
         letter = t.split('-')[1]?.trim() || '';
         type = 'Titik';
@@ -330,11 +329,11 @@ export default function ReadingHistoryScreen() {
       if (letter) {
         const aIdx = alphabetData.findIndex(a => a.letter.toUpperCase() === letter.toUpperCase());
         if (aIdx !== -1) {
-          return { 
-            idx: aIdx, 
-            type, 
-            letter, 
-            title: type === 'Titik' ? `Titik ${letter.toUpperCase()}` : `Mga Salita (${letter.toUpperCase()})` 
+          return {
+            idx: aIdx,
+            type,
+            letter,
+            title: type === 'Titik' ? `Titik ${letter.toUpperCase()}` : `Mga Salita (${letter.toUpperCase()})`
           };
         }
       }
@@ -342,8 +341,8 @@ export default function ReadingHistoryScreen() {
       const cleanLetter = t.replace(/[^a-z]/g, '').trim().toUpperCase();
       const alphaIdx = alphabetData.findIndex(a => a.letter.toUpperCase() === cleanLetter);
       if (alphaIdx !== -1) {
-        return { 
-          idx: alphaIdx, 
+        return {
+          idx: alphaIdx,
           type: t.length <= 2 ? 'Titik' : 'Talata', // Heuristic
           letter: cleanLetter,
           title: t.length <= 2 ? `Titik ${cleanLetter}` : title
@@ -413,9 +412,9 @@ export default function ReadingHistoryScreen() {
         // Sort reports by date descending inside each activity
         aralin.activities.forEach(act => {
           act.reports.sort((a, b) => {
-             const A = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
-             const B = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
-             return B.getTime() - A.getTime();
+            const A = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
+            const B = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
+            return B.getTime() - A.getTime();
           });
         });
 
@@ -425,7 +424,7 @@ export default function ReadingHistoryScreen() {
   };
 
   // Helper for old toggle logic
-  const toggle = (i: number) => { } ; // Stub for compat
+  const toggle = (i: number) => { }; // Stub for compat
 
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -478,12 +477,12 @@ export default function ReadingHistoryScreen() {
               <Text style={[S.heroTitle, { color: C.white }]}>Ang iyong{'\n'}Kasaysayan</Text>
             </View>
             <View style={S.heroStars}>
-               <TrophyIcon size={48} color={C.yellow} />
-               <View style={S.starsRow}>
-                 <StarIcon size={16} color={C.yellow} />
-                 <StarIcon size={24} color={C.yellow} />
-                 <StarIcon size={16} color={C.yellow} />
-               </View>
+              <TrophyIcon size={48} color={C.yellow} />
+              <View style={S.starsRow}>
+                <StarIcon size={16} color={C.yellow} />
+                <StarIcon size={24} color={C.yellow} />
+                <StarIcon size={16} color={C.yellow} />
+              </View>
             </View>
           </View>
         </BounceIn>
@@ -503,7 +502,7 @@ export default function ReadingHistoryScreen() {
                 <Text style={[S.sumVal, { color: C.white, fontSize: lastPassage.length > 8 ? 13 : 15 }]} numberOfLines={1}>{lastPassage}</Text>
                 <Text style={[S.sumLabel, { color: 'rgba(255,255,255,0.8)' }]}>Huling Binasa</Text>
               </View>
-              
+
               <View style={[S.sumCard, { backgroundColor: '#e67e22' }]}>
                 <ZapIcon size={18} color={C.white} />
                 <Text style={[S.sumVal, { color: C.white }]}>{totalAttempts}</Text>
@@ -514,7 +513,7 @@ export default function ReadingHistoryScreen() {
                 <StarIcon size={18} color={C.white} />
                 <Text style={[S.sumVal, { color: C.white }]}>
                   {(() => {
-                    const all = groupedReports.flatMap(g => 
+                    const all = groupedReports.flatMap(g =>
                       g.activities.flatMap(a => a.reports.map(r => r.accuracyRate))
                     );
                     if (all.length === 0) return '—';
@@ -531,7 +530,7 @@ export default function ReadingHistoryScreen() {
         {/* ── Aralin Mastary Roadmap ────────────────────────────────────────── */}
         <View style={{ paddingHorizontal: 16, paddingBottom: 40, marginTop: 4 }}>
           {groupedReports.map((aralinGroup, i) => (
-             <AralinMasteryCard key={aralinGroup.aralinIndex} group={aralinGroup} />
+            <AralinMasteryCard key={aralinGroup.aralinIndex} group={aralinGroup} />
           ))}
           {groupedReports.length === 0 && !isLoading && (
             <View style={S.emptyState}>
@@ -630,9 +629,9 @@ const S = StyleSheet.create({
   talataActivityGroup: { marginBottom: 16 },
   talataHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
   talataTitle: { fontSize: 14, fontWeight: '800', color: C.slate },
-  
-  talataItem: { 
-    marginBottom: 20, 
+
+  talataItem: {
+    marginBottom: 20,
     paddingLeft: 14,
     borderLeftWidth: 4,
     borderRadius: 8,
@@ -640,20 +639,20 @@ const S = StyleSheet.create({
     paddingVertical: 12,
     marginRight: 4,
   },
-  talataTopInfo: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
+  talataTopInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
     paddingRight: 8,
   },
   talataTimeBox: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   statusBadgeText: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
-  
-  talataStatsRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
+
+  talataStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: C.white,
     padding: 12,
@@ -668,7 +667,7 @@ const S = StyleSheet.create({
   miscueZone: { marginTop: 12 },
   perfectBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10 },
   perfectText: { fontSize: 12, fontWeight: '800' },
-  
+
   miscueIconRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   miscueBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
   miscueBadgeLabel: { fontSize: 11, fontWeight: '800' },
