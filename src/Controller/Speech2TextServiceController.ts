@@ -1,3 +1,4 @@
+
 // This file is a custom hook, named with the convention "use..." so it can use React hooks like useState, useEffect, useRef, useCallback, useMemo.
 // useState: manage internal status (e.g. isLoading), useEffect: handle side effects, useRef: persistent mutable values, useCallback/useMemo: memoize event handlers or calculations.
 import { useState, useCallback } from 'react';
@@ -229,6 +230,69 @@ export const useSpeechToText = () => {
     [],
   );
 
+// WAV2VEC2 SPEECH TO TEXT IMPLEMENTATION
+  const processAudioWithHubert = useCallback(
+    async (audioFile: string): Promise<string> => {
+      try {
+        setIsLoading(true);
+
+        const formData = new FormData();
+        const fileUri = audioFile.startsWith('file://') ? audioFile : `file://${audioFile}`;
+
+        // ✅ Field name "file" matches HuggingFace Space endpoint
+        formData.append('file', {
+          uri: fileUri,
+          name: 'audio.wav',
+          type: 'audio/wav',
+        } as any);
+
+        const response = await fetch('https://cisckids-hubertapi.hf.space/transcribe', {
+          method: 'POST',
+          // ✅ No Content-Type header — fetch auto-sets multipart boundary
+          headers: {
+            Accept: 'application/json',
+          },
+          body: formData,
+        });
+
+        // ✅ Read raw text first so errors are always readable
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error(
+            `Upload failed ${response.status}: ${responseText.substring(0, 200)}`,
+          );
+        }
+
+        let data: any = responseText;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          // Some endpoints can return plain text; keep raw body as fallback.
+        }
+        const transcript = extractTranscript(data);
+
+        if (!transcript?.trim()) {
+          throw new Error('Walang natukoy na pagbigkas!');
+        }
+
+        return transcript;
+      } catch (error: any) {
+        setSttErrorVisible(true);
+        setSttErrorMessage(
+          error?.message
+            ? `Transcription failed: ${error.message}`
+            : 'Failed to transcribe audio. Please check your internet connection and try again.',
+        );
+        console.log('STT Error (Wav2Vec2): ' + error.message);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
   // WAV2VEC2 SPEECH TO TEXT IMPLEMENTATION
   const processAudioWithWav2Vec2 = useCallback(
     async (audioFile: string): Promise<string> => {
@@ -364,6 +428,7 @@ export const useSpeechToText = () => {
     processAudioWithDeepgram,
     processAudioWithWav2Vec2,
     processAudioWithWhisper,
+    processAudioWithHubert,
     getSimulatedResponse,
     // ── STT error modal ──────────────────────────────────────────────────────
     sttErrorVisible,

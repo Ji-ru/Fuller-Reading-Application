@@ -134,27 +134,55 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
   // WORD FEEDBACK — REDESIGNED
   // Single colour-coded result band — green when correct,
   // orange when not — with a clear emoji + message.
+  // Now includes target vs spoken word comparison.
   // ─────────────────────────────────────────────────────────
   if (type === 'word') {
     return (
-      <View>
-        {/* Result card */}
-        <View style={readingStyles.wordResultCard}>
-          <View style={[
-            readingStyles.wordResultContent,
-            isTextCorrect
-              ? readingStyles.wordResultCorrect
-              : readingStyles.wordResultIncorrect,
-          ]}>
-            <Text style={readingStyles.wordResultIcon}>
-              {isTextCorrect ? '✓' : '✗'}
-            </Text>
-            <Text style={readingStyles.wordResultText}>
+      <View style={{ width: '100%', alignItems: 'center' }}>
+        <View style={[
+          readingStyles.newAlphaCard,
+          isTextCorrect ? readingStyles.newAlphaCardCorrect : readingStyles.newAlphaCardIncorrect
+        ]}>
+          <View style={readingStyles.newAlphaHeader}>
+            <Text style={readingStyles.newAlphaHeaderEmoji}>{isTextCorrect ? '🌟' : '💡'}</Text>
+            <Text style={[
+              readingStyles.newAlphaHeaderText,
+              isTextCorrect ? readingStyles.newAlphaTextCorrect : readingStyles.newAlphaTextIncorrect
+            ]}>
               {isTextCorrect
-                ? 'You pronounced it correctly!'
-                : 'Keep practicing — you can do it!'}
+                ? 'Perfectly Pronounced!'
+                : 'Keep Practicing!'}
             </Text>
           </View>
+
+          <View style={readingStyles.newAlphaComparisonContainer}>
+            <View style={readingStyles.newAlphaTargetBox}>
+              <Text style={readingStyles.newAlphaLabel}>Word</Text>
+              <Text style={[readingStyles.newAlphaTargetLetter, { fontSize: 28, lineHeight: 36 }]}>{targetText}</Text>
+            </View>
+
+            <View style={readingStyles.newAlphaDivider}>
+               <Text style={readingStyles.newAlphaDividerIcon}>{isTextCorrect ? '✓' : '✗'}</Text>
+            </View>
+
+            <View style={[
+              readingStyles.newAlphaSpokenBox,
+              isTextCorrect ? readingStyles.newAlphaSpokenCorrect : readingStyles.newAlphaSpokenIncorrect
+            ]}>
+              <Text style={readingStyles.newAlphaLabel}>You Said</Text>
+              <Text style={[
+                readingStyles.newAlphaSpokenLetter,
+                isTextCorrect ? readingStyles.newAlphaSpokenLetterCorrect : readingStyles.newAlphaSpokenLetterIncorrect,
+                { fontSize: 28, lineHeight: 36 }
+              ]}>{spokenText ? spokenText : '—'}</Text>
+            </View>
+          </View>
+
+          {passedFeedback && (
+            <View style={readingStyles.newAlphaFeedbackBox}>
+              <Text style={readingStyles.newAlphaFeedbackText}>{passedFeedback}</Text>
+            </View>
+          )}
         </View>
 
         {/* Try again button */}
