@@ -148,7 +148,7 @@ export default function PageSelectionScreen() {
         {/* Highlight dot – top-left glow like reference image */}
         <View style={selection.alphabetHighlightDot} />
         <View style={selection.alphabetContainer}>
-          <Text style={selection.alphabetLetter}>{item.letter}</Text>
+          <Text style={[selection.alphabetLetter, { fontFamily: 'Nunito-Bold' }]}>{item.letter}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -209,6 +209,7 @@ export default function PageSelectionScreen() {
         <Text style={[
           selection.wordBubbleText,
           completed && selection.wordBubbleTextCompleted,
+          { fontFamily: 'Nunito-Bold' }
         ]}>
           {word}
         </Text>
@@ -250,12 +251,12 @@ export default function PageSelectionScreen() {
     return (
       <View style={selection.itemWrapper}>
         <TouchableOpacity
-          style={[selection.item, { borderColor: accentColor }]}
+          style={selection.item}
           onPress={() => handlePassageSelect(item)}
           activeOpacity={0.8}
         >
           {/* Colored accent bar on the left edge */}
-          <View style={[selection.passageAccentBar, { backgroundColor: accentColor }]} />
+          <View style={selection.passageAccentBar} />
           <View style={selection.insidePassageListContainer}>
             <Image
               style={selection.readingImage}
@@ -291,7 +292,7 @@ export default function PageSelectionScreen() {
                 x={110}                 // center X
                 y={35}                  // baseline Y
                 fontSize={23}
-                fontFamily="DynaPuff-Bold"
+                fontFamily="Nunito-Black"
                 textAnchor="middle"     // center align
                 fill="none"          // inside color
                 stroke="#D7E9FF"        // outline color
@@ -304,7 +305,7 @@ export default function PageSelectionScreen() {
                 x={110}
                 y={35}
                 fontSize={23}
-                fontFamily="DynaPuff-Bold"
+                fontFamily="Nunito-Black"
                 textAnchor="middle"
                 fill="#3B7FC9"
               >
@@ -394,7 +395,7 @@ export default function PageSelectionScreen() {
         <View style={selection.contentContainer}>
           {activeTab === 'alphabet' && (
             <>
-              <Text style={selection.sublabel}>Select a letter to practice:</Text>
+              <Text style={selection.sublabel}>Select a letter to read:</Text>
               <FlatList
                 data={alphabetData}
                 renderItem={renderAlphabetItem}
@@ -412,7 +413,7 @@ export default function PageSelectionScreen() {
             <View style={selection.wordSelectionContainer}>
               {!selectedChapter ? (
                 <>
-                  <Text style={selection.sublabel}>Choose a chapter:</Text>
+                  <Text style={selection.sublabel}>Choose a chapter and lesson to read:</Text>
                   <FlatList
                     data={chapters}
                     renderItem={renderChapterCard}
@@ -457,7 +458,7 @@ export default function PageSelectionScreen() {
 
           {activeTab === 'passage' && (
             <View style={selection.passageListContainer}>
-              <Text style={selection.sublabel}>Select a passage:</Text>
+              <Text style={selection.sublabel}>Select a passage to read:</Text>
               {passages.length > 0 ? (
                 <FlatList
                   data={passages}

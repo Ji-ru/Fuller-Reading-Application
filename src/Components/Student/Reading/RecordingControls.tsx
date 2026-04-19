@@ -11,34 +11,6 @@ interface RecordingControlsProps {
   showRecordingStatus?: boolean;
 }
 
-interface RecordingTimerBadgeProps {
-  recordTime: string;
-}
-
-const RecordingTimerBadge: React.FC<RecordingTimerBadgeProps> = ({ recordTime }) => {
-  // Pulse animation for the red dot indicator
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.3, duration: 600, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      ])
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [pulseAnim]);
-
-  return (
-    <View style={readingStyles.timerBadge}>
-      {/* Pulsing dot */}
-      <Animated.View style={[readingStyles.timerDot, { opacity: pulseAnim }]} />
-      <Text style={readingStyles.timerText}>{recordTime}</Text>
-    </View>
-  );
-};
-
 export const RecordingControls: React.FC<RecordingControlsProps> = ({
   isRecording,
   isLoading,
@@ -50,9 +22,18 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
 
   return (
     <View style={readingStyles.microphoneContainer}>
-      {showRecordingStatus && isRecording && (
-        <RecordingTimerBadge recordTime={recordTime} />
-      )}
+      <View style={readingStyles.recordingStatusPill}>
+        <View style={[
+          readingStyles.recordingStatusDot,
+          isRecording && readingStyles.recordingStatusDotActive
+        ]} />
+        <Text style={[
+          readingStyles.recordingStatusText,
+          isRecording && readingStyles.recordingStatusTextActive
+        ]}>
+          {isRecording ? 'Tap to stop' : 'Tap to start'}
+        </Text>
+      </View>
 
       <TouchableOpacity
         style={

@@ -1,19 +1,10 @@
 // screens/SignUp/SignUp_Two.tsx
-//
-// WHAT CHANGED FROM v1:
-//   • Calls GoogleSignUpUserCredentials() (your existing function) instead of
-//     the now-removed SignUpWithGoogleCredentials().
-//   • No longer reads or uses googleIdToken — auth.currentUser is already set
-//     by initiateGoogleSignUp() before navigation begins.
-//   • googleEmail is still read from userInfo to render the pre-filled badge.
-//   • Everything else (email path, modal, animations) is unchanged.
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, Image, TextInput, TouchableOpacity,
-  Alert, Modal, ActivityIndicator, StyleSheet,
+  Modal, ActivityIndicator,
 } from 'react-native';
 import signup from '../../UI_Designs/SignUpStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -21,49 +12,72 @@ import buttons from '../../UI_Designs/ButtonStyles';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import {
   SignUpUserCredentials,
-  GoogleSignUpUserCredentials,    // ← your existing function
+  GoogleSignUpUserCredentials,
 } from '../../Controller/AuthenticationController';
 import LottieView from 'lottie-react-native';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
-import { sw, sh, sf } from '../../Utils/responsive';
+import ActionSheetModal from '../../Components/GlobalUse/Modal/ActionSheetModal';
+import DatePicker from 'react-native-date-picker';
+import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
+import GenderSelection from '../../Components/SignUp/Buttons/GenderRadioButton';
+import {
+  launchImageLibrary, launchCamera, ImagePickerResponse,
+} from 'react-native-image-picker';
+import upperNav from '../../UI_Designs/UpperNavigation';
 
 export default function SignUpTwoScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'SignUpTwo'>>();
-  const personalInfo = route.params.userInfo;
-  const role = route.params.role;
-
-  // ── Google sign-up detection ──────────────────────────────────────────────
-  // googleEmail is appended to userInfo by SignUpOne.
-  // googleIdToken is no longer needed — auth.currentUser was set in
-  // initiateGoogleSignUp() before navigation began.
-  const googleEmail = (personalInfo as any).googleEmail as string | undefined;
-  const isGoogleSignUp = Boolean(googleEmail);
+  const { accountInfo, role } = route.params;
+  const isGoogleSignUp = Boolean(accountInfo.googleEmail);
 
   const [currentStep] = useState(2);
-  const { handleDesignatedUserPage, handleCancelRegistration, handleCompletedRegistration } = useNavigationHelper();
+  const { handleDesignatedUserPage, handleCancelRegistration, handleCompletedRegistration, handleBackStep } = useNavigationHelper();
 
-  // Email pre-filled for Google users, empty for email users
-  const [email, setEmail] = useState(googleEmail ?? '');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isParentConfirmed, setIsParentConfirmed] = useState(false);
-
-  // Custom Alert Modal State
+  // Personal information states (migrated from old SignUpOne)
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [gradeLevel, setGradeLevel] = useState(0);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+  const [gender, setGender] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
-  const [alertData, setAlertData] = useState({ title: '', message: '' });
+  const [alertData, setAlertData] = useState<{
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    confirmText?: string;
+    cancelText?: string;
+  }>({ title: '', message: '' });
 
-  const showAlert = (title: string, message: string) => {
-    setAlertData({ title, message });
+  const showAlert = (title: string, message: string, buttonText?: string) => {
+    setAlertData({
+      title,
+      message,
+      onConfirm: undefined,
+      confirmText: buttonText,
+      cancelText: undefined,
+    });
     setAlertVisible(true);
   };
 
-  // Modal states (Loading / Success)
+  const showConfirm = (title: string, message: string, onConfirm: () => void, confirmText: string, cancelText?: string) => {
+    setAlertData({ title, message, onConfirm, confirmText, cancelText });
+    setAlertVisible(true);
+  };
+
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
+
+  // ── Modal states (Loading / Success) ──────────────────────────────────────
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'loading' | 'success'>('loading');
   const [modalMessage, setModalMessage] = useState('');
 
   const isMounted = useRef(true);
+  const congratulationsRef = useRef<LottieView>(null);
+  const confettiRef = useRef<LottieView>(null);
 
   useEffect(() => {
     isMounted.current = true;
@@ -72,10 +86,6 @@ export default function SignUpTwoScreen() {
     };
   }, []);
 
-  const isValidEmail = (e: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-  };
-
   const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, operationName: string): Promise<T> => {
     const timeoutPromise = new Promise<T>((_, reject) =>
       setTimeout(() => reject(new Error(`timeout-error:${operationName}`)), timeoutMs)
@@ -83,37 +93,51 @@ export default function SignUpTwoScreen() {
     return Promise.race([promise, timeoutPromise]);
   };
 
-  const congratulationsRef = useRef<LottieView>(null);
-  const confettiRef = useRef<LottieView>(null);
+  const handleProfilePicChange = () => {
+    setActionSheetVisible(true);
+  };
+
+  const openCamera = () => {
+    launchCamera(
+      { mediaType: 'photo', quality: 0.8, saveToPhotos: true },
+      handleImageResponse,
+    );
+  };
+
+  const openGallery = () => {
+    launchImageLibrary(
+      { mediaType: 'photo', quality: 0.8 },
+      handleImageResponse,
+    );
+  };
+
+  const handleImageResponse = (response: ImagePickerResponse) => {
+    if (response.didCancel) {
+      showAlert('Notice', 'User cancelled opening picker');
+    } else if (response.errorCode) {
+      showAlert('Error', 'Failed to pick image. Please try again.');
+    } else if (response.assets?.[0]?.uri) {
+      setProfileImage(response.assets[0].uri);
+    }
+  };
+
+  const formatDateToReadable = (dateObj: Date): string => {
+    const day = dateObj.getDate();
+    const month = dateObj.toLocaleString('default', { month: 'long' });
+    const year = dateObj.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
 
   // ── Registration ──────────────────────────────────────────────────────────
   const handleRegister = async () => {
     if (!isMounted.current) return;
 
-    // Password validation only applies to the email/password path
-    if (!isGoogleSignUp) {
-      if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
-        showAlert('Error', 'Please fill out all fields.');
-        return;
-      }
-      if (!isValidEmail(email.trim())) {
-        showAlert('Error', 'Please enter a valid email address.');
-        return;
-      }
-      if (password.length > 128) {
-        showAlert('Error', 'Password is too long.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        showAlert('Error', 'Passwords do not match.');
-        return;
-      }
+    if (!firstName.trim() || !lastName.trim()) {
+      showAlert('Missing Information', 'Please provide both your First Name and Last Name before continuing.', 'Got it');
+      return;
     }
-    if (role === 'student' && !isParentConfirmed) {
-      showAlert(
-        'Consent Required',
-        'A parent or guardian must confirm consent before registration.'
-      );
+    if (role !== 'admin' && gradeLevel === 0) {
+      showAlert('Grade Level Required', 'Please select your assigned grade level to proceed.', 'Got it');
       return;
     }
 
@@ -122,80 +146,89 @@ export default function SignUpTwoScreen() {
       setModalMessage('Creating your account...');
       setModalVisible(true);
 
+      const email = accountInfo.email;
+      const password = accountInfo.password || '';
+
       if (isGoogleSignUp) {
-        // ── Google path ────────────────────────────────────────────────────
-        // auth.currentUser is already set; GoogleSignUpUserCredentials reads it.
-        // email and password are passed for signature compatibility but are
-        // ignored by the function — it uses currentUser.email internally.
-        if (personalInfo.role === 'student') {
+        if (role === 'student') {
           await withTimeout(
             GoogleSignUpUserCredentials(email, {
-              role: personalInfo.role!,
-              firstName: personalInfo.firstName!,
-              middleName: personalInfo.middleName,
-              lastName: personalInfo.lastName!,
-              sex: personalInfo.sex!,
-              profileImageUrl: personalInfo?.profileImageUrl,
-              gradeLevel: personalInfo.studentData?.gradeLevel,
-              dateOfBirth: personalInfo.studentData?.dateOfBirth,
-              assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
+              role,
+              firstName: firstName.trim(),
+              middleName: middleName.trim(),
+              lastName: lastName.trim(),
+              sex: gender,
+              profileImageUrl: profileImage || '',
+              gradeLevel,
+              dateOfBirth: formatDateToReadable(date),
               parentConsent: {
-                confirmed: isParentConfirmed,
+                confirmed: accountInfo.parentConfirmed || false,
               },
             }), 60000, 'Google Sign Up'
           );
-        } else if (personalInfo.role === 'faculty') {
+        } else if (role === 'faculty') {
           await withTimeout(
             GoogleSignUpUserCredentials(email, {
-              role: personalInfo.role!,
-              firstName: personalInfo.firstName!,
-              middleName: personalInfo.middleName,
-              lastName: personalInfo.lastName!,
-              sex: personalInfo.sex!,
-              profileImageUrl: personalInfo?.profileImageUrl,
-              assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
+              role,
+              firstName: firstName.trim(),
+              middleName: middleName.trim(),
+              lastName: lastName.trim(),
+              sex: gender,
+              profileImageUrl: profileImage || '',
+              assignedGradeLevels: [gradeLevel],
+            }), 60000, 'Google Sign Up'
+          );
+        } else if (role === 'admin') {
+          await withTimeout(
+            GoogleSignUpUserCredentials(email, {
+              role,
+              firstName: firstName.trim(),
+              middleName: middleName.trim(),
+              lastName: lastName.trim(),
+              sex: gender,
+              profileImageUrl: profileImage || '',
             }), 60000, 'Google Sign Up'
           );
         }
       } else {
-        // ── Email / password path (unchanged from original) ─────────────
-        if (personalInfo.role === 'student') {
+        // Email / Password Path
+        if (role === 'student') {
           await withTimeout(
             SignUpUserCredentials(email, password, {
-              role: personalInfo.role!,
-              firstName: personalInfo.firstName!,
-              middleName: personalInfo.middleName,
-              lastName: personalInfo.lastName!,
-              sex: personalInfo.sex!,
-              profileImageUrl: personalInfo?.profileImageUrl,
-              gradeLevel: personalInfo.studentData?.gradeLevel,
-              dateOfBirth: personalInfo.studentData?.dateOfBirth,
+              role,
+              firstName: firstName.trim(),
+              middleName: middleName.trim(),
+              lastName: lastName.trim(),
+              sex: gender,
+              profileImageUrl: profileImage || '',
+              gradeLevel,
+              dateOfBirth: formatDateToReadable(date),
               parentConsent: {
-                confirmed: isParentConfirmed,
+                confirmed: accountInfo.parentConfirmed || false,
               },
             }), 60000, 'Email Sign Up'
           );
-        } else if (personalInfo.role === 'faculty') {
+        } else if (role === 'faculty') {
           await withTimeout(
             SignUpUserCredentials(email, password, {
-              role: personalInfo.role!,
-              firstName: personalInfo.firstName!,
-              middleName: personalInfo.middleName,
-              lastName: personalInfo.lastName!,
-              sex: personalInfo.sex!,
-              profileImageUrl: personalInfo?.profileImageUrl,
-              assignedGradeLevels: personalInfo.facultyData?.assignedGradeLevels,
+              role,
+              firstName: firstName.trim(),
+              middleName: middleName.trim(),
+              lastName: lastName.trim(),
+              sex: gender,
+              profileImageUrl: profileImage || '',
+              assignedGradeLevels: [gradeLevel],
             }), 60000, 'Email Sign Up'
           );
-        } else if (personalInfo.role === 'admin') {
+        } else if (role === 'admin') {
           await withTimeout(
             SignUpUserCredentials(email, password, {
-              role: personalInfo.role!,
-              firstName: personalInfo.firstName!,
-              middleName: personalInfo.middleName,
-              lastName: personalInfo.lastName!,
-              sex: personalInfo.sex!,
-              profileImageUrl: personalInfo?.profileImageUrl,
+              role,
+              firstName: firstName.trim(),
+              middleName: middleName.trim(),
+              lastName: lastName.trim(),
+              sex: gender,
+              profileImageUrl: profileImage || '',
             }), 60000, 'Email Sign Up'
           );
         }
@@ -216,7 +249,7 @@ export default function SignUpTwoScreen() {
       setTimeout(() => {
         if (isMounted.current) {
           setModalVisible(false);
-          handleCompletedRegistration(personalInfo.role!);
+          handleCompletedRegistration(role);
         }
       }, 2000);
 
@@ -224,9 +257,9 @@ export default function SignUpTwoScreen() {
       if (!isMounted.current) return;
       setModalVisible(false);
       if (error.message && error.message.includes('timeout-error')) {
-        showAlert('Registration Error', 'Connection timed out. Please check your internet connection.');
+        showAlert('Connection Timeout', 'The connection timed out. Please check your internet connection and try again.', 'Retry');
       } else {
-        showAlert('Registration Error', error.message);
+        showAlert('Registration Failed', error.message, 'Dismiss');
       }
     }
   };
@@ -236,16 +269,23 @@ export default function SignUpTwoScreen() {
     congratulationsRef.current?.reset();
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={signup.container}>
-      <View>
-        <Image
-          source={require('../../../assets/images/cisckids.png')}
-          style={signup.ciscLogo}
-        />
-        <BubbleBackground />
+      <BubbleBackground />
 
+      <View style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }}>
+        <TouchableOpacity
+          style={upperNav.touchable}
+          onPress={() => handleBackStep()}
+        >
+          <Image
+            style={upperNav.backButtonIcon}
+            source={require('../../../assets/icons/BackButton-icon.png')}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View>
         <Text style={signup.label}>Register</Text>
 
         {/* Step indicator */}
@@ -253,10 +293,10 @@ export default function SignUpTwoScreen() {
           <View
             style={[
               signup.stepCircle,
-              currentStep === 1 ? signup.inactivateStep : signup.activateStep,
+              currentStep === 1 ? signup.activateStep : signup.activateStep, // Circle 1 still active/colored but completed
             ]}
           >
-            <Text style={currentStep === 1 ? signup.activenumber : signup.inactivenumber}>1</Text>
+            <Text style={signup.activenumber}>✓</Text>
           </View>
           <View style={signup.stepLine} />
           <View
@@ -269,96 +309,143 @@ export default function SignUpTwoScreen() {
           </View>
         </View>
 
-        <Text style={signup.subLabel}>Create an Account</Text>
+        {/* Profile picture */}
+        <View style={{ position: 'relative', alignSelf: 'center', marginVertical: 10 }}>
+          <Image
+            source={
+              profileImage
+                ? { uri: profileImage }
+                : require('../../../assets/images/defaultProfile.png')
+            }
+            style={signup.defaultProfile}
+          />
+          <TouchableOpacity
+            onPress={handleProfilePicChange}
+            style={signup.cameraBackground}
+          >
+            <Image
+              source={require('../../../assets/icons/Camera-add.png')}
+              style={signup.cameraIcon}
+            />
+          </TouchableOpacity>
+        </View>
 
-        <View>
-          <Text style={signup.textform}>Email Address</Text>
+        {/* Personal information form */}
+        <View style={{ marginTop: 10 }}>
+          <Text style={signup.subLabel}>Personal Information</Text>
 
-          {isGoogleSignUp ? (
-            // ── Locked Google email badge ──────────────────────────────────
-            <View style={styles.googleEmailBadge}>
-              <Image
-                source={require('../../../assets/images/Google-icon.png')}
-                style={styles.googleIcon}
-              />
-              <Text style={styles.googleEmailText} numberOfLines={1}>
-                {googleEmail}
-              </Text>
-              <View style={styles.lockedTag}>
-                <Text style={styles.lockedTagText}>Google</Text>
-              </View>
-            </View>
-          ) : (
-            // ── Editable email input (email path) ─────────────────────────
+          <View style={signup.inputContainer}>
+            <Image
+              source={require('../../../assets/icons/Edit-icon.png')}
+              style={signup.inputIcon}
+            />
             <TextInput
               style={signup.textInputForm}
-              placeholder="example@gmail.com"
+              placeholder="First Name"
               placeholderTextColor="#A9A9A9"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
+              value={firstName}
+              onChangeText={setFirstName}
             />
-          )}
+          </View>
 
-          {/* Password fields hidden for Google sign-up */}
-          {!isGoogleSignUp && (
+          <View style={signup.inputContainer}>
+            <Image
+              source={require('../../../assets/icons/Edit-icon.png')}
+              style={signup.inputIcon}
+            />
+            <TextInput
+              style={signup.textInputForm}
+              placeholder="Middle Name (Optional)"
+              placeholderTextColor="#A9A9A9"
+              value={middleName}
+              onChangeText={setMiddleName}
+            />
+          </View>
+
+          <View style={signup.inputContainer}>
+            <Image
+              source={require('../../../assets/icons/Edit-icon.png')}
+              style={signup.inputIcon}
+            />
+            <TextInput
+              style={signup.textInputForm}
+              placeholder="Last Name"
+              placeholderTextColor="#A9A9A9"
+              value={lastName}
+              onChangeText={setLastName}
+            />
+          </View>
+
+          <Text style={signup.textform}>Select Gender:</Text>
+          <GenderSelection onGenderSelect={setGender} />
+
+          <Text style={signup.textform}>Date of Birth</Text>
+          <TouchableOpacity
+            style={signup.dateInput}
+            onPress={() => setShowPicker(true)}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image
+                source={require('../../../assets/icons/Calendar-icon.png')}
+                style={[signup.inputIcon, { tintColor: '#666' }]}
+              />
+              <Text style={signup.dateText}>{date.toDateString()}</Text>
+            </View>
+            <Image
+              source={require('../../../assets/icons/VerticalDown-icon.png')}
+              style={[signup.icon, { tintColor: '#999', width: 20, height: 20 }]}
+            />
+          </TouchableOpacity>
+
+          <DatePicker
+            modal
+            mode="date"
+            open={showPicker}
+            date={date}
+            maximumDate={new Date()}
+            onConfirm={pickedDate => { setShowPicker(false); setDate(pickedDate); }}
+            onCancel={() => setShowPicker(false)}
+          />
+
+          {role !== 'admin' && (
             <>
-              <Text style={signup.textform}>Password</Text>
-              <TextInput
-                style={signup.textInputForm}
-                secureTextEntry
-                placeholder="*********"
-                placeholderTextColor="#A9A9A9"
-                value={password}
-                onChangeText={setPassword}
-              />
-
-              <Text style={signup.textform}>Confirm Password</Text>
-              <TextInput
-                style={signup.textInputForm}
-                secureTextEntry
-                placeholder="*********"
-                placeholderTextColor="#A9A9A9"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-              />
-            </>
-          )}
-          {role === 'student' && (
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setIsParentConfirmed(!isParentConfirmed)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.checkbox, isParentConfirmed && styles.checkedBox]}>
-                {isParentConfirmed && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-
-              <Text style={styles.checkboxText}>
-                By checking this box, I confirm that I am a parent or guardian and consent
-                to my child's registration in compliance with child safety laws like COPPA.
+              <Text style={signup.textform}>
+                {role === 'student' ? 'Grade Level' : 'Assigned Grade Level'}
               </Text>
-            </TouchableOpacity>
+              <GradeLevelDropDownSelection onSelect={value => setGradeLevel(value)} />
+            </>
           )}
         </View>
 
+        {/* Action Buttons */}
         <TouchableOpacity
-          style={[buttons.nextPageButton, modalVisible && { opacity: 0.7 }]}
+          style={[buttons.nextPageSignUpButton, modalVisible && { opacity: 0.7 }, { marginTop: 20 }]}
           onPress={handleRegister}
           disabled={modalVisible}
         >
-          <Text style={buttons.nextPageText}>Register</Text>
+          <Text style={buttons.nextPageSignUpText}>Complete Registration</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[buttons.cancelButton, modalVisible && { opacity: 0.7 }]}
-          onPress={handleCancelRegistration}
+          style={[buttons.cancelSignUpButton, modalVisible && { opacity: 0.7 }]}
+          onPress={() =>
+            showConfirm(
+              'Cancel Registration',
+              'Are you sure you want to cancel? Your progress will be lost.',
+              () => {
+                setAlertVisible(false);
+                handleCancelRegistration(false);
+              },
+              'Cancel',
+              'Keep Going'
+            )
+          }
           disabled={modalVisible}
         >
-          <Text style={buttons.cancelText}>Cancel</Text>
+          <Text style={buttons.cancelSignUpText}>Cancel</Text>
         </TouchableOpacity>
       </View>
+
 
       {/* Loading / success modal */}
       <Modal
@@ -406,81 +493,23 @@ export default function SignUpTwoScreen() {
         visible={alertVisible}
         title={alertData.title}
         message={alertData.message}
+        confirmText={alertData.confirmText}
+        onConfirm={alertData.onConfirm}
+        cancelText={alertData.cancelText}
         onClose={() => setAlertVisible(false)}
+      />
+
+      <ActionSheetModal
+        visible={actionSheetVisible}
+        title="Select Profile Picture"
+        message="Choose an option to upload your photo"
+        options={[
+          { text: 'Take Photo', onPress: openCamera },
+          { text: 'Choose from Gallery', onPress: openGallery },
+          { text: 'Cancel', onPress: () => { }, isCancel: true }
+        ]}
+        onClose={() => setActionSheetVisible(false)}
       />
     </SafeAreaView>
   );
 }
-
-// ── Google email badge styles ─────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  googleEmailBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F7FF',
-    borderWidth: 1,
-    borderColor: '#D0DAFB',
-    borderRadius: sw(10),
-    paddingHorizontal: sw(14),
-    paddingVertical: sh(12),
-    marginBottom: sh(12),
-    gap: sw(10),
-  },
-  googleIcon: {
-    width: sw(20),
-    height: sw(20),
-    resizeMode: 'contain',
-  },
-  googleEmailText: {
-    flex: 1,
-    fontSize: sf(14),
-    color: '#1E1E1E',
-    fontFamily: 'Satoshi-Medium',
-  },
-  lockedTag: {
-    backgroundColor: '#E8EFFF',
-    borderRadius: sw(6),
-    paddingHorizontal: sw(8),
-    paddingVertical: sh(2),
-  },
-  lockedTagText: {
-    fontSize: sf(11),
-    color: '#3D71D9',
-    fontFamily: 'Satoshi-Bold',
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: sh(10),
-    marginBottom: sh(15),
-  },
-
-  checkbox: {
-    width: sw(20),
-    height: sw(20),
-    borderWidth: 2,
-    borderColor: '#3D71D9',
-    borderRadius: sw(4),
-    marginRight: sw(10),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  checkedBox: {
-    backgroundColor: '#3D71D9',
-  },
-
-  checkmark: {
-    color: 'white',
-    fontSize: sf(14),
-    fontWeight: 'bold',
-  },
-
-  checkboxText: {
-    flex: 1,
-    fontSize: sf(13),
-    color: '#666',
-    fontFamily: 'Satoshi-Medium',
-    lineHeight: sh(18),
-  },
-});

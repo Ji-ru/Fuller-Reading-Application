@@ -21,7 +21,15 @@ import { WordContext } from '../Interfaces/dataInterfaces';
 export type RootStackParamList = {
   Loading: undefined;
   SignUpCompleted: { role: UserRole };
-  SignUpTwo: { role: UserRole; userInfo: Partial<UserDocument> };
+  SignUpTwo: {
+    role: UserRole;
+    accountInfo: {
+      email: string;
+      password?: string;
+      parentConfirmed?: boolean;
+      googleEmail?: string;
+    };
+  };
   SignUpOne: { role: UserRole; googleEmail?: string };
   Login: { authError?: string } | undefined;
 
@@ -188,8 +196,25 @@ export const useNavigationHelper = () => {
     }
 
     // Navigate to SignUpTwo with the collected info
-    navigation.navigate('SignUpTwo', { role, userInfo });
+    navigation.navigate('SignUpTwo', { role, accountInfo: {} as any }); // Placeholder for type compatibility while migrating
   };
+
+  /**
+   * Handles navigation from SignUpOne to SignUpTwo in the NEW flow
+   * (Step 1: Account Credentials -> Step 2: Personal Information)
+   */
+  const handleAccountStepNext = (
+    role: UserRole,
+    accountInfo: {
+      email: string;
+      password?: string;
+      parentConfirmed?: boolean;
+      googleEmail?: string;
+    }
+  ) => {
+    navigation.navigate('SignUpTwo', { role, accountInfo });
+  };
+
 
   // Add a method to navigate from ChooseRole to SignUpOne
   const handleRoleSelection = (role: UserRole) => {
@@ -327,7 +352,12 @@ export const useNavigationHelper = () => {
   };
 
   // Handles canceling of registration (Needed modification when Firebase Auth is integrated)
-  const handleCancelRegistration = () => {
+  const handleCancelRegistration = (confirm: boolean = true) => {
+    if (!confirm) {
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      return;
+    }
+
     Alert.alert(
       'Cancel Registration',
       'Are you sure you want to cancel? Your progress will be lost.',
@@ -359,5 +389,7 @@ export const useNavigationHelper = () => {
     handleBackStep,
     handleLogout,
     handleCancelRegistration,
+    handleAccountStepNext,
   };
+
 };
