@@ -25,6 +25,7 @@ import {
   arrayUnion,
   startAfter,
   Timestamp,
+  orderBy,
 } from '@react-native-firebase/firestore';
 import {
   UserDocument,
@@ -430,6 +431,7 @@ export const updateFacultyProfile = async (
     middleName?: string;
     lastName: string;
     email: string;
+    sex?: string;
   },
 ) => {
   try {
@@ -457,11 +459,42 @@ export const updateFacultyProfile = async (
       middleName: updates.middleName,
       lastName: updates.lastName,
       email: updates.email,
+      ...(updates.sex ? { sex: updates.sex } : {}),
       updatedAt: serverTimestamp() as Timestamp,
     });
     return { success: true };
   } catch (error: any) {
     throw new Error('Faculty profile update failed: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   UPDATE STUDENT BASIC INFO
+------------------------------------------------------------- */
+export const updateStudentBasicInfo = async (
+  uid: string,
+  updates: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    sex: string;
+    dateOfBirth?: string;
+  },
+) => {
+  try {
+    const userRef = doc(db, 'users', uid);
+
+    await updateDoc(userRef, {
+      firstName: updates.firstName,
+      middleName: updates.middleName,
+      lastName: updates.lastName,
+      sex: updates.sex,
+      'studentData.dateOfBirth': updates.dateOfBirth,
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Student profile update failed: ' + error.message);
   }
 };
 
@@ -669,7 +702,7 @@ export const getUsers = async ({
     // BROWSE MODE: Original pagination logic
     let baseUserQuery = query(
       collection(db, 'users'),
-
+      orderBy('createdAt', 'desc'),
       limit(60),
     );
 
@@ -722,6 +755,7 @@ export const getAllClasses = async ({
   try {
     let classesQuery = query(
       collection(db, 'classes'),
+      orderBy('createdAt', 'desc'),
       limit(limitOverride || 20),
     );
 

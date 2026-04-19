@@ -9,6 +9,7 @@ import { SafeAreaView }          from 'react-native-safe-area-context';
 import {
   View, Text, Image, TextInput, TouchableOpacity, Alert,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import signup         from '../../UI_Designs/SignUpStyles';
 import DatePicker     from 'react-native-date-picker';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
@@ -21,6 +22,8 @@ import GenderSelection from '../../Components/SignUp/Buttons/GenderRadioButton';
 import { RootStackParamList }      from '../../Controller/NavigationController';
 import { RouteProp, useRoute }     from '@react-navigation/native';
 import BubbleBackground            from '../../Components/GlobalUse/BubbleBackground';
+import AlertModal                  from '../../Components/GlobalUse/Modal/AlertModal';
+import ActionSheetModal            from '../../Components/GlobalUse/Modal/ActionSheetModal';
 
 type SignUpOneRouteProp = RouteProp<RootStackParamList, 'SignUpOne'>;
 
@@ -46,13 +49,20 @@ export default function SignUpOneScreen() {
   const [showPicker,   setShowPicker]   = useState(false);
   const [gender,       setGender]       = useState('');
 
+  // ── Custom Alert Modal State ───────────────────────────────────────────────
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: '', message: '' });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertData({ title, message });
+    setAlertVisible(true);
+  };
+
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
+
   // ── Profile image helpers (unchanged) ──────────────────────────────────────
   const handleProfilePicChange = () => {
-    Alert.alert('Select Profile Picture', 'Choose an option', [
-      { text: 'Take Photo',            onPress: openCamera  },
-      { text: 'Choose from Gallery',   onPress: openGallery },
-      { text: 'Cancel', style: 'cancel' },
-    ], { cancelable: true });
+    setActionSheetVisible(true);
   };
 
   const openCamera = () => {
@@ -71,9 +81,9 @@ export default function SignUpOneScreen() {
 
   const handleImageResponse = (response: ImagePickerResponse) => {
     if (response.didCancel) {
-      Alert.alert('Error', 'User cancelled image picker');
+      showAlert('Notice', 'User cancelled opening picker');
     } else if (response.errorCode) {
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
+      showAlert('Error', 'Failed to pick image. Please try again.');
     } else if (response.assets?.[0]?.uri) {
       setProfileImage(response.assets[0].uri);
     }
@@ -88,6 +98,11 @@ export default function SignUpOneScreen() {
 
   // ── Next: pass personal info + google credentials to SignUpTwo ─────────────
   const handleNext = () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      showAlert('Missing Information', 'Please fill out your First Name and Last Name.');
+      return;
+    }
+
     // Google credentials are appended to the existing userInfo payload.
     // handleSignUpNavigationWithData must pass them as extra params —
     // see the NavigationController note in the README file.
@@ -136,7 +151,7 @@ export default function SignUpOneScreen() {
     <SafeAreaView style={signup.container}>
       <BubbleBackground />
 
-      <View>
+      <KeyboardAwareScrollView>
         <Image
           source={require('../../../assets/images/cisckids.png')}
           style={signup.ciscLogo}
@@ -262,7 +277,26 @@ export default function SignUpOneScreen() {
         >
           <Text style={buttons.cancelSignUpText}>Cancel</Text>
         </TouchableOpacity>
-      </View>
+      </KeyboardAwareScrollView>
+
+      <AlertModal
+        visible={alertVisible}
+        title={alertData.title}
+        message={alertData.message}
+        onClose={() => setAlertVisible(false)}
+      />
+
+      <ActionSheetModal
+        visible={actionSheetVisible}
+        title="Select Profile Picture"
+        message="Choose an option to upload your photo"
+        options={[
+          { text: 'Take Photo', onPress: openCamera },
+          { text: 'Choose from Gallery', onPress: openGallery },
+          { text: 'Cancel', onPress: () => {}, isCancel: true }
+        ]}
+        onClose={() => setActionSheetVisible(false)}
+      />
     </SafeAreaView>
   );
 }
