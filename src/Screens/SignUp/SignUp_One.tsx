@@ -7,7 +7,11 @@
 import React, { useState }       from 'react';
 import { SafeAreaView }          from 'react-native-safe-area-context';
 import {
-  View, Text, Image, TextInput, TouchableOpacity, Alert,
+  View, Text, Image, TextInput, TouchableOpacity, Alert, ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import signup         from '../../UI_Designs/SignUpStyles';
@@ -148,155 +152,190 @@ export default function SignUpOneScreen() {
   };
 
   return (
-    <SafeAreaView style={signup.container}>
-      <BubbleBackground />
+  <SafeAreaView style={signup.container}>
+    <BubbleBackground />
 
-      <KeyboardAwareScrollView>
-        <Image
-          source={require('../../../assets/images/cisckids.png')}
-          style={signup.ciscLogo}
-        />
-        <Text style={signup.label}>Register</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View>
+              <Image
+                source={require('../../../assets/images/cisckids.png')}
+                style={signup.ciscLogo}
+              />
 
-        {/* Step indicator */}
-        <View style={signup.stepsContainer}>
-          <View
-            style={[
-              signup.stepCircle,
-              currentStep === 1 ? signup.activateStep : signup.inactivateStep,
-            ]}
-          >
-            <Text style={currentStep === 1 ? signup.activenumber : signup.inactivenumber}>1</Text>
-          </View>
-          <View style={signup.stepLine} />
-          <View
-            style={[
-              signup.stepCircle,
-              currentStep === 2 ? signup.activateStep : signup.inactivateStep,
-            ]}
-          >
-            <Text style={currentStep === 2 ? signup.activenumber : signup.inactivenumber}>2</Text>
+              <Text style={signup.label}>Register</Text>
+
+              {/* Step indicator */}
+              <View style={signup.stepsContainer}>
+                <View
+                  style={[
+                    signup.stepCircle,
+                    currentStep === 1
+                      ? signup.activateStep
+                      : signup.inactivateStep,
+                  ]}
+                >
+                  <Text
+                    style={
+                      currentStep === 1
+                        ? signup.activenumber
+                        : signup.inactivenumber
+                    }
+                  >
+                    1
+                  </Text>
+                </View>
+
+                <View style={signup.stepLine} />
+
+                <View
+                  style={[
+                    signup.stepCircle,
+                    currentStep === 2
+                      ? signup.activateStep
+                      : signup.inactivateStep,
+                  ]}
+                >
+                  <Text
+                    style={
+                      currentStep === 2
+                        ? signup.activenumber
+                        : signup.inactivenumber
+                    }
+                  >
+                    2
+                  </Text>
+                </View>
+              </View>
+
+              {/* Profile picture */}
+              <View style={{ position: 'relative', alignSelf: 'center' }}>
+                <Image
+                  source={
+                    profileImage
+                      ? { uri: profileImage }
+                      : require('../../../assets/images/defaultProfile.png')
+                  }
+                  style={signup.defaultProfile}
+                />
+
+                <TouchableOpacity
+                  onPress={handleProfilePicChange}
+                  style={signup.cameraBackground}
+                >
+                  <Image
+                    source={require('../../../assets/icons/Camera-add.png')}
+                    style={signup.cameraIcon}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Form */}
+              <View>
+                <Text style={signup.subLabel}>Personal Information</Text>
+
+                <Text style={signup.textform}>First Name</Text>
+                <TextInput
+                  style={signup.textInputForm}
+                  placeholder="e.g Juan"
+                  placeholderTextColor="#A9A9A9"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                />
+
+                <Text style={signup.textform}>Middle Name</Text>
+                <TextInput
+                  style={signup.textInputForm}
+                  placeholder="e.g Marasigan"
+                  placeholderTextColor="#A9A9A9"
+                  value={middleName}
+                  onChangeText={setMiddleName}
+                />
+
+                <Text style={signup.textform}>Last Name</Text>
+                <TextInput
+                  style={signup.textInputForm}
+                  placeholder="e.g Campus"
+                  placeholderTextColor="#A9A9A9"
+                  value={lastName}
+                  onChangeText={setLastName}
+                />
+
+                <Text style={signup.textform}>Select Gender:</Text>
+                <GenderSelection onGenderSelect={setGender} />
+
+                <Text style={signup.textform}>Date of Birth</Text>
+                <TouchableOpacity
+                  style={signup.dateInput}
+                  onPress={() => setShowPicker(true)}
+                >
+                  <Text style={signup.dateText}>
+                    {date.toDateString()}
+                  </Text>
+                  <Image
+                    source={require('../../../assets/icons/Calendar-icon.png')}
+                    style={signup.icon}
+                  />
+                </TouchableOpacity>
+
+                <DatePicker
+                  modal
+                  mode="date"
+                  open={showPicker}
+                  date={date}
+                  maximumDate={new Date()}
+                  onConfirm={pickedDate => {
+                    setShowPicker(false);
+                    setDate(pickedDate);
+                  }}
+                  onCancel={() => setShowPicker(false)}
+                />
+
+                {role !== 'admin' && (
+                  <>
+                    <Text style={signup.textform}>
+                      {role === 'student'
+                        ? 'Grade Level'
+                        : 'Assigned Grade Level'}
+                    </Text>
+
+                    <GradeLevelDropDownSelection
+                      onSelect={value => setGradeLevel(value)}
+                    />
+                  </>
+                )}
+              </View>
+
+              {/* Buttons */}
+              <TouchableOpacity
+                style={buttons.nextPageSignUpButton}
+                onPress={handleNext}
+              >
+                <Text style={buttons.nextPageSignUpText}>
+                  Next
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={buttons.cancelSignUpButton}
+                onPress={handleCancelRegistration}
+              >
+                <Text style={buttons.cancelSignUpText}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
             </View>
-        </View>
-
-        {/* Profile picture */}
-        <View style={{ position: 'relative', alignSelf: 'center' }}>
-          <Image
-            source={
-              profileImage
-                ? { uri: profileImage }
-                : require('../../../assets/images/defaultProfile.png')
-            }
-            style={signup.defaultProfile}
-          />
-          <TouchableOpacity
-            onPress={handleProfilePicChange}
-            style={signup.cameraBackground}
-          >
-            <Image
-              source={require('../../../assets/icons/Camera-add.png')}
-              style={signup.cameraIcon}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Personal information form */}
-        <View>
-          <Text style={signup.subLabel}>Personal Information</Text>
-
-          <Text style={signup.textform}>First Name</Text>
-          <TextInput
-            style={signup.textInputForm}
-            placeholder="e.g Juan"
-            placeholderTextColor="#A9A9A9"
-            value={firstName}
-            onChangeText={setFirstName}
-          />
-
-          <Text style={signup.textform}>Middle Name</Text>
-          <TextInput
-            style={signup.textInputForm}
-            placeholder="e.g Marasigan"
-            placeholderTextColor="#A9A9A9"
-            value={middleName}
-            onChangeText={setMiddleName}
-          />
-
-          <Text style={signup.textform}>Last Name</Text>
-          <TextInput
-            style={signup.textInputForm}
-            placeholder="e.g Campus"
-            placeholderTextColor="#A9A9A9"
-            value={lastName}
-            onChangeText={setLastName}
-          />
-
-          <Text style={signup.textform}>Select Gender:</Text>
-          <GenderSelection onGenderSelect={setGender} />
-
-          <Text style={signup.textform}>Date of Birth</Text>
-          <TouchableOpacity
-            style={signup.dateInput}
-            onPress={() => setShowPicker(true)}
-          >
-            <Text style={signup.dateText}>{date.toDateString()}</Text>
-            <Image
-              source={require('../../../assets/icons/Calendar-icon.png')}
-              style={signup.icon}
-            />
-          </TouchableOpacity>
-
-          <DatePicker
-            modal
-            mode="date"
-            open={showPicker}
-            date={date}
-            maximumDate={new Date()}
-            onConfirm={pickedDate => { setShowPicker(false); setDate(pickedDate); }}
-            onCancel={() => setShowPicker(false)}
-          />
-
-          {role !== 'admin' && (
-            <>
-              <Text style={signup.textform}>
-                {role === 'student' ? 'Grade Level' : 'Assigned Grade Level'}
-              </Text>
-              <GradeLevelDropDownSelection onSelect={value => setGradeLevel(value)} />
-            </>
-          )}
-        </View>
-
-        {/* Navigation */}
-        <TouchableOpacity style={buttons.nextPageSignUpButton} onPress={handleNext}>
-          <Text style={buttons.nextPageSignUpText}>Next</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={buttons.cancelSignUpButton}
-          onPress={handleCancelRegistration}
-        >
-          <Text style={buttons.cancelSignUpText}>Cancel</Text>
-        </TouchableOpacity>
-      </KeyboardAwareScrollView>
-
-      <AlertModal
-        visible={alertVisible}
-        title={alertData.title}
-        message={alertData.message}
-        onClose={() => setAlertVisible(false)}
-      />
-
-      <ActionSheetModal
-        visible={actionSheetVisible}
-        title="Select Profile Picture"
-        message="Choose an option to upload your photo"
-        options={[
-          { text: 'Take Photo', onPress: openCamera },
-          { text: 'Choose from Gallery', onPress: openGallery },
-          { text: 'Cancel', onPress: () => {}, isCancel: true }
-        ]}
-        onClose={() => setActionSheetVisible(false)}
-      />
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
