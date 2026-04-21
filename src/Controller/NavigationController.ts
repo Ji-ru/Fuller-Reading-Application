@@ -210,11 +210,10 @@ export const useNavigationHelper = () => {
       password?: string;
       parentConfirmed?: boolean;
       googleEmail?: string;
-    }
+    },
   ) => {
     navigation.navigate('SignUpTwo', { role, accountInfo });
   };
-
 
   // Add a method to navigate from ChooseRole to SignUpOne
   const handleRoleSelection = (role: UserRole) => {
@@ -264,7 +263,7 @@ export const useNavigationHelper = () => {
     email?: string;
     role?: UserRole;
     sex: string;
-    reading_Level?: 'beginner' | 'intermediate' | 'advanced';
+    reading_Level?: 'beginner' | 'emerging' | 'intermediate' | 'advanced';
   }) => {
     if (role === 'student') {
       handleStudentViewStats({
@@ -391,5 +390,4 @@ export const useNavigationHelper = () => {
     handleCancelRegistration,
     handleAccountStepNext,
   };
-
 };

@@ -38,6 +38,7 @@ export default function LoginScreen() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const isMounted = useRef(true);
+  const isInitialLoad = useRef(true);
 
   const { handleNextStep, handleReplaceStep, routeParams } = useNavigationHelper();
 

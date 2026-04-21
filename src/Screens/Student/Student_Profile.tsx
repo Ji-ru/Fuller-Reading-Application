@@ -7,7 +7,6 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,7 +19,6 @@ import {
   getClassByCode,
   updateStudentBasicInfo,
 } from '../../Controller/AuthenticationController';
-import { updateStudentBasicInfo } from '../../Controller/AuthenticationController';
 import { getAuth } from '@react-native-firebase/auth';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
@@ -47,21 +45,30 @@ export default function Profile() {
   const auth = getAuth();
 
   // ── State ───────────────────────────────────────────────────────────────────
-  const [menuVisible,   setMenuVisible]   = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
-  const [profileData,   setProfileData]   = useState<UserDocument | null>(null);
-  const [classData,     setClassData]     = useState<ClassDocument | null>(null);
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<UserDocument | null>(null);
+  const [classData, setClassData] = useState<ClassDocument | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Edit states
-  const [isEditing,   setIsEditing]   = useState(false);
-  const [isSaving,    setIsSaving]    = useState(false);
-  const [firstName,   setFirstName]   = useState('');
-  const [middleName,  setMiddleName]  = useState('');
-  const [lastName,    setLastName]    = useState('');
-  const [sex,         setSex]         = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [sex, setSex] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
+
+  // ── Custom Alert State ──────────────────────────────────────────────────────
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: '', message: '' });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertData({ title, message });
+    setAlertVisible(true);
+  };
 
   // ── Hooks ───────────────────────────────────────────────────────────────────
   const { handleLogout, handleBackStep } = useNavigationHelper();
@@ -79,10 +86,10 @@ export default function Profile() {
       setProfileData(profile);
 
       if (profile) {
-        setFirstName(profile.firstName   || '');
-        setMiddleName(profile.middleName  || '');
-        setLastName(profile.lastName    || '');
-        setSex(profile.sex          || '');
+        setFirstName(profile.firstName || '');
+        setMiddleName(profile.middleName || '');
+        setLastName(profile.lastName || '');
+        setSex(profile.sex || '');
         setDateOfBirth(profile.studentData?.dateOfBirth || '');
       }
 
@@ -102,23 +109,23 @@ export default function Profile() {
 
   const getReadingLevelLabel = (level?: string) => {
     const levels: Record<string, string> = {
-      beginner:     'Beginner',
+      beginner: 'Beginner',
       intermediate: 'Intermediate',
-      advanced:     'Advanced',
-      expert:       'Expert',
+      advanced: 'Advanced',
+      expert: 'Expert',
     };
     return levels[level || 'beginner'] || 'Beginner';
   };
 
   // ── Event handlers ──────────────────────────────────────────────────────────
-  const toggleMenu       = () => setMenuVisible(v => !v);
+  const toggleMenu = () => setMenuVisible(v => !v);
   const handleLogoutPress = () => { setMenuVisible(false); setLogoutVisible(true); };
-  const confirmLogout    = async () => { setLogoutVisible(false); await handleLogout(); };
-  const cancelLogout     = () => setLogoutVisible(false);
+  const confirmLogout = async () => { setLogoutVisible(false); await handleLogout(); };
+  const cancelLogout = () => setLogoutVisible(false);
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !sex.trim()) {
-      Alert.alert('Validation Error', 'First Name, Last Name, and Sex are required.');
+      showAlert('Validation Error', 'First Name, Last Name, and Sex are required.');
       return;
     }
     setIsSaving(true);
@@ -126,18 +133,18 @@ export default function Profile() {
       const user = getCurrentUser();
       if (user) {
         await updateStudentBasicInfo(user.uid, {
-          firstName:   firstName.trim(),
-          middleName:  middleName.trim(),
-          lastName:    lastName.trim(),
-          sex:         sex.trim(),
+          firstName: firstName.trim(),
+          middleName: middleName.trim(),
+          lastName: lastName.trim(),
+          sex: sex.trim(),
           dateOfBirth: dateOfBirth.trim(),
         });
         setIsEditing(false);
-        Alert.alert('Success', 'Profile updated successfully!');
+        showAlert('Success', 'Profile updated successfully!');
         fetchProfileData();
       }
     } catch (err: any) {
-      Alert.alert('Update Failed', err.message || 'An error occurred while updating.');
+      showAlert('Update Failed', err.message || 'An error occurred while updating.');
     } finally {
       setIsSaving(false);
     }
@@ -146,10 +153,10 @@ export default function Profile() {
   const handleCancel = () => {
     setIsEditing(false);
     if (profileData) {
-      setFirstName(profileData.firstName   || '');
-      setMiddleName(profileData.middleName  || '');
-      setLastName(profileData.lastName    || '');
-      setSex(profileData.sex          || '');
+      setFirstName(profileData.firstName || '');
+      setMiddleName(profileData.middleName || '');
+      setLastName(profileData.lastName || '');
+      setSex(profileData.sex || '');
       setDateOfBirth(profileData.studentData?.dateOfBirth || '');
     }
   };
@@ -176,11 +183,12 @@ export default function Profile() {
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
+      <BubbleBackground />
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.innerContainer}>
-          <BubbleBackground />
 
           {/* HEADER */}
           <View style={styles.header}>
@@ -213,13 +221,9 @@ export default function Profile() {
             )}
           </View>
 
-        {/* DROPDOWN MENU */}
-        {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
-            <TouchableOpacity
-              onPress={handleLogoutPress}
-              style={upperNav.logoutButton}
-            >
+          {/* PROFILE HEADER / CARD */}
+          <View style={styles.profileHeader}>
+            <View style={styles.profileImageContainer}>
               <Image
                 source={
                   profileData?.profileImageUrl
@@ -291,9 +295,9 @@ export default function Profile() {
               </View>
             ) : (
               <View style={styles.infoGrid}>
-                <InfoItem label="First Name"  value={profileData?.firstName  || 'N/A'} />
+                <InfoItem label="First Name" value={profileData?.firstName || 'N/A'} />
                 <InfoItem label="Middle Name" value={profileData?.middleName || 'N/A'} />
-                <InfoItem label="Last Name"   value={profileData?.lastName   || 'N/A'} />
+                <InfoItem label="Last Name" value={profileData?.lastName || 'N/A'} />
                 <InfoItem
                   label="Birthdate"
                   value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)}
@@ -301,8 +305,8 @@ export default function Profile() {
                 <InfoItem
                   label="Sex"
                   value={
-                    profileData?.sex === 'male'   ? 'Male'   :
-                    profileData?.sex === 'female' ? 'Female' : 'N/A'
+                    profileData?.sex === 'male' ? 'Male' :
+                      profileData?.sex === 'female' ? 'Female' : 'N/A'
                   }
                 />
               </View>
@@ -325,8 +329,7 @@ export default function Profile() {
                 label="Reading Level"
                 value={getReadingLevelLabel(profileData?.studentData?.reading_Level)}
               />
-              <Text style={upperNav.logoutText}>Logout</Text>
-            </TouchableOpacity>
+            </View>
           </View>
 
         </View>
@@ -336,6 +339,13 @@ export default function Profile() {
         visible={logoutVisible}
         onCancel={cancelLogout}
         onConfirm={confirmLogout}
+      />
+
+      <AlertModal
+        visible={alertVisible}
+        title={alertData.title}
+        message={alertData.message}
+        onClose={() => setAlertVisible(false)}
       />
     </SafeAreaView>
   );
@@ -351,15 +361,15 @@ const InfoItem = ({ label, value }: { label: string; value: string }) => (
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container:        { flex: 1, backgroundColor: '#f8fafc' },
-  innerContainer:   { flexGrow: 1, paddingBottom: sh(24) },
+  container: { flex: 1, backgroundColor: '#f8fafc' },
+  innerContainer: { flexGrow: 1, paddingBottom: sh(24) },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
-  loadingText:      { marginTop: sh(12), fontSize: sf(16), color: '#64748b' },
-  errorText:        { fontSize: sf(16), color: '#ef4444', textAlign: 'center', marginBottom: sh(16), paddingHorizontal: sw(32) },
-  retryButton:      { backgroundColor: '#3b82f6', paddingHorizontal: sw(24), paddingVertical: sh(12), borderRadius: sw(8) },
-  retryButtonText:  { color: 'white', fontSize: sf(16), fontWeight: '600' },
-  header:           { position: 'relative', zIndex: 100 },
-  logoutButton:     { flexDirection: 'row', alignItems: 'center', padding: sw(16), borderRadius: sw(12) },
+  loadingText: { marginTop: sh(12), fontSize: sf(16), color: '#64748b' },
+  errorText: { fontSize: sf(16), color: '#ef4444', textAlign: 'center', marginBottom: sh(16), paddingHorizontal: sw(32) },
+  retryButton: { backgroundColor: '#3b82f6', paddingHorizontal: sw(24), paddingVertical: sh(12), borderRadius: sw(8) },
+  retryButtonText: { color: 'white', fontSize: sf(16), fontWeight: '600' },
+  header: { position: 'relative', zIndex: 100 },
+  logoutButton: { flexDirection: 'row', alignItems: 'center', padding: sw(16), borderRadius: sw(12) },
 
   profileHeader: {
     alignItems: 'center',
@@ -375,9 +385,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center',
     marginBottom: sh(12), borderWidth: 3, borderColor: '#3b82f6',
   },
-  profileImage:  { width: sw(94), height: sw(94), borderRadius: sw(47) },
-  studentName:   { fontSize: sf(24), fontWeight: 'bold', color: '#1e293b', marginBottom: sh(4) },
-  studentRole:   { fontSize: sf(16), color: '#64748b' },
+  profileImage: { width: sw(94), height: sw(94), borderRadius: sw(47) },
+  studentName: { fontSize: sf(24), fontWeight: 'bold', color: '#1e293b', marginBottom: sh(4) },
+  studentRole: { fontSize: sf(16), color: '#64748b' },
 
   section: {
     backgroundColor: 'white',
@@ -412,8 +422,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: sw(6),
   },
-  sectionHeaderRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: sh(16) },
-  sectionTitle:          { fontSize: sf(20), fontWeight: 'bold', color: '#1e293b', marginBottom: sh(16) },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: sh(16) },
+  sectionTitle: { fontSize: sf(20), fontWeight: 'bold', color: '#1e293b', marginBottom: sh(16) },
   editButtonTextPrimary: { fontSize: sf(14), color: '#3b82f6', fontWeight: '600' },
 
   infoGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
@@ -422,17 +432,14 @@ const styles = StyleSheet.create({
   infoValue: { fontSize: sf(16), fontWeight: '600', color: '#1e293b' },
 
   formContainer: { marginTop: sh(8) },
-  inputGroup:    { marginBottom: sh(14) },
-  inputLabel:    { fontSize: sf(14), color: '#475569', marginBottom: sh(6), fontWeight: '500' },
-  optionalText:  { fontSize: sf(12), color: '#94a3b8', fontWeight: '400' },
+  inputGroup: { marginBottom: sh(14) },
+  inputLabel: { fontSize: sf(14), color: '#475569', marginBottom: sh(6), fontWeight: '500' },
+  optionalText: { fontSize: sf(12), color: '#94a3b8', fontWeight: '400' },
   textInput: {
     borderWidth: 1, borderColor: '#e2e8f0', borderRadius: sw(8),
     paddingHorizontal: sw(12), paddingVertical: sh(10),
     fontSize: sf(15), color: '#1e293b', backgroundColor: '#f8fafc',
   },
-  actionRow:         { flexDirection: 'row', justifyContent: 'flex-end', gap: sw(12), marginTop: sh(8) },
-  cancelButton:      { paddingHorizontal: sw(16), paddingVertical: sh(10), borderRadius: sw(8), borderWidth: 1, borderColor: '#e2e8f0' },
-  cancelButtonText:  { fontSize: sf(14), color: '#64748b', fontWeight: '500' },
-  saveButton:        { paddingHorizontal: sw(20), paddingVertical: sh(10), borderRadius: sw(8), backgroundColor: '#3b82f6', minWidth: sw(80), alignItems: 'center' },
-  saveButtonText:    { fontSize: sf(14), color: 'white', fontWeight: '600' },
+  actionRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: sw(12), marginTop: sh(8) },
+  saveButtonText: { fontSize: sf(14), color: 'white', fontWeight: '600' },
 });
