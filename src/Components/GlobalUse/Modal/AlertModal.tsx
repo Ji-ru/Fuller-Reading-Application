@@ -15,6 +15,9 @@ interface AlertModalProps {
   title: string;
   message: string;
   onClose: () => void;
+  confirmText?: string;
+  onConfirm?: () => void;
+  cancelText?: string;
 }
 
 export default function AlertModal({
@@ -22,7 +25,20 @@ export default function AlertModal({
   title,
   message,
   onClose,
+  confirmText,
+  onConfirm,
+  cancelText,
 }: AlertModalProps) {
+  const isConfirmMode = Boolean(cancelText);
+
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm();
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <Modal
       transparent
@@ -32,20 +48,28 @@ export default function AlertModal({
     >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          {/* Header Icon / Title */}
           <Text style={styles.titleText}>{title}</Text>
-          
-          {/* Body Message */}
           <Text style={styles.messageText}>{message}</Text>
           
-          {/* Primary Action Button */}
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={onClose}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.closeButtonText}>Okay</Text>
-          </TouchableOpacity>
+          <View style={isConfirmMode ? styles.buttonContainerRow : styles.buttonContainerColumn}>
+            {isConfirmMode && (
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={onClose}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cancelButtonText}>{cancelText}</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[styles.button, styles.confirmButton, isConfirmMode && { flex: 1.2 }]}
+              onPress={handleConfirm}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.confirmButtonText}>{confirmText || 'Okay'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -67,7 +91,6 @@ const styles = StyleSheet.create({
     borderRadius: sw(20),
     padding: sw(24),
     alignItems: 'center',
-    // Shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -89,15 +112,37 @@ const styles = StyleSheet.create({
     marginBottom: sh(24),
     lineHeight: sh(22),
   },
-  closeButton: {
-    backgroundColor: '#2CA96A',
+  buttonContainerColumn: {
     width: '100%',
+  },
+  buttonContainerRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: sw(12),
+  },
+  button: {
     paddingVertical: sh(12),
     borderRadius: sw(12),
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: sh(48),
   },
-  closeButtonText: {
+  confirmButton: {
+    backgroundColor: '#3B7FC9',
+    width: '100%',
+    flex: 1,
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+    flex: 1,
+  },
+  confirmButtonText: {
     color: '#FFFFFF',
+    fontSize: sf(16),
+    fontFamily: 'Satoshi-Bold',
+  },
+  cancelButtonText: {
+    color: '#666666',
     fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
   },
