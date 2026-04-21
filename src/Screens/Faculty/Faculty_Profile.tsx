@@ -77,7 +77,7 @@ export default function FacultyProfile() {
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !sex.trim()) {
-      showAlert('Validation Error', 'First Name, Last Name, Email, and Sex are required.');
+      Alert.alert('Validation Error', 'First Name, Last Name, Email, and Sex are required.');
       return;
     }
 

@@ -38,7 +38,6 @@ export default function LoginScreen() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const isMounted = useRef(true);
-  const isInitialLoad = useRef(true);
 
   const { handleNextStep, handleReplaceStep, routeParams } = useNavigationHelper();
 
@@ -71,7 +70,7 @@ export default function LoginScreen() {
     // onAuthStateChanged fires immediately with the current user state
     const unsubscribe = auth.onAuthStateChanged((user) => {
       // If a Firebase session already exists on the device, jump to Loading
-      if (user && isMounted.current && isInitialLoad.current) {
+      if (user && isMounted.current) {
         handleReplaceStep('Loading');
       }
       isInitialLoad.current = false;
@@ -213,7 +212,7 @@ export default function LoginScreen() {
       if (error.message.includes('timeout-error')) {
         setGoogleError('Connection timed out. Please check your internet connection.');
       } else {
-        setGoogleError(error.message || 'Google Sign-In failed. Please try again.');
+        setGoogleError('Google Sign-In failed. Please try again.');
       }
     } finally {
       if (isMounted.current) setGoogleLoading(false);

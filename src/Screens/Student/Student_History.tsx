@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
@@ -14,112 +15,75 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
-import styles from '../../UI_Designs/StudentHistoryStyles';
+import historyStyles from '../../UI_Designs/StudentHistoryStyles';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import Svg, { Text as SvgText } from 'react-native-svg';
 import { getAuth } from '@react-native-firebase/auth';
+
+// ── Performance / Activity components (moved from Student_Profile) ────────────
+import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
+import StudentAccuracyTrendsChart  from '../../Components/Faculty/StudentView_Status/Student_Accuracy_Chart';
+import StudentMiscueAnalytics      from '../../Components/Faculty/StudentView_Status/Student_MiscueChart';
+import StudentTopMiscuePassageAndWords from '../../Components/Faculty/StudentView_Status/Student_TopPassage&TopWords';
+import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
+import StudentWordMastery     from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
+import { sw, sh, sf } from '../../Utils/responsive';
+
 const auth = getAuth();
-/**
- * Interface for grouped report data by passage
- * Each passage contains multiple reading attempts with their reports
- */
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface GroupedReport {
   passageTitle: string;
   reports: ReportData[];
 }
 
-/**
- * Interface for individual report data
- * Updated to match the new MiscueReportDocument structure
- */
 interface ReportData {
   id: string;
   timestamp: any;
-  accuracyRate: number; // Changed from accuracy (string) to accuracyRate (number)
-  wordPerMin: number; // Added: words per minute as string
-  recordingDuration?: string; // Added: optional recording duration
-  totalMiscues?: number; // Optional: legacy field
+  accuracyRate: number;
+  wordPerMin: number;
+  recordingDuration?: string;
+  totalMiscues?: number;
   substitution: string;
   omission: string;
   insertion: string;
   repetition: string;
-  substitutionCount?: number; // Optional: legacy field
-  omissionCount?: number; // Optional: legacy field
-  insertionCount?: number; // Optional: legacy field
-  repetitionCount?: number; // Optional: legacy field
-  miscues?: any[]; // Added: miscue details array
+  substitutionCount?: number;
+  omissionCount?: number;
+  insertionCount?: number;
+  repetitionCount?: number;
+  miscues?: any[];
 }
 
-/**
- * ReadingHistoryScreen Component
- * Displays user's reading history organized by passages
- * Now shows additional data: wordPerMin and recordingDuration
- */
+type ActiveTab = 'history' | 'performance' | 'activity';
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function ReadingHistoryScreen() {
-  // State for storing grouped reports by passage
-  const [groupedReports, setGroupedReports] = useState<GroupedReport[]>([]);
+  const [groupedReports,   setGroupedReports]   = useState<GroupedReport[]>([]);
+  const [isLoading,        setIsLoading]        = useState(true);
+  const [expandedPassages, setExpandedPassages] = useState<Set<number>>(new Set());
+  const [menuVisible,      setMenuVisible]      = useState(false);
+  const [logoutVisible,    setLogoutVisible]    = useState(false);
 
-  // State for loading indicator
-  const [isLoading, setIsLoading] = useState(true);
+  // ── NEW: tab state ──────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<ActiveTab>('history');
 
-  // State for tracking which passages are expanded (using passage index)
-  const [expandedPassages, setExpandedPassages] = useState<Set<number>>(
-    new Set(),
-  );
-
-  // HANDLE MENU
-  const [menuVisible, setMenuVisible] = useState(false);
-  // HANDLE LOGOUT
   const { handleLogout, handleBackStep, handleNextStep } = useNavigationHelper();
 
-  // HANDLE LOGOUT MODAL VISIBILITY
-  const [logoutVisible, setLogoutVisible] = useState(false);
+  const toggleMenu       = () => setMenuVisible(v => !v);
+  const handleLogoutPress = () => { setMenuVisible(false); setLogoutVisible(true); };
+  const confirmLogoout   = async () => { setLogoutVisible(false); await handleLogout(); };
+  const cancelLogout     = () => setLogoutVisible(false);
 
-  const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
-  };
+  useEffect(() => { fetchReports(); }, []);
 
-  const handleLogoutPress = () => {
-    setMenuVisible(false);
-    setLogoutVisible(true);
-  };
-
-  const confirmLogoout = async () => {
-    setLogoutVisible(false);
-    await handleLogout();
-  };
-
-  const cancelLogout = () => {
-    setLogoutVisible(false);
-  };
-
-  /**
-   * Fetch reports when component mounts
-   */
-  useEffect(() => {
-    fetchReports();
-  }, []);
-
-  /**
-   * Fetch all reports for the current user from Firestore
-   * Groups reports by passage title for organized display
-   */
   const fetchReports = async () => {
     try {
       setIsLoading(true);
       const user = auth.currentUser;
-
-      if (!user) {
-        Alert.alert('Error', 'No authenticated user found');
-        return;
-      }
-
-      // Fetch all reports for current user using the new interface
+      if (!user) { Alert.alert('Error', 'No authenticated user found'); return; }
       const reports = await MiscueReportController.getStudentReports(user.uid);
-
-      // Group reports by passage title
-      const grouped = groupReportsByPassage(reports);
-      setGroupedReports(grouped);
+      setGroupedReports(groupReportsByPassage(reports));
     } catch (error) {
       console.error('Failed to fetch reports:', error);
       Alert.alert('Error', 'Failed to load reading history');
@@ -128,627 +92,418 @@ export default function ReadingHistoryScreen() {
     }
   };
 
-  /**
-   * Groups reports by passage title
-   * Now handles both new and old data structures
-   */
-  const groupReportsByPassage = (
-    reports: MiscueReportDocument[],
-  ): GroupedReport[] => {
-    // Create a map to group reports by passage title
+  const groupReportsByPassage = (reports: MiscueReportDocument[]): GroupedReport[] => {
     const groupMap = new Map<string, ReportData[]>();
-
     reports.forEach(report => {
       const passageTitle = report.passageTitle || 'Unknown Passage';
-
-      if (!groupMap.has(passageTitle)) {
-        groupMap.set(passageTitle, []);
-      }
-
-      // Convert MiscueReportDocument to ReportData
-      const reportData: ReportData = {
-        id: report.reportId, // Using reportId from the new structure
-        timestamp: report.createdAt,
-        accuracyRate: report.accuracyRate || 0,
-        wordPerMin: report.wordPerMin || 0,
+      if (!groupMap.has(passageTitle)) groupMap.set(passageTitle, []);
+      groupMap.get(passageTitle)?.push({
+        id:               report.reportId,
+        timestamp:        report.createdAt,
+        accuracyRate:     report.accuracyRate    || 0,
+        wordPerMin:       report.wordPerMin       || 0,
         recordingDuration: report.recordingDuration,
-
-        // Miscue summaries
-        substitution: report.substitution || 'None',
-        omission: report.omission || 'None',
-        insertion: report.insertion || 'None',
-        repetition: report.repetition || 'None',
-
-        // Miscue details array (if you want to display them)
-        miscues: report.miscues || [],
-
-        // Legacy fields for backward compatibility
-        // Note: These might not exist in new reports
-        totalMiscues: (report as any).totalMiscues,
-        substitutionCount: (report as any).substitutionCount,
-        omissionCount: (report as any).omissionCount,
-        insertionCount: (report as any).insertionCount,
-        repetitionCount: (report as any).repetitionCount,
-      };
-
-      groupMap.get(passageTitle)?.push(reportData);
+        substitution:     report.substitution    || 'None',
+        omission:         report.omission         || 'None',
+        insertion:        report.insertion         || 'None',
+        repetition:       report.repetition        || 'None',
+        miscues:          report.miscues           || [],
+        totalMiscues:     (report as any).totalMiscues,
+        substitutionCount:(report as any).substitutionCount,
+        omissionCount:    (report as any).omissionCount,
+        insertionCount:   (report as any).insertionCount,
+        repetitionCount:  (report as any).repetitionCount,
+      });
     });
-
-    // Convert map to array and sort reports within each passage by timestamp
-    const grouped: GroupedReport[] = Array.from(groupMap.entries()).map(
-      ([passageTitle, reports]) => ({
-        passageTitle,
-        reports: reports.sort((a, b) => {
-          // Sort by timestamp descending (newest first)
-          const timeA = a.timestamp?.toDate?.() || new Date(0);
-          const timeB = b.timestamp?.toDate?.() || new Date(0);
-          return timeB.getTime() - timeA.getTime();
-        }),
+    return Array.from(groupMap.entries()).map(([passageTitle, reps]) => ({
+      passageTitle,
+      reports: reps.sort((a, b) => {
+        const A = a.timestamp?.toDate?.() || new Date(0);
+        const B = b.timestamp?.toDate?.() || new Date(0);
+        return B.getTime() - A.getTime();
       }),
-    );
-
-    return grouped;
+    }));
   };
 
-  /**
-   * Toggle expansion state for a passage
-   */
   const togglePassageExpansion = (index: number) => {
     setExpandedPassages(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
-      } else {
-        newSet.add(index);
-      }
-      return newSet;
+      const s = new Set(prev);
+      s.has(index) ? s.delete(index) : s.add(index);
+      return s;
     });
   };
 
-  /**
-   * Format Firebase timestamp to readable date string
-   */
   const formatDate = (timestamp: any): string => {
     if (!timestamp) return 'Unknown Date';
-
     try {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
       });
-    } catch (error) {
-      return 'Invalid Date';
-    }
+    } catch { return 'Invalid Date'; }
   };
 
-  /**
-   * Format recording duration - returns MM:SS format
-   */
   const formatDuration = (duration?: string | number): string => {
     if (!duration && duration !== 0) return 'N/A';
-
-    // If duration is a string in MM:SS format, return it as-is
     if (typeof duration === 'string') {
-      // Validate format (should be something like "1:23" or "0:45")
-      if (/^\d+:\d{2}$/.test(duration)) {
-        return duration;
-      }
-
-      // If it's a string but not in MM:SS, try to parse as seconds
-      const seconds = parseInt(duration);
-      if (!isNaN(seconds) && seconds > 0) {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-      }
-
+      if (/^\d+:\d{2}$/.test(duration)) return duration;
+      const s = parseInt(duration);
+      if (!isNaN(s) && s > 0)
+        return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
       return 'N/A';
     }
-
-    // If duration is a number (legacy format - seconds)
     if (typeof duration === 'number') {
       if (duration <= 0) return 'N/A';
-
-      const mins = Math.floor(duration / 60);
-      const secs = Math.floor(duration % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
+      return `${Math.floor(duration / 60)}:${Math.floor(duration % 60).toString().padStart(2, '0')}`;
     }
-
     return 'N/A';
   };
-  /**
-   * Calculate total miscues from miscues array if totalMiscues not available
-   */
+
   const getTotalMiscues = (report: ReportData): number => {
-    if (report.totalMiscues !== undefined) {
-      return report.totalMiscues;
-    }
-
-    // Calculate from miscues array if available
-    if (report.miscues && Array.isArray(report.miscues)) {
-      return report.miscues.length;
-    }
-
-    // Try to calculate from individual counts
-    const counts = [
-      report.substitutionCount || 0,
-      report.omissionCount || 0,
-      report.insertionCount || 0,
-      report.repetitionCount || 0,
-    ];
-    return counts.reduce((sum, count) => sum + count, 0);
+    if (report.totalMiscues !== undefined) return report.totalMiscues;
+    if (report.miscues && Array.isArray(report.miscues)) return report.miscues.length;
+    return (report.substitutionCount || 0) + (report.omissionCount || 0) +
+           (report.insertionCount    || 0) + (report.repetitionCount || 0);
   };
 
-  /**
-   * Compute summary stats across all reports
-   */
-  const getTotalAttempts = (): number => {
-    return groupedReports.reduce((sum, g) => sum + g.reports.length, 0);
+  const getTotalAttempts  = () => groupedReports.reduce((s, g) => s + g.reports.length, 0);
+  const getAverageAccuracy = () => {
+    const all = groupedReports.flatMap(g => g.reports);
+    if (!all.length) return '0';
+    return (all.reduce((s, r) => s + r.accuracyRate, 0) / all.length).toFixed(1);
+  };
+  const getBestWPM = () => {
+    const all = groupedReports.flatMap(g => g.reports);
+    return all.length ? Math.max(...all.map(r => r.wordPerMin || 0)) : 0;
   };
 
-  const getAverageAccuracy = (): string => {
-    const allReports = groupedReports.flatMap(g => g.reports);
-    if (allReports.length === 0) return '0';
-    const avg =
-      allReports.reduce((sum, r) => sum + r.accuracyRate, 0) /
-      allReports.length;
-    return avg.toFixed(1);
-  };
+  const uid = auth.currentUser?.uid || '';
 
-  const getBestWPM = (): number => {
-    const allReports = groupedReports.flatMap(g => g.reports);
-    if (allReports.length === 0) return 0;
-    return Math.max(...allReports.map(r => r.wordPerMin || 0));
-  };
+  // ── Shared header (used in both loading/empty/main states) ─────────────────
+  const Header = () => (
+    <View>
+      <View style={upperNav.header}>
+        <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
+          <Image
+            style={upperNav.backButtonIcon}
+            source={require('../../../assets/icons/BackButton-icon.png')}
+          />
+        </TouchableOpacity>
+        <Svg height={60} width={220}>
+          <SvgText
+            x={110} y={35} fontSize={23}
+            fontFamily="DynaPuff-Bold" textAnchor="middle"
+            fill="none" stroke="#D7E9FF" strokeWidth={8} strokeLinejoin="round"
+          >
+            Reading History
+          </SvgText>
+          <SvgText
+            x={110} y={35} fontSize={23}
+            fontFamily="DynaPuff-Bold" textAnchor="middle"
+            fill="#3B7FC9"
+          >
+            Reading History
+          </SvgText>
+        </Svg>
+        <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
+          <Image style={upperNav.menuIcon} source={require('../../../assets/icons/Menu-icon.png')} />
+        </TouchableOpacity>
+      </View>
 
-  /**
-   * Render loading state
-   */
+      {menuVisible && (
+        <View style={upperNav.dropdownMenu}>
+          <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
+            <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
+            <Text style={upperNav.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {menuVisible && (
+        <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
+      )}
+    </View>
+  );
+
+  // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.insideContainer}>
+      <SafeAreaView style={historyStyles.container}>
+        <View style={historyStyles.insideContainer}>
           <BubbleBackground />
-          <View style={styles.loadingContainer}>
+          <View style={historyStyles.loadingContainer}>
             <ActivityIndicator size="large" color="#3B7FC9" />
-            <Text style={styles.loadingText}>Loading reading history...</Text>
+            <Text style={historyStyles.loadingText}>Loading reading history...</Text>
           </View>
         </View>
       </SafeAreaView>
     );
   }
 
-  /**
-   * Render empty state when no reports exist
-   */
-  if (groupedReports.length === 0) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.insideContainer}>
-          <BubbleBackground />
-
-          {/* HEADER */}
-          <View>
-            <View style={upperNav.header}>
-              <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
-                <Image
-                  style={upperNav.backButtonIcon}
-                  source={require('../../../assets/icons/BackButton-icon.png')}
-                />
-              </TouchableOpacity>
-              <Svg height={60} width={200}>
-                <SvgText
-                  x={100}
-                  y={35}
-                  fontSize={21}
-                  fontFamily="Comfortaa-Bold"
-                  textAnchor="middle"
-                  fill="none"
-                  stroke="#D7E9FF"
-                  strokeWidth={8}
-                  strokeLinejoin="round"
-                >
-                  Reading History
-                </SvgText>
-                <SvgText
-                  x={100}
-                  y={35}
-                  fontSize={21}
-                  fontFamily="Comfortaa-Bold"
-                  textAnchor="middle"
-                  fill="#3B7FC9"
-                >
-                  Reading History
-                </SvgText>
-              </Svg>
-              <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-                <Image
-                  style={upperNav.menuIcon}
-                  source={require('../../../assets/icons/Menu-icon.png')}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* DROPDOWN MENU */}
-          {menuVisible && (
-            <View style={upperNav.dropdownMenu}>
-              <TouchableOpacity
-                onPress={handleLogoutPress}
-                style={upperNav.logoutButton}
-              >
-                <Image
-                  source={require('../../../assets/icons/Logout-icon.png')}
-                  style={upperNav.logoutIcon}
-                />
-                <Text style={upperNav.logoutText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          {menuVisible && (
-            <TouchableOpacity
-              style={upperNav.closeMenu}
-              onPress={() => setMenuVisible(false)}
-              activeOpacity={1}
-            />
-          )}
-
-          {/* EMPTY STATE */}
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconContainer}>
-              <Text style={styles.emptyIcon}>📚</Text>
-            </View>
-            <Text style={styles.emptyTitle}>No Reading History Yet</Text>
-            <Text style={styles.emptyMessage}>
-              You haven't completed any reading activities yet. Start reading passages to track your progress and see your improvement over time!
-            </Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() => handleNextStep('StudentTabs' as any, { screen: 'StudentLibrary' } as any)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.emptyButtonText}>Start Reading</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* LOGOUT MODAL */}
-          <LogoutModal
-            visible={logoutVisible}
-            onCancel={cancelLogout}
-            onConfirm={confirmLogoout}
-          />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  /**
-   * Main render
-   */
+  // ── Main render ─────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.insideContainer}>
-        {/* BUBBLE DECORATIONS */}
+    <SafeAreaView style={historyStyles.container}>
+      <View style={historyStyles.insideContainer}>
         <BubbleBackground />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={historyStyles.scrollContent}
         >
-          {/* HEADER (LOGO + MENU ICON) */}
-          <View>
-            <View style={upperNav.header}>
-              <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
-                <Image
-                  style={upperNav.backButtonIcon}
-                  source={require('../../../assets/icons/BackButton-icon.png')}
-                />
-              </TouchableOpacity>
-              {/* SVG Title - styled like Reading Materials */}
-              <Svg height={60} width={220}>
-                <SvgText
-                  x={110}
-                  y={35}
-                  fontSize={23}
-                  fontFamily="DynaPuff-Bold"
-                  textAnchor="middle"
-                  fill="none"
-                  stroke="#D7E9FF"
-                  strokeWidth={8}
-                  strokeLinejoin="round"
-                >
-                  Reading History
-                </SvgText>
-                <SvgText
-                  x={110}
-                  y={35}
-                  fontSize={23}
-                  fontFamily="DynaPuff-Bold"
-                  textAnchor="middle"
-                  fill="#3B7FC9"
-                >
-                  Reading History
-                </SvgText>
-              </Svg>
-              <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-                <Image
-                  style={upperNav.menuIcon}
-                  source={require('../../../assets/icons/Menu-icon.png')}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+          {/* Header */}
+          <Header />
 
-          {/* DROPDOWN MENU */}
-          {menuVisible && (
-            <View style={upperNav.dropdownMenu}>
+          {/* ── TAB BAR ────────────────────────────────────────────────────── */}
+          <View style={tabStyles.tabBar}>
+            {(
+              [
+                { key: 'history',     label: '📋 History'     },
+                { key: 'performance', label: '📊 Performance' },
+                { key: 'activity',    label: '⏱ Activity'    },
+              ] as { key: ActiveTab; label: string }[]
+            ).map(tab => (
               <TouchableOpacity
-                onPress={handleLogoutPress}
-                style={upperNav.logoutButton}
+                key={tab.key}
+                style={[tabStyles.tab, activeTab === tab.key && tabStyles.tabActive]}
+                onPress={() => setActiveTab(tab.key)}
+                activeOpacity={0.8}
               >
-                <Image
-                  source={require('../../../assets/icons/Logout-icon.png')}
-                  style={upperNav.logoutIcon}
-                />
-                <Text style={upperNav.logoutText}>Logout</Text>
+                <Text style={[tabStyles.tabText, activeTab === tab.key && tabStyles.tabTextActive]}>
+                  {tab.label}
+                </Text>
               </TouchableOpacity>
-            </View>
-          )}
-
-          {/* OVERLAY TO CLOSE MENU */}
-          {menuVisible && (
-            <TouchableOpacity
-              style={upperNav.closeMenu}
-              onPress={() => setMenuVisible(false)}
-              activeOpacity={1}
-            />
-          )}
-
-          {/* SUMMARY STATS BAR */}
-          <View style={styles.statsBar}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{groupedReports.length}</Text>
-              <Text style={styles.statLabel}>Passages</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{getTotalAttempts()}</Text>
-              <Text style={styles.statLabel}>Attempts</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{getAverageAccuracy()}%</Text>
-              <Text style={styles.statLabel}>Avg. Accuracy</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{getBestWPM()}</Text>
-              <Text style={styles.statLabel}>Best WPM</Text>
-            </View>
+            ))}
           </View>
 
-          {/* SECTION LABEL */}
-          <View style={styles.contentContainer}>
-            <Text style={styles.sectionLabel}>Your Reading Sessions</Text>
-
-            {/* List of passages with their reports */}
-            {groupedReports.map((group, passageIndex) => {
-              const isExpanded = expandedPassages.has(passageIndex);
-
-              return (
-                <View
-                  key={passageIndex}
-                  style={[
-                    styles.passageCard,
-                    isExpanded && styles.passageCardExpanded,
-                  ]}
-                >
-                  {/* Passage Header - Clickable to expand/collapse */}
+          {/* ══════════════════════════════════════════════════════════════════
+              HISTORY TAB — existing reading history content unchanged
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'history' && (
+            <>
+              {groupedReports.length === 0 ? (
+                /* Empty state */
+                <View style={historyStyles.emptyContainer}>
+                  <View style={historyStyles.emptyIconContainer}>
+                    <Text style={historyStyles.emptyIcon}>📚</Text>
+                  </View>
+                  <Text style={historyStyles.emptyTitle}>No Reading History Yet</Text>
+                  <Text style={historyStyles.emptyMessage}>
+                    You haven't completed any reading activities yet. Start reading
+                    passages to track your progress and see your improvement over time!
+                  </Text>
                   <TouchableOpacity
-                    onPress={() => togglePassageExpansion(passageIndex)}
-                    style={styles.passageHeader}
-                    activeOpacity={0.7}
+                    style={historyStyles.emptyButton}
+                    onPress={() => handleNextStep('StudentTabs' as any, { screen: 'StudentLibrary' } as any)}
+                    activeOpacity={0.8}
                   >
-                    <View style={styles.passageIconContainer}>
-                      <Text style={styles.passageIconText}>📖</Text>
-                    </View>
-
-                    <View style={styles.passageInfo}>
-                      <Text style={styles.passageTitle} numberOfLines={2}>
-                        {group.passageTitle}
-                      </Text>
-                      <Text style={styles.passageAttempts}>
-                        {group.reports.length} attempt
-                        {group.reports.length > 1 ? 's' : ''}
-                      </Text>
-                    </View>
-
-                    {/* Expand/Collapse indicator */}
-                    <View style={styles.passageArrowContainer}>
-                      <Text style={styles.passageArrow}>
-                        {isExpanded ? '▼' : '▶'}
-                      </Text>
-                    </View>
+                    <Text style={historyStyles.emptyButtonText}>Start Reading</Text>
                   </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  {/* Summary stats bar */}
+                  <View style={historyStyles.statsBar}>
+                    <View style={historyStyles.statItem}>
+                      <Text style={historyStyles.statValue}>{groupedReports.length}</Text>
+                      <Text style={historyStyles.statLabel}>Passages</Text>
+                    </View>
+                    <View style={historyStyles.statDivider} />
+                    <View style={historyStyles.statItem}>
+                      <Text style={historyStyles.statValue}>{getTotalAttempts()}</Text>
+                      <Text style={historyStyles.statLabel}>Attempts</Text>
+                    </View>
+                    <View style={historyStyles.statDivider} />
+                    <View style={historyStyles.statItem}>
+                      <Text style={historyStyles.statValue}>{getAverageAccuracy()}%</Text>
+                      <Text style={historyStyles.statLabel}>Avg. Accuracy</Text>
+                    </View>
+                    <View style={historyStyles.statDivider} />
+                    <View style={historyStyles.statItem}>
+                      <Text style={historyStyles.statValue}>{getBestWPM()}</Text>
+                      <Text style={historyStyles.statLabel}>Best WPM</Text>
+                    </View>
+                  </View>
 
-                  {/* Expanded content - List of reports for this passage */}
-                  {isExpanded && (
-                    <View style={styles.reportsContainer}>
-                      <ScrollView
-                        style={styles.nestedScroll}
-                        nestedScrollEnabled={true}
-                        showsVerticalScrollIndicator={false}
-                      >
-                        {group.reports.map((report, reportIndex) => {
-                          const totalMiscues = getTotalMiscues(report);
+                  {/* Passage list */}
+                  <View style={historyStyles.contentContainer}>
+                    <Text style={historyStyles.sectionLabel}>Your Reading Sessions</Text>
 
-                          return (
-                            <View key={report.id} style={styles.reportCard}>
-                              {/* Report Date & Attempt Badge */}
-                              <View style={styles.reportDateRow}>
-                                <Text style={styles.reportDate}>
-                                  {formatDate(report.timestamp)}
+                    {groupedReports.map((group, passageIndex) => {
+                      const isExpanded = expandedPassages.has(passageIndex);
+                      return (
+                        <View
+                          key={passageIndex}
+                          style={[
+                            historyStyles.passageCard,
+                            isExpanded && historyStyles.passageCardExpanded,
+                          ]}
+                        >
+                          <TouchableOpacity
+                            onPress={() => togglePassageExpansion(passageIndex)}
+                            style={historyStyles.passageHeader}
+                            activeOpacity={0.7}
+                          >
+                            <View style={historyStyles.passageIconContainer}>
+                              <Text style={historyStyles.passageIconText}>📖</Text>
+                            </View>
+                            <View style={historyStyles.passageInfo}>
+                              <Text style={historyStyles.passageTitle} numberOfLines={2}>
+                                {group.passageTitle}
+                              </Text>
+                              <Text style={historyStyles.passageAttempts}>
+                                {group.reports.length} attempt{group.reports.length > 1 ? 's' : ''}
+                              </Text>
+                            </View>
+                            <View style={historyStyles.passageArrowContainer}>
+                              <Text style={historyStyles.passageArrow}>
+                                {isExpanded ? '▼' : '▶'}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+
+                          {isExpanded && (
+                            <View style={historyStyles.reportsContainer}>
+                              <ScrollView
+                                style={historyStyles.nestedScroll}
+                                nestedScrollEnabled={true}
+                                showsVerticalScrollIndicator={false}
+                              >
+                                {group.reports.map((report, reportIndex) => {
+                                  const totalMiscues = getTotalMiscues(report);
+                                  return (
+                                    <View key={report.id} style={historyStyles.reportCard}>
+                                      <View style={historyStyles.reportDateRow}>
+                                        <Text style={historyStyles.reportDate}>
+                                          {formatDate(report.timestamp)}
+                                        </Text>
+                                        <View style={historyStyles.reportAttemptBadge}>
+                                          <Text style={historyStyles.reportAttemptText}>
+                                            #{reportIndex + 1}
+                                          </Text>
+                                        </View>
+                                      </View>
+
+                                      <View style={historyStyles.metricsGrid}>
+                                        <View style={historyStyles.metricCard}>
+                                          <Text style={historyStyles.metricValue}>{report.accuracyRate.toFixed(1)}%</Text>
+                                          <Text style={historyStyles.metricLabel}>Accuracy</Text>
+                                        </View>
+                                        <View style={historyStyles.metricCard}>
+                                          <Text style={historyStyles.metricValue}>{report.wordPerMin}</Text>
+                                          <Text style={historyStyles.metricLabel}>Words / Min</Text>
+                                        </View>
+                                        <View style={historyStyles.metricCard}>
+                                          <Text style={historyStyles.metricValue}>{formatDuration(report.recordingDuration)}</Text>
+                                          <Text style={historyStyles.metricLabel}>Duration</Text>
+                                        </View>
+                                        <View style={historyStyles.metricCard}>
+                                          <Text style={historyStyles.metricValue}>{totalMiscues}</Text>
+                                          <Text style={historyStyles.metricLabel}>Total Miscues</Text>
+                                        </View>
+                                      </View>
+
+                                      {totalMiscues > 0 && (
+                                        <View style={historyStyles.miscueSection}>
+                                          <Text style={historyStyles.miscueSectionTitle}>Miscue Breakdown</Text>
+                                          {report.substitution !== 'None' && (
+                                            <View style={historyStyles.miscueRow}>
+                                              <View style={[historyStyles.miscueTag, historyStyles.miscueTagSubstitution]}>
+                                                <Text style={historyStyles.miscueTagText}>Substitution</Text>
+                                              </View>
+                                              <Text style={historyStyles.miscueDetail}>{report.substitution}</Text>
+                                            </View>
+                                          )}
+                                          {report.omission !== 'None' && (
+                                            <View style={historyStyles.miscueRow}>
+                                              <View style={[historyStyles.miscueTag, historyStyles.miscueTagOmission]}>
+                                                <Text style={historyStyles.miscueTagText}>Omission</Text>
+                                              </View>
+                                              <Text style={historyStyles.miscueDetail}>{report.omission}</Text>
+                                            </View>
+                                          )}
+                                          {report.insertion !== 'None' && (
+                                            <View style={historyStyles.miscueRow}>
+                                              <View style={[historyStyles.miscueTag, historyStyles.miscueTagInsertion]}>
+                                                <Text style={historyStyles.miscueTagText}>Insertion</Text>
+                                              </View>
+                                              <Text style={historyStyles.miscueDetail}>{report.insertion}</Text>
+                                            </View>
+                                          )}
+                                          {report.repetition !== 'None' && (
+                                            <View style={historyStyles.miscueRow}>
+                                              <View style={[historyStyles.miscueTag, historyStyles.miscueTagRepetition]}>
+                                                <Text style={historyStyles.miscueTagText}>Repetition</Text>
+                                              </View>
+                                              <Text style={historyStyles.miscueDetail}>{report.repetition}</Text>
+                                            </View>
+                                          )}
+                                        </View>
+                                      )}
+
+                                      {totalMiscues === 0 && (
+                                        <View style={historyStyles.perfectBadge}>
+                                          <Text style={historyStyles.perfectIcon}>🌟</Text>
+                                          <Text style={historyStyles.perfectText}>
+                                            Perfect reading! No miscues detected.
+                                          </Text>
+                                        </View>
+                                      )}
+                                    </View>
+                                  );
+                                })}
+                              </ScrollView>
+
+                              {group.reports.length > 5 && (
+                                <Text style={historyStyles.viewMoreText}>
+                                  Scroll to see more attempts
                                 </Text>
-                                <View style={styles.reportAttemptBadge}>
-                                  <Text style={styles.reportAttemptText}>
-                                    #{reportIndex + 1}
-                                  </Text>
-                                </View>
-                              </View>
-
-                              {/* Performance Metrics Grid */}
-                              <View style={styles.metricsGrid}>
-                                <View style={styles.metricCard}>
-                                  <Text style={styles.metricValue}>
-                                    {report.accuracyRate.toFixed(1)}%
-                                  </Text>
-                                  <Text style={styles.metricLabel}>Accuracy</Text>
-                                </View>
-
-                                <View style={styles.metricCard}>
-                                  <Text style={styles.metricValue}>
-                                    {report.wordPerMin}
-                                  </Text>
-                                  <Text style={styles.metricLabel}>
-                                    Words / Min
-                                  </Text>
-                                </View>
-
-                                <View style={styles.metricCard}>
-                                  <Text style={styles.metricValue}>
-                                    {formatDuration(report.recordingDuration)}
-                                  </Text>
-                                  <Text style={styles.metricLabel}>Duration</Text>
-                                </View>
-
-                                <View style={styles.metricCard}>
-                                  <Text style={styles.metricValue}>
-                                    {totalMiscues}
-                                  </Text>
-                                  <Text style={styles.metricLabel}>
-                                    Total Miscues
-                                  </Text>
-                                </View>
-                              </View>
-
-                              {/* Miscue Details - Only show if there are miscues */}
-                              {totalMiscues > 0 && (
-                                <View style={styles.miscueSection}>
-                                  <Text style={styles.miscueSectionTitle}>
-                                    Miscue Breakdown
-                                  </Text>
-
-                                  {/* Substitution */}
-                                  {report.substitution !== 'None' && (
-                                    <View style={styles.miscueRow}>
-                                      <View
-                                        style={[
-                                          styles.miscueTag,
-                                          styles.miscueTagSubstitution,
-                                        ]}
-                                      >
-                                        <Text style={styles.miscueTagText}>
-                                          Substitution
-                                        </Text>
-                                      </View>
-                                      <Text style={styles.miscueDetail}>
-                                        {report.substitution}
-                                      </Text>
-                                    </View>
-                                  )}
-
-                                  {/* Omission */}
-                                  {report.omission !== 'None' && (
-                                    <View style={styles.miscueRow}>
-                                      <View
-                                        style={[
-                                          styles.miscueTag,
-                                          styles.miscueTagOmission,
-                                        ]}
-                                      >
-                                        <Text style={styles.miscueTagText}>
-                                          Omission
-                                        </Text>
-                                      </View>
-                                      <Text style={styles.miscueDetail}>
-                                        {report.omission}
-                                      </Text>
-                                    </View>
-                                  )}
-
-                                  {/* Insertion */}
-                                  {report.insertion !== 'None' && (
-                                    <View style={styles.miscueRow}>
-                                      <View
-                                        style={[
-                                          styles.miscueTag,
-                                          styles.miscueTagInsertion,
-                                        ]}
-                                      >
-                                        <Text style={styles.miscueTagText}>
-                                          Insertion
-                                        </Text>
-                                      </View>
-                                      <Text style={styles.miscueDetail}>
-                                        {report.insertion}
-                                      </Text>
-                                    </View>
-                                  )}
-
-                                  {/* Repetition */}
-                                  {report.repetition !== 'None' && (
-                                    <View style={styles.miscueRow}>
-                                      <View
-                                        style={[
-                                          styles.miscueTag,
-                                          styles.miscueTagRepetition,
-                                        ]}
-                                      >
-                                        <Text style={styles.miscueTagText}>
-                                          Repetition
-                                        </Text>
-                                      </View>
-                                      <Text style={styles.miscueDetail}>
-                                        {report.repetition}
-                                      </Text>
-                                    </View>
-                                  )}
-                                </View>
-                              )}
-
-                              {/* No miscues message */}
-                              {totalMiscues === 0 && (
-                                <View style={styles.perfectBadge}>
-                                  <Text style={styles.perfectIcon}>🌟</Text>
-                                  <Text style={styles.perfectText}>
-                                    Perfect reading! No miscues detected.
-                                  </Text>
-                                </View>
                               )}
                             </View>
-                          );
-                        })}
-                      </ScrollView>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+            </>
+          )}
 
-                      {/* View More indicator if there are many reports */}
-                      {group.reports.length > 5 && (
-                        <Text style={styles.viewMoreText}>
-                          Scroll to see more attempts
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-          </View>
+          {/* ══════════════════════════════════════════════════════════════════
+              PERFORMANCE TAB — moved from Student_Profile
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'performance' && (
+            <View style={tabStyles.tabContent}>
+              <View style={tabStyles.section}>
+                <StudentAlphabetMastery studentId={uid} />
+              </View>
+              <View style={tabStyles.section}>
+                <StudentWordMastery studentId={uid} />
+              </View>
+              <View style={tabStyles.section}>
+                <StudentAccuracyTrendsChart studentId={uid} />
+              </View>
+              <View style={tabStyles.section}>
+                <StudentMiscueAnalytics studentId={uid} />
+                <StudentTopMiscuePassageAndWords studentId={uid} />
+              </View>
+            </View>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              ACTIVITY TAB — moved from Student_Profile
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'activity' && (
+            <View style={tabStyles.tabContent}>
+              <View style={tabStyles.section}>
+                <Text style={tabStyles.sectionTitle}>Activity Tracking</Text>
+                <StudentActivityTrackingCard studentId={uid} />
+              </View>
+            </View>
+          )}
+
         </ScrollView>
 
-        {/* LOGOUT MODAL */}
         <LogoutModal
           visible={logoutVisible}
           onCancel={cancelLogout}
@@ -758,3 +513,60 @@ export default function ReadingHistoryScreen() {
     </SafeAreaView>
   );
 }
+
+// ─── Tab styles (self-contained, don't touch StudentHistoryStyles) ─────────────
+const tabStyles = StyleSheet.create({
+  tabBar: {
+    flexDirection: 'row',
+    marginHorizontal: sw(16),
+    marginTop: sh(12),
+    marginBottom: sh(4),
+    backgroundColor: '#fff',
+    borderRadius: sw(12),
+    padding: sw(5),
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sh(1) },
+    shadowOpacity: 0.08,
+    shadowRadius: sw(3),
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: sh(10),
+    alignItems: 'center',
+    borderRadius: sw(8),
+  },
+  tabActive: {
+    backgroundColor: '#3B7FC9',
+  },
+  tabText: {
+    fontSize: sf(13),
+    fontWeight: '600',
+    color: '#64748b',
+    fontFamily: 'Satoshi-Bold',
+  },
+  tabTextActive: {
+    color: '#ffffff',
+  },
+  tabContent: {
+    paddingHorizontal: sw(12),
+    paddingTop: sh(8),
+  },
+  section: {
+    backgroundColor: '#fff',
+    borderRadius: sw(14),
+    padding: sw(14),
+    marginBottom: sh(12),
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sh(1) },
+    shadowOpacity: 0.07,
+    shadowRadius: sw(3),
+  },
+  sectionTitle: {
+    fontSize: sf(16),
+    fontFamily: 'Satoshi-Bold',
+    color: '#1e293b',
+    marginBottom: sh(10),
+  },
+});

@@ -15,9 +15,6 @@ interface AlertModalProps {
   title: string;
   message: string;
   onClose: () => void;
-  onConfirm?: () => void;
-  confirmText?: string;
-  cancelText?: string;
 }
 
 export default function AlertModal({
@@ -25,12 +22,7 @@ export default function AlertModal({
   title,
   message,
   onClose,
-  onConfirm,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
 }: AlertModalProps) {
-  const isConfirmation = !!onConfirm;
-
   return (
     <Modal
       transparent
@@ -46,28 +38,14 @@ export default function AlertModal({
           {/* Body Message */}
           <Text style={styles.messageText}>{message}</Text>
           
-          {/* Action Buttons */}
-          <View style={isConfirmation ? styles.buttonRow : styles.singleButtonContainer}>
-            {isConfirmation && (
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={onClose}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.cancelButtonText}>{cancelText}</Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={[styles.button, isConfirmation ? styles.confirmButton : styles.closeButton]}
-              onPress={isConfirmation ? onConfirm : onClose}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.closeButtonText}>
-                {isConfirmation ? confirmText : (confirmText !== 'Confirm' ? confirmText : 'Okay')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* Primary Action Button */}
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.closeButtonText}>Okay</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -111,41 +89,15 @@ const styles = StyleSheet.create({
     marginBottom: sh(24),
     lineHeight: sh(22),
   },
-  singleButtonContainer: {
-    width: '100%',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    width: '100%',
-    gap: sw(12),
-  },
-  button: {
-    paddingVertical: sh(12),
-    borderRadius: sw(12),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   closeButton: {
     backgroundColor: '#2CA96A',
     width: '100%',
-  },
-  confirmButton: {
-    backgroundColor: '#FF4D4D', // Red for destructive actions like discarding progress
-    flex: 1,
-  },
-  cancelButton: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    flex: 1,
+    paddingVertical: sh(12),
+    borderRadius: sw(12),
+    alignItems: 'center',
   },
   closeButtonText: {
     color: '#FFFFFF',
-    fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
-  },
-  cancelButtonText: {
-    color: '#4B5563',
     fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
   },
