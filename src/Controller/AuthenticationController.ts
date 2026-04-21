@@ -663,7 +663,19 @@ export const getCurrentUser = () => {
 ------------------------------------------------------------- */
 export const logoutUser = async () => {
   try {
-    await signOutFromGoogle(); // Clear native Google session
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      // Check if the user is signed in via Google
+      const isGoogleUser = currentUser.providerData.some(
+        (profile) => profile.providerId === 'google.com',
+      );
+
+      if (isGoogleUser) {
+        await signOutFromGoogle(); // Clear native Google session
+      }
+    }
+
     await signOut(auth); // MODULAR API for Firebase
     return { success: true };
   } catch (error: any) {

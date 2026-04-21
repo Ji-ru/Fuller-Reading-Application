@@ -6,9 +6,11 @@ import { useClassMetrics } from '../../Hooks/Admin/useClassMetrics';
 import { sw, sh, sf } from '../../Utils/responsive';
 
 const screenWidth = Dimensions.get('window').width;
+
 interface ClassStatusChartProps {
   acadYear?: string;
 }
+
 const chartConfig = {
   color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
   strokeWidth: sw(2),
@@ -16,18 +18,14 @@ const chartConfig = {
 };
 
 const COLORS = {
-  active: '#4CAF50',
-  archived: '#FE5A59',
+  active: '#4ECDC4',
+  archived: '#FF6B6B',
   cardBackground: '#FFFFFF',
-  textPrimary: '#1E1E1E',
-  textSecondary: '#999999',
-  error: '#FE5A59',
+  textPrimary: '#2D3436',
+  textSecondary: '#636E72',
+  error: '#FF7675',
 };
 
-/**
- * Displays a pie chart comparing active vs archived classes.
- * Uses the useClassMetrics hook to fetch data.
- */
 const ClassStatusChart: React.FC<ClassStatusChartProps> = ({acadYear}) => {
   const {
     activeClassCount,
@@ -62,14 +60,14 @@ const ClassStatusChart: React.FC<ClassStatusChartProps> = ({acadYear}) => {
 
   const pieData = [
     {
-      name: `Active (${activeClassCount})`,
+      name: `Active`,
       population: activeClassCount,
       color: COLORS.active,
       legendFontColor: COLORS.textPrimary,
       legendFontSize: sw(12),
     },
     {
-      name: `Archived (${archivedClassCount})`,
+      name: `Archived`,
       population: archivedClassCount,
       color: COLORS.archived,
       legendFontColor: COLORS.textPrimary,
@@ -79,18 +77,27 @@ const ClassStatusChart: React.FC<ClassStatusChartProps> = ({acadYear}) => {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Active vs Archived Classes</Text>
-      <Text style={styles.subtitle}>Total Classes: {totalClasses}</Text>
-      <PieChart
-        data={pieData}
-        width={screenWidth - 64}
-        height={180}
-        chartConfig={chartConfig}
-        accessor="population"
-        backgroundColor="transparent"
-        paddingLeft="15"
-        absolute
-      />
+      <View style={styles.headerRow}>
+        <View style={styles.accentBar} />
+        <View>
+          <Text style={styles.title}>Active vs Archived Classes</Text>
+          <Text style={styles.subtitle}>Total Classes: {totalClasses}</Text>
+        </View>
+      </View>
+      
+      <View style={styles.chartWrapper}>
+        <PieChart
+          data={pieData}
+          width={screenWidth - sw(40)}
+          height={sh(180)}
+          chartConfig={chartConfig}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="0"
+          center={[sw(10), 0]}
+          absolute
+        />
+      </View>
     </View>
   );
 };
@@ -98,30 +105,48 @@ const ClassStatusChart: React.FC<ClassStatusChartProps> = ({acadYear}) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: sw(14),
+    borderRadius: sw(20),
     padding: sw(20),
-    marginBottom: sh(16),
-    elevation: 3,
+    marginBottom: sh(20),
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.08,
-    shadowRadius: sw(6),
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.05,
+    shadowRadius: sw(10),
+    elevation: 4,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: sh(16),
+  },
+  accentBar: {
+    width: sw(4),
+    height: sh(24),
+    backgroundColor: COLORS.active,
+    borderRadius: sw(2),
+    marginRight: sw(10),
   },
   title: {
-    fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(18),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textPrimary,
-    marginBottom: sh(4),
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
-    marginBottom: sh(16),
+  },
+  chartWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -sw(15),
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
+    marginTop: sh(10),
   },
 });
 

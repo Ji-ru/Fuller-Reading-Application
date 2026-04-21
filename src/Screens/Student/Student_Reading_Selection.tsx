@@ -30,6 +30,36 @@ const passages = readingMaterialData?.Passages || [];
 const wordsContainer = readingMaterialData?.Words?.[0];
 const chapters = wordsContainer?.chapters || [];
 
+// Shared vibrant color palette – used across alphabet tiles, passage cards, etc.
+export const READING_COLORS = [
+  '#4DC97A', // green
+  '#5BC8D6', // teal
+  '#4A9EE0', // blue
+  '#F5C842', // yellow
+  '#F08C3A', // orange
+  '#E84E4E', // red
+  '#9B59E8', // purple
+  '#E84E99', // pink
+  '#5BC8D6', // teal
+  '#4DC97A', // green
+  '#F5C842', // yellow
+  '#4A9EE0', // blue
+  '#F08C3A', // orange
+  '#9B59E8', // purple
+  '#E84E4E', // red
+  '#E84E99', // pink
+  '#4DC97A', // green
+  '#F5C842', // yellow
+  '#5BC8D6', // teal
+  '#E84E4E', // red
+  '#4A9EE0', // blue
+  '#9B59E8', // purple
+  '#F08C3A', // orange
+  '#4DC97A', // green
+  '#E84E99', // pink
+  '#5BC8D6', // teal
+];
+
 export default function PageSelectionScreen() {
   const { handleLogout, handleBackStep, handleReadingNext } = useNavigationHelper();
 
@@ -105,19 +135,24 @@ export default function PageSelectionScreen() {
     handleReadingNext(passage, 'passage');
   };
 
-  const renderAlphabetItem = ({ item }: { item: Alphabet }) => (
-    <TouchableOpacity
-      style={[
-        selection.alphabetItem,
-      ]}
-      onPress={() => handleAlphabetSelect(item)}
-    >
-      <View style={selection.alphabetContainer}>
-        <Text style={selection.alphabetLetter}>{item.letter}</Text>
-        {/* Completed badge removed – completion is indicated by background color */}
-      </View>
-    </TouchableOpacity>
-  );
+  // Color palette is defined at module level as READING_COLORS (reusable)
+
+  const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => {
+    const bgColor = READING_COLORS[index % READING_COLORS.length];
+    return (
+      <TouchableOpacity
+        style={[selection.alphabetItem, { backgroundColor: bgColor }]}
+        onPress={() => handleAlphabetSelect(item)}
+        activeOpacity={0.8}
+      >
+        {/* Highlight dot – top-left glow like reference image */}
+        <View style={selection.alphabetHighlightDot} />
+        <View style={selection.alphabetContainer}>
+          <Text style={[selection.alphabetLetter, { fontFamily: 'Nunito-Bold' }]}>{item.letter}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   // --- CHAPTER CARD (Step 1) – reuses letterCard styles ---
   const renderChapterCard = ({ item }: { item: any }) => {
@@ -174,6 +209,7 @@ export default function PageSelectionScreen() {
         <Text style={[
           selection.wordBubbleText,
           completed && selection.wordBubbleTextCompleted,
+          { fontFamily: 'Nunito-Bold' }
         ]}>
           {word}
         </Text>
@@ -210,25 +246,31 @@ export default function PageSelectionScreen() {
     );
   };
 
-  const renderPassageItem = ({ item }: { item: Passage }) => (
-    <View style={selection.itemWrapper}>
-      <TouchableOpacity
-        style={selection.item}
-        onPress={() => handlePassageSelect(item)}
-      >
-        <View style={selection.insidePassageListContainer}>
-          <Image
-            style={selection.readingImage}
-            source={getPassageImage(item.image)}
-          />
-          <View style={selection.titleAuthorWrapper}>
-            <Text style={selection.title}>{item.title}</Text>
-            <Text style={selection.author}>By {item.author}</Text>
+  const renderPassageItem = ({ item, index }: { item: Passage; index: number }) => {
+    const accentColor = READING_COLORS[index % READING_COLORS.length];
+    return (
+      <View style={selection.itemWrapper}>
+        <TouchableOpacity
+          style={selection.item}
+          onPress={() => handlePassageSelect(item)}
+          activeOpacity={0.8}
+        >
+          {/* Colored accent bar on the left edge */}
+          <View style={selection.passageAccentBar} />
+          <View style={selection.insidePassageListContainer}>
+            <Image
+              style={selection.readingImage}
+              source={getPassageImage(item.image)}
+            />
+            <View style={selection.titleAuthorWrapper}>
+              <Text style={selection.title}>{item.title}</Text>
+              <Text style={selection.author}>By {item.author}</Text>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={selection.container}>
@@ -250,7 +292,7 @@ export default function PageSelectionScreen() {
                 x={110}                 // center X
                 y={35}                  // baseline Y
                 fontSize={23}
-                fontFamily="DynaPuff-Bold"
+                fontFamily="Nunito-Black"
                 textAnchor="middle"     // center align
                 fill="none"          // inside color
                 stroke="#D7E9FF"        // outline color
@@ -263,7 +305,7 @@ export default function PageSelectionScreen() {
                 x={110}
                 y={35}
                 fontSize={23}
-                fontFamily="DynaPuff-Bold"
+                fontFamily="Nunito-Black"
                 textAnchor="middle"
                 fill="#3B7FC9"
               >
@@ -353,7 +395,7 @@ export default function PageSelectionScreen() {
         <View style={selection.contentContainer}>
           {activeTab === 'alphabet' && (
             <>
-              <Text style={selection.sublabel}>Select a letter to practice:</Text>
+              <Text style={selection.sublabel}>Select a letter to read:</Text>
               <FlatList
                 data={alphabetData}
                 renderItem={renderAlphabetItem}
@@ -371,7 +413,7 @@ export default function PageSelectionScreen() {
             <View style={selection.wordSelectionContainer}>
               {!selectedChapter ? (
                 <>
-                  <Text style={selection.sublabel}>Choose a chapter:</Text>
+                  <Text style={selection.sublabel}>Choose a chapter and lesson to read:</Text>
                   <FlatList
                     data={chapters}
                     renderItem={renderChapterCard}
@@ -416,7 +458,7 @@ export default function PageSelectionScreen() {
 
           {activeTab === 'passage' && (
             <View style={selection.passageListContainer}>
-              <Text style={selection.sublabel}>Select a passage:</Text>
+              <Text style={selection.sublabel}>Select a passage to read:</Text>
               {passages.length > 0 ? (
                 <FlatList
                   data={passages}

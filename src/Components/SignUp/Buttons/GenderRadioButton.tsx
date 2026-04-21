@@ -15,11 +15,15 @@ const GenderSelection = ({ onGenderSelect }: GenderSelectionProps) => {
       id: '1',
       label: 'Male',
       value: 'male',
+      labelStyle: { fontFamily: 'Satoshi-Medium', color: '#666' },
+      color: '#3D71D9',
     },
     {
       id: '2',
       label: 'Female',
       value: 'female',
+      labelStyle: { fontFamily: 'Satoshi-Medium', color: '#666' },
+      color: '#3D71D9',
     },
   ];
 

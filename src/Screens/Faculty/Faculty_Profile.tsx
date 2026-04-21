@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import facultyProfile from '../../UI_Designs/FacultyProfile';
+import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { getCurrentUser, getUserProfile, updateFacultyProfile } from '../../Controller/AuthenticationController';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
@@ -16,6 +17,16 @@ export default function FacultyProfile() {
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
 
   // Profile States
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +69,7 @@ export default function FacultyProfile() {
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Could not load profile data.');
+      showAlert('Error', 'Could not load profile data.');
     } finally {
       setIsLoading(false);
     }
@@ -82,10 +93,10 @@ export default function FacultyProfile() {
           sex: sex.trim(),
         });
         setIsEditing(false);
-        Alert.alert('Success', 'Profile updated successfully!');
+        showAlert('Success', 'Profile updated successfully!');
       }
     } catch (error: any) {
-      Alert.alert('Update Failed', error.message || 'An error occurred while updating.');
+      showAlert('Update Failed', error.message || 'An error occurred while updating.');
     } finally {
       setIsSaving(false);
     }
@@ -305,11 +316,17 @@ export default function FacultyProfile() {
           />
         )}
         
-        {/* LOGOUT MODAL */}
         <LogoutModal
           visible={logoutVisible}
           onCancel={cancelLogout}
           onConfirm={confirmLogout}
+        />
+        
+        <AlertModal
+          visible={alertVisible}
+          title={alertTitle}
+          message={alertMessage}
+          onClose={() => setAlertVisible(false)}
         />
       </View>
     </SafeAreaView>

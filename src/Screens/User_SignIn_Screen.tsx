@@ -73,6 +73,7 @@ export default function LoginScreen() {
       if (user && isMounted.current) {
         handleReplaceStep('Loading');
       }
+      isInitialLoad.current = false;
     });
 
     return unsubscribe; // Cleanup listener on unmount

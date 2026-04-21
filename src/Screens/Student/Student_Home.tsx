@@ -91,9 +91,6 @@ export default function UserHomeScreen() {
 
         {/* INTRO */}
         <Text style={user.text}>Welcome, Learner!</Text>
-        <Text style={user.subtext}>
-          Adventure begins with every word you read!
-        </Text>
 
         {/* STUDY IMAGE */}
         <Image

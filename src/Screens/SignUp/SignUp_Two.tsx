@@ -13,7 +13,7 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, Image, TextInput, TouchableOpacity,
-  Alert, Modal, ActivityIndicator, StyleSheet,
+  Modal, ActivityIndicator,
 } from 'react-native';
 import signup from '../../UI_Designs/SignUpStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -21,7 +21,7 @@ import buttons from '../../UI_Designs/ButtonStyles';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import {
   SignUpUserCredentials,
-  GoogleSignUpUserCredentials,    // ← your existing function
+  GoogleSignUpUserCredentials,
 } from '../../Controller/AuthenticationController';
 import LottieView from 'lottie-react-native';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
@@ -30,24 +30,13 @@ import { sw, sh, sf } from '../../Utils/responsive';
 
 export default function SignUpTwoScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'SignUpTwo'>>();
-  const personalInfo = route.params.userInfo;
-  const role = route.params.role;
-
-  // ── Google sign-up detection ──────────────────────────────────────────────
-  // googleEmail is appended to userInfo by SignUpOne.
-  // googleIdToken is no longer needed — auth.currentUser was set in
-  // initiateGoogleSignUp() before navigation began.
-  const googleEmail = (personalInfo as any).googleEmail as string | undefined;
-  const isGoogleSignUp = Boolean(googleEmail);
+  const { accountInfo, role } = route.params;
+  const isGoogleSignUp = Boolean(accountInfo.googleEmail);
 
   const [currentStep] = useState(2);
   const { handleDesignatedUserPage, handleCancelRegistration, handleCompletedRegistration } = useNavigationHelper();
 
-  // Email pre-filled for Google users, empty for email users
-  const [email, setEmail] = useState(googleEmail ?? '');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isParentConfirmed, setIsParentConfirmed] = useState(false);
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
 
   // Custom Alert Modal State
   const [alertVisible, setAlertVisible] = useState(false);
@@ -86,6 +75,55 @@ export default function SignUpTwoScreen() {
   const congratulationsRef = useRef<LottieView>(null);
   const confettiRef = useRef<LottieView>(null);
 
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, operationName: string): Promise<T> => {
+    const timeoutPromise = new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`timeout-error:${operationName}`)), timeoutMs)
+    );
+    return Promise.race([promise, timeoutPromise]);
+  };
+
+  const handleProfilePicChange = () => {
+    setActionSheetVisible(true);
+  };
+
+  const openCamera = () => {
+    launchCamera(
+      { mediaType: 'photo', quality: 0.8, saveToPhotos: true },
+      handleImageResponse,
+    );
+  };
+
+  const openGallery = () => {
+    launchImageLibrary(
+      { mediaType: 'photo', quality: 0.8 },
+      handleImageResponse,
+    );
+  };
+
+  const handleImageResponse = (response: ImagePickerResponse) => {
+    if (response.didCancel) {
+      showAlert('Notice', 'User cancelled opening picker');
+    } else if (response.errorCode) {
+      showAlert('Error', 'Failed to pick image. Please try again.');
+    } else if (response.assets?.[0]?.uri) {
+      setProfileImage(response.assets[0].uri);
+    }
+  };
+
+  const formatDateToReadable = (dateObj: Date): string => {
+    const day = dateObj.getDate();
+    const month = dateObj.toLocaleString('default', { month: 'long' });
+    const year = dateObj.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
+
   // ── Registration ──────────────────────────────────────────────────────────
   const handleRegister = async () => {
     if (!isMounted.current) return;
@@ -121,6 +159,9 @@ export default function SignUpTwoScreen() {
       setModalType('loading');
       setModalMessage('Creating your account...');
       setModalVisible(true);
+
+      const email = accountInfo.email;
+      const password = accountInfo.password || '';
 
       if (isGoogleSignUp) {
         // ── Google path ────────────────────────────────────────────────────
@@ -236,16 +277,23 @@ export default function SignUpTwoScreen() {
     congratulationsRef.current?.reset();
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={signup.container}>
-      <View>
-        <Image
-          source={require('../../../assets/images/cisckids.png')}
-          style={signup.ciscLogo}
-        />
-        <BubbleBackground />
+      <BubbleBackground />
 
+      <View style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }}>
+        <TouchableOpacity
+          style={upperNav.touchable}
+          onPress={() => handleBackStep()}
+        >
+          <Image
+            style={upperNav.backButtonIcon}
+            source={require('../../../assets/icons/BackButton-icon.png')}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View>
         <Text style={signup.label}>Register</Text>
 
         {/* Step indicator */}
@@ -253,10 +301,10 @@ export default function SignUpTwoScreen() {
           <View
             style={[
               signup.stepCircle,
-              currentStep === 1 ? signup.inactivateStep : signup.activateStep,
+              currentStep === 1 ? signup.activateStep : signup.activateStep, // Circle 1 still active/colored but completed
             ]}
           >
-            <Text style={currentStep === 1 ? signup.activenumber : signup.inactivenumber}>1</Text>
+            <Text style={signup.activenumber}>✓</Text>
           </View>
           <View style={signup.stepLine} />
           <View
@@ -269,96 +317,143 @@ export default function SignUpTwoScreen() {
           </View>
         </View>
 
-        <Text style={signup.subLabel}>Create an Account</Text>
+        {/* Profile picture */}
+        <View style={{ position: 'relative', alignSelf: 'center', marginVertical: 10 }}>
+          <Image
+            source={
+              profileImage
+                ? { uri: profileImage }
+                : require('../../../assets/images/defaultProfile.png')
+            }
+            style={signup.defaultProfile}
+          />
+          <TouchableOpacity
+            onPress={handleProfilePicChange}
+            style={signup.cameraBackground}
+          >
+            <Image
+              source={require('../../../assets/icons/Camera-add.png')}
+              style={signup.cameraIcon}
+            />
+          </TouchableOpacity>
+        </View>
 
-        <View>
-          <Text style={signup.textform}>Email Address</Text>
+        {/* Personal information form */}
+        <View style={{ marginTop: 10 }}>
+          <Text style={signup.subLabel}>Personal Information</Text>
 
-          {isGoogleSignUp ? (
-            // ── Locked Google email badge ──────────────────────────────────
-            <View style={styles.googleEmailBadge}>
-              <Image
-                source={require('../../../assets/images/Google-icon.png')}
-                style={styles.googleIcon}
-              />
-              <Text style={styles.googleEmailText} numberOfLines={1}>
-                {googleEmail}
-              </Text>
-              <View style={styles.lockedTag}>
-                <Text style={styles.lockedTagText}>Google</Text>
-              </View>
-            </View>
-          ) : (
-            // ── Editable email input (email path) ─────────────────────────
+          <View style={signup.inputContainer}>
+            <Image
+              source={require('../../../assets/icons/Edit-icon.png')}
+              style={signup.inputIcon}
+            />
             <TextInput
               style={signup.textInputForm}
-              placeholder="example@gmail.com"
+              placeholder="First Name"
               placeholderTextColor="#A9A9A9"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
+              value={firstName}
+              onChangeText={setFirstName}
             />
-          )}
+          </View>
 
-          {/* Password fields hidden for Google sign-up */}
-          {!isGoogleSignUp && (
+          <View style={signup.inputContainer}>
+            <Image
+              source={require('../../../assets/icons/Edit-icon.png')}
+              style={signup.inputIcon}
+            />
+            <TextInput
+              style={signup.textInputForm}
+              placeholder="Middle Name (Optional)"
+              placeholderTextColor="#A9A9A9"
+              value={middleName}
+              onChangeText={setMiddleName}
+            />
+          </View>
+
+          <View style={signup.inputContainer}>
+            <Image
+              source={require('../../../assets/icons/Edit-icon.png')}
+              style={signup.inputIcon}
+            />
+            <TextInput
+              style={signup.textInputForm}
+              placeholder="Last Name"
+              placeholderTextColor="#A9A9A9"
+              value={lastName}
+              onChangeText={setLastName}
+            />
+          </View>
+
+          <Text style={signup.textform}>Select Gender:</Text>
+          <GenderSelection onGenderSelect={setGender} />
+
+          <Text style={signup.textform}>Date of Birth</Text>
+          <TouchableOpacity
+            style={signup.dateInput}
+            onPress={() => setShowPicker(true)}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image
+                source={require('../../../assets/icons/Calendar-icon.png')}
+                style={[signup.inputIcon, { tintColor: '#666' }]}
+              />
+              <Text style={signup.dateText}>{date.toDateString()}</Text>
+            </View>
+            <Image
+              source={require('../../../assets/icons/VerticalDown-icon.png')}
+              style={[signup.icon, { tintColor: '#999', width: 20, height: 20 }]}
+            />
+          </TouchableOpacity>
+
+          <DatePicker
+            modal
+            mode="date"
+            open={showPicker}
+            date={date}
+            maximumDate={new Date()}
+            onConfirm={pickedDate => { setShowPicker(false); setDate(pickedDate); }}
+            onCancel={() => setShowPicker(false)}
+          />
+
+          {role !== 'admin' && (
             <>
-              <Text style={signup.textform}>Password</Text>
-              <TextInput
-                style={signup.textInputForm}
-                secureTextEntry
-                placeholder="*********"
-                placeholderTextColor="#A9A9A9"
-                value={password}
-                onChangeText={setPassword}
-              />
-
-              <Text style={signup.textform}>Confirm Password</Text>
-              <TextInput
-                style={signup.textInputForm}
-                secureTextEntry
-                placeholder="*********"
-                placeholderTextColor="#A9A9A9"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-              />
-            </>
-          )}
-          {role === 'student' && (
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setIsParentConfirmed(!isParentConfirmed)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.checkbox, isParentConfirmed && styles.checkedBox]}>
-                {isParentConfirmed && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-
-              <Text style={styles.checkboxText}>
-                By checking this box, I confirm that I am a parent or guardian and consent
-                to my child's registration in compliance with child safety laws like COPPA.
+              <Text style={signup.textform}>
+                {role === 'student' ? 'Grade Level' : 'Assigned Grade Level'}
               </Text>
-            </TouchableOpacity>
+              <GradeLevelDropDownSelection onSelect={value => setGradeLevel(value)} />
+            </>
           )}
         </View>
 
+        {/* Action Buttons */}
         <TouchableOpacity
-          style={[buttons.nextPageButton, modalVisible && { opacity: 0.7 }]}
+          style={[buttons.nextPageSignUpButton, modalVisible && { opacity: 0.7 }, { marginTop: 20 }]}
           onPress={handleRegister}
           disabled={modalVisible}
         >
-          <Text style={buttons.nextPageText}>Register</Text>
+          <Text style={buttons.nextPageSignUpText}>Complete Registration</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[buttons.cancelButton, modalVisible && { opacity: 0.7 }]}
-          onPress={handleCancelRegistration}
+          style={[buttons.cancelSignUpButton, modalVisible && { opacity: 0.7 }]}
+          onPress={() =>
+            showConfirm(
+              'Cancel Registration',
+              'Are you sure you want to cancel? Your progress will be lost.',
+              () => {
+                setAlertVisible(false);
+                handleCancelRegistration(false);
+              },
+              'Cancel',
+              'Keep Going'
+            )
+          }
           disabled={modalVisible}
         >
-          <Text style={buttons.cancelText}>Cancel</Text>
+          <Text style={buttons.cancelSignUpText}>Cancel</Text>
         </TouchableOpacity>
       </View>
+
 
       {/* Loading / success modal */}
       <Modal
@@ -411,76 +506,3 @@ export default function SignUpTwoScreen() {
     </SafeAreaView>
   );
 }
-
-// ── Google email badge styles ─────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  googleEmailBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F7FF',
-    borderWidth: 1,
-    borderColor: '#D0DAFB',
-    borderRadius: sw(10),
-    paddingHorizontal: sw(14),
-    paddingVertical: sh(12),
-    marginBottom: sh(12),
-    gap: sw(10),
-  },
-  googleIcon: {
-    width: sw(20),
-    height: sw(20),
-    resizeMode: 'contain',
-  },
-  googleEmailText: {
-    flex: 1,
-    fontSize: sf(14),
-    color: '#1E1E1E',
-    fontFamily: 'Satoshi-Medium',
-  },
-  lockedTag: {
-    backgroundColor: '#E8EFFF',
-    borderRadius: sw(6),
-    paddingHorizontal: sw(8),
-    paddingVertical: sh(2),
-  },
-  lockedTagText: {
-    fontSize: sf(11),
-    color: '#3D71D9',
-    fontFamily: 'Satoshi-Bold',
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: sh(10),
-    marginBottom: sh(15),
-  },
-
-  checkbox: {
-    width: sw(20),
-    height: sw(20),
-    borderWidth: 2,
-    borderColor: '#3D71D9',
-    borderRadius: sw(4),
-    marginRight: sw(10),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  checkedBox: {
-    backgroundColor: '#3D71D9',
-  },
-
-  checkmark: {
-    color: 'white',
-    fontSize: sf(14),
-    fontWeight: 'bold',
-  },
-
-  checkboxText: {
-    flex: 1,
-    fontSize: sf(13),
-    color: '#666',
-    fontFamily: 'Satoshi-Medium',
-    lineHeight: sh(18),
-  },
-});

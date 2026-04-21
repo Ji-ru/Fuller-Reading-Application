@@ -13,10 +13,12 @@ import { TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
 import {
   getUserProfile,
   getCurrentUser,
   getClassByCode,
+  updateStudentBasicInfo,
 } from '../../Controller/AuthenticationController';
 import { updateStudentBasicInfo } from '../../Controller/AuthenticationController';
 import { getAuth } from '@react-native-firebase/auth';
@@ -211,9 +213,13 @@ export default function Profile() {
             )}
           </View>
 
-          {/* PROFILE HEADER */}
-          <View style={styles.profileHeader}>
-            <View style={styles.profileImageContainer}>
+        {/* DROPDOWN MENU */}
+        {menuVisible && (
+          <View style={upperNav.dropdownMenu}>
+            <TouchableOpacity
+              onPress={handleLogoutPress}
+              style={upperNav.logoutButton}
+            >
               <Image
                 source={
                   profileData?.profileImageUrl
@@ -319,7 +325,8 @@ export default function Profile() {
                 label="Reading Level"
                 value={getReadingLevelLabel(profileData?.studentData?.reading_Level)}
               />
-            </View>
+              <Text style={upperNav.logoutText}>Logout</Text>
+            </TouchableOpacity>
           </View>
 
         </View>
@@ -358,8 +365,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: sh(24),
     backgroundColor: 'white',
-    marginHorizontal: sw(16),
     marginTop: sh(16),
+    padding: sw(20),
     borderRadius: sw(16),
     elevation: 4,
   },
@@ -376,9 +383,34 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginHorizontal: sw(16),
     marginTop: sh(16),
-    padding: sw(20),
-    borderRadius: sw(16),
+    gap: sw(12),
+  },
+  cancelButton: {
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(20),
+    borderRadius: sw(20),
+    borderWidth: 2,
+    borderColor: '#FF7043',
+    backgroundColor: '#ffffff',
+  },
+  cancelButtonText: {
+    color: '#FF7043',
+    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(14),
+  },
+  saveButton: {
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(24),
+    borderRadius: sw(20),
+    backgroundColor: '#38B6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: sw(80),
     elevation: 4,
+    shadowColor: '#38B6FF',
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.3,
+    shadowRadius: sw(6),
   },
   sectionHeaderRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: sh(16) },
   sectionTitle:          { fontSize: sf(20), fontWeight: 'bold', color: '#1e293b', marginBottom: sh(16) },

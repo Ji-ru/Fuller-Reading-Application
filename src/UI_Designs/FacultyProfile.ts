@@ -62,9 +62,9 @@ const facultyProfile = StyleSheet.create({
     zIndex: 10,
   },
   avatarIcon: {
-    width: sw(55),
-    height: sw(55),
-    tintColor: '#FFFFFF',
+    width: sw(92),
+    height: sw(92),
+    borderRadius: sw(46),
   },
   inputGroup: {
     marginBottom: sh(18),

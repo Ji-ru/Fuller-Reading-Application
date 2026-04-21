@@ -1,11 +1,6 @@
 // screens/SignUp/SignUp_One.tsx
-// Changes vs. original:
-//   • Accepts optional googleEmail + googleIdToken route params.
-//   • Passes them through unchanged to SignUpTwo via handleSignUpNavigationWithData.
-//   • No visual change — SignUpOne still collects personal information.
-
-import React, { useState }       from 'react';
-import { SafeAreaView }          from 'react-native-safe-area-context';
+import React, { useState, useRef, useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, Image, TextInput, TouchableOpacity, Alert, ScrollView,
   KeyboardAvoidingView,
@@ -36,22 +31,28 @@ export default function SignUpOneScreen() {
   const { role } = route.params;
 
   // ── Read optional Google params forwarded from ChooseRole ──────────────────
-  const googleEmail   = route.params?.googleEmail;
+  const googleEmail = route.params?.googleEmail;
+  const isGoogleSignUp = Boolean(googleEmail);
 
-  const { handleSignUpNavigationWithData, handleCancelRegistration } =
-    useNavigationHelper();
+  const { handleAccountStepNext, handleCancelRegistration, handleBackStep } = useNavigationHelper();
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep] = useState(1);
 
-  // Personal information states
-  const [firstName,    setFirstName]    = useState('');
-  const [middleName,   setMiddleName]   = useState('');
-  const [lastName,     setLastName]     = useState('');
-  const [gradeLevel,   setGradeLevel]   = useState(0);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [date,         setDate]         = useState(new Date());
-  const [showPicker,   setShowPicker]   = useState(false);
-  const [gender,       setGender]       = useState('');
+  // Account Information states
+  const [email, setEmail] = useState(googleEmail ?? '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isParentConfirmed, setIsParentConfirmed] = useState(false);
+
+  // ── Custom Alert Modal State ───────────────────────────────────────────────
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState<{
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    confirmText?: string;
+    cancelText?: string;
+  }>({ title: '', message: '' });
 
   // ── Custom Alert Modal State ───────────────────────────────────────────────
   const [alertVisible, setAlertVisible] = useState(false);
@@ -69,18 +70,13 @@ export default function SignUpOneScreen() {
     setActionSheetVisible(true);
   };
 
-  const openCamera = () => {
-    launchCamera(
-      { mediaType: 'photo', quality: 0.8, saveToPhotos: true },
-      handleImageResponse,
-    );
+  const showConfirm = (title: string, message: string, onConfirm: () => void, confirmText: string, cancelText?: string) => {
+    setAlertData({ title, message, onConfirm, confirmText, cancelText });
+    setAlertVisible(true);
   };
 
-  const openGallery = () => {
-    launchImageLibrary(
-      { mediaType: 'photo', quality: 0.8 },
-      handleImageResponse,
-    );
+  const isValidEmail = (e: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   };
 
   const handleImageResponse = (response: ImagePickerResponse) => {
@@ -91,13 +87,23 @@ export default function SignUpOneScreen() {
     } else if (response.assets?.[0]?.uri) {
       setProfileImage(response.assets[0].uri);
     }
-  };
 
-  const formatDateToReadable = (dateObj: Date): string => {
-    const day   = dateObj.getDate();
-    const month = dateObj.toLocaleString('default', { month: 'long' });
-    const year  = dateObj.getFullYear();
-    return `${day} ${month} ${year}`;
+    if (role === 'student' && !isParentConfirmed) {
+      showAlert(
+        'Consent Required',
+        'A parent or guardian must confirm consent before registration proceeds.',
+        'Acknowledge'
+      );
+      return;
+    }
+
+    // Proceed to Step 2
+    handleAccountStepNext(role, {
+      email: email.trim(),
+      password: isGoogleSignUp ? undefined : password,
+      parentConfirmed: isParentConfirmed,
+      googleEmail,
+    });
   };
 
   // ── Next: pass personal info + google credentials to SignUpTwo ─────────────

@@ -104,7 +104,7 @@ const readingStyles = StyleSheet.create({
     fontSize: sf(23),
     lineHeight: sf(30),
     textAlign: 'center',
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Nunito-Regular',
   },
   readingImage: {
     width: sw(230),
@@ -143,10 +143,70 @@ const readingStyles = StyleSheet.create({
   // MICROPHONE
   microphoneContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recordingStatusPill: {
+    backgroundColor: 'rgba(44, 215, 47, 0.08)',
+    paddingVertical: sh(6),
+    paddingHorizontal: sw(16),
+    borderRadius: sw(20),
+    marginBottom: sh(12),
+    borderWidth: 1.5,
+    borderColor: 'rgba(27, 246, 118, 0.2)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(8),
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  recordingStatusDot: {
+    width: sw(8),
+    height: sw(8),
+    borderRadius: sw(4),
+    backgroundColor: '#149e22ff',
+  },
+  recordingStatusDotActive: {
+    backgroundColor: '#FF4D4D',
+  },
+  recordingStatusText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Bold',
+    color: '#050505ff',
+    letterSpacing: 0.3,
+  },
+  recordingStatusTextActive: {
+    color: '#FF4D4D',
+  },
+  navArrowItem: {
+    width: sw(56),
+    height: sw(56),
+    borderRadius: sw(18),
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#3B7FC9',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    borderWidth: 3,
+    borderColor: '#3B7FC9',
+  },
+  navArrowText: {
+    fontSize: sf(28),
+    fontFamily: 'Nunito-Black',
+    color: '#3B7FC9',
+    marginTop: sh(-2), // Visual adjustment for vertical center
+  },
+  navArrowEmpty: {
+    width: sw(56),
   },
   microphone: {
     backgroundColor: '#84D6F2',
-    borderRadius: sw(75),
+    borderRadius: sw(50),
     justifyContent: 'center',
     alignItems: 'center',
     width: sw(150),
@@ -159,7 +219,7 @@ const readingStyles = StyleSheet.create({
   },
   microphoneRecording: {
     backgroundColor: '#FF9E9C',
-    borderRadius: sw(75),
+    borderRadius: sw(50),
     justifyContent: 'center',
     alignItems: 'center',
     width: sw(150),
@@ -1160,7 +1220,7 @@ const readingStyles = StyleSheet.create({
     maxWidth: sw(320),
   },
   loadingModalTitle: {
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Nunito-Bold',
     fontSize: sf(18),
     color: '#1E1E1E',
     marginTop: sh(20),
@@ -1308,6 +1368,87 @@ const readingStyles = StyleSheet.create({
     color: '#92400E',
     textAlign: 'center',
     lineHeight: sf(22),
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // PLAIN-TEXT ALPHABET / WORD FEEDBACK — REDESIGNED
+  // ─────────────────────────────────────────────────────────
+
+  /** Outer wrapper */
+  plainFeedbackWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: sh(24),
+    paddingHorizontal: sw(16),
+  },
+
+  /** "Good Job!" greeting text */
+  plainGreetText: {
+    fontSize: sf(28),
+    fontFamily: 'sassoon-primary-std',
+    color: '#2C2C2C',
+    textAlign: 'center',
+    marginBottom: sh(12),
+  },
+
+  /** Target letter / word displayed in large green (correct) */
+  plainLetterCorrect: {
+    fontSize: sf(72),
+    fontFamily: 'sassoon-primary-std',
+    color: '#2E7D32',
+    textAlign: 'center',
+    marginBottom: sh(8),
+  },
+
+  /** Target letter / word displayed in large text (incorrect — neutral dark) */
+  plainLetterIncorrect: {
+    fontSize: sf(72),
+    fontFamily: 'sassoon-primary-std',
+    color: '#2C2C2C',
+    textAlign: 'center',
+    marginBottom: sh(8),
+  },
+
+  /** Word-specific size override (smaller than letter) */
+  plainWordSize: {
+    fontSize: sf(48),
+    lineHeight: sf(56),
+  },
+
+  /** "Keep it up. You can do it." encouragement text */
+  plainEncourageText: {
+    fontSize: sf(22),
+    fontFamily: 'sassoon-primary-std',
+    color: '#555555',
+    textAlign: 'center',
+    marginBottom: sh(12),
+  },
+
+  /** "Correct" / "Incorrect Reading" result label (base) */
+  plainResultLabel: {
+    fontSize: sf(24),
+    fontFamily: 'sassoon-primary-std',
+    textAlign: 'center',
+    marginTop: sh(4),
+    marginBottom: sh(16),
+  },
+
+  /** Green colour for "Correct" label */
+  plainResultCorrect: {
+    color: '#2E7D32',
+  },
+
+  /** Red colour for "Incorrect Reading" label */
+  plainResultIncorrect: {
+    color: '#D32F2F',
+  },
+
+  // ── Loading Modal Image ─────────────────────────────────────────────────────
+  loadingModalImage: {
+    width: sw(120),
+    height: sw(120),
+    resizeMode: 'contain',
+    marginBottom: sh(12),
   },
 });
 
