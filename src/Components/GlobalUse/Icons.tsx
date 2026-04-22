@@ -181,6 +181,17 @@ export const FileTextIcon = ({ size = 24, color = '#000' }: IconProps) => (
   </Svg>
 );
 
+export const ClipboardListIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <Rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+    <Line x1="8" y1="11" x2="8" y2="11" />
+    <Line x1="8" y1="16" x2="8" y2="16" />
+    <Line x1="12" y1="11" x2="16" y2="11" />
+    <Line x1="12" y1="16" x2="16" y2="16" />
+  </Svg>
+);
+
 export const RefreshIcon = ({ size = 24, color = '#000' }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Polyline points="23 4 23 10 17 10" />
@@ -200,6 +211,14 @@ export const CheckCircleIcon = ({ size = 24, color = '#000' }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
     <Polyline points="22 4 12 14.01 9 11.01" />
+  </Svg>
+);
+
+export const XCircleIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <Circle cx="12" cy="12" r="10" />
+    <Line x1="15" y1="9" x2="9" y2="15" />
+    <Line x1="9" y1="9" x2="15" y2="15" />
   </Svg>
 );
 
@@ -327,5 +346,55 @@ export const LogoutIcon = ({ size = 24, color = '#000' }: IconProps) => (
 export const ChevronRightIcon = ({ size = 24, color = '#000' }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <Polyline points="9 18 15 12 9 6" />
+  </Svg>
+);
+
+export const ChevronLeftIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <Polyline points="15 18 9 12 15 6" />
+  </Svg>
+);
+
+export const FilterIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Polyline points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+  </Svg>
+);
+
+export const BackArrowIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Line x1="19" y1="12" x2="5" y2="12" />
+    <Polyline points="12 19 5 12 12 5" />
+  </Svg>
+);
+
+export const CalendarIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <Line x1="16" y1="2" x2="16" y2="6" />
+    <Line x1="8" y1="2" x2="8" y2="6" />
+    <Line x1="3" y1="10" x2="21" y2="10" />
+  </Svg>
+);
+
+export const EyeIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <Circle cx="12" cy="12" r="3" />
+  </Svg>
+);
+
+export const EyeOffIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+    <Line x1="1" y1="1" x2="23" y2="23" />
+    <Path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+  </Svg>
+);
+export const BurgerIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <Line x1="3" y1="6" x2="21" y2="6" />
+    <Line x1="3" y1="12" x2="15" y2="12" />
+    <Line x1="3" y1="18" x2="21" y2="18" />
   </Svg>
 );

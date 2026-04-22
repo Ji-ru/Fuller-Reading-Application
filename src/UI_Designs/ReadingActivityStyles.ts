@@ -7,7 +7,7 @@ const scaleFont = (size: number) => Math.min(size, width * 0.05);
 const readingStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0faf4',
+    backgroundColor: '#ebf5fb',
     padding: 10,
   },
 
@@ -26,11 +26,11 @@ const readingStyles = StyleSheet.create({
     alignSelf: 'center',
     width: '95%',
     maxWidth: 700,
-    height: 380,
-    minHeight: 380,
-    maxHeight: 380,
+    height: 230,
+    minHeight: 230,
+    maxHeight: 230,
     borderWidth: 2,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -44,12 +44,12 @@ const readingStyles = StyleSheet.create({
     alignSelf: 'center',
     width: '95%',
     maxWidth: 700,
-    height: 380,
-    minHeight: 380,
-    maxHeight: 380,
+    height: 230,
+    minHeight: 230,
+    maxHeight: 230,
     borderWidth: 2,
-    borderColor: '#1a7a45',
-    shadowColor: '#1a7a45',
+    borderColor: '#154360',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 18,
@@ -59,11 +59,11 @@ const readingStyles = StyleSheet.create({
   },
 
   passageCard: {
-    backgroundColor: '#f0faf4',
+    backgroundColor: '#ebf5fb',
     padding: 24,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
     width: '90%',
     maxHeight: 300,
   },
@@ -87,12 +87,12 @@ const readingStyles = StyleSheet.create({
     fontFamily: 'Satoshi-Bold',
     textAlign: 'center',
     marginBottom: 6,
-    color: '#1b2e23',
+    color: '#1c2833',
   },
 
   passageAuthor: {
     fontSize: scaleFont(12),
-    color: '#8fafa0',
+    color: '#859dab',
     textAlign: 'center',
     marginBottom: 4,
   },
@@ -100,7 +100,7 @@ const readingStyles = StyleSheet.create({
   passageText: {
     fontSize: Math.min(20, width * 0.045),
     lineHeight: 30,
-    color: '#1b2e23',
+    color: '#1c2833',
     textAlign: 'center',
     marginTop: 12,
     fontFamily: 'Satoshi-Medium',
@@ -117,7 +117,7 @@ const readingStyles = StyleSheet.create({
     lineHeight: 34,
     textAlign: 'center',
     fontFamily: 'Satoshi-Medium',
-    color: '#1b2e23',
+    color: '#1c2833',
     paddingHorizontal: 4,
   },
 
@@ -133,19 +133,20 @@ const readingStyles = StyleSheet.create({
 
   // ── Microphone / Recording Controls ─────────────────────────────────────
   microphoneContainer: {
-    marginTop: 32,
+    marginTop: 20,
     alignItems: 'center',
     gap: 12,
+    marginBottom:30,
   },
 
   microphone: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#154360',
     width: 88,
     height: 88,
     borderRadius: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1a7a45',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.35,
     shadowRadius: 20,
@@ -175,7 +176,7 @@ const readingStyles = StyleSheet.create({
   },
 
   letterContainer: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#154360',
     minWidth: width * 0.25,
     height: 120,
     width: 120,
@@ -184,7 +185,7 @@ const readingStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#1a7a45',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -205,12 +206,12 @@ const readingStyles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
   },
 
   exampleText: {
     fontSize: scaleFont(20),
-    color: '#1b2e23',
+    color: '#1c2833',
     lineHeight: scaleFont(28),
     textAlign: 'center',
     flexWrap: 'wrap',
@@ -218,7 +219,7 @@ const readingStyles = StyleSheet.create({
   },
 
   highlightedLetter: {
-    color: '#1a7a45',
+    color: '#154360',
     fontWeight: 'bold',
     textDecorationLine: 'underline',
     fontSize: scaleFont(22),
@@ -226,7 +227,6 @@ const readingStyles = StyleSheet.create({
 
   // ── Word Card ───────────────────────────────────────────────────────────
   wordCardContainer: {
-    marginTop: 24,
     alignItems: 'center',
     width: '100%',
   },
@@ -237,13 +237,13 @@ const readingStyles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
     minWidth: '85%',
     maxWidth: '92%',
     height: 180,
     minHeight: 180,
     maxHeight: 180,
-    shadowColor: '#1a7a45',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -257,7 +257,7 @@ const readingStyles = StyleSheet.create({
   wordCardText: {
     fontSize: Math.min(64, width * 0.14),
     fontWeight: 'bold',
-    color: '#1a7a45',
+    color: '#1c2833',
     textAlign: 'center',
     flexWrap: 'wrap',
     fontFamily: 'Satoshi-Bold',
@@ -265,7 +265,7 @@ const readingStyles = StyleSheet.create({
 
   wordCardInstruction: {
     fontSize: scaleFont(16),
-    color: '#8fafa0',
+    color: '#859dab',
     fontWeight: '600',
     textAlign: 'center',
     fontFamily: 'Satoshi-Medium',
@@ -278,10 +278,10 @@ const readingStyles = StyleSheet.create({
     padding: 20,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#1a7a45',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -291,12 +291,12 @@ const readingStyles = StyleSheet.create({
   calculationText: {
     fontSize: 22,
     fontFamily: 'Satoshi-Bold',
-    color: '#1a7a45',
+    color: '#154360',
   },
 
   correctContainer: {
-    borderColor: '#2ecc71',
-    backgroundColor: '#f0faf4',
+    borderColor: '#3498db',
+    backgroundColor: '#ebf5fb',
   },
 
   incorrectContainer: {
@@ -307,14 +307,14 @@ const readingStyles = StyleSheet.create({
   feedbackLabel: {
     fontSize: 16,
     fontFamily: 'Satoshi-Bold',
-    color: '#1b2e23',
+    color: '#1c2833',
     marginBottom: 12,
     marginLeft: 4,
   },
 
   boldText: {
     fontFamily: 'Satoshi-Bold',
-    color: '#1a7a45',
+    color: '#154360',
   },
 
   // ── Miscue Specific Text Colors ─────────────────────────────────────────
@@ -325,13 +325,13 @@ const readingStyles = StyleSheet.create({
 
   // ── Try Again Button ────────────────────────────────────────────────────
   tryAgainButton: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#154360',
     borderRadius: 14,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 24,
-    shadowColor: '#1a7a45',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -354,7 +354,7 @@ const readingStyles = StyleSheet.create({
   waFeedbackMessage: {
     fontSize: 18,
     fontFamily: 'Satoshi-Bold',
-    color: '#1b2e23',
+    color: '#1c2833',
     textAlign: 'center',
   },
 
@@ -363,18 +363,18 @@ const readingStyles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
   },
 
   feedbackText: {
     fontSize: scaleFont(14),
     fontFamily: 'Satoshi-Medium',
     textAlign: 'center',
-    color: '#1b2e23',
+    color: '#1c2833',
   },
 
   successText: {
-    color: '#1a7a45',
+    color: '#154360',
     fontWeight: 'bold',
   },
 
@@ -393,20 +393,20 @@ const readingStyles = StyleSheet.create({
   instructionTitle: {
     fontSize: 24,
     fontFamily: 'Satoshi-Bold',
-    color: '#1b2e23',
+    color: '#1c2833',
     textAlign: 'center',
   },
 
   instructionSubtitle: {
     fontSize: 14,
     fontFamily: 'Satoshi-Medium',
-    color: '#8fafa0',
+    color: '#859dab',
     marginTop: 4,
     textAlign: 'center',
   },
 
   instructionListening: {
-    color: '#1a7a45',
+    color: '#154360',
   },
 
   // ── Navigation Arrows ──────────────────────────────────────────────────
@@ -428,8 +428,8 @@ const readingStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#f0faf4',
-    shadowColor: '#1a7a45',
+    borderColor: '#ebf5fb',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -438,7 +438,7 @@ const readingStyles = StyleSheet.create({
 
   footerControls: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 100,
     left: 20,
     right: 20,
     flexDirection: 'row',
@@ -448,9 +448,12 @@ const readingStyles = StyleSheet.create({
   },
 
   activityContentWrapper: {
-    marginTop: 40,
+    flex: 1,
     width: '100%',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    marginTop: 60,
+    gap: 24,
   },
 
   progressDotsContainer: {
@@ -466,7 +469,7 @@ const readingStyles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#154360',
     opacity: 0.15,
   },
 
@@ -474,7 +477,7 @@ const readingStyles = StyleSheet.create({
     width: 20,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#154360',
     opacity: 1,
   },
 
@@ -509,7 +512,7 @@ const readingStyles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#154360',
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -518,7 +521,7 @@ const readingStyles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
     zIndex: 10,
-    shadowColor: '#1a7a45',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -526,7 +529,7 @@ const readingStyles = StyleSheet.create({
   },
 
   completedCard: {
-    borderColor: '#1a7a45',
+    borderColor: '#154360',
     borderWidth: 3,
   },
 
@@ -537,7 +540,7 @@ const readingStyles = StyleSheet.create({
 
   loadingText: {
     fontSize: scaleFont(14),
-    color: '#8fafa0',
+    color: '#859dab',
     textAlign: 'center',
     fontFamily: 'Satoshi-Medium',
   },

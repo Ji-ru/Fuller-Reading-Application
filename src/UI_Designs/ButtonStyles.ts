@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 const buttons = StyleSheet.create({
   // ── Primary Action (Next, Continue, Start) ──────────────────────────────
   nextPageButton: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#3d71d9',
     borderRadius: 14,
     width: '90%',
     maxWidth: 360,
@@ -13,7 +13,7 @@ const buttons = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 10,
     marginTop: 28,
-    shadowColor: '#1a7a45',
+    shadowColor: '#3d71d9',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -30,7 +30,7 @@ const buttons = StyleSheet.create({
   cancelButton: {
     backgroundColor: '#fff',
     borderWidth: 1.5,
-    borderColor: '#e74c3c',
+    borderColor: '#eb5c6c',
     borderRadius: 14,
     width: '90%',
     maxWidth: 360,
@@ -40,7 +40,7 @@ const buttons = StyleSheet.create({
     alignSelf: 'center',
   },
   cancelText: {
-    color: '#e74c3c',
+    color: '#eb5c6c',
     fontSize: 15,
     fontFamily: 'Satoshi-Bold',
     letterSpacing: 0.3,
@@ -48,7 +48,7 @@ const buttons = StyleSheet.create({
 
   // ── Start Reading ───────────────────────────────────────────────────────
   startReadingButton: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#3d71d9',
     borderRadius: 14,
     width: '90%',
     maxWidth: 360,
@@ -57,7 +57,7 @@ const buttons = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     marginTop: 80,
-    shadowColor: '#1a7a45',
+    shadowColor: '#3d71d9',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -66,7 +66,7 @@ const buttons = StyleSheet.create({
 
   // ── Reading History ─────────────────────────────────────────────────────
   readingHistoryButton: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#3d71d9',
     borderRadius: 14,
     width: '90%',
     maxWidth: 360,
@@ -75,7 +75,7 @@ const buttons = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     marginTop: 14,
-    shadowColor: '#1a7a45',
+    shadowColor: '#3d71d9',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -84,7 +84,7 @@ const buttons = StyleSheet.create({
 
   // ── Role Selection (Student / Teacher) ──────────────────────────────────
   studentButton: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#3d71d9',
     borderRadius: 14,
     width: '90%',
     maxWidth: 360,
@@ -93,7 +93,7 @@ const buttons = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     marginTop: 14,
-    shadowColor: '#1a7a45',
+    shadowColor: '#3d71d9',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -103,7 +103,7 @@ const buttons = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#1a7a45',
+    borderColor: '#3d71d9',
     width: '90%',
     maxWidth: 360,
     height: 50,
@@ -111,6 +111,22 @@ const buttons = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     marginTop: 14,
+  },
+  adminButton: {
+    backgroundColor: '#eb5c6c',
+    borderRadius: 14,
+    width: '90%',
+    maxWidth: 360,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: 14,
+    shadowColor: '#eb5c6c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
   },
 
   // ── Gender Radio ────────────────────────────────────────────────────────
@@ -127,7 +143,7 @@ const buttons = StyleSheet.create({
     alignSelf: 'center',
     fontFamily: 'Satoshi-Medium',
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
   },
 });
 

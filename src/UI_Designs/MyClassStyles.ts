@@ -33,11 +33,11 @@ const myClass = StyleSheet.create({
 
   // CREATE BUTTON
   createButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#3498db',
     borderRadius: 12,
     marginBottom: 20,
     elevation: 3,
-    shadowColor: '#4CAF50',
+    shadowColor: '#3498db',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -315,7 +315,7 @@ const myClass = StyleSheet.create({
     color: '#fff',
   },
   createClassButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#3498db',
   },
   createClassButtonDisabled: {
     backgroundColor: '#9CA3AF',

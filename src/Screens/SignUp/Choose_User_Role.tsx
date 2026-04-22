@@ -48,7 +48,7 @@ export default function ChooseRole() {
           </TouchableOpacity>
           <Image
             style={localStyles.logo}
-            source={require('../../../assets/images/cisckids.png')}
+            source={require('../../../assets/images/cisckids copy.png')}
             resizeMode="contain"
           />
           {/* Spacer to balance the row */}
@@ -70,7 +70,7 @@ export default function ChooseRole() {
             <Text style={buttons.nextPageText}>Ako ay Estudyante</Text>
           </TouchableOpacity>
           <TouchableOpacity style={buttons.teacherButton} onPress={() => handleRoleSelection('faculty')}>
-            <Text style={[buttons.nextPageText, { color: '#1a7a45' }]}>Ako ay Guro</Text>
+            <Text style={[buttons.nextPageText, { color: '#3d71d9' }]}>Ako ay Guro</Text>
           </TouchableOpacity>
         </View>
       </View>

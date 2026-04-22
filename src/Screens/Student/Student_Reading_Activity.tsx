@@ -1,6 +1,6 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -12,7 +12,8 @@ import {
 import bubbles from '../../UI_Designs/BubblesDesign';
 import readingStyles from '../../UI_Designs/ReadingActivityStyles';
 
-import { getAuth } from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
+import { FeedbackModal } from '../../Components/Student/Reading/FeedbackModal';
 import { transcribeAudio as transcribeAudioAPI } from '../../../api';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
@@ -66,14 +67,10 @@ function NavArrow({ direction, disabled, isFinish, onPress }: { direction: 'left
       activeOpacity={0.7}
     >
       <LinearGradient
-        colors={['#ffffff', '#f0faf4']}
+        colors={['#ffffff', '#eaf2f8']}
         style={{ width: '100%', height: '100%', borderRadius: 28, justifyContent: 'center', alignItems: 'center' }}
       >
-        {isFinish ? (
-          <FinishCheckmark color="#1a7a45" />
-        ) : (
-          <ChevronIcon direction={direction} color="#1a7a45" />
-        )}
+        <ChevronIcon direction={direction} color="#3d71d9" />
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -96,12 +93,12 @@ const WaveLoading = () => {
         You can replace this text-based wave with a true animated pulsing set of elements
         but using these textual waves gives a nice lightweight effect that matches 'wave' 
       */}
-      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#1a7a45', fontWeight: 'bold' }}>~</Text>
-      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#2CA96A', fontWeight: 'bold' }}>~</Text>
-      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#1a7a45', fontWeight: 'bold' }}>~</Text>
-      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#1a7a45', fontWeight: 'bold' }}>~</Text>
-      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#2CA96A', fontWeight: 'bold' }}>~</Text>
-      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#1a7a45', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#3d71d9', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#5dade2', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#3d71d9', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#3d71d9', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#5dade2', fontWeight: 'bold' }}>~</Text>
+      <Text style={{ fontSize: 24, letterSpacing: 3, color: '#3d71d9', fontWeight: 'bold' }}>~</Text>
     </View>
   );
 };
@@ -111,7 +108,7 @@ const RetryButton = ({ onPress }: { onPress: () => void }) => (
   <View style={{ alignItems: 'center', justifyContent: 'center', width: 180 }}>
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <LinearGradient
-        colors={['#1a7a45', '#2ecc71']}
+        colors={['#3d71d9', '#2a50a1']}
         style={readingStyles.microphone}
       >
         <Svg width={42} height={42} viewBox="0 0 24 24" fill="none">
@@ -135,7 +132,7 @@ const RetryButton = ({ onPress }: { onPress: () => void }) => (
 );
 
 export default function ReadingActivityScreenPage() {
-  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const route = useRoute<ReadingActivityScreenRouteProp>();
   const { readingMaterial: initialMaterial, type, items = [], initialIndex = 0 } = route.params;
 
@@ -148,11 +145,8 @@ export default function ReadingActivityScreenPage() {
   const [accuracyString, setAccuracyString] = useState('0');
   const [feedback, setFeedback] = useState('');
   const [isReadingCompleted, setIsReadingCompleted] = useState(false);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [feedbackModalType, setFeedbackModalType] = useState<
-    'congratulations' | 'tryAgain' | 'passageSuccess' | 'goodJob'
-  >('congratulations');
   const [totalWords, setTotalWords] = useState(0);
+
 
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [finalTagalogText, setFinalTagalogText] = useState('');
@@ -216,33 +210,20 @@ export default function ReadingActivityScreenPage() {
     initializeAudio();
     if (type === 'passage' && isPassage(readingMaterial)) {
       setTotalWords(passageWordCount);
+    } else {
+      setTotalWords(1);
     }
+
   }, [checkPermission, initializeAudio, type, readingMaterial, passageWordCount]);
 
   const isTextPerfect = useCallback((spoken: string, target: string): boolean => {
-    const cleanSpoken = spoken.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const cleanTarget = target.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    const cleanSpoken = spoken.toLowerCase().replace(/[^a-zñ0-9]/g, '').trim();
+    const cleanTarget = target.toLowerCase().replace(/[^a-zñ0-9]/g, '').trim();
     return cleanSpoken === cleanTarget;
   }, []);
 
-  const displayFeedbackModal = useCallback((
-    accuracyNum: number,
-    isAlphabetAndWordMode: boolean,
-    isCorrect?: boolean,
-  ) => {
-    setHasShownModalForCurrentAttempt(false);
-    let modalType: 'congratulations' | 'tryAgain' | 'passageSuccess' | 'goodJob';
-    if (isAlphabetAndWordMode) {
-      modalType = isCorrect ? 'congratulations' : 'tryAgain';
-    } else {
-      if (accuracyNum >= 90) modalType = 'passageSuccess';
-      else if (accuracyNum >= 50) modalType = 'goodJob';
-      else modalType = 'tryAgain';
-    }
-    setFeedbackModalType(modalType);
-    setShowFeedbackModal(true);
-    setHasShownModalForCurrentAttempt(true);
-  }, []);
+
+
 
   const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
     setIsTranscribing(true);
@@ -252,8 +233,9 @@ export default function ReadingActivityScreenPage() {
       setFinalTagalogText(transcription);
       setSpokenText(transcription);
       setRecordingDuration(duration);
-      analyzeReading(transcription, duration);
+      await analyzeReading(transcription, duration);
       setIsReadingCompleted(true);
+
     } catch (error) {
       console.error(error);
       const simulatedResponse = getSimulatedResponse(targetText);
@@ -276,11 +258,12 @@ export default function ReadingActivityScreenPage() {
       }
     } else {
       setHasShownModalForCurrentAttempt(false);
-      setShowFeedbackModal(false);
       setHasStoredReport(false);
       setHasStoredCorrectAttempt(false);
+      resetAll();
       await startRecording(targetText);
     }
+
   }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText]);
 
   const convertAccuracyStringToNumber = useCallback((accuracyStr: string): number => {
@@ -290,13 +273,16 @@ export default function ReadingActivityScreenPage() {
   }, []);
 
   const resetAll = useCallback(() => {
+    if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
     setSpokenText('');
+
+
     setMiscues([]);
     setAccuracyString('0');
     setFeedback('');
     setIsReadingCompleted(false);
-    setShowFeedbackModal(false);
     setHasShownModalForCurrentAttempt(false);
+
     setHasStoredReport(false);
     setHasStoredCorrectAttempt(false);
     setIsCorrectAttempt(false);
@@ -326,9 +312,9 @@ export default function ReadingActivityScreenPage() {
   useEffect(() => {
     const checkIfAlreadyCompleted = async () => {
       try {
-        const auth = getAuth();
-        const user = auth.currentUser;
+        const user = auth().currentUser;
         if (!user) return;
+
         if (type === 'alphabet' && isAlphabet(readingMaterial)) {
           const existing = await MiscueReportController.hasAlphabetBeenCompleted(user.uid, readingMaterial.letter);
           if (existing) setAlreadyCompleted(true);
@@ -378,6 +364,7 @@ export default function ReadingActivityScreenPage() {
       setAccuracyString(calculatedAccuracy);
       setFeedback(accuracyFeedback);
       accuracyNum = convertAccuracyStringToNumber(calculatedAccuracy);
+      setIsCorrectAttempt(accuracyNum >= 85);
       const wpm = Math.round((totalWords / duration) * 60);
       if (!hasStoredReport) storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
     } else if (type === 'word' && isWords(readingMaterial)) {
@@ -403,17 +390,15 @@ export default function ReadingActivityScreenPage() {
       if (!hasStoredReport) storeMiscueReport(accuracyNum, duration, [], 0);
     }
 
-    if (!hasShownModalForCurrentAttempt) {
-      setTimeout(() => {
-        displayFeedbackModal(accuracyNum, type === 'alphabet' || type === 'word', isWordAlphabetCorrect);
-      }, 500);
-    }
   };
+
 
   const storeMiscueReport = useCallback(async (accuracyNum: number, duration: number, miscues: Miscue[], wpm: number) => {
     try {
       if (hasStoredReport) return;
-      if (!spokenText || spokenText.trim() === '' || duration < 1 || wpm <= 0) return;
+      if (!spokenText || spokenText.trim() === '' || duration < 1) return;
+      if (type === 'passage' && wpm <= 0) return;
+
       const mins = Math.floor(duration / 60);
       const seconds = Math.floor(duration % 60);
       const formattedDuration = `${mins}:${seconds.toString().padStart(2, '0')}`;
@@ -424,7 +409,8 @@ export default function ReadingActivityScreenPage() {
     }
   }, [hasStoredReport, spokenText, getTitle, totalWords]);
 
-  const handleFeedbackModalClose = useCallback(() => setShowFeedbackModal(false), []);
+  const handleFeedbackModalClose = useCallback(() => {}, []);
+
 
   return (
     <SafeAreaView style={readingStyles.container}>
@@ -455,50 +441,40 @@ export default function ReadingActivityScreenPage() {
           {/* Progress Dots below card */}
           {items.length > 1 && (
             <View style={readingStyles.progressDotsContainer}>
-              {items.map((_, index) => {
-                const dotColor = type === 'word' ? ACCENT_COLORS[index % ACCENT_COLORS.length] : undefined;
-                return (
-                  <View
-                    key={index}
-                    style={[
-                      readingStyles.progressDot,
-                      dotColor ? { backgroundColor: dotColor, opacity: 0.2 } : null,
-                      currentIndex === index && readingStyles.progressDotActive,
-                      currentIndex === index && dotColor ? { backgroundColor: dotColor, opacity: 1 } : null
-                    ]}
-                  />
-                );
-              })}
+              {items.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    readingStyles.progressDot,
+                    currentIndex === index && readingStyles.progressDotActive
+                  ]}
+                />
+              ))}
             </View>
           )}
 
 
-          {(isLoading || isTranscribing) && (
-            <View style={readingStyles.loadingContainer}>
-              <Text style={readingStyles.loadingText}>Sinusuri..</Text>
-            </View>
-          )}
 
-          {isReadingCompleted && isCorrectAttempt && (type === 'alphabet' || type === 'word') && finalTagalogText.trim() !== '' && (
-            <View style={{ marginVertical: 10, alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, color: '#888', fontStyle: 'italic', textAlign: 'center' }}>
-                {`"${finalTagalogText}"`}
-              </Text>
-            </View>
-          )}
+          <View style={S.statusReserved}>
+            {(isLoading || isTranscribing) && (
+              <View style={S.miniStatus}>
+                <ActivityIndicator size="small" color="#3d71d9" />
+                <Text style={S.miniStatusText}>{isTranscribing ? 'Sinusuri...' : 'Nakikinig...'}</Text>
+              </View>
+            )}
 
-          {!isLoading && !isTranscribing && isReadingCompleted && (type === 'passage' || !isCorrectAttempt) && (
-            <FeedbackResult
-              targetText={targetText}
-              spokenText={spokenText}
-              miscues={miscues}
-              onTryAgain={resetAll}
-              type={type}
-              accuracy={accuracyString}
-              feedback={feedback}
-              isTextCorrect={isCorrectAttempt}
-            />
-          )}
+            {isReadingCompleted && !isLoading && !isTranscribing && (
+              <BounceIn style={S.feedbackBox}>
+                <Text style={[S.feedbackText, isCorrectAttempt ? { color: '#3d71d9' } : { color: '#eb5c6c' }]}>
+                  {isCorrectAttempt ? 'Napakahusay!' : 'Subukan muli...'}
+                </Text>
+                
+                {type === 'passage' && (
+                  <Text style={S.accuracySub}>{accuracyString}% Accuracy</Text>
+                )}
+              </BounceIn>
+            )}
+          </View>
         </View>
 
         {/* Stable Footer Controls - Lifted */}
@@ -514,16 +490,12 @@ export default function ReadingActivityScreenPage() {
             />
           )}
 
-          {!isReadingCompleted ? (
-            <RecordingControls
-              isRecording={isRecording}
-              isLoading={isLoading || isTranscribing}
-              hasPermission={hasPermission}
-              onRecordToggle={handleRecordToggle}
-            />
-          ) : (
-            !isCorrectAttempt && <RetryButton onPress={resetAll} />
-          )}
+          <RecordingControls
+            isRecording={isRecording}
+            isLoading={isLoading || isTranscribing}
+            hasPermission={hasPermission}
+            onRecordToggle={handleRecordToggle}
+          />
 
           {(type !== 'passage' && type !== 'alphabet') && (
             <NavArrow
@@ -536,5 +508,21 @@ export default function ReadingActivityScreenPage() {
         </View>
       </View>
     </SafeAreaView>
+
+
   );
 }
+
+const S = {
+  statusReserved: { height: 80, justifyContent: 'flex-start', alignItems: 'center', width: '100%' },
+  feedbackBox: { alignItems: 'center' },
+  feedbackIconBox: { width: 54, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  checkCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#3d71d9', justifyContent: 'center', alignItems: 'center' },
+  checkMark: { color: '#ffffff', fontSize: 18, fontWeight: '900' },
+  maliCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#eb5c6c', justifyContent: 'center', alignItems: 'center' },
+  maliX: { color: '#ffffff', fontSize: 18, fontWeight: '900' },
+  feedbackText: { fontSize: 18, fontWeight: '900', letterSpacing: 0.3 },
+  accuracySub: { fontSize: 14, fontWeight: '700', color: '#859dab', marginTop: 4 },
+  miniStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 },
+  miniStatusText: { fontSize: 14, fontWeight: '700', color: '#859dab' },
+};

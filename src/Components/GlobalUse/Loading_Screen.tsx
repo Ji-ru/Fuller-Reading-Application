@@ -23,8 +23,7 @@ export default function LoadingScreen() {
       try {
         if (!currentUser) {
           console.log('LoadingScreen: No user found, going to Login');
-          setStatusMessage('No user found. Redirecting...');
-          setTimeout(() => { if (isMounted) handleReplaceStep('Login'); }, 800);
+          handleReplaceStep('Login');
           return;
         }
 
@@ -40,11 +39,8 @@ export default function LoadingScreen() {
 
         if (!userDoc.exists) {
           console.log('LoadingScreen: Profile not found, going to Login');
-          setStatusMessage('Profile not found. Redirecting...');
-          setTimeout(() => {
-            auth().signOut();
-            if (isMounted) handleReplaceStep('Login');
-          }, 800);
+          auth().signOut();
+          handleReplaceStep('Login');
           return;
         }
 
@@ -52,20 +48,17 @@ export default function LoadingScreen() {
         const role = userData?.role;
 
         console.log(`LoadingScreen: User verified as ${role}`);
-        setStatusMessage(`Welcome ${userData?.firstName || ''}!`);
-
-        setTimeout(() => {
-          if (!isMounted) return;
-          if (role === 'student') {
-            handleReplaceStep('UserHome');
-          } else if (role === 'faculty') {
-            handleReplaceStep('FacultyDashboard');
-          }
-        }, 500);
+        
+        if (role === 'student') {
+          handleReplaceStep('UserHome');
+        } else if (role === 'faculty') {
+          handleReplaceStep('FacultyDashboard');
+        } else if (role === 'admin') {
+          handleReplaceStep('AdminDashboard');
+        }
       } catch (error) {
         console.error('LoadingScreen: Error during verification:', error);
-        setStatusMessage('Error. Redirecting...');
-        setTimeout(() => { if (isMounted) handleReplaceStep('Login'); }, 800);
+        handleReplaceStep('Login');
       }
     });
 
@@ -82,9 +75,9 @@ export default function LoadingScreen() {
           clearInterval(progressInterval);
           return 100;
         }
-        return prev + 1; // ~100% over 5 seconds
+        return prev + 5; 
       });
-    }, 50);
+    }, 10);
 
     return () => {
       console.log('LoadingScreen: Cleanup');
@@ -99,7 +92,7 @@ export default function LoadingScreen() {
     <View style={loading.container}>
       <Video
         style={loading.video}
-        source={require('../../../assets/videos/cisc_logo_animated.mp4')}
+        source={require('../../../assets/videos/cisc_logo_animated (4).mp4')}
         repeat={true}
         resizeMode='cover'
       />
@@ -110,7 +103,7 @@ export default function LoadingScreen() {
         </View>
         <Text style={loading.progressText}>{Math.round(Math.min(progress, 100))}%</Text>
         <Text style={loading.statusText}>{statusMessage}</Text>
-        <ActivityIndicator size="small" color="#2CA96A" style={loading.loadingSpinner} />
+        <ActivityIndicator size="small" color="#3498db" style={loading.loadingSpinner} />
       </View>
     </View>
   );

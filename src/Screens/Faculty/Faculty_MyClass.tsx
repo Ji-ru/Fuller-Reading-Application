@@ -17,13 +17,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { ArchiveIcon, BookOpenIcon, EditIcon, TrashIcon } from '../../Components/GlobalUse/Icons';
+import { BurgerIcon, ArchiveIcon, BookOpenIcon, EditIcon, TrashIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
 import { createCustomClass } from '../../Controller/AuthenticationController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
+import bubbles from '../../UI_Designs/BubblesDesign';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
 
 const { width: SW } = Dimensions.get('window');
@@ -49,11 +51,22 @@ export default function MyClass() {
   const [actionModalVisible, setActionModalVisible] = useState(false);
   const [actionType, setActionType] = useState<'archive' | 'delete'>('archive');
 
+  // Generic Alert State
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<{title: string, message: string, type: 'danger' | 'info' | 'primary', onConfirm?: () => void}>({
+    title: '', message: '', type: 'info'
+  });
+
+  const showAlert = (title: string, message: string, type: 'danger' | 'info' | 'primary' = 'info', onConfirm?: () => void) => {
+    setAlertConfig({ title, message, type, onConfirm });
+    setAlertVisible(true);
+  };
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [nameError, setNameError] = useState(false);
 
-  const filterOptions = ['All', 'Grade 1', 'Grade 2', 'Grade 3'];
+  const filterOptions = ['All', 'Baitang 1', 'Baitang 2', 'Baitang 3'];
 
   const { handleLogout, handleClassStudents } = useNavigationHelper();
   const route = useRoute();
@@ -100,10 +113,10 @@ export default function MyClass() {
       const selectedGradeInt = parseInt(gradeLevel, 10);
       const classCode = await createCustomClass(currentUser.uid, newClassName.trim(), selectedGradeInt);
       await fetchClasses();
-      Alert.alert('Class Created 🎉', `Success! Your class code is: ${classCode}`);
       setCreateModalVisible(false);
+      showAlert('Class Created 🎉', `Success! Your class code is: ${classCode}`, 'info');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to create class');
+      showAlert('Error', error.message || 'Failed to create class', 'danger');
     } finally {
       setIsProcessing(false);
     }
@@ -126,9 +139,9 @@ export default function MyClass() {
       });
       await fetchClasses();
       setEditModalVisible(false);
-      Alert.alert('Success', 'Ang klase ay matagumpay na na-update.');
+      showAlert('Success', 'Ang klase ay matagumpay na na-update.', 'info');
     } catch (error: any) {
-      Alert.alert('Error', 'Hindi ma-update ang klase.');
+      showAlert('Error', 'Hindi ma-update ang klase.', 'danger');
     } finally {
       setIsProcessing(false);
     }
@@ -154,7 +167,7 @@ export default function MyClass() {
       }
       setActionModalVisible(false);
     } catch (error: any) {
-      Alert.alert('Error', `Hindi ma-execute ang ${actionType}.`);
+      showAlert('Error', `Hindi ma-execute ang ${actionType}.`, 'danger');
     } finally {
       setIsProcessing(false);
     }
@@ -220,16 +233,21 @@ export default function MyClass() {
   return (
     <SafeAreaView style={S.safeArea}>
       <View style={S.container}>
+        {/* BUBBLE DECORATIONS */}
+        <View style={bubbles.bubblesContainer} pointerEvents="none">
+          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
+          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
+          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
+        </View>
+
         {/* HEADER */}
         <View style={S.headerRow}>
-          <TouchableOpacity style={S.menuBtn} onPress={toggleMenu}>
-            <View style={S.menuDotLine} />
-            <View style={[S.menuDotLine, { width: 14 }]} />
-            <View style={S.menuDotLine} />
+          <TouchableOpacity style={S.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
+            <BurgerIcon size={24} color={F.ink} />
           </TouchableOpacity>
           <Image
             style={S.logo}
-            source={require('../../../assets/images/cisckids.png')}
+            source={require('../../../assets/images/cisckids copy.png')}
             resizeMode="contain"
           />
           <View style={{ width: 44 }} />
@@ -372,28 +390,28 @@ export default function MyClass() {
         </Modal>
 
         {/* ACTION CONFIRMATION MODAL (Archive/Delete) */}
-        <Modal visible={actionModalVisible} transparent animationType="fade">
-          <View style={S.fullModalOverlay}>
-            <View style={S.actionModal}>
-              <View style={[S.actionIconBox, { backgroundColor: actionType === 'delete' ? F.red + '15' : F.primaryDeep + '15' }]}>
-                {actionType === 'delete' ? <TrashIcon size={32} color={F.red} /> : <ArchiveIcon size={32} color={F.primaryDeep} />}
-              </View>
-              <Text style={S.actionTitle}>{actionType === 'delete' ? 'I-delete ang Klase?' : 'I-archive ang Klase?'}</Text>
-              <Text style={S.actionSub}>Sigurado ka bang gusto mong {actionType === 'delete' ? 'i-delete' : 'i-archive'} ang "{selectedClass?.className}"?</Text>
+        <ConfirmationModal
+          visible={actionModalVisible}
+          type={actionType === 'delete' ? 'danger' : 'primary'}
+          title={actionType === 'delete' ? 'I-delete ang Klase?' : 'I-archive ang Klase?'}
+          message={`Sigurado ka bang gusto mong ${actionType === 'delete' ? 'i-delete' : 'i-archive'} ang "${selectedClass?.className}"?`}
+          confirmText={actionType === 'delete' ? 'I-delete' : 'I-archive'}
+          onCancel={() => setActionModalVisible(false)}
+          onConfirm={executeAction}
+        />
 
-              <View style={S.actionButtons}>
-                <TouchableOpacity style={S.actionCancel} onPress={() => setActionModalVisible(false)}><Text style={S.actionCancelText}>Bumalik</Text></TouchableOpacity>
-                <TouchableOpacity
-                  style={[S.actionConfirm, { backgroundColor: actionType === 'delete' ? F.red : F.primaryDeep }]}
-                  onPress={executeAction}
-                  disabled={isProcessing}
-                >
-                  <Text style={S.actionConfirmText}>{isProcessing ? '...' : actionType === 'delete' ? 'I-delete' : 'I-archive'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <ConfirmationModal
+          visible={alertVisible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          type={alertConfig.type}
+          confirmText="OK"
+          onCancel={() => setAlertVisible(false)}
+          onConfirm={() => {
+            setAlertVisible(false);
+            if (alertConfig.onConfirm) alertConfig.onConfirm();
+          }}
+        />
 
       </View>
     </SafeAreaView>
@@ -406,7 +424,6 @@ const S = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, marginBottom: 10 },
   logo: { width: 100, height: 90 },
   menuBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: F.white, justifyContent: 'center', alignItems: 'center', ...Shadows.subtle },
-  menuDotLine: { width: 20, height: 2.5, backgroundColor: F.ink, borderRadius: 2, marginVertical: 2 },
   content: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 12, color: F.slate, fontWeight: '600' },

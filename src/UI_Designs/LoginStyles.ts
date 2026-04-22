@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 const login = StyleSheet.create({
   safeAreaContainer: {
     flex: 1,
-    backgroundColor: '#f0faf4',
+    backgroundColor: '#ebf5fb',
   },
   container: {
     flex: 1,
@@ -27,7 +27,7 @@ const login = StyleSheet.create({
     marginBottom: 6,
     fontFamily: 'Satoshi-Medium',
     fontSize: 14,
-    color: '#1b2e23',
+    color: '#1c2833',
     letterSpacing: 0.2,
   },
 
@@ -42,29 +42,29 @@ const login = StyleSheet.create({
     backgroundColor: '#fff',
     fontFamily: 'Satoshi-Medium',
     fontSize: 15,
-    color: '#1b2e23',
+    color: '#1c2833',
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
   },
   textInputError: {
-    borderColor: '#e74c3c',
+    borderColor: '#eb5c6c',
     backgroundColor: '#fff5f5',
     borderWidth: 1.5,
   },
   textInputValid: {
-    borderColor: '#2ecc71',
+    borderColor: '#3d71d9',
     borderWidth: 1.5,
   },
 
   // ── Error & Required ────────────────────────────────────────────────────
   errorText: {
     fontSize: 11,
-    color: '#e74c3c',
+    color: '#eb5c6c',
     fontFamily: 'Satoshi-Regular',
     marginLeft: 2,
   },
   requiredStar: {
-    color: '#e74c3c',
+    color: '#eb5c6c',
     fontSize: 14,
   },
 
@@ -72,7 +72,7 @@ const login = StyleSheet.create({
   forgotpass: {
     fontSize: 13,
     fontFamily: 'Satoshi-Medium',
-    color: '#1a7a45',
+    color: '#3d71d9',
     textDecorationLine: 'underline',
   },
   forgotPassButton: {
@@ -84,14 +84,14 @@ const login = StyleSheet.create({
 
   // ── Sign In Button ──────────────────────────────────────────────────────
   button: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#3d71d9',
     borderRadius: 14,
     width: '100%',
     maxWidth: 360,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1a7a45',
+    shadowColor: '#3d71d9',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -104,7 +104,7 @@ const login = StyleSheet.create({
     letterSpacing: 0.5,
   },
   buttonDisabled: {
-    backgroundColor: '#8fafa0',
+    backgroundColor: '#859dab',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -126,11 +126,11 @@ const login = StyleSheet.create({
   leftLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#c8e6d4',
+    backgroundColor: '#cde3f5',
   },
   notRegisteredText: {
     fontSize: 12,
-    color: '#8fafa0',
+    color: '#859dab',
     fontWeight: '600',
     letterSpacing: 0.3,
     textAlign: 'center',
@@ -140,7 +140,7 @@ const login = StyleSheet.create({
   rightLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#c8e6d4',
+    backgroundColor: '#cde3f5',
   },
 
   // ── Registration Buttons ────────────────────────────────────────────────
@@ -151,7 +151,7 @@ const login = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
     marginTop: 16,
     width: '100%',
     maxWidth: 360,
@@ -161,7 +161,7 @@ const login = StyleSheet.create({
   signupwithemailbutton: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#3d71d9',
     borderRadius: 14,
     width: '100%',
     maxWidth: 360,
@@ -169,7 +169,7 @@ const login = StyleSheet.create({
     marginTop: 16,
     marginBottom: 10,
     paddingHorizontal: 20,
-    shadowColor: '#1a7a45',
+    shadowColor: '#3d71d9',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -188,6 +188,20 @@ const login = StyleSheet.create({
   },
 
   // ── Input Container ─────────────────────────────────────────────────────
+  passwordContainer: {
+    width: '100%',
+    maxWidth: 360,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  eyeIconContainer: {
+    position: 'absolute',
+    right: 12,
+    height: '100%',
+    justifyContent: 'center',
+    padding: 4,
+  },
   textInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -204,11 +218,11 @@ const login = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#c8e6d4',
+    backgroundColor: '#cde3f5',
   },
   dividerText: {
     marginHorizontal: 14,
-    color: '#8fafa0',
+    color: '#859dab',
     fontSize: 13,
     fontFamily: 'Satoshi-Medium',
   },

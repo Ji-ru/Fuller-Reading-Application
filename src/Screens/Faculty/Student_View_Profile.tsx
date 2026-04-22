@@ -1,32 +1,43 @@
-import React, { use } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
-  StyleSheet,
+  Dimensions,
   Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
 
+import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import bubbles from '../../UI_Designs/BubblesDesign';
-import upperNav from '../../UI_Designs/UpperNavigation';
-import { useNavigationHelper } from '../../Controller/NavigationController';
+import { useNavigationHelper, RootStackParamList } from '../../Controller/NavigationController';
 import { useStudentReadingStats } from '../../Hooks/use_ReadingStudentStats';
+import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
+import { 
+  BarChartIcon, 
+  BookOpenIcon, 
+  HistoryIcon, 
+  TargetIcon, 
+  UserProfileIcon, 
+  ZapIcon,
+  TrendUpIcon,
+  RefreshIcon,
+  ClipboardListIcon,
+  StarIcon
+} from '../../Components/GlobalUse/Icons';
+import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { AssessmentController } from '../../Controller/AssessmentController';
+import { getUserProfile } from '../../Controller/AuthenticationController';
+import { MiscueReportController } from '../../Controller/MiscueReportController';
 
-/* -------------------------------------------------------------------------- */
-/* TYPES                                                                      */
-/* -------------------------------------------------------------------------- */
+const { width: SW } = Dimensions.get('window');
+const alphabetData = readingMaterialData?.Alphabet || [];
 
-type RouteParams = {
-  StudentViewProfile: {
-    studentId: string;
-    studentName: string;
-    readingLevel: string;
-  };
-};
+type RouteParams = RouteProp<RootStackParamList, 'StudentViewProfile'>;
 
 interface ProgressData {
   date: string;
@@ -35,124 +46,157 @@ interface ProgressData {
   passageTitle: string;
 }
 
-/* -------------------------------------------------------------------------- */
-/* COMPONENT                                                                  */
-/* -------------------------------------------------------------------------- */
-
 export default function StudentViewProfile() {
-  const route = useRoute<RouteProp<RouteParams, 'StudentViewProfile'>>();
+  const route = useRoute<RouteParams>();
   const { studentId, studentName, readingLevel } = route.params;
 
   const { handleBackStep } = useNavigationHelper();
-  const { stats, progress, loading, error, refresh } =
-    useStudentReadingStats(studentId);
+  const { stats, progress, loading: statsLoading, error, refresh: refreshStats } = useStudentReadingStats(studentId);
+
+  const [aralinDone, setAralinDone] = useState(0);
+  const [assessmentsDone, setAssessmentsDone] = useState(0);
+  const [assessmentAvg, setAssessmentAvg] = useState(0);
+  const [internalLoading, setInternalLoading] = useState(true);
 
   const topMiscuedPassage = stats?.passagePerformance?.[0];
   const hasProgressData = progress.length > 0;
 
-  /* ------------------------------------------------------------------------ */
-  /* LOADING                                                                  */
-  /* ------------------------------------------------------------------------ */
+  useEffect(() => {
+    fetchDetailedStats();
+  }, [studentId]);
+
+  const fetchDetailedStats = async () => {
+    try {
+      setInternalLoading(true);
+      const [mastered, detailedMastery, profile] = await Promise.all([
+        MiscueReportController.getStudentMasteredLessons(studentId),
+        MiscueReportController.getStudentDetailedCompletion(studentId),
+        getUserProfile(studentId)
+      ]);
+
+      // Calculate Aralin Done
+      const aralinCount = calculateAralinDone(detailedMastery);
+      setAralinDone(aralinCount);
+
+      // Fetch Assessment Stats
+      const classCode = profile?.studentData?.classCode;
+      if (classCode) {
+        const actList = await AssessmentController.getStudentActivities(classCode);
+        let completedCount = 0;
+        let totalCorrect = 0;
+        let totalPossible = 0;
+
+        for (const act of actList) {
+          const res = await AssessmentController.getStudentResultForUser(act.activityId, studentId);
+          if (res) {
+            completedCount++;
+            totalCorrect += res.score;
+            totalPossible += res.totalItems;
+          }
+        }
+        setAssessmentsDone(completedCount);
+        setAssessmentAvg(totalPossible > 0 ? (totalCorrect / totalPossible) * 100 : 0);
+      }
+    } catch (e) {
+      console.log("Error fetching detailed stats:", e);
+    } finally {
+      setInternalLoading(false);
+    }
+  };
+
+  const calculateAralinDone = (mastery: any) => {
+    if (!mastery || !mastery.completedAlpha || !mastery.completedWords || !mastery.completedPassages) return 0;
+    let completedCount = 0;
+    
+    alphabetData.forEach((aralin, idx) => {
+      const letter = aralin.letter;
+      const isAlphaDone = mastery.completedAlpha.has(letter) ? 1 : 0;
+      const wordCount = mastery.completedWords?.[letter]?.size || 0;
+      const totalWords = getTotalWordsForLetter(letter);
+
+      const currentPassages = readingMaterialData?.Passages?.filter((p: any) => p.aralin === idx + 1) || [];
+      const passageCount = currentPassages.filter((p: any) => mastery.completedPassages.has(p.title)).length;
+      const totalPassages = currentPassages.length;
+
+      const totalPossible = 1 + totalWords + totalPassages;
+      const masteredCount = isAlphaDone + Math.min(wordCount, totalWords) + Math.min(passageCount, totalPassages);
+
+      const progressPerc = totalPossible > 0 ? Math.round((masteredCount / totalPossible) * 100) : 0;
+      if (progressPerc === 100) completedCount++;
+    });
+    
+    return completedCount;
+  };
+
+
+  const getTotalWordsForLetter = (letter: string) => {
+    if (!readingMaterialData?.Words) return 0;
+    const subset = readingMaterialData.Words.filter((w: any) => w.letter === letter);
+    const allWords = subset.flatMap((w: any) => (w.contrasts || []).flatMap((c: any) => c.words || []));
+    const letterLower = letter.toLowerCase();
+    const uniqueWords = Array.from(new Set(allWords)).filter(
+      (word: any) => word?.trim().toLowerCase() !== letterLower
+    );
+    return uniqueWords.length;
+  };
+
+
+  const handleRefresh = async () => {
+    refreshStats();
+    await fetchDetailedStats();
+  };
+
+  const loading = statsLoading || internalLoading;
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Loading reading statistics...</Text>
+      <SafeAreaView style={S.loadingContainer}>
+        <ActivityIndicator size="large" color={F.primary} />
+        <Text style={S.loadingText}>Kinukuha ang istatistika...</Text>
       </SafeAreaView>
     );
   }
 
-  /* ------------------------------------------------------------------------ */
-  /* ERROR                                                                    */
-  /* ------------------------------------------------------------------------ */
-
   if (error) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={refresh}>
-          <Text style={styles.retryButtonText}>Retry</Text>
+      <SafeAreaView style={S.loadingContainer}>
+        <Text style={S.errorText}>{error}</Text>
+        <TouchableOpacity style={S.retryBtn} onPress={handleRefresh}>
+          <Text style={S.retryBtnText}>Subukan muli</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  /**
-   * ==========================================================================
-   * ACCURACY CHART COMPONENT
-   * ==========================================================================
-   * Renders a line chart showing accuracy progression over time
-   * Features:
-   * - Animated bars with connecting lines
-   * - Y-axis percentage labels
-   * - Color-coded by performance level
-   * @param data - Array of progress data points
-   * ==========================================================================
-   */
+  // ─── Charts ─────────────────────────────────────────────────────────────────
+  
   const AccuracyChart = ({ data }: { data: ProgressData[] }) => {
     const maxHeight = 120;
-    const chartData = data.slice(-10); // Show last 10 readings
-
+    const chartData = data.slice(-10);
     return (
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartSubtitle}>Accuracy Over Time</Text>
-        <View style={styles.chartWrapper}>
-          {/* Y-Axis Labels */}
-          <View style={styles.yAxis}>
-            <Text style={styles.yAxisLabel}>100%</Text>
-            <Text style={styles.yAxisLabel}>75%</Text>
-            <Text style={styles.yAxisLabel}>50%</Text>
-            <Text style={styles.yAxisLabel}>25%</Text>
-            <Text style={styles.yAxisLabel}>0%</Text>
+      <View style={S.chartSection}>
+        <View style={S.chartHeader}>
+          <TargetIcon size={18} color={F.primary} />
+          <Text style={S.chartTitle}>Accuracy Over Time</Text>
+        </View>
+        <View style={S.chartWrapper}>
+          <View style={S.yAxis}>
+            {['100%', '75%', '50%', '25%', '0%'].map(l => <Text key={l} style={S.yAxisLabel}>{l}</Text>)}
           </View>
-
-          {/* Chart Bars */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.chartScroll}
-          >
-            <View style={styles.chartBarsContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={S.chartBarsRow}>
               {chartData.map((item, index) => {
                 const height = (item.accuracy / 100) * maxHeight;
                 const isLast = index === chartData.length - 1;
-                const barColor =
-                  item.accuracy >= 90
-                    ? '#10b981'
-                    : item.accuracy >= 75
-                    ? '#f59e0b'
-                    : '#ef4444';
-
+                const barColor = item.accuracy >= 90 ? '#10b981' : item.accuracy >= 75 ? '#f59e0b' : '#ef4444';
                 return (
-                  <View key={index} style={styles.chartBarWrapper}>
-                    <View style={styles.chartBarColumn}>
-                      {/* Accuracy Value */}
-                      <Text style={[styles.chartValue, { color: barColor }]}>
-                        {item.accuracy}%
-                      </Text>
-
-                      {/* Bar */}
-                      <View
-                        style={[
-                          styles.chartBar,
-                          { height, backgroundColor: barColor },
-                        ]}
-                      />
-
-                      {/* Connector Line */}
-                      {!isLast && (
-                        <View
-                          style={[
-                            styles.chartConnector,
-                            { backgroundColor: barColor },
-                          ]}
-                        />
-                      )}
+                  <View key={index} style={S.barComp}>
+                    <View style={S.barCore}>
+                      <Text style={[S.barVal, { color: barColor }]}>{item.accuracy}%</Text>
+                      <View style={[S.barFill, { height, backgroundColor: barColor }]} />
+                      {!isLast && <View style={[S.connector, { backgroundColor: barColor }]} />}
                     </View>
-
-                    {/* Date Label */}
-                    <Text style={styles.chartLabel}>{item.date}</Text>
+                    <Text style={S.barLabel}>{item.date}</Text>
                   </View>
                 );
               })}
@@ -163,209 +207,25 @@ export default function StudentViewProfile() {
     );
   };
 
-  /**
-   * ==========================================================================
-   * PERFORMANCE SUMMARY COMPONENT
-   * ==========================================================================
-   * Displays aggregate statistics and trend analysis
-   * Features:
-   * - Best accuracy, average WPM, total readings
-   * - Progress trend indicator with emoji
-   * - First vs last comparison
-   * @param data - Array of progress data points
-   * ==========================================================================
-   */
-  const PerformanceSummary = ({ data }: { data: ProgressData[] }) => {
-    // Safety checks for empty data
-    if (data.length === 0) {
-      return (
-        <View style={styles.summaryContainer}>
-          <Text style={styles.summaryTitle}>Performance Summary</Text>
-          <Text style={styles.noDataText}>No reading data available</Text>
-        </View>
-      );
-    }
-
-    // Find best and worst accuracy
-    const bestAccuracy = Math.max(...data.map(d => d.accuracy));
-    const worstAccuracy = Math.min(...data.map(d => d.accuracy));
-
-    // Calculate average WPM with safety check
-    const totalWPM = data.reduce((sum, d) => sum + d.wpm, 0);
-    const avgWPM = Math.round(totalWPM / data.length);
-
-    // Find best and average WPM
-    const bestWPM = Math.max(...data.map(d => d.wpm));
-
-    // Calculate WPM improvement
-    const firstWPM = data[0]?.wpm || 0;
-    const lastWPM = data[data.length - 1]?.wpm || 0;
-    const wpmImprovement = lastWPM - firstWPM;
-
-    // Accuracy trend calculation
-    const firstAccuracy = data[0]?.accuracy || 0;
-    const lastAccuracy = data[data.length - 1]?.accuracy || 0;
-    const accuracyImprovement = lastAccuracy - firstAccuracy;
-
-    // Determine overall trend (weighted: 70% accuracy, 30% WPM)
-    const accuracyTrendScore =
-      accuracyImprovement > 5 ? 1 : accuracyImprovement < -5 ? -1 : 0;
-    const wpmTrendScore =
-      wpmImprovement > 10 ? 1 : wpmImprovement < -10 ? -1 : 0;
-    const overallTrendScore = accuracyTrendScore * 0.7 + wpmTrendScore * 0.3;
-
-    const isImproving = overallTrendScore > 0.2;
-    const isDecreasing = overallTrendScore < -0.2;
-
-    const totalReadings = data.length;
-
-    return (
-      <View style={styles.summaryContainer}>
-        <Text style={styles.summaryTitle}>Performance Summary</Text>
-
-        {/* Stats Grid */}
-        <View style={styles.summaryGrid}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>{bestAccuracy}%</Text>
-            <Text style={styles.summaryLabel}>Best Accuracy</Text>
-            {worstAccuracy > 0 && (
-              <Text style={styles.summarySubtext}>
-                Lowest: {worstAccuracy}%
-              </Text>
-            )}
-          </View>
-
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>{avgWPM}</Text>
-            <Text style={styles.summaryLabel}>Avg WPM</Text>
-            {bestWPM > avgWPM && (
-              <Text style={styles.summarySubtext}>Best: {bestWPM}</Text>
-            )}
-          </View>
-
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>{totalReadings}</Text>
-            <Text style={styles.summaryLabel}>Total Readings</Text>
-            {data.length >= 5 && (
-              <Text style={styles.summarySubtext}>
-                Last 7 days: {data.slice(-7).length}
-              </Text>
-            )}
-          </View>
-        </View>
-
-        {/* Progress Trend - More Detailed */}
-        {data.length >= 2 && (
-          <View style={styles.trendContainer}>
-            <Text style={styles.trendTitle}>Progress Analysis</Text>
-
-            <View style={styles.trendRow}>
-              <Text style={styles.trendLabel}>Accuracy Trend:</Text>
-              <View style={styles.trendValueContainer}>
-                <Text style={styles.trendValue}>
-                  {firstAccuracy}% → {lastAccuracy}%
-                  {accuracyImprovement !== 0 && (
-                    <Text
-                      style={
-                        accuracyImprovement > 0
-                          ? styles.positiveTrend
-                          : styles.negativeTrend
-                      }
-                    >
-                      {accuracyImprovement > 0 ? ' ↑' : ' ↓'}{' '}
-                      {Math.abs(accuracyImprovement).toFixed(1)}%
-                    </Text>
-                  )}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.trendRow}>
-              <Text style={styles.trendLabel}>WPM Trend:</Text>
-              <View style={styles.trendValueContainer}>
-                <Text style={styles.trendValue}>
-                  {firstWPM} → {lastWPM}
-                  {wpmImprovement !== 0 && (
-                    <Text
-                      style={
-                        wpmImprovement > 0
-                          ? styles.positiveTrend
-                          : styles.negativeTrend
-                      }
-                    >
-                      {wpmImprovement > 0 ? ' ↑' : ' ↓'}{' '}
-                      {Math.abs(wpmImprovement)}
-                    </Text>
-                  )}
-                </Text>
-              </View>
-            </View>
-
-            {/* Overall Trend Indicator */}
-            <View style={styles.overallTrendContainer}>
-              <Text style={styles.overallTrendLabel}>Overall Progress:</Text>
-              <View style={styles.trendIndicator}>
-                {isImproving ? (
-                  <>
-                    <Text style={styles.trendEmoji}>📈</Text>
-                    <Text style={styles.trendUp}>Significant Improvement</Text>
-                  </>
-                ) : isDecreasing ? (
-                  <>
-                    <Text style={styles.trendEmoji}>📉</Text>
-                    <Text style={styles.trendDown}>Needs Attention</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.trendEmoji}>➡️</Text>
-                    <Text style={styles.trendNeutral}>Steady Progress</Text>
-                  </>
-                )}
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
-    );
-  };
-  /**
-   * ==========================================================================
-   * WPM CHART COMPONENT
-   * ==========================================================================
-   * Renders a bar chart showing words per minute progression
-   * Features:
-   * - Vertical bars scaled to max WPM
-   * - Value labels on bars
-   * - Gradient-like color scheme
-   * @param data - Array of progress data points
-   * ==========================================================================
-   */
   const WPMChart = ({ data }: { data: ProgressData[] }) => {
     const maxHeight = 100;
-    const chartData = data.slice(-10); // Show last 10 readings
+    const chartData = data.slice(-10);
     const maxWPM = Math.max(...chartData.map(d => d.wpm), 100);
-
     return (
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartSubtitle}>Words Per Minute Over Time</Text>
+      <View style={S.chartSection}>
+        <View style={S.chartHeader}>
+          <ZapIcon size={18} color={F.primary} />
+          <Text style={S.chartTitle}>Words Per Minute Trends</Text>
+        </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.wpmChartContainer}>
+          <View style={S.wpmChartContainer}>
             {chartData.map((item, index) => {
               const height = (item.wpm / maxWPM) * maxHeight;
-              const barColor = `hsl(${
-                160 + (item.wpm / maxWPM) * 40
-              }, 70%, 50%)`;
-
               return (
-                <View key={index} style={styles.wpmBarWrapper}>
-                  <Text style={styles.wpmValue}>{item.wpm}</Text>
-                  <View
-                    style={[
-                      styles.wpmBar,
-                      { height, backgroundColor: '#10b981' },
-                    ]}
-                  />
-                  <Text style={styles.wpmLabel}>{item.date}</Text>
+                <View key={index} style={S.wpmBarWrapper}>
+                  <Text style={S.wpmValue}>{item.wpm}</Text>
+                  <View style={[S.wpmBar, { height, backgroundColor: F.primary }]} />
+                  <Text style={S.wpmLabel}>{item.date}</Text>
                 </View>
               );
             })}
@@ -375,113 +235,150 @@ export default function StudentViewProfile() {
     );
   };
 
-  /* ------------------------------------------------------------------------ */
-  /* RENDER                                                                   */
-  /* ------------------------------------------------------------------------ */
+  const SummarySection = ({ data }: { data: ProgressData[] }) => {
+    if (data.length === 0) return null;
+    const bestAcc = Math.max(...data.map(d => d.accuracy));
+    const avgWPM = Math.round(data.reduce((s, d) => s + d.wpm, 0) / data.length);
+    
+    const firstAcc = data[0].accuracy;
+    const lastAcc = data[data.length - 1].accuracy;
+    const accImp = lastAcc - firstAcc;
+
+    return (
+      <View style={S.card}>
+        <Text style={S.cardTitle}>Performance Summary</Text>
+        <View style={S.trendRow}>
+          <View style={S.trendItem}>
+            <Text style={S.trendVal}>{bestAcc}%</Text>
+            <Text style={S.trendLab}>Best Accuracy</Text>
+          </View>
+          <View style={S.vDivider} />
+          <View style={S.trendItem}>
+            <Text style={S.trendVal}>{avgWPM}</Text>
+            <Text style={S.trendLab}>Average WPM</Text>
+          </View>
+          <View style={S.vDivider} />
+          <View style={S.trendItem}>
+            <TrendUpIcon size={20} color={accImp >= 0 ? '#10b981' : '#f43f5e'} />
+            <Text style={[S.trendVal, { color: accImp >= 0 ? '#10b981' : '#f43f5e', fontSize: 14 }]}>
+              {accImp >= 0 ? `+${accImp}%` : `${accImp}%`}
+            </Text>
+            <Text style={S.trendLab}>Progress</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.innerContainer}>
-          {/* BUBBLES */}
-          <View style={bubbles.bubblesContainer}>
-            <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-            <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          </View>
+    <SafeAreaView style={S.bg}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
+        
+        {/* Bubbles */}
+        <View style={bubbles.bubblesContainer} pointerEvents="none">
+          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
+          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
+          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
+        </View>
 
-          {/* HEADER */}
-          <View style={upperNav.header}>
-            <TouchableOpacity
-              style={upperNav.touchable}
-              onPress={handleBackStep}
-            >
-              <Image
-                source={require('../../../assets/icons/BackButton-icon.png')}
-              />
-            </TouchableOpacity>
+        {/* Header */}
+        <View style={S.headerBar}>
+          <TouchableOpacity style={S.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
+            <View style={S.backArrow} />
+          </TouchableOpacity>
+          <Image style={S.logo} source={require('../../../assets/images/cisckids copy.png')} resizeMode="contain" />
+          <View style={{ width: 44 }} />
+        </View>
 
-            <Text style={styles.headerTitle}>Student Reading Profile</Text>
-
-            <View style={{ width: 40 }} />
-          </View>
-
-          {/* STUDENT SUMMARY */}
-          <View style={styles.profileHeader}>
-            <Text style={styles.studentName}>{studentName}</Text>
-            <Text style={styles.studentMeta}>
-              Reading Level: {readingLevel}
-            </Text>
-          </View>
-
-          {/* READING STATISTICS */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Reading Statistics</Text>
-
-            <View style={styles.statsGrid}>
-              <StatCard
-                number={stats?.totalAttempts || 0}
-                label="Total Attempts"
-              />
-              <StatCard
-                number={`${stats?.averageAccuracy || 0}%`}
-                label="Avg. Accuracy"
-              />
-              <StatCard
-                number={stats?.topMiscueType || 'N/A'}
-                label="Top Miscue Type"
-              />
+        {/* Hero */}
+        <BounceIn delay={100}>
+          <View style={S.heroCard}>
+            <View style={S.heroLeft}>
+              <Text style={S.heroLabel}>Profil ng Mag-aaral</Text>
+              <Text style={S.heroName}>{studentName}</Text>
+              <View style={S.heroLevelBadge}>
+                <BookOpenIcon size={12} color={F.white} />
+                <Text style={S.heroLevelText}>{readingLevel}</Text>
+              </View>
             </View>
+            <View style={S.heroIconCircle}>
+              <UserProfileIcon size={40} color={F.primaryDeep} />
+            </View>
+          </View>
+        </BounceIn>
 
+        {/* Core Stats */}
+        <View style={S.content}>
+          <BounceIn delay={200}>
+            <View style={S.statsGrid}>
+              <View style={S.statCard}>
+                <View style={[S.statIconBox, { backgroundColor: F.primary + '15' }]}>
+                  <BookOpenIcon size={20} color={F.primary} />
+                </View>
+                <Text style={S.statVal}>{aralinDone}</Text>
+                <Text style={S.statLab}>Aralin</Text>
+              </View>
+              <View style={S.statCard}>
+                <View style={[S.statIconBox, { backgroundColor: F.primary + '15' }]}>
+                  <ClipboardListIcon size={20} color={F.primary} />
+                </View>
+                <Text style={S.statVal}>{assessmentsDone}</Text>
+                <Text style={S.statLab}>Pagsusulit</Text>
+              </View>
+              <View style={S.statCard}>
+                <View style={[S.statIconBox, { backgroundColor: F.purple + '15' }]}>
+                  <StarIcon size={20} color={F.purple} />
+                </View>
+                <Text style={S.statVal} numberOfLines={1}>{assessmentAvg.toFixed(0)}%</Text>
+                <Text style={S.statLab}>Galing</Text>
+              </View>
+            </View>
+          </BounceIn>
+
+          {/* Miscue Details */}
+          <BounceIn delay={300}>
             {topMiscuedPassage && (
-              <View style={styles.miscueCard}>
-                <Text style={styles.miscueTitle}>Top Miscued Passage</Text>
-                <Text style={styles.miscuePassage}>
-                  {topMiscuedPassage.title}
-                </Text>
-                <View style={styles.miscueStats}>
-                  <Text style={styles.miscueStat}>
-                    Accuracy:{' '}
-                    <Text style={styles.miscueStatValue}>
-                      {topMiscuedPassage.accuracy.toFixed(1)}%
-                    </Text>
-                  </Text>
-                  <Text style={styles.miscueStat}>
-                    Attempts:{' '}
-                    <Text style={styles.miscueStatValue}>
-                      {topMiscuedPassage.attempts}
-                    </Text>
-                  </Text>
+              <View style={[S.card, { borderLeftWidth: 5, borderLeftColor: '#ef4444' }]}>
+                <Text style={S.cardTitle}>Top Miscued Passage</Text>
+                <Text style={S.passageTitle}>{topMiscuedPassage.title}</Text>
+                <View style={S.pStatsRow}>
+                  <Text style={S.pStatText}>Accuracy: <Text style={{ fontWeight: '800' }}>{topMiscuedPassage.accuracy.toFixed(1)}%</Text></Text>
+                  <Text style={S.pStatText}>Attempts: <Text style={{ fontWeight: '800' }}>{topMiscuedPassage.attempts}</Text></Text>
                 </View>
               </View>
             )}
 
             {stats?.mostCommonMiscueWords?.length ? (
-              <View style={styles.miscueCard}>
-                <Text style={styles.miscueTitle}>Most Common Miscue Words</Text>
-                {stats.mostCommonMiscueWords.map((item, index) => (
-                  <View key={index} style={styles.wordItem}>
-                    <Text style={styles.wordText}>"{item.word}"</Text>
-                    <Text style={styles.wordCount}>{item.count}</Text>
-                  </View>
-                ))}
+              <View style={S.card}>
+                <Text style={S.cardTitle}>Common Miscue Words</Text>
+                <View style={S.wordList}>
+                  {stats.mostCommonMiscueWords.map((item, index) => (
+                    <View key={index} style={S.wordItem}>
+                      <Text style={S.wordTxt}>"{item.word}"</Text>
+                      <View style={S.wordCountBadge}>
+                        <Text style={S.wordCountTxt}>{item.count}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
               </View>
             ) : null}
-          </View>
+          </BounceIn>
 
-          {/* PROGRESS */}
+          {/* Progress Charts */}
           {hasProgressData && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Reading Progress</Text>
-              <AccuracyChart data={progress} />
-              <WPMChart data={progress} />
-              <PerformanceSummary data={progress} />
-            </View>
+            <BounceIn delay={400}>
+              <View style={{ marginTop: 10 }}>
+                <AccuracyChart data={progress} />
+                <WPMChart data={progress} />
+                <SummarySection data={progress} />
+              </View>
+            </BounceIn>
           )}
 
-          {/* REFRESH */}
-          <TouchableOpacity style={styles.refreshButton} onPress={refresh}>
-            <Text style={styles.refreshButtonText}>Refresh Data</Text>
+          <TouchableOpacity style={S.refreshBtn} onPress={handleRefresh} activeOpacity={0.8}>
+            <RefreshIcon size={18} color={F.white} />
+            <Text style={S.refreshBtnText}>I-update ang Data</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -489,568 +386,114 @@ export default function StudentViewProfile() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* REUSED CHILD COMPONENTS (UNCHANGED LOGIC)                                  */
-/* -------------------------------------------------------------------------- */
+const S = StyleSheet.create({
+  bg: { flex: 1, backgroundColor: F.bg },
+  content: { paddingHorizontal: 16 },
+  
+  // Header
+  headerBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 10,
+  },
+  logo: { width: 100, height: 90 },
+  backBtn: {
+    width: 44, height: 44, borderRadius: 14, backgroundColor: F.white,
+    justifyContent: 'center', alignItems: 'center', ...Shadows.subtle
+  },
+  backArrow: {
+    width: 12, height: 12, borderLeftWidth: 3, borderTopWidth: 3,
+    borderColor: F.primaryDeep, transform: [{ rotate: '-45deg' }], marginLeft: 4
+  },
 
-const StatCard = ({
-  number,
-  label,
-}: {
-  number: number | string;
-  label: string;
-}) => (
-  <View style={styles.statCard}>
-    <Text style={styles.statNumber}>{number}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
+  // Hero
+  heroCard: {
+    backgroundColor: F.primaryDeep, marginHorizontal: 16, marginTop: 10,
+    borderRadius: Radii.xl, padding: 24, flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'space-between', ...Shadows.cardLift
+  },
+  heroLeft: { flex: 1 },
+  heroLabel: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4 },
+  heroName: { fontSize: 24, fontWeight: '900', color: F.white, marginBottom: 12 },
+  heroLevelBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start',
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10
+  },
+  heroLevelText: { color: F.white, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' },
+  heroIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: F.primaryLight, justifyContent: 'center', alignItems: 'center' },
 
-/* ⬇️ AccuracyChart, WPMChart, PerformanceSummary
-   COPY DIRECTLY FROM Profile — NO CHANGES REQUIRED ⬇️ */
-
-// ============================================================================
-// STYLES
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#f8fafc',
-  },
-  innerContainer: {
-    padding: 10,
-    paddingBottom: 40,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#64748b',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#ef4444',
-    textAlign: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 32,
-  },
-  retryButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  header: {
-    position: 'relative',
-    zIndex: 100,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#e2e8f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 3,
-    borderColor: '#3b82f6',
-  },
-  profileImage: {
-    width: 94,
-    height: 94,
-    borderRadius: 47,
-  },
-  studentName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  studentRole: {
-    fontSize: 16,
-    color: '#64748b',
-  },
-  section: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 16,
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  infoItem: {
-    width: '48%',
-    marginBottom: 16,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
+  // Stats Grid
+  statsGrid: { flexDirection: 'row', gap: 8, marginTop: 20, marginBottom: 20 },
   statCard: {
-    backgroundColor: '#f1f5f9',
-    padding: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginHorizontal: 2,
+    flex: 1, backgroundColor: F.white, borderRadius: 20, padding: 16,
+    alignItems: 'center', ...Shadows.card
   },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  miscueCard: {
-    backgroundColor: '#fef2f2',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
-  },
-  miscueTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#dc2626',
-    marginBottom: 8,
-  },
-  miscuePassage: {
-    fontSize: 14,
-    color: '#1e293b',
-    marginBottom: 8,
-  },
-  miscueStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  miscueStat: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  miscueStatValue: {
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  wordList: {
-    marginTop: 8,
-  },
-  wordItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#fecaca',
-  },
-  wordText: {
-    fontSize: 14,
-    color: '#1e293b',
-    fontStyle: 'italic',
-  },
-  wordCount: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  chartContainer: {
-    marginBottom: 24,
-  },
-  chartSubtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 12,
-  },
-  chartWrapper: {
-    flexDirection: 'row',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    minHeight: 160,
-  },
-  yAxis: {
-    justifyContent: 'space-between',
-    paddingRight: 8,
-    height: 120,
-  },
-  yAxisLabel: {
-    fontSize: 10,
-    color: '#94a3b8',
-    fontWeight: '500',
-  },
-  chartScroll: {
-    flex: 1,
-  },
-  chartBarsContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 120,
-    paddingHorizontal: 4,
-  },
-  chartBarWrapper: {
-    alignItems: 'center',
-    marginHorizontal: 6,
-  },
-  chartBarColumn: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  chartValue: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  chartBar: {
-    width: 16,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    minHeight: 4,
-  },
-  chartConnector: {
-    position: 'absolute',
-    top: '55%',
-    right: -6,
-    width: 12,
-    height: 2,
-    opacity: 0.4,
-  },  
-  chartLabel: {
-    fontSize: 10,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  wpmChartContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: 100,
-    paddingHorizontal: 10,
-    marginTop: 10,
-  },
+  statIconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  statVal: { fontSize: 18, fontWeight: '900', color: F.ink, marginBottom: 2 },
+  statLab: { fontSize: 11, fontWeight: '700', color: F.slate, textTransform: 'uppercase' },
 
-  wpmBar: {
-    width: 20,
-    backgroundColor: '#10b981',
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    marginBottom: 4,
+  // Generic Card
+  card: {
+    backgroundColor: F.white, borderRadius: 24, padding: 20,
+    marginBottom: 16, ...Shadows.card
   },
+  cardTitle: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', marginBottom: 12, letterSpacing: 0.5 },
+  
+  // Passage Detail
+  passageTitle: { fontSize: 20, fontWeight: '900', color: F.ink, marginBottom: 10 },
+  pStatsRow: { flexDirection: 'row', gap: 16 },
+  pStatText: { fontSize: 14, color: F.inkLight },
 
-  statsSummaryContainer: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 10,
+  // Word List
+  wordList: { gap: 8 },
+  wordItem: { 
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: F.bg
   },
+  wordTxt: { fontSize: 16, fontWeight: '700', color: F.ink, fontStyle: 'italic' },
+  wordCountBadge: { backgroundColor: F.primary + '12', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  wordCountTxt: { fontSize: 12, fontWeight: '900', color: F.primaryDeep },
 
-  statsSummaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 16,
-  },
+  // Charts
+  chartSection: { backgroundColor: F.white, borderRadius: 24, padding: 20, marginBottom: 16, ...Shadows.card },
+  chartHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 },
+  chartTitle: { fontSize: 15, fontWeight: '800', color: F.ink },
+  chartWrapper: { flexDirection: 'row' },
+  yAxis: { justifyContent: 'space-between', paddingRight: 12, height: 120, paddingVertical: 10 },
+  yAxisLabel: { fontSize: 10, color: F.slate, fontWeight: '700' },
+  chartBarsRow: { flexDirection: 'row', alignItems: 'flex-end', height: 140, paddingHorizontal: 10 },
+  barComp: { alignItems: 'center', marginHorizontal: 8 },
+  barCore: { alignItems: 'center', position: 'relative' },
+  barVal: { fontSize: 11, fontWeight: '800', marginBottom: 6 },
+  barFill: { width: 22, borderTopLeftRadius: 11, borderTopRightRadius: 11, minHeight: 4 },
+  connector: { position: 'absolute', top: '60%', right: -12, width: 24, height: 2, opacity: 0.15, zIndex: -1 },
+  barLabel: { fontSize: 10, color: F.slate, fontWeight: '700', marginTop: 12 },
 
-  statBox: {
-    alignItems: 'center',
-    flex: 1,
-    padding: 12,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+  wpmChartContainer: { flexDirection: 'row', alignItems: 'flex-end', height: 120, paddingHorizontal: 4 },
+  wpmBarWrapper: { alignItems: 'center', marginHorizontal: 10 },
+  wpmValue: { fontSize: 12, fontWeight: '900', color: F.primaryDeep, marginBottom: 6 },
+  wpmBar: { width: 26, borderTopLeftRadius: 6, borderTopRightRadius: 6 },
+  wpmLabel: { fontSize: 10, color: F.slate, fontWeight: '700', marginTop: 8 },
 
-  statBoxNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: 4,
-  },
+  // Summary
+  trendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
+  trendItem: { flex: 1, alignItems: 'center' },
+  trendVal: { fontSize: 20, fontWeight: '900', color: F.ink },
+  trendLab: { fontSize: 10, fontWeight: '700', color: F.slate, marginTop: 4, textTransform: 'uppercase' },
+  vDivider: { width: 1, height: 30, backgroundColor: F.bg },
 
-  statBoxLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
+  // Actions
+  refreshBtn: {
+    backgroundColor: F.primaryDeep, borderRadius: Radii.lg, height: 56,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 12, marginTop: 10, ...Shadows.button
   },
+  refreshBtnText: { color: F.white, fontSize: 16, fontWeight: '800' },
 
-  trendContainer: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 12,
-  },
-
-  trendTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 8,
-  },
-
-  trendIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  trendText: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-
-  trendArrow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  trendUp: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  trendUpText: {
-    fontSize: 14,
-    color: '#10b981',
-    fontWeight: '600',
-  },
-
-  trendDown: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  trendDownText: {
-    fontSize: 14,
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-
-  trendNeutral: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  trendNeutralText: {
-    fontSize: 14,
-    color: '#f59e0b',
-    fontWeight: '600',
-  },
-  // WPM Chart styles
-  wpmBarWrapper: {
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  wpmValue: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#065f46',
-    marginBottom: 4,
-  },
-  wpmLabel: {
-    fontSize: 10,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  // Performance Summary styles
-  summaryContainer: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 16,
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  summaryCard: {
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  summaryNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: 4,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  trendContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  trendEmoji: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  // Refresh Button
-  refreshButton: {
-    backgroundColor: '#3b82f6',
-    marginHorizontal: 16,
-    marginVertical: 24,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  refreshButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-
-  noDataText: {
-    textAlign: 'center',
-    color: '#94a3b8',
-    fontStyle: 'italic',
-    marginTop: 16,
-  },
-
-  summarySubtext: {
-    fontSize: 10,
-    color: '#64748b',
-    marginTop: 2,
-  },
-
-  trendRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-
-  trendLabel: {
-    fontSize: 14,
-    color: '#475569',
-    fontWeight: '500',
-  },
-
-  trendValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  trendValue: {
-    fontSize: 14,
-    color: '#1e293b',
-  },
-
-  positiveTrend: {
-    color: '#10b981',
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-
-  negativeTrend: {
-    color: '#ef4444',
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-
-  overallTrendContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-  },
-
-  overallTrendLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  studentMeta: {
-    fontSize: 14,
-    color: '#64748b',
-  },
+  // Loading/Error
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: F.bg },
+  loadingText: { marginTop: 16, color: F.slate, fontWeight: '700', fontSize: 16 },
+  errorText: { fontSize: 16, color: F.red, fontWeight: '700', textAlign: 'center', padding: 20 },
+  retryBtn: { backgroundColor: F.primary, paddingHorizontal: 30, paddingVertical: 14, borderRadius: 12, ...Shadows.button },
+  retryBtnText: { color: F.white, fontWeight: '800', fontSize: 15 },
 });

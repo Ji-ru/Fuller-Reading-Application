@@ -1,19 +1,10 @@
 import { Miscue } from '../Interfaces/miscue';
 import { MiscueReportDocument } from '../Interfaces/dataInterfaces';
-import { getAuth } from '@react-native-firebase/auth';
-import firestore, {
-  getFirestore,
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-} from '@react-native-firebase/firestore';
-
-const auth = getAuth();
-const db = getFirestore();
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 export const MiscueReportController = {
+
 
   // ================= STORE REPORT =================
   async storeReport(
@@ -25,7 +16,7 @@ export const MiscueReportController = {
     recordingDuration?: string
   ): Promise<string> {
     try {
-      const user = auth.currentUser;
+      const user = auth().currentUser;
       if (!user) throw new Error('User not logged in');
 
       const reportRef = firestore().collection('miscueReports').doc();
@@ -169,7 +160,7 @@ export const MiscueReportController = {
 
   // ================= WORD STORAGE =================
   async storeWordCorrectAttempt(letter: string, word: string): Promise<string> {
-    const user = auth.currentUser;
+    const user = auth().currentUser;
     if (!user) throw new Error('User not logged in');
 
     const existing = await this.hasWordBeenCompleted(user.uid, letter, word);
@@ -201,7 +192,7 @@ export const MiscueReportController = {
 
   // ================= ALPHABET STORAGE =================
   async storeAlphabetCorrectAttempt(letter: string): Promise<string> {
-    const user = auth.currentUser;
+    const user = auth().currentUser;
     if (!user) throw new Error('User not logged in');
 
     const existing = await this.hasAlphabetBeenCompleted(user.uid, letter);

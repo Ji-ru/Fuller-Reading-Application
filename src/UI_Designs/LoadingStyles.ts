@@ -40,14 +40,14 @@ const loading = StyleSheet.create({
   // Progress Bar Fill
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#3498db',
     borderRadius: 6,
   },
   
   // Progress Percentage Text
   progressText: {
     fontSize: 18,
-    color: '#2CA96A',
+    color: '#3498db',
     fontFamily: 'Satoshi-Bold',
     marginBottom: 8,
   },

@@ -18,6 +18,7 @@ interface PassageDisplayProps {
   isRecording: boolean;
   miscues?: Miscue[];
   isCompleted?: boolean;
+  isCorrect?: boolean;
 }
 
 const CheckmarkBadge = () => (
@@ -51,24 +52,6 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   isCompleted = false,
   isCorrect = true,
 }) => {
-  // Function to highlight letter in text
-  const highlightLetterInText = (text: string, letter: string) => {
-    const parts = text.split(new RegExp(`(${letter})`, 'gi'));
-
-    return parts.map((part, index) => {
-      if (part.toUpperCase() === letter.toUpperCase()) {
-        return (
-          <Text key={index} style={readingStyles.highlightedLetter}>
-            {part}
-          </Text>
-        );
-      }
-      return <Text key={index}>{part}</Text>;
-    });
-  };
-
-
-
   // Format passage text with line breaks
   const formatText = (text: string) => {
     return text.split('\n').map((line, index) => (
@@ -180,9 +163,15 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
             {punctuation && <Text>{punctuation}</Text>}
           </Text>,
         );
-      } else {
-        renderedWords.push(<Text key={`word-${index}`}>{originalWord}</Text>);
+        // Correct word (no miscue)
+        renderedWords.push(
+          <Text key={`word-${index}`} style={{ color: '#1a7a45' }}>
+            {originalWord}
+          </Text>
+        );
       }
+
+
 
       if (index < originalWords.length - 1) {
         renderedWords.push(<Text key={`space-${keyCounter++}`}> </Text>);
@@ -194,9 +183,10 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
   const renderTextContent = () => {
     if (isPassage(material)) {
-      if (!isRecording && miscues && miscues.length > 0) {
+      if (!isRecording && isCompleted) {
         return renderTextWithMiscues();
       }
+
       return formatText(material.text);
     }
     return null;
@@ -208,16 +198,18 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       <View style={readingStyles.wordCardContainer}>
         <View style={[
           readingStyles.wordCard, 
-          isCompleted && isCorrect && readingStyles.completedCard,
-          isCompleted && !isCorrect && readingStyles.errorCard
         ]}>
+
           <View style={readingStyles.clipContainer}>
             {/* Decorative shapes to match Hero */}
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.03)', bottom: -15, left: -15, width: 60, height: 60 }]} />
           </View>
           
-          <Text style={readingStyles.wordCardText}>
+          <Text style={[
+             readingStyles.wordCardText,
+             isCompleted && { color: isCorrect ? '#1a7a45' : '#e74c3c' }
+          ]}>
             {material.letter}
           </Text>
         </View>
@@ -233,16 +225,18 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       <View style={readingStyles.wordCardContainer}>
         <View style={[
           readingStyles.wordCard, 
-          isCompleted && isCorrect && readingStyles.completedCard,
-          isCompleted && !isCorrect && readingStyles.errorCard
         ]}>
+
           <View style={readingStyles.clipContainer}>
             {/* Decorative shapes to match Hero */}
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.03)', bottom: -15, left: -15, width: 60, height: 60 }]} />
           </View>
 
-          <Text style={readingStyles.wordCardText}>{allWords[0]}</Text>
+          <Text style={[
+             readingStyles.wordCardText,
+             isCompleted && { color: isCorrect ? '#1a7a45' : '#e74c3c' }
+          ]}>{allWords[0]}</Text>
         </View>
       </View>
     );
@@ -252,17 +246,12 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   // PASSAGE DISPLAY
   if(type === 'passage' && isPassage(material)){
     return (
-      <View style={readingStyles.insideContainer}>
-        <View style={readingStyles.passageHeader}>
-          <Text style={readingStyles.passageTitle}>{material.title}</Text>
-          <Text style={readingStyles.passageAuthor}>{material.author}</Text>
-        </View>
+      <View>
 
-        <View style={[
-          !isRecording ? readingStyles.passageContainerFeedback : readingStyles.passageContainer,
-          isCompleted && isCorrect && readingStyles.completedCard,
-          isCompleted && !isCorrect && readingStyles.errorCard
-        ]}>
+        <View style={readingStyles.passageContainer}>
+
+
+
           <View style={readingStyles.clipContainer}>
              {/* Decorative shapes to match Hero */}
              <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
@@ -270,6 +259,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
           
           <ScrollView
             style={readingStyles.passageScroll}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
             showsVerticalScrollIndicator={true}
           >
             <View style={readingStyles.textContainer}>

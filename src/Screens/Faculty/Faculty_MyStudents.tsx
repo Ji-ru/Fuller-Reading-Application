@@ -85,7 +85,7 @@ export default function MyStudents() {
            <View style={S.studentInfo}>
               <Text style={S.studentName} numberOfLines={1}>{item.firstName} {item.lastName}</Text>
               <View style={S.levelBadge}>
-                 <Text style={S.levelText}>{item.studentData?.reading_Level || 'Beginner'}</Text>
+                 <Text style={S.levelText}>{item.studentData?.reading_Level || 'Baguhan'}</Text>
               </View>
            </View>
            <ChevronRightIcon size={20} color={F.slate} />
@@ -111,7 +111,7 @@ export default function MyStudents() {
            </TouchableOpacity>
            <Image
              style={S.logo}
-             source={require('../../../assets/images/cisckids.png')}
+             source={require('../../../assets/images/cisckids copy.png')}
              resizeMode="contain"
            />
            <View style={{ width: 44 }} /> 
@@ -228,8 +228,8 @@ const S = StyleSheet.create({
   avatarText: { fontSize: 18, fontWeight: '900', color: F.primaryDeep },
   studentInfo: { flex: 1 },
   studentName: { fontSize: 17, fontWeight: '800', color: F.ink, marginBottom: 4 },
-  levelBadge: { backgroundColor: '#f5f7f9', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, alignSelf: 'flex-start' },
-  levelText: { fontSize: 11, fontWeight: '700', color: F.slate, textTransform: 'capitalize' },
+  levelBadge: { backgroundColor: F.primary + '10', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, alignSelf: 'flex-start' },
+  levelText: { fontSize: 11, fontWeight: '700', color: F.primaryDeep, textTransform: 'capitalize' },
 
   loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 16, color: F.slate, fontWeight: '600' },

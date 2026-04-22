@@ -10,6 +10,8 @@ import {
   Modal,
   Animated,
   Pressable,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import bubbles from '../../UI_Designs/BubblesDesign';
@@ -19,6 +21,7 @@ import {
   getUserProfile,
   getCurrentUser,
   getClassByCode,
+  joinClass,
 } from '../../Controller/AuthenticationController';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
@@ -30,6 +33,7 @@ import {
   BarChartIcon, RepeatIcon, TargetIcon, ZapIcon, AlertTriangleIcon,
   TrendUpIcon, TypeIcon, RefreshIcon, BookOpenIcon,
   TrophyIcon, ThumbsUpIcon, FlexIcon, SproutIcon, RocketIcon, StarIcon,
+  LogoutIcon, BurgerIcon
 } from '../../Components/GlobalUse/Icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -41,15 +45,6 @@ function BackArrow({ color = C.ink }: { color?: string }) {
   );
 }
  
-function MenuBars({ color = C.ink }: { color?: string }) {
-  return (
-    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
-      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: color }} />
-      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: color }} />
-      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: color }} />
-    </View>
-  );
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface StudentStats {
@@ -283,6 +278,12 @@ export default function Profile() {
 
   const { handleLogout, handleBackStep } = useNavigationHelper();
 
+  // Join Class states
+  const [joinCode, setJoinCode] = useState('');
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [joinError, setJoinError] = useState('');
+  const [joinSuccess, setJoinSuccess] = useState('');
+
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
@@ -414,29 +415,14 @@ function DotsLoading() {
             <TouchableOpacity style={S.headerMenuBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
               <BackArrow />
             </TouchableOpacity>
-            <Image style={S.headerLogo} source={require('../../../assets/images/cisckids.png')} resizeMode="contain" />
-            <TouchableOpacity style={S.headerMenuBtn} onPress={() => setMenuVisible(v => !v)} activeOpacity={0.7}>
-              <MenuBars />
-            </TouchableOpacity>
+            <Image style={S.headerLogo} source={require('../../../assets/images/cisckids copy.png')} resizeMode="contain" />
+            <View style={{ width: 44 }} />
           </View>
-          {menuVisible && (
-            <View style={upperNav.dropdownMenu}>
-              <TouchableOpacity
-                onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
-                style={upperNav.logoutButton}
-              >
-                <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
-                <Text style={upperNav.logoutText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          {menuVisible && (
-            <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
-          )}
         </View>
 
+
         {/* ── Hero Card ─────────────────────────────────────────────────────── */}
-        <BounceIn delay={50}>
+        <BounceIn delay={30}>
           <View style={S.heroCard}>
             <View style={S.heroAvatarWrap}>
               <Image
@@ -447,11 +433,6 @@ function DotsLoading() {
                 }
                 style={S.heroAvatar}
               />
-              <View style={S.heroBadge}>
-                <Text style={S.heroBadgeText}>
-                  {getReadingLevelLabel(profileData?.studentData?.reading_Level).label}
-                </Text>
-              </View>
             </View>
             <Text style={S.heroName}>{profileData?.firstName} {profileData?.lastName}</Text>
             <Text style={S.heroSub}>
@@ -463,10 +444,87 @@ function DotsLoading() {
           </View>
         </BounceIn>
 
-        {/* ── Personal Info ─────────────────────────────────────────────────── */}
-        <BounceIn delay={120}>
+        {/* ── Sumali sa Klase ─────────────────────────────────────────────── */}
+        <BounceIn delay={72}>
           <View style={S.section}>
-            <Text style={S.sectionTitle}><UserProfileIcon size={16} color={C.ink} /> Impormasyon</Text>
+            <View style={S.sectionTitleRow}>
+              <BookOpenIcon size={16} color={C.ink} />
+              <Text style={S.sectionTitle}>Sumali sa Klase</Text>
+            </View>
+            {classData ? (
+              <View style={S.joinedClassBox}>
+                <Text style={S.joinedClassLabel}>Kasalukuyang Klase</Text>
+                <Text style={S.joinedClassName}>{classData.className}</Text>
+                <Text style={S.joinedClassCode}>Code: {profileData?.studentData?.classCode}</Text>
+              </View>
+            ) : (
+              <>
+                <Text style={S.joinClassDesc}>
+                  Ilagay ang class code na ibinigay ng iyong guro para sumali sa klase.
+                </Text>
+                <View style={S.joinInputRow}>
+                  <TextInput
+                    style={[S.joinInput, joinError ? { borderColor: C.red } : null]}
+                    placeholder="e.g. X7K9R2"
+                    placeholderTextColor={C.slate}
+                    value={joinCode}
+                    onChangeText={(t) => { setJoinCode(t.toUpperCase()); setJoinError(''); setJoinSuccess(''); }}
+                    autoCapitalize="characters"
+                    maxLength={6}
+                    editable={!joinLoading}
+                  />
+                  <TouchableOpacity
+                    style={[S.joinBtn, joinLoading && { opacity: 0.7 }]}
+                    disabled={joinLoading || !joinCode.trim()}
+                    onPress={async () => {
+                      setJoinError('');
+                      setJoinSuccess('');
+                      if (!joinCode.trim()) return;
+                      setJoinLoading(true);
+                      try {
+                        const user = getCurrentUser();
+                        if (!user) throw new Error('Hindi naka-login.');
+                        const result = await joinClass(user.uid, joinCode.trim());
+                        setJoinSuccess(`Sumali ka na sa ${result.className}!`);
+                        setJoinCode('');
+                        // Refresh profile data
+                        await fetchAll();
+                      } catch (e: any) {
+                        const msg = e.message || '';
+                        if (msg.includes('Invalid or inactive')) {
+                          setJoinError('Walang klase na may ganitong code.');
+                        } else if (msg.includes('Already enrolled')) {
+                          setJoinError('Kasali ka na sa klase na ito.');
+                        } else {
+                          setJoinError('Nagkaroon ng error. Subukan muli.');
+                        }
+                      } finally {
+                        setJoinLoading(false);
+                      }
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    {joinLoading ? (
+                      <ActivityIndicator size="small" color={C.white} />
+                    ) : (
+                      <Text style={S.joinBtnText}>Sumali</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+                {joinError ? <Text style={S.joinErrorText}>{joinError}</Text> : null}
+                {joinSuccess ? <Text style={S.joinSuccessText}>{joinSuccess}</Text> : null}
+              </>
+            )}
+          </View>
+        </BounceIn>
+
+        {/* ── Personal Info ─────────────────────────────────────────────────── */}
+        <BounceIn delay={108}>
+          <View style={S.section}>
+            <View style={S.sectionTitleRow}>
+              <UserProfileIcon size={16} color={C.ink} />
+              <Text style={S.sectionTitle}>Impormasyon</Text>
+            </View>
             <View style={S.infoRow}>
               <InfoPill iconView={<GenderIcon size={18} color={C.teal} />} label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
             </View>
@@ -475,71 +533,6 @@ function DotsLoading() {
             </View>
           </View>
         </BounceIn>
-
-        {/* ── Stat Tiles ────────────────────────────────────────────────────── */}
-        {readingStats && (
-          <View style={S.section}>
-            <Text style={S.sectionTitle}><BarChartIcon size={16} color={C.ink} /> Mga Istatistika</Text>
-            <View style={S.tilesGrid}>
-              <StatTile emoji="" iconView={<RepeatIcon size={26} color={C.teal} />} value={readingStats.totalAttempts}      label="Pagtatangka"     color={C.teal}   delay={160} onPress={() => setModal('passages')} />
-              <StatTile emoji="" iconView={<TargetIcon size={26} color={C.green} />} value={`${readingStats.averageAccuracy}%`} label="Katumpakan"   color={C.green}  delay={200} onPress={() => setModal('accuracy')} />
-              <StatTile emoji="" iconView={<ZapIcon size={26} color={C.orange} />} value={`${avgWpm}`}                      label="WPM"            color={C.orange} delay={240} onPress={() => setModal('wpm')} />
-              <StatTile emoji="" iconView={<AlertTriangleIcon size={26} color={C.red} />} value={readingStats.topMiscueType}       label="Top Pagkakamali" color={C.red}   delay={280} onPress={() => setModal('miscues')} />
-            </View>
-          </View>
-        )}
-
-        {/* ── Progress ─────────────────────────────────────────────────────── */}
-        {progressData.length > 1 && (
-          <BounceIn delay={320}>
-            <View style={S.section}>
-              <Text style={S.sectionTitle}><TrendUpIcon size={16} color={C.ink} /> Pag-unlad</Text>
-              <View style={S.trendRow}>
-                <TrendPill label="Katumpakan" from={firstAcc} to={lastAcc} delta={accDelta} suffix="%" />
-                <TrendPill label="WPM"        from={firstWpm} to={lastWpm} delta={wpmDelta} suffix="" />
-              </View>
-              <Text style={S.chartLabel}>Katumpakan (huling 8 pagbabasa)</Text>
-              <MiniBarChart data={progressData} valueKey="accuracy" color={C.green} />
-              <Text style={[S.chartLabel, { marginTop: 16 }]}>WPM (huling 8 pagbabasa)</Text>
-              <MiniBarChart data={progressData} valueKey="wpm" color={C.orange} />
-            </View>
-          </BounceIn>
-        )}
-
-        {/* ── Common Miscue Words preview ───────────────────────────────────── */}
-        {readingStats && readingStats.mostCommonMiscueWords.length > 0 && (
-          <BounceIn delay={360}>
-            <TouchableOpacity style={S.section} onPress={() => setModal('words')} activeOpacity={0.85}>
-              <View style={S.sectionHeaderRow}>
-                <Text style={S.sectionTitle}><TypeIcon size={16} color={C.ink} /> Mga Salitang May Pagkakamali</Text>
-                <Text style={S.seeMore}>Tingnan lahat ›</Text>
-              </View>
-              <View style={S.wordChips}>
-                {readingStats.mostCommonMiscueWords.slice(0, 5).map((w, i) => (
-                  <View
-                    key={i}
-                    style={[S.wordChip, { backgroundColor: i === 0 ? C.red : i === 1 ? C.orange : C.yellow }]}
-                  >
-                    <Text style={S.wordChipText}>"{w.word}"</Text>
-                    <Text style={S.wordChipCount}>{w.count}×</Text>
-                  </View>
-                ))}
-              </View>
-            </TouchableOpacity>
-          </BounceIn>
-        )}
-
-        {/* Refresh */}
-        <BounceIn delay={400}>
-          <TouchableOpacity style={S.refreshBtn} onPress={fetchAll} activeOpacity={0.8}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <RefreshIcon size={18} color={C.white} />
-              <Text style={S.refreshText}>I-refresh ang Data</Text>
-            </View>
-          </TouchableOpacity>
-        </BounceIn>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -744,41 +737,36 @@ const S = StyleSheet.create({
   retryText:    { color: C.white, fontWeight: '700', fontSize: 15 },
 
   heroCard: {
-    backgroundColor: C.white, marginHorizontal: 16, marginTop: 12,
-    borderRadius: Radii.lg, alignItems: 'center', paddingVertical: 28, paddingHorizontal: 20,
+    backgroundColor: C.white, marginHorizontal: 16, marginTop: 8,
+    borderRadius: Radii.lg, alignItems: 'center', paddingVertical: 20, paddingHorizontal: 16,
     ...Shadows.cardLift,
   },
-  heroAvatarWrap: { position: 'relative', marginBottom: 14 },
-  heroAvatar: { width: 96, height: 96, borderRadius: 48, borderWidth: 4, borderColor: C.green },
-  heroBadge: {
-    position: 'absolute', bottom: -6, left: '50%', transform: [{ translateX: -44 }],
-    backgroundColor: C.greenDark, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3,
-    minWidth: 88, alignItems: 'center',
-  },
-  heroBadgeText: { color: C.white, fontSize: 11, fontWeight: '700' },
-  heroName: { fontSize: 22, fontWeight: '800', color: C.ink, marginTop: 8 },
-  heroSub:  { fontSize: 13, color: C.slate, marginTop: 4 },
+  heroAvatarWrap: { position: 'relative', marginBottom: 10 },
+  heroAvatar: { width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: C.green },
+  heroName: { fontSize: 22, fontWeight: '800', color: C.ink, marginTop: 6 },
+  heroSub:  { fontSize: 13, color: C.slate, marginTop: 2 },
 
-  ringContainer: { alignItems: 'center', marginTop: 20 },
-  ringOuter: { width: 120, height: 120, borderRadius: 60, borderWidth: 8, justifyContent: 'center', alignItems: 'center' },
-  ringInner: { width: 96, height: 96, borderRadius: 48, borderWidth: 5, justifyContent: 'center', alignItems: 'center' },
-  ringValue: { fontSize: 22, fontWeight: '800' },
-  ringUnit:  { fontSize: 10, color: C.slate },
-  ringLabel: { marginTop: 8, fontSize: 14, fontWeight: '700' },
+  ringContainer: { alignItems: 'center', marginTop: 14 },
+  ringOuter: { width: 100, height: 100, borderRadius: 50, borderWidth: 7, justifyContent: 'center', alignItems: 'center' },
+  ringInner: { width: 80, height: 80, borderRadius: 40, borderWidth: 4, justifyContent: 'center', alignItems: 'center' },
+  ringValue: { fontSize: 18, fontWeight: '800' },
+  ringUnit:  { fontSize: 9, color: C.slate },
+  ringLabel: { marginTop: 6, fontSize: 12, fontWeight: '700' },
 
   section: {
-    backgroundColor: C.white, marginHorizontal: 16, marginTop: 14,
-    borderRadius: Radii.lg, padding: 18,
+    backgroundColor: C.white, marginHorizontal: 16, marginTop: 10,
+    borderRadius: Radii.lg, padding: 14,
     ...Shadows.card,
   },
-  sectionTitle:     { fontSize: 16, fontWeight: '800', color: C.ink, marginBottom: 14 },
-  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  seeMore:          { fontSize: 13, color: C.green, fontWeight: '600' },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  sectionTitle:     { fontSize: 16, fontWeight: '800', color: C.ink },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  seeMore:          { fontSize: 12, color: C.green, fontWeight: '600' },
 
-  infoRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
-  infoPill:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.greenPale, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, flex: 1 },
+  infoRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 6 },
+  infoPill:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.greenPale, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, flex: 1 },
 
-  infoPillLabel: { fontSize: 11, color: C.slate },
+  infoPillLabel: { fontSize: 12, color: C.slate },
   infoPillValue: { fontSize: 14, fontWeight: '700', color: C.ink },
 
   tilesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -787,15 +775,15 @@ const S = StyleSheet.create({
     borderRadius: 18, padding: 16, alignItems: 'center', borderTopWidth: 4,
   },
 
-  statTileValue: { fontSize: 22, fontWeight: '800', marginBottom: 2 },
-  statTileLabel: { fontSize: 12, color: C.inkLight, textAlign: 'center' },
+  statTileValue: { fontSize: 24, fontWeight: '800', marginBottom: 2 },
+  statTileLabel: { fontSize: 14, color: C.inkLight, textAlign: 'center' },
   statTileTap:   { fontSize: 10, color: C.slate, marginTop: 6 },
 
   trendRow:       { flexDirection: 'row', gap: 10, marginBottom: 12 },
   trendPill:      { flex: 1, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', backgroundColor: C.white },
-  trendPillLabel: { fontSize: 11, color: C.slate, marginBottom: 2 },
-  trendPillVal:   { fontSize: 14, fontWeight: '700' },
-  trendPillDelta: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+  trendPillLabel: { fontSize: 13, color: C.slate, marginBottom: 2 },
+  trendPillVal:   { fontSize: 16, fontWeight: '700' },
+  trendPillDelta: { fontSize: 12, fontWeight: '600', marginTop: 2 },
 
   miniChart:   { flexDirection: 'row', alignItems: 'flex-end', gap: 4, marginTop: 6 },
   miniBarCol:  { alignItems: 'center', flex: 1 },
@@ -864,4 +852,29 @@ const S = StyleSheet.create({
   wordDetailBarBg: { flex: 1, height: 10, backgroundColor: C.greenLight, borderRadius: 5, overflow: 'hidden' },
   wordDetailBar:   { height: 10, borderRadius: 5 },
   wordDetailCount: { fontSize: 13, fontWeight: '700', color: C.slate, width: 28, textAlign: 'right' },
+
+  // ── Join Class ────────────────────────────────────────────────────────────
+  joinClassDesc: { fontSize: 13, color: C.slate, lineHeight: 20, marginBottom: 10 },
+  joinInputRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  joinInput: {
+    flex: 1, height: 46, backgroundColor: C.greenPale, borderRadius: 14,
+    paddingHorizontal: 16, fontSize: 16, fontWeight: '800', color: C.ink,
+    letterSpacing: 4, textAlign: 'center', borderWidth: 1.5, borderColor: C.greenLight,
+  },
+  joinBtn: {
+    height: 46, paddingHorizontal: 20, backgroundColor: C.green,
+    borderRadius: 14, justifyContent: 'center', alignItems: 'center',
+    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
+  },
+  joinBtnText: { fontSize: 15, fontWeight: '800', color: C.white },
+  joinErrorText: { fontSize: 13, fontWeight: '600', color: C.red, marginTop: 10 },
+  joinSuccessText: { fontSize: 13, fontWeight: '700', color: C.green, marginTop: 10 },
+  joinedClassBox: {
+    backgroundColor: C.greenPale, borderRadius: 14, padding: 14, alignItems: 'center',
+    borderWidth: 1.5, borderColor: C.greenLight,
+  },
+  joinedClassLabel: { fontSize: 11, fontWeight: '600', color: C.slate, marginBottom: 2 },
+  joinedClassName: { fontSize: 18, fontWeight: '800', color: C.ink, marginBottom: 2 },
+  joinedClassCode: { fontSize: 13, fontWeight: '600', color: C.green },
 });

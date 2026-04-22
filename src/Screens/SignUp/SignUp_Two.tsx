@@ -22,6 +22,7 @@ import bubbles from '../../UI_Designs/BubblesDesign';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { SignUpUserCredentials, verifyFacultyAccessCode, getClassByCode } from '../../Controller/AuthenticationController';
 import LottieView from 'lottie-react-native';
+import { EyeIcon, EyeOffIcon, AlertTriangleIcon } from '../../Components/GlobalUse/Icons';
 export default function SignUpTwoScreen() {
   // Access the studentInfo passed from SignUpOne
   const route = useRoute<RouteProp<RootStackParamList, 'SignUpTwo'>>();
@@ -37,9 +38,13 @@ export default function SignUpTwoScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [modalType, setModalType] = useState<'loading' | 'success'>('loading');
   const [modalMessage, setModalMessage] = useState('');
 
@@ -49,12 +54,20 @@ export default function SignUpTwoScreen() {
   
   // Handles Registration Logic
   const handleRegister = async () => {
+    setIsSubmitted(true);
+
     if (!email || !password || !confirmPassword) {
-      return Alert.alert('Error', 'Please fill out all fields.');
+      return;
     }
 
     if (password !== confirmPassword) {
-      return Alert.alert('Error', 'Passwords do not match.');
+      return;
+    }
+
+    // Password Strength Check
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return;
     }
 
     try {
@@ -65,13 +78,6 @@ export default function SignUpTwoScreen() {
       // Call with correct parameters - using non-null assertion since we validated above
       if (personalInfo.role! === 'student') {
         const classCode = (personalInfo as any).classCode;
-        if (classCode) {
-           const classExists = await getClassByCode(classCode);
-           if (!classExists) {
-             setModalVisible(false);
-             return Alert.alert('Error', 'Ang ibinigay na Class Code ay hindi wasto.');
-           }
-        }
 
         await SignUpUserCredentials(email, password, {
           role: personalInfo.role!,
@@ -139,6 +145,29 @@ export default function SignUpTwoScreen() {
 
   return (
     <SafeAreaView style={signup.container}>
+      {/* BUBBLE DECORATIONS */}
+      <View style={bubbles.bubblesContainer} pointerEvents="none">
+        {/* Top Bubbles */}
+        <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
+        <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
+        <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
+        <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
+        <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
+        <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
+        <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
+        <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
+
+        {/* Bottom Bubbles */}
+        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
+        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
+        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
+        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
+        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
+        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
+        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
+        <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
+      </View>
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -155,87 +184,87 @@ export default function SignUpTwoScreen() {
             <View style={localStyles.backArrow} />
           </TouchableOpacity>
           <Image
-            source={require('../../../assets/images/cisckids.png')}
+            source={require('../../../assets/images/cisckids copy.png')}
             style={localStyles.logo}
             resizeMode="contain"
           />
           <View style={{ width: 44 }} />
         </View>
-        {/* BUBBLE DECORATIONS */}
-        <View style={bubbles.bubblesContainer} pointerEvents="none">
-          {/* Top Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
 
-          {/* Bottom Bubbles */}
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft1]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft2]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft3]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft4]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft5]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft6]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft7]} />
-          <View style={[bubbles.bubble, bubbles.bubbleBottomLeft8]} />
-        </View>
-        {/* SCREEN TITLE */}
-        <Text style={signup.label}>Register</Text>
-        {/* STEPS INIDCATOR */}
-        <View style={signup.stepsContainer}>
-          <View
-            style={[
-              signup.stepCircle,
-              currentStep == 1 ? signup.inactivateStep : signup.activateStep,
-            ]}
-          >
-            <Text style={signup.number}>1</Text>
-          </View>
-
-          <View style={signup.stepLine} />
-
-          <View
-            style={[
-              signup.stepCircle,
-              currentStep == 2 ? signup.activateStep : signup.inactivateStep,
-            ]}
-          >
-            <Text style={signup.number}>2</Text>
-          </View>
-        </View>
         {/* CREATE AN ACCOUNT FORM */}
-        <Text style={signup.subLabel}>Create an Account</Text>
         <View>
           {/* EMAIL ADDRESS */}
-          <Text style={signup.textform}>Email Address</Text>
+          <Text style={signup.textform}>
+            Email Address {isSubmitted && !email.trim() && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
+          </Text>
           <TextInput
-            style={signup.textInputForm}
-            placeholder="example@gmail.com"
+            style={[signup.textInputForm, isSubmitted && !email.trim() ? { borderColor: '#e74c3c' } : null]}
+            placeholder="cisckids@gmail.com"
             value={email}
             onChangeText={setEmail}
           />
           {/* PASSWORD */}
-          <Text style={signup.textform}>Password</Text>
-          <TextInput
-            style={signup.textInputForm}
-            secureTextEntry
-            placeholder="*********"
-            value={password}
-            onChangeText={setPassword}
-          />
+          <Text style={signup.textform}>
+            Password {isSubmitted && !password && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
+          </Text>
+          <View style={[signup.textInputForm, localStyles.passwordContainer, isSubmitted && !password ? { borderColor: '#e74c3c' } : null]}>
+            <TextInput
+              style={localStyles.nakedInput}
+              secureTextEntry={!showPassword}
+              placeholder="∗∗∗∗∗∗∗∗∗∗∗"
+              placeholderTextColor="#999"
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity 
+              style={localStyles.eyeIconBtn} 
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOffIcon size={20} color="#8fafa0" />
+              ) : (
+                <EyeIcon size={20} color="#8fafa0" />
+              )}
+            </TouchableOpacity>
+          </View>
+          {password.length > 0 && (
+            <Text style={[
+              localStyles.requirementInfo, 
+              !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/.test(password) && { color: '#e74c3c' }
+            ]}>
+              * Dapat may 8+ characters, kabilang ang uppercase, numero, at simbolo.
+            </Text>
+          )}
+
           {/* CONFIRM PASSWORD */}
-          <Text style={signup.textform}>Confirm Password</Text>
-          <TextInput
-            style={signup.textInputForm}
-            secureTextEntry
-            placeholder="*********"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
+          <Text style={signup.textform}>
+            Confirm Password {isSubmitted && !confirmPassword && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
+          </Text>
+          <View style={[signup.textInputForm, localStyles.passwordContainer, isSubmitted && (!confirmPassword || password !== confirmPassword) ? { borderColor: '#e74c3c' } : null]}>
+            <TextInput
+              style={localStyles.nakedInput}
+              secureTextEntry={!showConfirmPassword}
+              placeholder="∗∗∗∗∗∗∗∗∗∗∗"
+              placeholderTextColor="#999"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+            <TouchableOpacity 
+              style={localStyles.eyeIconBtn} 
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? (
+                <EyeOffIcon size={20} color="#8fafa0" />
+              ) : (
+                <EyeIcon size={20} color="#8fafa0" />
+              )}
+            </TouchableOpacity>
+          </View>
+          {confirmPassword.length > 0 && password !== confirmPassword && (
+            <Text style={[localStyles.requirementInfo, { color: '#e74c3c' }]}>
+              * Hindi tumutugma
+            </Text>
+          )}
         </View>
 
         {/* CONFIRM AND CANCEL BUTTONS */}
@@ -245,15 +274,15 @@ export default function SignUpTwoScreen() {
           onPress={handleRegister}
           disabled={modalVisible}
         >
-          <Text style={buttons.nextPageText}>Register</Text>
+          <Text style={buttons.nextPageText}>Magrehistro</Text>
         </TouchableOpacity>
         {/* CANCEL */}
         <TouchableOpacity
           style={[buttons.cancelButton, modalVisible && { opacity: 0.7 }]}
-          onPress={handleCancelRegistration}
+          onPress={() => setShowCancelModal(true)}
           disabled={modalVisible}
         >
-          <Text style={buttons.cancelText}>Cancel</Text>
+          <Text style={buttons.cancelText}>I-kansela</Text>
         </TouchableOpacity>
       </View>
       </ScrollView>
@@ -306,6 +335,43 @@ export default function SignUpTwoScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Cancel Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showCancelModal}
+        onRequestClose={() => setShowCancelModal(false)}
+      >
+        <View style={localStyles.modalOverlay}>
+          <View style={localStyles.modalContainer}>
+             {/* ICON BOX */}
+             <View style={localStyles.modalIconBox}>
+                <AlertTriangleIcon size={34} color="#e74c3c" />
+             </View>
+
+             {/* TEXT CONTENT */}
+             <Text style={localStyles.modalTitle}>I-kansela ang Pagrehistro?</Text>
+             <Text style={localStyles.modalMessage}>Sigurado ka ba na gusto mong kanselahin? Mawawala ang iyong mga nailagay na impormasyon.</Text>
+
+             {/* BUTTONS */}
+             <View style={localStyles.modalButtonRow}>
+                <TouchableOpacity style={localStyles.modalCancelBtn} onPress={() => setShowCancelModal(false)}>
+                   <Text style={localStyles.modalCancelBtnText}>Ipagpatuloy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                   style={localStyles.modalConfirmBtn} 
+                   onPress={() => {
+                     setShowCancelModal(false);
+                     handleCancelRegistration();
+                   }}
+                >
+                   <Text style={localStyles.modalConfirmBtnText}>I-discard</Text>
+                </TouchableOpacity>
+             </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -340,7 +406,108 @@ const localStyles = StyleSheet.create({
     transform: [{ rotate: '-45deg' }],
   },
   logo: {
-    width: 140,
-    height: 48,
+    width: 100,
+    height: 90,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 0, // Reset for internal padding
+    paddingRight: 12,
+  },
+  nakedInput: {
+    flex: 1,
+    height: '100%',
+    paddingHorizontal: 16,
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 15,
+    color: '#1b2e23',
+  },
+  eyeIconBtn: {
+    padding: 8,
+  },
+  requirementInfo: {
+    fontSize: 10,
+    color: '#8fafa0',
+    marginHorizontal: 24,
+    marginTop: -4,
+    marginBottom: 8,
+    fontFamily: 'Satoshi-Medium',
+  },
+  // Modal Styles (Cancel Registration)
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  modalIconBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: '#fff5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Satoshi-Black',
+    color: '#1b2e23',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Medium',
+    color: '#8fafa0',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelBtnText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Bold',
+    color: '#8fafa0',
+  },
+  modalConfirmBtn: {
+    flex: 1.5,
+    backgroundColor: '#e74c3c',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#e74c3c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  modalConfirmBtnText: {
+    fontSize: 15,
+    fontFamily: 'Satoshi-Bold',
+    color: '#fff',
   },
 });

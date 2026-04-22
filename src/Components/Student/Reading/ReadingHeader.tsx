@@ -43,7 +43,7 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
 
         <Image
           style={localStyles.logo}
-          source={require('../../../../assets/images/cisckids.png')}
+          source={require('../../../../assets/images/cisckids copy.png')}
           resizeMode="contain"
         />
 
@@ -65,7 +65,7 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   backBtn: {
     width: 44,

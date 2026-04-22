@@ -1,51 +1,28 @@
-import React, { useRef, useEffect } from 'react';
-import { Animated, ViewStyle, StyleProp } from 'react-native';
+import { Animated, ViewStyle, StyleProp, View, Image } from 'react-native';
 import { StudentColors as C } from '../../Utilities/Theme';
 
 // ─── BounceIn ─────────────────────────────────────────────────────────────────
-// Spring-scales children from 0.75 → 1 after an optional delay.
+// Animations removed: Now renders children immediately with static layout.
 export function BounceIn({
   children,
   delay = 0,
   flex = false,
+  style,
 }: {
   children: React.ReactNode;
   delay?: number;
   flex?: boolean;
+  style?: StyleProp<ViewStyle>;
 }) {
-  const scale   = useRef(new Animated.Value(0.75)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(delay),
-      Animated.parallel([
-        Animated.spring(scale, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 65,
-          friction: 7,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
-  }, []);
-
   return (
-    <Animated.View
-      style={[{ transform: [{ scale }], opacity }, flex && { flex: 1 }]}
-    >
+    <View style={[flex && { flex: 1 }, style]}>
       {children}
-    </Animated.View>
+    </View>
   );
 }
 
 // ─── FloatingImage ────────────────────────────────────────────────────────────
-// Continuously bobs an image up and down by 10px.
+// Animations removed: Image is now static.
 export function FloatingImage({
   source,
   style,
@@ -53,36 +30,17 @@ export function FloatingImage({
   source: any;
   style: StyleProp<any>;
 }) {
-  const floatY = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatY, {
-          toValue: -10,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatY, {
-          toValue: 0,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, []);
-
   return (
-    <Animated.Image
+    <Image
       source={source}
-      style={[style, { transform: [{ translateY: floatY }] }]}
+      style={style}
       resizeMode="contain"
     />
   );
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
-// Pulsing placeholder bar for loading states.
+// Animations removed: Pulsing disabled, static placeholder bar.
 export function Skeleton({
   w = '100%',
   h = 16,
@@ -92,33 +50,14 @@ export function Skeleton({
   h?: number;
   r?: number;
 }) {
-  const anim = useRef(new Animated.Value(0.35)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(anim, {
-          toValue: 1,
-          duration: 750,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim, {
-          toValue: 0.35,
-          duration: 750,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, []);
-
   return (
-    <Animated.View
+    <View
       style={{
         width: w,
         height: h,
         borderRadius: r,
         backgroundColor: C.mint,
-        opacity: anim,
+        opacity: 0.5,
         marginBottom: 8,
       }}
     />

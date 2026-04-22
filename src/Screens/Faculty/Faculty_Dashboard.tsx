@@ -12,13 +12,21 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
-import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { BookOpenIcon, HistoryIcon, TrophyIcon, UsersIcon } from '../../Components/GlobalUse/Icons';
+import { 
+  BookOpenIcon, 
+  HistoryIcon, 
+  TrophyIcon, 
+  UsersIcon, 
+  BriefcaseIcon,
+  ClipboardListIcon,
+  BurgerIcon
+} from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import { AssessmentController } from '../../Controller/AssessmentController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
+import { getUserProfile } from '../../Controller/AuthenticationController';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
@@ -41,12 +49,10 @@ export default function FacultyDashboard() {
     avgAccuracy: number;
   }>({ classCount: 0, studentCount: 0, reportCount: 0, avgAccuracy: 0 });
   const [classes, setClasses] = useState<ClassDocument[]>([]);
-  const [selectedClassId, setSelectedClassId] = useState<string>('all');
-  const [showClassPicker, setShowClassPicker] = useState<boolean>(false);
   // ========================================================================
   // HOOKS
   // ========================================================================
-  const { handleLogout } = useNavigationHelper();
+  const { handleLogout, handleTabNavigation } = useNavigationHelper();
   const auth = getAuth();
   const route = useRoute();
   const { getNumberOfClasses, getNumbersOfAllStudents, getOverallAverageWPMandAccuracy } =
@@ -64,7 +70,6 @@ export default function FacultyDashboard() {
 
       // Fetch Profile for name
       try {
-        const { getUserProfile } = require('../../Controller/AuthenticationController');
         const profile = await getUserProfile(currentUser.uid);
         if (profile?.firstName) {
           setUserName(profile.firstName);
@@ -73,16 +78,17 @@ export default function FacultyDashboard() {
         console.log('Name fetch error:', err);
       }
 
-      const [classCount, studentCount, averages] = await Promise.all([
+      const [classCount, studentCount, averages, assessmentList] = await Promise.all([
         getNumberOfClasses(currentUser.uid),
         getNumbersOfAllStudents(currentUser.uid),
         getOverallAverageWPMandAccuracy(currentUser.uid, { type: 'overall' }),
+        AssessmentController.getFacultyActivities()
       ]);
 
       setStats({
         classCount,
         studentCount,
-        reportCount: averages.totalReports,
+        reportCount: assessmentList.length,
         avgAccuracy: averages.averageAccuracy,
       });
 
@@ -155,14 +161,14 @@ export default function FacultyDashboard() {
           <Text style={S.sumLabel}>Mag-aaral</Text>
         </View>
         <View style={S.sumCard}>
-          <HistoryIcon size={20} color={F.primary} />
+          <ClipboardListIcon size={20} color={F.primary} />
           <Text style={S.sumVal}>{stats.reportCount}</Text>
-          <Text style={S.sumLabel}>Mga Ulat</Text>
+          <Text style={S.sumLabel}>Mga Pagsusulit</Text>
         </View>
         <View style={S.sumCard}>
           <TrophyIcon size={20} color={F.primary} />
           <Text style={S.sumVal}>{stats.avgAccuracy.toFixed(0)}%</Text>
-          <Text style={S.sumLabel}>Mastery</Text>
+          <Text style={S.sumLabel}>Galing</Text>
         </View>
       </View>
     );
@@ -193,14 +199,12 @@ export default function FacultyDashboard() {
           </View>
 
           <View style={S.headerRow}>
-            <TouchableOpacity style={S.menuBtn} onPress={toggleMenu}>
-              <View style={S.menuDotLine} />
-              <View style={[S.menuDotLine, { width: 14 }]} />
-              <View style={S.menuDotLine} />
+            <TouchableOpacity style={S.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
+              <BurgerIcon size={24} color={F.ink} />
             </TouchableOpacity>
             <Image
               style={S.logo}
-              source={require('../../../assets/images/cisckids.png')}
+              source={require('../../../assets/images/cisckids copy.png')}
               resizeMode="contain"
             />
             <View style={{ width: 44 }} />
@@ -230,58 +234,31 @@ export default function FacultyDashboard() {
               {renderStatsSection()}
             </View>
 
-            <View style={{ marginBottom: 3 }}>
-              <Text style={S.sectionLabel}>Class</Text>
-              <ClassReadingStatus facultyId={auth.currentUser?.uid} />
-            </View>
+            <View style={{ marginBottom: 30 }}>
+              <Text style={S.sectionLabel}>Mabilisang Aksyon</Text>
+              <View style={S.quickActions}>
+                 <TouchableOpacity 
+                   style={[S.actionCard, { backgroundColor: F.white }]} 
+                   onPress={() => handleTabNavigation('MyClass' as any)}
+                 >
+                   <View style={[S.actionIconBox, { backgroundColor: F.primary + '15' }]}>
+                     <BriefcaseIcon size={24} color={F.primary} />
+                   </View>
+                   <Text style={S.actionLabel}>Aking Klase</Text>
+                   <Text style={S.actionSub}>Pamahalaan ang mga mag-aaral</Text>
+                 </TouchableOpacity>
 
-            <View style={{ marginBottom: 24 }}>
-              <TouchableOpacity
-                style={S.classSelectBtn}
-                onPress={() => setShowClassPicker(!showClassPicker)}
-              >
-                <View style={S.classSelectLeft}>
-                  <View style={S.filterCircle}>
-                    <UsersIcon size={16} color={F.primary} />
-                  </View>
-                  <Text style={S.classSelectText}>
-                    {selectedClassId === 'all'
-                      ? 'Mga Klase'
-                      : classes.find(c => c.classId === selectedClassId)?.className || 'Select Class'}
-                  </Text>
-                </View>
-                <Text style={S.chevron}>{showClassPicker ? '▲' : '▼'}</Text>
-              </TouchableOpacity>
-
-              {showClassPicker && (
-                <View style={S.classOptions}>
-                  <TouchableOpacity
-                    style={S.optionItem}
-                    onPress={() => { setSelectedClassId('all'); setShowClassPicker(false); }}
-                  >
-                    <Text style={[S.optionText, selectedClassId === 'all' && S.optionTextActive]}>Mga Klase</Text>
-                  </TouchableOpacity>
-                  {classes.map(c => (
-                    <TouchableOpacity
-                      key={c.classId}
-                      style={S.optionItem}
-                      onPress={() => { setSelectedClassId(c.classId); setShowClassPicker(false); }}
-                    >
-                      <Text style={[S.optionText, selectedClassId === c.classId && S.optionTextActive]}>
-                        {c.className} ({c.classCode})
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            <View style={{ marginBottom: 20 }}>
-              <Text style={S.sectionLabel}>Error Analytics</Text>
-              <MiscueAnalytics
-                facultyId={auth.currentUser?.uid}
-                classId={selectedClassId === 'all' ? undefined : selectedClassId}
-              />
+                 <TouchableOpacity 
+                   style={[S.actionCard, { backgroundColor: F.white }]} 
+                   onPress={() => handleTabNavigation('FacultyAssessments' as any)}
+                 >
+                   <View style={[S.actionIconBox, { backgroundColor: F.primary + '15' }]}>
+                     <ClipboardListIcon size={24} color={F.primary} />
+                   </View>
+                   <Text style={S.actionLabel}>Pagsusulit</Text>
+                   <Text style={S.actionSub}>Gumawa at tingnan ang mga pagsusulit</Text>
+                 </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -304,12 +281,12 @@ const S = StyleSheet.create({
   logo: { width: 100, height: 90 },
   menuBtn: {
     width: 44, height: 44, borderRadius: 14, backgroundColor: F.white,
-    justifyContent: 'center', alignItems: 'center', gap: 4, ...Shadows.subtle
+    justifyContent: 'center', alignItems: 'center', ...Shadows.subtle
   },
-  menuDotLine: { width: 22, height: 2.5, borderRadius: 2, backgroundColor: F.ink },
+  menuDotLine: { width: 20, height: 2.5, backgroundColor: F.ink, borderRadius: 2, marginVertical: 2 },
 
   heroCard: {
-    backgroundColor: F.primary, borderRadius: Radii.xl,
+    backgroundColor: F.primaryDeep, borderRadius: Radii.xl,
     padding: 24, marginBottom: 24, flexDirection: 'row',
     alignItems: 'center', justifyContent: 'space-between',
     ...Shadows.cardLift
@@ -344,4 +321,17 @@ const S = StyleSheet.create({
   optionItem: { padding: 12, borderRadius: 8 },
   optionText: { fontSize: 14, fontWeight: '600', color: F.slate },
   optionTextActive: { color: F.primary, fontWeight: '800' },
+
+  quickActions: { flexDirection: 'row', gap: 12 },
+  actionCard: {
+    flex: 1, borderRadius: Radii.lg, padding: 20,
+    alignItems: 'center', justifyContent: 'center',
+    ...Shadows.card, borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)'
+  },
+  actionIconBox: {
+    width: 54, height: 54, borderRadius: 18,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 14
+  },
+  actionLabel: { fontSize: 15, fontWeight: '900', color: F.ink, marginBottom: 4 },
+  actionSub: { fontSize: 10, color: F.slate, fontWeight: '600', textAlign: 'center', lineHeight: 14 },
 });

@@ -34,6 +34,17 @@ import MyArchive from './src/Screens/Faculty/Faculty_MyArchive';
 import MyStudents from './src/Screens/Faculty/Faculty_MyStudents';
 import StudentViewProfile from './src/Screens/Faculty/Student_View_Profile';
 
+// ADMIN PAGE
+import AdminDashboard from './src/Screens/Admin/AdminDashboard';
+import UserManagement from './src/Screens/Admin/UserManagement';
+
+// ASSESSMENT PAGE
+import FacultyAssessments from './src/Screens/Faculty/Faculty_Assessments';
+import FacultyCreateAssessment from './src/Screens/Faculty/Faculty_CreateAssessment';
+import StudentAssessments from './src/Screens/Student/Student_Assessments';
+import StudentAssessmentActivity from './src/Screens/Student/Student_AssessmentActivity';
+import StudentAssessmentReview from './src/Screens/Student/Student_AssessmentReview';
+
 const Stack = createNativeStackNavigator();
 
 function App() {
@@ -41,7 +52,7 @@ function App() {
   <ApplicationProvider {...eva} theme={eva.light}>
     <SafeAreaProvider>
         <NavigationContainer>
-          <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+          <Stack.Navigator initialRouteName="Loading" screenOptions={{ headerShown: false, animation: 'none' }}>
 
             {/* SIGN IN PAGES */}
             <Stack.Screen name="Login" component={LoginScreen} />
@@ -59,6 +70,9 @@ function App() {
             <Stack.Screen name="PassageSelection" component={PageSelectionScreen} />
             <Stack.Screen name="ReadingActivity" component={ReadingActivityScreenPage} />
             <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
+            <Stack.Screen name="StudentAssessments" component={StudentAssessments} />
+            <Stack.Screen name="StudentAssessmentActivity" component={StudentAssessmentActivity} />
+            <Stack.Screen name="StudentAssessmentReview" component={StudentAssessmentReview} />
 
             {/* FACULTY PAGES */}
               <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
@@ -67,11 +81,13 @@ function App() {
               <Stack.Screen name="Archive" component={MyArchive} />
               <Stack.Screen name="MyStudents" component={MyStudents} />
               <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
+              <Stack.Screen name="FacultyAssessments" component={FacultyAssessments} />
+              <Stack.Screen name="FacultyCreateAssessment" component={FacultyCreateAssessment} />
               {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}
 
             {/* ADMIN PAGES */}
-
-            
+            <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
+            <Stack.Screen name="UserManagement" component={UserManagement} />
 
             
           </Stack.Navigator>

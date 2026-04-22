@@ -17,7 +17,7 @@ const selection = StyleSheet.create({
     fontSize: 32,
     fontFamily: 'Satoshi-Bold',
     textAlign: 'center',
-    color: '#1b2e23',
+    color: '#1c2833',
     marginVertical: 12,
   },
   sublabel: {
@@ -37,7 +37,7 @@ const selection = StyleSheet.create({
   beginText: {
     fontFamily: 'Satoshi-Black',
     fontSize: 20,
-    color: '#2CA96A',
+    color: '#3498db',
   },
   textContainer: {
     flexDirection: 'column',
@@ -137,7 +137,7 @@ const selection = StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: '#2CA96A',
+    backgroundColor: '#3498db',
     shadowColor: '#4F46E5',
     elevation: 3,
   },
@@ -184,7 +184,7 @@ const selection = StyleSheet.create({
   alphabetLetter: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2CA96A',
+    color: '#3498db',
   },
   alphabetWord: {
     fontSize: 10,

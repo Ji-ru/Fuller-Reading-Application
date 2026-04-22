@@ -588,22 +588,23 @@ export const getForStudentsMiscueStats = () => {
         processedStudents.add(studentId);
         totalStudents++;
 
-        const reports = await getStudentReports(studentId);
-        const studentReportsCount = reports.length;
+        // Get all reports but filter for REAL ones (exclude synthesized legacy placeholders)
+        const allReports = await getStudentReports(studentId);
+        const realReports = allReports.filter(r => !r.reportId?.startsWith('syn-'));
+        const studentReportsCount = realReports.length;
 
         if (studentReportsCount > 0) {
-          // Calculate THIS STUDENT'S averages
-          const studentTotalAccuracy = reports.reduce(
+          // Calculate THIS STUDENT'S average from real reports only
+          const studentTotalAccuracy = realReports.reduce(
             (sum, report) => sum + (report.accuracyRate || 0),
             0,
           );
-          const studentTotalWPM = reports.reduce(
+          const studentTotalWPM = realReports.reduce(
             (sum, report) => sum + (report.wordPerMin || 0),
             0,
           );
 
-          const studentAverageAccuracy =
-            studentTotalAccuracy / studentReportsCount;
+          const studentAverageAccuracy = studentTotalAccuracy / studentReportsCount;
           const studentAverageWPM = studentTotalWPM / studentReportsCount;
 
           // Add this student's averages to the overall totals
@@ -618,11 +619,7 @@ export const getForStudentsMiscueStats = () => {
       // Calculate overall averages (average of student averages)
       const averageAccuracy =
         totalStudentsWithReports > 0
-          ? parseFloat(
-              (totalStudentAverageAccuracy / totalStudentsWithReports).toFixed(
-                2,
-              ),
-            )
+          ? Math.round(totalStudentAverageAccuracy / totalStudentsWithReports)
           : 0;
 
       const averageWPM =

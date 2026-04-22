@@ -3,35 +3,34 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Animated,
   Dimensions,
+  TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native';
+import auth from '@react-native-firebase/auth';
 import { 
   LayoutIcon, 
-  BriefcaseIcon, 
-  ArchiveIcon, 
+  UsersIcon, 
   UserProfileIcon, 
   LogoutIcon, 
-  ChevronRightIcon,
-  ClipboardListIcon
-} from '../../GlobalUse/Icons';
-import { FacultyColors as F, Radii, Shadows } from '../../../Utilities/Theme';
-import { useNavigationHelper } from '../../../Controller/NavigationController';
-import { getAuth } from '@react-native-firebase/auth';
+  ChevronRightIcon 
+} from '../GlobalUse/Icons';
+import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
+import { useNavigationHelper } from '../../Controller/NavigationController';
+import { getUserProfile } from '../../Controller/AuthenticationController';
 
 const { width } = Dimensions.get('window');
 const SIDEBAR_WIDTH = width * 0.75;
 
-interface FacultySideMenuProps {
+interface AdminSideMenuProps {
   visible: boolean;
   onClose: () => void;
   onLogout: () => void;
   currentRoute?: string;
 }
 
-const FacultySideMenu: React.FC<FacultySideMenuProps> = ({ 
+const AdminSideMenu: React.FC<AdminSideMenuProps> = ({ 
   visible, 
   onClose, 
   onLogout,
@@ -39,27 +38,22 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
 }) => {
   const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
-  const { handleTabNavigation } = useNavigationHelper();
-  const auth = getAuth();
-  const user = auth.currentUser;
-  const [userName, setUserName] = React.useState('Faculty User');
-  const [initial, setInitial] = React.useState('F');
+  const { handleTabNavigation, handleNavigateStep } = useNavigationHelper();
+  
+  const currentUser = auth().currentUser;
+  const [userName, setUserName] = React.useState('Admin User');
+  const [initial, setInitial] = React.useState('A');
+  const [shouldRender, setShouldRender] = React.useState(visible);
 
   React.useEffect(() => {
     const fetchName = async () => {
-      if (user) {
+      if (currentUser) {
         try {
-          if (user.displayName) {
-             setUserName(user.displayName);
-             setInitial(user.displayName.charAt(0).toUpperCase());
-          } else {
-             const { getUserProfile } = require('../../../Controller/AuthenticationController');
-             const profile = await getUserProfile(user.uid);
-             if (profile) {
-                const fullName = `${profile.firstName} ${profile.lastName}`;
-                setUserName(fullName);
-                setInitial(profile.firstName.charAt(0).toUpperCase());
-             }
+          const profile = await getUserProfile(currentUser.uid);
+          if (profile && profile.firstName) {
+            const fullName = `${profile.firstName} ${profile.lastName || ''}`;
+            setUserName(fullName.trim());
+            setInitial(profile.firstName.charAt(0).toUpperCase());
           }
         } catch (e) {
           console.warn('Sidebar name fetch error:', e);
@@ -67,9 +61,7 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
       }
     };
     fetchName();
-  }, [user]);
-
-  const [shouldRender, setShouldRender] = React.useState(visible);
+  }, [currentUser]);
 
   React.useEffect(() => {
     if (visible) {
@@ -103,23 +95,19 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
   }, [visible]);
 
   const navItems = [
-    { id: 'FacultyDashboard', label: 'Dashboard', icon: LayoutIcon },
-    { id: 'MyClass', label: 'Mga Klase', icon: BriefcaseIcon },
-    { id: 'FacultyAssessments', label: 'Pagsusulit', icon: ClipboardListIcon },
-    { id: 'Archive', label: 'Archive', icon: ArchiveIcon },
-    { id: 'FacultyProfile', label: 'Aking Profile', icon: UserProfileIcon },
+    { id: 'AdminDashboard', label: 'Dashboard', icon: LayoutIcon },
+    { id: 'UserManagement', label: 'Pamamahala ng User', icon: UsersIcon },
   ];
 
   const handleNavigate = (route: string) => {
     onClose();
-    handleTabNavigation(route as any);
+    handleNavigateStep(route as any);
   };
 
   if (!shouldRender) return null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'auto' : 'none'}>
-      {/* Backdrop */}
       <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View 
           style={[
@@ -129,7 +117,6 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
         />
       </TouchableWithoutFeedback>
 
-      {/* Sidebar Content */}
       <Animated.View 
         style={[
           styles.sidebar, 
@@ -142,7 +129,7 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
           </TouchableOpacity>
           <View style={styles.userInfo}>
             <Text style={styles.userName} numberOfLines={1}>{userName}</Text>
-            <Text style={styles.userRole}>Faculty Member</Text>
+            <Text style={styles.userRole}>Administrator ng System</Text>
           </View>
         </View>
 
@@ -176,7 +163,7 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
             </View>
             <Text style={styles.logoutLabel}>Maglog-out</Text>
           </TouchableOpacity>
-          <Text style={styles.versionText}>v1.0.4 Faculty Panel</Text>
+          <Text style={styles.versionText}>v1.0.4 Admin Panel</Text>
         </View>
       </Animated.View>
     </View>
@@ -223,7 +210,7 @@ const styles = StyleSheet.create({
   navItemActive: { backgroundColor: F.white, ...Shadows.subtle },
   iconBox: {
     width: 40, height: 40, borderRadius: 12,
-    backgroundColor: F.primary + '15', justifyContent: 'center',
+    backgroundColor: '#E8F5F5', justifyContent: 'center',
     alignItems: 'center', marginRight: 14
   },
   iconBoxActive: { backgroundColor: F.primary },
@@ -241,11 +228,11 @@ const styles = StyleSheet.create({
   },
   logoutIconBox: {
     width: 36, height: 36, borderRadius: 10,
-    backgroundColor: F.red + '15', justifyContent: 'center',
+    backgroundColor: '#FFE5E5', justifyContent: 'center',
     alignItems: 'center', marginRight: 12
   },
   logoutLabel: { fontSize: 15, fontWeight: '700', color: F.red },
   versionText: { fontSize: 11, color: F.slate, textAlign: 'center', opacity: 0.5 }
 });
 
-export default FacultySideMenu;
+export default AdminSideMenu;

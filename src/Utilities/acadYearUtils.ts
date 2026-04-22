@@ -39,23 +39,9 @@ export const getCurrentAcademicYear = (): string => {
    * Default: 2 years back, current year, 2 years forward
    */
   export const getAcademicYearOptions = (): string[] => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
+    const currentSY = getCurrentAcademicYear();
+    const [startYear] = currentSY.split('-').map(Number);
     const options: string[] = [];
-    
-    // Generate years
-    for (let i = 1; i >= 0; i--) {
-      const startYear = currentYear - i - (currentMonth < 6 ? 0 : 1);
-      const endYear = startYear + 1;
-      options.push(`${startYear}-${endYear}`);
-    }
-    
-    // Future years
-    for (let i = 1; i <= 1; i++) {
-      const startYear = currentYear + i - (currentMonth < 6 ? 1 : 0);
-      const endYear = startYear + 1;
-      options.push(`${startYear}-${endYear}`);
-    }
     
     return options.reverse(); // Most recent first
   };

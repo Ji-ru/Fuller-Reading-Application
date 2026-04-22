@@ -113,7 +113,39 @@ export interface MiscueReportDocument {
 
   // Creation from Firestore Timestamp
   timestamp: any;
+}/**
+ * ASSESSMENT ACTIVITY INTERFACE
+ */
+export interface ActivityDocument {
+  activityId: string;
+  title: string;
+  aralinIndex: number;
+  items: {
+    type: 'alphabet' | 'word' | 'passage';
+    contentId: string; // the letter, word text, or passage ID
+  }[];
+  cardLimit: number;
+  facultyId: string;
+  classCode: string;
+  createdAt: any;
+  isActive: boolean;
 }
 
-
-
+/**
+ * ACTIVITY RESULT INTERFACE
+ */
+export interface ActivityResultDocument {
+  resultId: string;
+  activityId: string;
+  studentId: string;
+  score: number; // Count of correct cards
+  totalItems: number; // cardLimit
+  percentage: number;
+  completedAt: any;
+  responses?: {
+    contentId: string;
+    isCorrect: boolean;
+    type: 'alphabet' | 'word' | 'passage';
+    miscues?: any[];
+  }[];
+}

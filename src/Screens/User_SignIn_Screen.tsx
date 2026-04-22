@@ -1,5 +1,6 @@
 // React Dependencies
 import React, { useState } from 'react';
+import auth from '@react-native-firebase/auth';
 import {
   View,
   Text,
@@ -12,8 +13,9 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Keyboard,
+  Platform,
 } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Video from 'react-native-video';
 
 // Styles
@@ -22,9 +24,13 @@ import bubbles from '../UI_Designs/BubblesDesign';
 
 // Controllers (Hooks)
 import { useNavigationHelper } from '../Controller/NavigationController';
-import { loginUser } from '../Controller/AuthenticationController';
+import { loginUser, sendPasswordReset } from '../Controller/AuthenticationController';
+import { EyeIcon, EyeOffIcon } from '../Components/GlobalUse/Icons';
+import ConfirmationModal from '../Components/GlobalUse/ConfirmationModal';
+
 
 export default function LoginScreen() {
+  const { handleNextStep, handleReplaceStep } = useNavigationHelper();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,12 +42,29 @@ export default function LoginScreen() {
     email: false,
     password: false,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState({
+    title: '',
+    message: '',
+    type: 'primary' as 'primary' | 'danger' | 'info',
+    onConfirm: () => setModalVisible(false),
+  });
 
-  /**
-   * Handle navigation for the next page (either sign-in or sign-up)
-   * Used in Register Section () and Sign-in Section
-   */
-  const { handleNextStep, handleReplaceStep } = useNavigationHelper();
+
+  // Check if user is already logged in on mount
+  React.useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged((user) => {
+      if (user && !authChecked) {
+        setAuthChecked(true);
+        handleReplaceStep('Loading');
+      }
+    });
+    return unsubscribe;
+  }, [authChecked]);
 
   // Dismiss keyboard when tapping outside inputs
   const dismissKeyboard = () => {
@@ -54,12 +77,12 @@ export default function LoginScreen() {
 
     switch (field) {
       case 'email':
-        if (!value.trim()) error = 'Email is required';
+        if (!value.trim()) error = 'Kinakailangan';
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
           error = 'Invalid email';
         break;
       case 'password':
-        if (!value.trim()) error = 'Password is required';
+        if (!value.trim()) error = 'Kinakailangan';
         break;
     }
     return error;
@@ -138,24 +161,64 @@ export default function LoginScreen() {
       let errorMessage = 'Login failed. Please try again.';
 
       if (error.message.includes('user-not-found')) {
-        errorMessage = 'No account found with this email.';
+        errorMessage = 'Walang nahanap na account gamit ang email na ito.';
       } else if (error.message.includes('wrong-password')) {
-        errorMessage = 'Incorrect password. Please try again.';
+        errorMessage = 'Mali ang password. Pakisubukang muli.';
       } else if (error.message.includes('too-many-requests')) {
-        errorMessage = 'Too many failed attempts. Please try again later.';
+        errorMessage = 'Masyadong maraming failed attempts. Pakisubukan muli mamaya.';
       } else if (error.message.includes('user-disabled')) {
-        errorMessage = 'This account has been disabled.';
+        errorMessage = 'Ang account na ito ay na-disable.';
       } else if (error.message.includes('invalid-email')) {
-        errorMessage = 'Invalid email address.';
+        errorMessage = 'Hindi wasto ang format ng email address.';
+      } else if (error.message.includes('Invalid email or password') || error.message.includes('invalid-credential')) {
+        errorMessage = 'Walang account na tumutugma sa mga credentials na ito. Pakisuri ang email at password, o gumawa ng account kung ikaw ay bago dito.';
       } else {
         errorMessage = error.message || 'Email and Password did not match.';
       }
 
-      Alert.alert('Login Failed', errorMessage);
+      showAlert('Login Failed', errorMessage, 'danger');
     } finally {
       setLoading(false);
     }
   };
+
+  const showAlert = (title: string, message: string, type: 'primary' | 'danger' | 'info' = 'primary') => {
+    setModalContent({
+      title,
+      message,
+      type,
+      onConfirm: () => setModalVisible(false),
+    });
+    setModalVisible(true);
+  };
+
+  const handleForgotPassword = async () => {
+    dismissKeyboard();
+    
+    if (!email.trim()) {
+      showAlert(
+        'Kinakailangan ang Email',
+        'Pakilagay ang iyong email address para ma-reset ang iyong password.',
+        'info'
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await sendPasswordReset(email);
+      showAlert(
+        'Tagumpay',
+        'Ang link para sa pag-reset ng password ay naipadala na sa iyong email.',
+        'primary'
+      );
+    } catch (error: any) {
+      showAlert('May Problema', error.message, 'danger');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Helper to get input style based on error state
   const getInputStyle = (field: 'email' | 'password') => {
@@ -168,22 +231,22 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaProvider style={login.safeAreaContainer}>
-      <TouchableWithoutFeedback>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior="height"
-          keyboardVerticalOffset={50}
+    <SafeAreaView style={login.safeAreaContainer}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <ScrollView
-            contentContainerStyle={{ flexGrow: 1 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={login.container}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={[login.container, { justifyContent: 'flex-start', paddingTop: 20 }]}>
               <Video
                 style={login.video}
-                source={require('../../assets/videos/cisc_logo_animated.mp4')}
+                source={require('../../assets/videos/cisc_logo_animated (4).mp4')}
                 repeat={true}
               />
               {/* <Image
@@ -201,7 +264,7 @@ export default function LoginScreen() {
               </Text>
               <TextInput
                 style={getInputStyle('email')}
-                placeholder="example@gmail.com"
+                placeholder="cisckids@gmail.com"
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={handleEmailChange}
@@ -220,28 +283,38 @@ export default function LoginScreen() {
                   <Text style={login.errorText}>{errors.password}</Text>
                 ) : null}
               </Text>
-              <TextInput
-                style={getInputStyle('password')}
-                secureTextEntry
-                placeholder="**********"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={handlePasswordChange}
-                onBlur={() => handleBlur('password')}
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-              />
+              <View style={login.passwordContainer}>
+                <TextInput
+                  style={[getInputStyle('password'), { flex: 1, marginBottom: 0 }]}
+                  secureTextEntry={!showPassword}
+                  placeholder="∗∗∗∗∗∗∗∗∗∗∗"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  onBlur={() => handleBlur('password')}
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
+                />
+                <TouchableOpacity 
+                  style={login.eyeIconContainer} 
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOffIcon size={20} color="#666" />
+                  ) : (
+                    <EyeIcon size={20} color="#666" />
+                  )}
+                </TouchableOpacity>
+              </View>
 
               {/* FORGOT PASSWORD */}
               <TouchableOpacity
                 style={login.forgotPassButton}
                 disabled={loading}
-                onPress={() => {
-                  dismissKeyboard();
-                }}
+                onPress={handleForgotPassword}
               >
-                <Text style={login.forgotpass}>Forgot Password?</Text>
+                <Text style={login.forgotpass}>Nakalimutan ang password?</Text>
               </TouchableOpacity>
 
               {/* SIGN IN BUTTON */}
@@ -266,7 +339,7 @@ export default function LoginScreen() {
                 <View style={login.notRegisteredAlignment}>
                   <View style={login.leftLine} />
                   <Text style={login.notRegisteredText}>
-                    Not Registered Yet?
+                    Wala ka pang account?
                   </Text>
                   <View style={login.rightLine} />
                 </View>
@@ -280,14 +353,26 @@ export default function LoginScreen() {
                     activeOpacity={0.7}
                     disabled={loading}
                   >
-                    <Text style={login.registerText}>Sign Up with Email</Text>
+                    <Text style={login.registerText}>Mag-sign up gamit ang email</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
-    </SafeAreaProvider>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      <ConfirmationModal
+        visible={modalVisible}
+        title={modalContent.title}
+        message={modalContent.message}
+        type={modalContent.type}
+        onConfirm={modalContent.onConfirm}
+        onCancel={() => setModalVisible(false)}
+        confirmText="Okay"
+        cancelText="Bumalik"
+      />
+    </SafeAreaView>
   );
 }
+

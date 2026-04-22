@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 
 const signup = StyleSheet.create({
   container: {
-    backgroundColor: '#f0faf4',
+    backgroundColor: '#ebf5fb',
     padding: 10,
     flex: 1,
   },
@@ -16,14 +16,14 @@ const signup = StyleSheet.create({
   label: {
     fontSize: 32,
     fontFamily: 'Satoshi-Bold',
-    color: '#1b2e23',
+    color: '#1c2833',
     textAlign: 'center',
     marginBottom: 4,
   },
   subLabel: {
     fontSize: 18,
     fontFamily: 'Satoshi-Bold',
-    color: '#1b2e23',
+    color: '#1c2833',
     textAlign: 'center',
     marginBottom: 4,
     marginTop: 8,
@@ -41,14 +41,14 @@ const signup = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#154360',
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2.5,
-    borderColor: '#f0faf4',
+    borderColor: '#ebf5fb',
   },
   cameraIcon: {
     width: 16,
@@ -74,15 +74,15 @@ const signup = StyleSheet.create({
   stepLine: {
     width: 36,
     height: 2,
-    backgroundColor: '#c8e6d4',
+    backgroundColor: '#cde3f5',
     marginHorizontal: 6,
     borderRadius: 1,
   },
   activateStep: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: '#3498db',
   },
   inactivateStep: {
-    backgroundColor: '#d4f5e2',
+    backgroundColor: '#d6eaf8',
   },
 
   //    FORMS
@@ -91,9 +91,9 @@ const signup = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Satoshi-Bold',
     marginHorizontal: 20,
-    color: '#1b2e23',
+    color: '#1c2833',
     marginBottom: 4,
-    marginTop: 6,
+    marginTop: 10,
     letterSpacing: 0.2,
   },
   textInputForm: {
@@ -107,9 +107,9 @@ const signup = StyleSheet.create({
     alignSelf: 'center',
     fontFamily: 'Satoshi-Medium',
     fontSize: 15,
-    color: '#1b2e23',
+    color: '#1c2833',
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
   },
   dateText: {
     textAlign: 'left',
@@ -117,7 +117,7 @@ const signup = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Satoshi-Regular',
     marginHorizontal: 16,
-    color: '#1b2e23',
+    color: '#1c2833',
   },
   dateInput: {
     flexDirection: 'row',
@@ -130,7 +130,7 @@ const signup = StyleSheet.create({
     justifyContent: 'space-between',
     alignSelf: 'center',
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
     marginBottom: 8,
   },
   icon: {
@@ -138,13 +138,13 @@ const signup = StyleSheet.create({
     maxHeight: 24,
     alignItems: 'flex-end',
     marginRight: 16,
-    tintColor: '#8fafa0',
+    tintColor: '#859dab',
   },
   number: {
     fontWeight: 'bold',
     fontSize: 12,
     fontFamily: 'Satoshi-Medium',
-    color: '#1b2e23',
+    color: '#1c2833',
   },
 
   // Select component (Dropdown)
@@ -158,7 +158,7 @@ const signup = StyleSheet.create({
     justifyContent: 'flex-end',
     alignSelf: 'center',
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
   },
 
   dropdownArrowicon: {
@@ -174,13 +174,13 @@ const signup = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#d6eaf8',
   },
 
   // COMPLETE SIGN UP PAGE
   completeSignUpContainer: {
     flex: 1,
-    backgroundColor: '#f0faf4',
+    backgroundColor: '#ebf5fb',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -194,7 +194,7 @@ const signup = StyleSheet.create({
     maxHeight: 412,
   },
   completeTitle: {
-    color: '#1a7a45',
+    color: '#154360',
     fontFamily: 'Satoshi-Bold',
     fontSize: 32,
     width: 400,
@@ -207,11 +207,11 @@ const signup = StyleSheet.create({
     paddingTop: 40,
     fontSize: 15,
     fontFamily: 'Satoshi-Regular',
-    color: '#4a6358',
+    color: '#2c3e50',
     lineHeight: 22,
   },
   completeNextButton: {
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#154360',
     borderRadius: 14,
     width: '90%',
     maxWidth: 360,
@@ -221,7 +221,7 @@ const signup = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 10,
     marginTop: 24,
-    shadowColor: '#1a7a45',
+    shadowColor: '#154360',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -255,7 +255,7 @@ const signup = StyleSheet.create({
     zIndex: 10, // Make sure text is above animations
   },
   successText: {
-    color: '#4CAF50',
+    color: '#3498db',
     fontSize: 18,
     fontWeight: 'bold',
   },

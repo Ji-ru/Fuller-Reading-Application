@@ -4,10 +4,11 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { useRoute } from '@react-navigation/native';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
-import { ArchiveIcon, HistoryIcon, BookOpenIcon, RefreshIcon } from '../../Components/GlobalUse/Icons';
+import { BurgerIcon, ArchiveIcon, HistoryIcon, BookOpenIcon, RefreshIcon } from '../../Components/GlobalUse/Icons';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { getAuth } from '@react-native-firebase/auth';
@@ -44,26 +45,25 @@ export default function MyArchive() {
   const confirmLogout = async () => { setLogoutVisible(false); await handleLogout(); };
   const cancelLogout = () => setLogoutVisible(false);
 
+  const [restoreModalVisible, setRestoreModalVisible] = useState(false);
+  const [classToRestore, setClassToRestore] = useState<ClassDocument | null>(null);
+
   const handleRestore = (classItem: ClassDocument) => {
-     Alert.alert(
-        'I-restore ang Klase',
-        `Gusto mo bang ibalik ang "${classItem.className}" sa iyong aktif na mga klase?`,
-        [
-           { text: 'Hindi', style: 'cancel' },
-           { 
-              text: 'Oo, I-restore', 
-              onPress: async () => {
-                 try {
-                    await getFacultyClasses_Student.archiveClass(classItem.classId, false);
-                    setClasses(prev => prev.filter(c => c.classId !== classItem.classId));
-                    Alert.alert('Success', 'Ang klase ay naibalik na.');
-                 } catch (e) {
-                    Alert.alert('Error', 'Hindi ma-restore ang klase.');
-                 }
-              }
-           }
-        ]
-     );
+     setClassToRestore(classItem);
+     setRestoreModalVisible(true);
+  };
+
+  const confirmRestore = async () => {
+    if (classToRestore) {
+      try {
+        await getFacultyClasses_Student.archiveClass(classToRestore.classId, false);
+        setClasses(prev => prev.filter(c => c.classId !== classToRestore.classId));
+        setRestoreModalVisible(false);
+        setClassToRestore(null);
+      } catch (e) {
+        console.error('Restore error:', e);
+      }
+    }
   };
 
   const renderClassItem = ({ item }: { item: ClassDocument }) => (
@@ -95,14 +95,12 @@ export default function MyArchive() {
 
         {/* HEADER */}
         <View style={S.headerRow}>
-          <TouchableOpacity style={S.menuBtn} onPress={toggleMenu}>
-            <View style={S.menuDotLine} />
-            <View style={[S.menuDotLine, { width: 14 }]} />
-            <View style={S.menuDotLine} />
+          <TouchableOpacity style={S.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
+            <BurgerIcon size={24} color={F.ink} />
           </TouchableOpacity>
           <Image
             style={S.logo}
-            source={require('../../../assets/images/cisckids.png')}
+            source={require('../../../assets/images/cisckids copy.png')}
             resizeMode="contain"
           />
           <View style={{ width: 44 }} /> 
@@ -155,6 +153,16 @@ export default function MyArchive() {
           onCancel={cancelLogout}
           onConfirm={confirmLogout}
         />
+
+        <ConfirmationModal
+          visible={restoreModalVisible}
+          type="primary"
+          title="I-restore ang Klase?"
+          message={`Gusto mo bang ibalik ang "${classToRestore?.className}" sa iyong aktif na mga klase?`}
+          confirmText="I-restore"
+          onCancel={() => setRestoreModalVisible(false)}
+          onConfirm={confirmRestore}
+        />
       </View>
     </SafeAreaView>
   );
@@ -170,9 +178,8 @@ const S = StyleSheet.create({
   logo: { width: 100, height: 90 },
   menuBtn: {
     width: 44, height: 44, borderRadius: 14, backgroundColor: F.white,
-    justifyContent: 'center', alignItems: 'center', gap: 4, ...Shadows.subtle
+    justifyContent: 'center', alignItems: 'center', ...Shadows.subtle
   },
-  menuDotLine: { width: 22, height: 2.5, borderRadius: 2, backgroundColor: F.ink },
 
   content: { padding: 20 },
   heroCard: {

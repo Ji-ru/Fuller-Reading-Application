@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Modal, StyleSheet, ActivityIndicator, Fla
 import signup from '../../../UI_Designs/SignUpStyles';
 import { getAllActiveClasses } from '../../../Controller/AuthenticationController';
 import { ClassDocument } from '../../../Interfaces/dataInterfaces';
+import { getCurrentAcademicYear } from '../../../Utilities/acadYearUtils';
 
 interface ClassSelectionButtonProps {
   gradeLevel?: number;
@@ -37,26 +38,41 @@ export default function ClassSelectionButton({ gradeLevel, onSelect, transparent
   // Filter classes whenever gradeLevel changes
   useEffect(() => {
     let list: (ClassDocument & { id: string })[] = [];
-    if (gradeLevel && allClasses.length > 0) {
-      const gNum = typeof gradeLevel === 'string' ? parseInt(gradeLevel.replace(/\D/g, ''), 10) : gradeLevel;
-      list = allClasses.filter(cls => {
-        if (!cls.gradeLevel) return false;
-        const clsGrade = typeof cls.gradeLevel === 'string' ? parseInt(cls.gradeLevel.replace(/\D/g, ''), 10) : cls.gradeLevel;
-        return clsGrade === gNum;
-      });
-    } else {
-      list = allClasses;
+    const currentSY = getCurrentAcademicYear();
+
+    if (allClasses.length > 0) {
+      // 1. Filter by Academic Year first
+      const currentYearClasses = allClasses.filter(cls => cls.acadYear === currentSY);
+
+      // 2. Filter by Grade Level if provided
+      if (gradeLevel) {
+        const gNum = typeof gradeLevel === 'string' ? parseInt(gradeLevel.replace(/\D/g, ''), 10) : gradeLevel;
+        list = currentYearClasses.filter(cls => {
+          if (!cls.gradeLevel) return false;
+          const clsGrade = typeof cls.gradeLevel === 'string' ? parseInt(cls.gradeLevel.replace(/\D/g, ''), 10) : cls.gradeLevel;
+          return clsGrade === gNum;
+        });
+      } else {
+        list = currentYearClasses;
+      }
     }
+
     setFilteredClasses(list);
 
-    // Pre-select the first available class
+    // 3. Pre-select logic: Only auto-select if we don't have a valid selection for this filter
     if (list.length > 0) {
-      setSelectedClass(list[0]);
-      if (onSelect) onSelect(list[0].classCode);
-    } else {
+      const isCurrentSelectionValid = selectedClass && list.some(cls => cls.id === selectedClass.id);
+      
+      if (!isCurrentSelectionValid) {
+        const defaultClass = list[0];
+        setSelectedClass(defaultClass);
+        if (onSelect) onSelect(defaultClass.classCode);
+      }
+    } else if (selectedClass !== null) {
       setSelectedClass(null);
+      if (onSelect) onSelect('');
     }
-  }, [gradeLevel, allClasses]);
+  }, [gradeLevel, allClasses, onSelect]);
 
   const handleClassSelect = (cls: ClassDocument & { id: string }) => {
     setSelectedClass(cls);

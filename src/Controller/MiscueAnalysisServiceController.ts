@@ -9,18 +9,19 @@ export class MiscueAnalysisService {
       return [];
     }
 
-    // Strip punctuation and split into words
+    // Strip punctuation and split into words (supporting Filipino ñ)
     const targetWords = passageText
       .toLowerCase()
-      .replace(/[^\w\s]/g, '') // Remove all punctuation
+      .replace(/[^a-zñ0-9\s]/g, '') // Keep ñ and numbers
       .split(/\s+/)
-      .filter(word => word.length > 0); // Remove empty strings
+      .filter(word => word.length > 0);
 
     const userWords = spokenText
       .toLowerCase()
-      .replace(/[^\w\s]/g, '') // Remove all punctuation
+      .replace(/[^a-zñ0-9\s]/g, '') // Keep ñ and numbers
       .split(/\s+/)
-      .filter(word => word.length > 0); // Remove empty strings
+      .filter(word => word.length > 0);
+
 
     const detectedMiscues: Miscue[] = [];
 
@@ -258,9 +259,10 @@ export class MiscueAnalysisService {
 
     const targetWords = passageText
       .toLowerCase()
-      .replace(/[^\w\s]/g, '')
+      .replace(/[^a-zñ0-9\s]/g, '')
       .split(/\s+/)
       .filter(word => word.length > 0);
+
     const miscues = this.detectMiscues(passageText, spokenText);
 
     // Count all error types that affect accuracy
@@ -331,8 +333,9 @@ export class MiscueAnalysisService {
     const normalizedTarget = targetLetter.toUpperCase().trim();
     const normalizedSpoken = spokenText.toUpperCase().trim();
 
-    // Remove everything except letters
-    const cleanSpoken = normalizedSpoken.replace(/[^A-Z]/g, '');
+    // Remove everything except letters (including Ñ)
+    const cleanSpoken = normalizedSpoken.replace(/[^A-ZÑ]/g, '');
+
 
     // For alphabet phoneme: must be exactly the single letter
     // Examples that should PASS: "A", "A.", "A!", "A "
@@ -369,9 +372,10 @@ export class MiscueAnalysisService {
     const normalizedTarget = targetWord.toUpperCase().trim();
     const normalizedSpoken = spokenText.toUpperCase().trim();
 
-    // Remove non-alphabetic characters but keep spaces
-    const cleanTarget = normalizedTarget.replace(/[^A-Z\s]/g, '').trim();
-    const cleanSpoken = normalizedSpoken.replace(/[^A-Z\s]/g, '').trim();
+    // Remove non-alphabetic characters but keep spaces and Ñ
+    const cleanTarget = normalizedTarget.replace(/[^A-ZÑ\s]/g, '').trim();
+    const cleanSpoken = normalizedSpoken.replace(/[^A-ZÑ\s]/g, '').trim();
+
 
     // Split into words
     const targetWords = cleanTarget.split(/\s+/).filter(Boolean);

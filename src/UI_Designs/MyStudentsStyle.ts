@@ -153,7 +153,7 @@ const myStudents = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#3498db',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -208,7 +208,7 @@ const myStudents = StyleSheet.create({
   },
   arrowIcon: {
     fontSize: 24,
-    color: '#4CAF50',
+    color: '#3498db',
     fontFamily: 'Satoshi-Bold',
   },
 

@@ -1,22 +1,12 @@
-import { useState, useEffect } from 'react';
 import {
-  getFirestore,
-  collection,
   doc,
   getDoc,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  updateDoc,
-  serverTimestamp,
-  arrayRemove,
-  arrayUnion,
+  getFirestore
 } from '@react-native-firebase/firestore';
-import { UserDocument, MiscueReportDocument } from '../Interfaces/dataInterfaces';
-import { getFacultyClasses_Student } from './use_FacultyClasses_Students';
 import { MiscueReportController } from '../Controller/MiscueReportController';
+import { MiscueReportDocument, UserDocument } from '../Interfaces/dataInterfaces';
 import { ClassReadingHealth, StudentReadingStatus } from '../Interfaces/miscue';
+import { getFacultyClasses_Student } from './use_FacultyClasses_Students';
 const db = getFirestore(); // Get firestore instance
 
 // Default thresholds for Grades 1-3 only
@@ -28,7 +18,7 @@ const defaultThresholds = {
   // WPM norms for grades 1-3 (based on research for younger readers)
   fluentWPM: (gradeLevel: number) => {
     const norms: Record<number, number> = {
-      1: 60, // Grade 1: 60+ WPM = Fluent
+      1: 60, // : 60+ WPM = Fluent
       2: 90, // Grade 2: 90+ WPM = Fluent
       3: 110, // Grade 3: 110+ WPM = Fluent
     };

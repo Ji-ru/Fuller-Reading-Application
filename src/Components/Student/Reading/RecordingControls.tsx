@@ -67,7 +67,12 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
 
   return (
     <View style={styles.proMicWrapper}>
-       {/* Instruction text always takes space to prevent jumping */}
+      <View style={styles.labelContainer}>
+        <Text style={isRecording ? styles.listeningText : styles.hintText}>
+          {isRecording ? 'Pindutin para huminto' : 'Pindutin para mag-record'}
+        </Text>
+      </View>
+
       <View style={readingStyles.pulseContainer}>
         {isRecording && (
           <>
@@ -92,7 +97,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={isRecording ? ['#e74c3c', '#c0392b'] : ['#1a7a45', '#2ecc71']}
+            colors={isRecording ? ['#eb5c6c', '#c0392b'] : ['#3d71d9', '#2a50a1']}
             style={isRecording ? readingStyles.microphoneRecording : readingStyles.microphone}
           >
             <View style={styles.micInnerGlow}>
@@ -130,7 +135,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
         </TouchableOpacity>
       </View>
 
-      {!hasPermission && <Text style={styles.errorText}>Microphone permission required</Text>}
+      {!hasPermission && <Text style={styles.errorText}>Kinakailangan ang pahintulot sa mikropono</Text>}
     </View>
   );
 };
@@ -149,13 +154,13 @@ const styles = StyleSheet.create({
   listeningText: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 14,
-    color: '#e74c3c',
+    color: '#eb5c6c',
     letterSpacing: 1.2,
   },
   hintText: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 13,
-    color: '#8fafa0',
+    color: '#859dab',
     opacity: 0.8,
   },
   micInnerGlow: {

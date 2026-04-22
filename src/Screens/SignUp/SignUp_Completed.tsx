@@ -33,7 +33,7 @@ export default function SignUpCompletedScreen() {
       <Text style={signup.completeTitle}>Welcome to</Text>
       <Video
         style={signup.video}
-        source={require('../../../assets/videos/cisc_logo_animated.mp4')}
+        source={require('../../../assets/videos/cisc_logo_animated (4).mp4')}
         repeat={false}
         resizeMode="cover"
       />

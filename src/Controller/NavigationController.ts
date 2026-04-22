@@ -12,7 +12,8 @@ import { Alert } from 'react-native';
 import { ReadingMaterial } from '../Interfaces/passage';
 
 // Interfaces of Students
-import { UserDocument, UserRole } from '../Interfaces/dataInterfaces';
+import { UserDocument, UserRole, ActivityResultDocument } from '../Interfaces/dataInterfaces';
+
 import { ScreenReplaceTypes } from 'react-native-screens';
 import { logoutUser } from './AuthenticationController';
 
@@ -54,7 +55,20 @@ export type RootStackParamList = {
     studentName: string;
     readingLevel: string;
   };
+
+
+  // ADMIN NAVIGATION
+  AdminDashboard: undefined;
+  UserManagement: undefined;
+
+  // ASSESSMENT NAVIGATION
+  FacultyAssessments: undefined;
+  FacultyCreateAssessment: { activity?: any }; // Optional activity for editing
+  StudentAssessments: undefined;
+  StudentAssessmentActivity: { activityId: string };
+  StudentAssessmentReview: { result: ActivityResultDocument };
 };
+
 
 // A list of all the screens within RootStackParamList
 type ScreenNames = keyof RootStackParamList;
@@ -81,6 +95,10 @@ export const useNavigationHelper = () => {
     navigation.replace(destination as any);
   };
 
+  const handleNavigateStep = (destination: ScreenNames) => {
+    navigation.navigate(destination as any);
+  };
+
   /**
    * Handles going back to the login page if the user is not verified
    * A destination based on the RootStackParamList, which only navigate back to login
@@ -103,6 +121,7 @@ export const useNavigationHelper = () => {
     dateOfBirth,
     classCode,
     facultyCode,
+    assignedGradeLevels,
   }: {
     profileImageUrl?: string;
     firstName: string;
@@ -121,7 +140,7 @@ export const useNavigationHelper = () => {
     if (!firstName || !lastName) {
       Alert.alert(
         'Missing Information',
-        'Please fill out all required fields.',
+        'Pakisagutan ang lahat ng kinakailangang field.',
       );
       return;
     }
@@ -129,7 +148,7 @@ export const useNavigationHelper = () => {
     if (role === 'student' && (!gradeLevel || !dateOfBirth)) {
       Alert.alert(
         'Missing Information',
-        'Please fill out all required fields for student registration.',
+        'Pakisagutan ang lahat ng kinakailangang impormasyon para sa pagrerehistro.',
       );
       return;
     }
@@ -148,7 +167,7 @@ export const useNavigationHelper = () => {
       firstName,
       middleName,
       lastName,
-      email: '',
+      email,
       role,
       sex,
       classCode,
@@ -192,6 +211,8 @@ export const useNavigationHelper = () => {
       navigation.navigate('UserHome');
     } else if (role === 'faculty') {
       navigation.navigate('FacultyDashboard');
+    } else if (role === 'admin') {
+      navigation.navigate('AdminDashboard');
     }
   };
 
@@ -224,6 +245,14 @@ export const useNavigationHelper = () => {
     readingLevel: string;
   }) => {
     navigation.navigate('StudentViewProfile', studentData);
+  };
+
+  const handleAssessmentNext = (activityId: string) => {
+    navigation.navigate('StudentAssessmentActivity', { activityId });
+  };
+
+  const handleAssessmentReview = (result: ActivityResultDocument) => {
+    navigation.navigate('StudentAssessmentReview', { result });
   };
 
   // Handles Back Button in any page the current user is in
@@ -266,6 +295,7 @@ export const useNavigationHelper = () => {
   return {
     handleNextStep,
     handleTabNavigation,
+    handleNavigateStep,
     handleReplaceStep,
     handleSignUpNavigationWithData,
     handleDesignatedUserPage,
@@ -275,6 +305,8 @@ export const useNavigationHelper = () => {
     handleHistoryNext,
     handleClassStudents,
     handleStudentViewStats,
+    handleAssessmentNext,
+    handleAssessmentReview,
     handleBackStep,
     handleLogout,
     handleCancelRegistration,

@@ -30,6 +30,16 @@ import bubbles from '../../UI_Designs/BubblesDesign';
 
 const { width: SW } = Dimensions.get('window');
 
+// ─── Color Palette for Lessons (Shades of Blue) ────────────────────────────────
+const BLUE_SHADES = [
+  '#3d71d9', // Brand Royal Blue
+  '#2a50a1', // Deep Blue
+  '#154360', // Darkest Blue
+  '#5989e5', // Lighter Royal
+  '#2a82be', // Sky Deep
+  '#1f618d', // Professional Slate Blue
+];
+
 // ─── Header Icons ────────────────────────────────────────────────────────────
 function BackArrow({ color = C.ink }: { color?: string }) {
   return (
@@ -55,7 +65,7 @@ function WordCard({
   onPress: (w: string) => void 
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const accent = LETTER_COLORS[index % LETTER_COLORS.length];
+  const accent = BLUE_SHADES[index % BLUE_SHADES.length];
   
   const cardWidth = (SW - 32 - 24) / 4; // 32 margins, 24 gaps
 
@@ -68,7 +78,7 @@ function WordCard({
   };
 
   return (
-    <BounceIn delay={index * 30}>
+    <BounceIn delay={index * 18}>
       <TouchableOpacity onPress={press} activeOpacity={0.85} style={{ marginBottom: 8 }}>
         <Animated.View style={[S.wordGridCard, { width: cardWidth, transform: [{ scale }] }]}>
           {/* Decorative shapes */}
@@ -112,7 +122,7 @@ function PassageCard({
   onPress: (p: Passage) => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const accent = LETTER_COLORS[index % LETTER_COLORS.length];
+  const accent = BLUE_SHADES[index % BLUE_SHADES.length];
 
   const press = () => {
     Animated.sequence([
@@ -123,7 +133,7 @@ function PassageCard({
   };
 
   return (
-    <BounceIn delay={index * 60}>
+    <BounceIn delay={index * 36}>
       <TouchableOpacity onPress={press} activeOpacity={0.85}>
         <Animated.View style={[S.passageCard, { borderLeftColor: accent, transform: [{ scale }], overflow: 'hidden' }]}>
           {/* Decorative shapes to match Hero */}
@@ -272,7 +282,7 @@ export default function PageSelectionScreen() {
     }).filter(sec => sec.data.length > 0);
   }, [currentWordsData, currentLetterInfo]);
 
-  const lessonAccent = selectedAralin !== null ? LETTER_COLORS[selectedAralin % LETTER_COLORS.length] : C.green;
+  const lessonAccent = selectedAralin !== null ? BLUE_SHADES[selectedAralin % BLUE_SHADES.length] : C.green;
 
   const aralinProgress = useMemo(() => {
     if (selectedAralin === null || !currentLetterInfo) return 0;
@@ -299,11 +309,11 @@ export default function PageSelectionScreen() {
     
     const isFullyMastered = isAlphaDone && (totalWordsCount === 0 || completedWordsCount >= totalWordsCount);
     const isLocked = index > 0 && !isLessonMastered(index - 1);
-    const bg = isLocked ? '#dfe6e9' : LETTER_COLORS[index % LETTER_COLORS.length];
+    const bg = isLocked ? '#dfe6e9' : BLUE_SHADES[index % BLUE_SHADES.length];
 
     return (
       <View style={S.lessonTileWrapper}>
-        <BounceIn delay={index * 35}>
+        <BounceIn delay={index * 21}>
           <TouchableOpacity
             onPress={() => handleLessonSelect(index)}
             activeOpacity={isLocked ? 1 : 0.8}
@@ -330,8 +340,8 @@ export default function PageSelectionScreen() {
 
             <Text style={[S.tileLetter, { color: isLocked ? C.slate : C.white }]}>{item.letter}</Text>
 
-            <View style={[S.tileRibbon, { backgroundColor: isLocked ? C.slate + '44' : 'rgba(0,0,0,0.1)' }]}>
-              <Text style={[S.tileRibbonText, { color: isLocked ? C.slate : C.white }]}>Aralin {index + 1}</Text>
+            <View style={[S.tileIndicator, { backgroundColor: isLocked ? C.slate + '22' : 'rgba(255,255,255,0.25)' }]}>
+              <Text style={[S.tileIndicatorText, { color: isLocked ? C.slate : C.white }]}>Aralin {index + 1}</Text>
             </View>
           </TouchableOpacity>
         </BounceIn>
@@ -363,7 +373,7 @@ export default function PageSelectionScreen() {
             <TouchableOpacity style={S.headerMenuBtn} onPress={handleCustomBack} activeOpacity={0.7}>
               <BackArrow />
             </TouchableOpacity>
-            <Image style={S.headerLogo} source={require('../../../assets/images/cisckids.png')} resizeMode="contain" />
+            <Image style={S.headerLogo} source={require('../../../assets/images/cisckids copy.png')} resizeMode="contain" />
             <View style={{ width: 44 }} />
           </View>
         </View>
@@ -371,16 +381,20 @@ export default function PageSelectionScreen() {
         <View style={S.contentArea}>
           {loading ? (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ fontSize: 16, color: C.inkLight, fontWeight: '600' }}>Inaayos ang mga Aralin...</Text>
+              <Text style={{ fontSize: 16, color: C.inkLight, fontWeight: '600' }}> Ang mga Aralin...</Text>
             </View>
           ) : selectedAralin === null ? (
             <>
-              <BounceIn delay={40}>
+              <BounceIn delay={24}>
                 <View style={S.heroBanner}>
+                  {/* Decorative background shapes */}
+                  <View style={[S.heroCircle, { backgroundColor: C.green + '12', top: -30, right: -40, width: 140, height: 140 }]} />
+                  <View style={[S.heroCircle, { backgroundColor: C.green + '06', bottom: -20, left: -20, width: 90, height: 90 }]} />
+                  
                   <View style={S.heroText}>
-                    <Text style={S.heroSub}>Piliin ang iyong</Text>
-                    <Text style={S.heroTitle}>ARALIN!</Text>
-                    <Text style={S.heroHint}>Simulan mula sa simula</Text>
+                    <Text style={S.heroSub}>Nabuksan na</Text>
+                    <Text style={S.heroTitle}>MGA ARALIN</Text>
+                    <View style={S.heroLine} />
                   </View>
                   <Image style={S.heroImage} source={require('../../../assets/images/Abc-Reading.png')} />
                 </View>
@@ -415,7 +429,7 @@ export default function PageSelectionScreen() {
                 contentContainerStyle={{ paddingBottom: 48 }}
                 ListHeaderComponent={
                   <View>
-                    <BounceIn delay={40}>
+                    <BounceIn delay={24}>
                       <TouchableOpacity
                         activeOpacity={0.85}
                         onPress={() => currentLetterInfo && handleAlphabetSelect(currentLetterInfo)}
@@ -446,7 +460,7 @@ export default function PageSelectionScreen() {
                     </BounceIn>
 
                     {prepareWordsData.length > 0 && (
-                      <BounceIn delay={100}>
+                      <BounceIn delay={60}>
                         <View style={S.sectionWrap}>
                           <View style={S.sectionHeaderRow}>
                             <View style={[S.wordBubble, { backgroundColor: lessonAccent + '15', width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
@@ -472,7 +486,7 @@ export default function PageSelectionScreen() {
                     )}
 
                     {currentPassages.length > 0 && (
-                      <BounceIn delay={140}>
+                      <BounceIn delay={84}>
                         <View style={S.sectionWrap}>
                           <View style={S.sectionHeaderRow}>
                             <View style={[S.passageEmojiBubble, { backgroundColor: lessonAccent + '15', width: 32, height: 32 }]}>
@@ -565,8 +579,9 @@ function LockedLessonModal({ visible, onClose }: { visible: boolean; onClose: ()
 const S = StyleSheet.create({
   root: { flex: 1 },
   bg: { flex: 1, backgroundColor: C.bg },
-  headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8, zIndex: 100 },
+  headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 4, zIndex: 100 },
   headerLogo: { width: 100, height: 90 },
+
   headerMenuBtn: {
     width: 44, height: 44, borderRadius: 14, backgroundColor: C.white,
     justifyContent: 'center', alignItems: 'center', ...Shadows.subtle,
@@ -576,16 +591,20 @@ const S = StyleSheet.create({
   heroBanner: {
     backgroundColor: C.white, borderRadius: Radii.xl,
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 16,
+    paddingHorizontal: 24, paddingVertical: 20,
     ...Shadows.cardLift, overflow: 'hidden',
+    marginBottom: 10,
+    position: 'relative'
   },
-  heroText:  { flex: 1 },
-  heroSub:   { fontSize: 13, color: C.slate, fontWeight: '600', marginBottom: 2 },
-  heroTitle: { fontSize: 26, fontWeight: '900', color: C.greenDeep, lineHeight: 30 },
+  heroText:  { flex: 1, zIndex: 2 },
+  heroSub:   { fontSize: 13, color: C.slate, fontWeight: '700', marginBottom: 2, opacity: 0.7 },
+  heroTitle: { fontSize: 28, fontWeight: '900', color: C.greenDeep, lineHeight: 32 },
+  heroLine:  { height: 4, width: 40, backgroundColor: C.green, marginTop: 8, borderRadius: 2 },
   heroHint:  { fontSize: 12, color: C.slate, marginTop: 6 },
-  heroImage: { width: 90, height: 90, resizeMode: 'contain' },
+  heroImage: { width: 95, height: 95, resizeMode: 'contain', zIndex: 2 },
 
-  contentArea: { flex: 1, marginHorizontal: 16, marginTop: 12 },
+  contentArea: { flex: 1, marginHorizontal: 16, marginTop: 0 },
+
 
   // ── Lesson Grid Tiles ──────────────────────────────────────────────────
   lessonTileWrapper: { width: (SW - 48) / 3, marginBottom: 14 },
@@ -618,27 +637,23 @@ const S = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.22)',
   },
   tileLetter: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '900',
     color: C.white,
     textShadowColor: 'rgba(0,0,0,0.18)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-  tileRibbon: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.12)',
-    paddingVertical: 5,
-    alignItems: 'center',
+  tileIndicator: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    marginTop: 6,
   },
-  tileRibbonText: {
-    fontSize: 10,
+  tileIndicatorText: {
+    fontSize: 11,
     fontWeight: '800',
-    color: C.white,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   masteredBadge: {
     position: 'absolute',
@@ -789,14 +804,14 @@ const S = StyleSheet.create({
     alignItems: 'center',
   },
   passageCardTitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '800',
     color: C.ink,
     marginBottom: 3,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   passageCardAuthor: {
-    fontSize: 12,
+    fontSize: 13,
     color: C.slate,
     fontStyle: 'italic',
   },

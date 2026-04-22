@@ -12,13 +12,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { BriefcaseIcon, HistoryIcon, UserProfileIcon } from '../../Components/GlobalUse/Icons';
+import { BriefcaseIcon, HistoryIcon, UserProfileIcon, BurgerIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import {
   getCurrentUser,
   getUserProfile,
 } from '../../Controller/AuthenticationController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
+import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
@@ -27,6 +28,7 @@ export default function FacultyProfile() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [profileData, setProfileData] = useState<UserDocument | null>(null);
+  const [activeClassCount, setActiveClassCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,8 +43,14 @@ export default function FacultyProfile() {
       setError(null);
       const cur = getCurrentUser();
       if (!cur) return;
-      const profile = await getUserProfile(cur.uid);
+      
+      const [profile, activeClasses] = await Promise.all([
+        getUserProfile(cur.uid),
+        getFacultyClasses_Student.getFacultyClasses(cur.uid, true)
+      ]);
+      
       setProfileData(profile);
+      setActiveClassCount(activeClasses.length);
     } catch (e: any) {
       setError(e.message || 'Failed to load profile');
     } finally {
@@ -87,14 +95,12 @@ export default function FacultyProfile() {
 
           {/* HEADER */}
           <View style={S.headerRow}>
-            <TouchableOpacity style={S.menuBtn} onPress={toggleMenu}>
-              <View style={S.menuDotLine} />
-              <View style={[S.menuDotLine, { width: 14 }]} />
-              <View style={S.menuDotLine} />
+            <TouchableOpacity style={S.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
+              <BurgerIcon size={24} color={F.ink} />
             </TouchableOpacity>
             <Image
               style={S.logo}
-              source={require('../../../assets/images/cisckids.png')}
+              source={require('../../../assets/images/cisckids copy.png')}
               resizeMode="contain"
             />
             <View style={{ width: 44 }} /> 
@@ -122,7 +128,7 @@ export default function FacultyProfile() {
             <View style={S.statsGrid}>
                <View style={S.statItem}>
                   <BriefcaseIcon size={24} color={F.primary} />
-                  <Text style={S.statVal}>{profileData?.facultyData?.assignedClassIds?.length || 0}</Text>
+                  <Text style={S.statVal}>{activeClassCount}</Text>
                   <Text style={S.statLab}>Mga Klase</Text>
                </View>
                <View style={S.statItem}>
@@ -178,9 +184,8 @@ const S = StyleSheet.create({
   logo: { width: 100, height: 90 },
   menuBtn: {
     width: 44, height: 44, borderRadius: 14, backgroundColor: F.white,
-    justifyContent: 'center', alignItems: 'center', gap: 4, ...Shadows.subtle
+    justifyContent: 'center', alignItems: 'center', ...Shadows.subtle
   },
-  menuDotLine: { width: 22, height: 2.5, borderRadius: 2, backgroundColor: F.ink },
 
   loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 16, fontSize: 13, fontWeight: '700', color: F.slate },
