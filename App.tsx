@@ -41,6 +41,7 @@ import UserManagement from './src/Screens/Admin/UserManagement';
 // ASSESSMENT PAGE
 import FacultyAssessments from './src/Screens/Faculty/Faculty_Assessments';
 import FacultyCreateAssessment from './src/Screens/Faculty/Faculty_CreateAssessment';
+import FacultyReports from './src/Screens/Faculty/Faculty_Reports';
 import StudentAssessments from './src/Screens/Student/Student_Assessments';
 import StudentAssessmentActivity from './src/Screens/Student/Student_AssessmentActivity';
 import StudentAssessmentReview from './src/Screens/Student/Student_AssessmentReview';
@@ -83,6 +84,7 @@ function App() {
               <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
               <Stack.Screen name="FacultyAssessments" component={FacultyAssessments} />
               <Stack.Screen name="FacultyCreateAssessment" component={FacultyCreateAssessment} />
+              <Stack.Screen name="FacultyReports" component={FacultyReports} />
               {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}
 
             {/* ADMIN PAGES */}

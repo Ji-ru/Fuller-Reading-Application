@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
+import { ReportController } from '../../Controller/ReportController';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { useRoute, RouteProp } from '@react-navigation/native';
@@ -33,6 +34,7 @@ export default function MyStudents() {
   const [students, setStudents] = useState<UserDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredStudents, setFilteredStudents] = useState<UserDocument[]>([]);
+  const [studentTrends, setStudentTrends] = useState<Record<string, { label: string, color: string }>>({});
 
   const { handleBackStep, handleStudentViewStats } = useNavigationHelper();
 
@@ -42,6 +44,41 @@ export default function MyStudents() {
       const studentList = await getFacultyClasses_Student.getStudentsInClass(classCode);
       setStudents(studentList);
       setFilteredStudents(studentList);
+
+      // Fetch trends dynamically based on assessment data
+      const studentIds = studentList.map(s => s.uid);
+      const allResults = await ReportController._getAllResultsForStudents(studentIds);
+      
+      const resultsByStudent: Record<string, any[]> = {};
+      allResults.forEach(r => {
+        if (!resultsByStudent[r.studentId]) resultsByStudent[r.studentId] = [];
+        resultsByStudent[r.studentId].push(r);
+      });
+
+      const trends: Record<string, { label: string, color: string }> = {};
+      for (const uid of studentIds) {
+        const sResults = resultsByStudent[uid] || [];
+        const scores = sResults
+          .sort((a, b) => {
+            const ta = a.completedAt?.toDate?.() || new Date(0);
+            const tb = b.completedAt?.toDate?.() || new Date(0);
+            return ta.getTime() - tb.getTime();
+          })
+          .map(r => r.percentage);
+          
+        const trendRaw = ReportController._calculateTrend(scores);
+        if (sResults.length === 0) {
+            trends[uid] = { label: 'Nagsisimula', color: F.primaryDeep };
+        } else if (trendRaw === 'improving') {
+            trends[uid] = { label: 'Umuunlad', color: '#1a9985' };
+        } else if (trendRaw === 'needs_practice') {
+            trends[uid] = { label: 'Kailangan Magsanay', color: F.red };
+        } else {
+            trends[uid] = { label: 'Matatag', color: F.primary };
+        }
+      }
+      setStudentTrends(trends);
+
     } catch (error: any) {
       console.log('Fetch students error:', error);
     } finally {
@@ -73,7 +110,7 @@ export default function MyStudents() {
           handleStudentViewStats({
             studentId: item.uid,
             studentName: `${item.firstName} ${item.lastName}`.trim(),
-            readingLevel: item.studentData?.reading_Level || 'N/A',
+            readingLevel: studentTrends[item.uid]?.label || item.studentData?.reading_Level || 'Baguhan',
           })
         }
         activeOpacity={0.8}
@@ -84,8 +121,10 @@ export default function MyStudents() {
            </View>
            <View style={S.studentInfo}>
               <Text style={S.studentName} numberOfLines={1}>{item.firstName} {item.lastName}</Text>
-              <View style={S.levelBadge}>
-                 <Text style={S.levelText}>{item.studentData?.reading_Level || 'Baguhan'}</Text>
+              <View style={[S.levelBadge, { backgroundColor: (studentTrends[item.uid]?.color || F.slate) + '15' }]}>
+                 <Text style={[S.levelText, { color: studentTrends[item.uid]?.color || F.slate }]}>
+                   {studentTrends[item.uid]?.label || 'Kinukuha...'}
+                 </Text>
               </View>
            </View>
            <ChevronRightIcon size={20} color={F.slate} />

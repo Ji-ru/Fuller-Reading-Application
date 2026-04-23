@@ -64,6 +64,7 @@ export type RootStackParamList = {
   // ASSESSMENT NAVIGATION
   FacultyAssessments: undefined;
   FacultyCreateAssessment: { activity?: any }; // Optional activity for editing
+  FacultyReports: undefined;
   StudentAssessments: undefined;
   StudentAssessmentActivity: { activityId: string };
   StudentAssessmentReview: { result: ActivityResultDocument };
