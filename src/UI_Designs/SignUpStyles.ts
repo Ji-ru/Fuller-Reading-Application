@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 const signup = StyleSheet.create({
   container: {
     backgroundColor: '#ebf5fb',
-    padding: 10,
+    padding: 8,
     flex: 1,
   },
   // SIGN UP PAGES
@@ -29,13 +29,13 @@ const signup = StyleSheet.create({
     marginTop: 8,
   },
   defaultProfile: {
-    width: 100,
-    height: 100,
-    maxWidth: 100,
-    maxHeight: 100,
+    width: 85,
+    height: 85,
+    maxWidth: 85,
+    maxHeight: 85,
     borderRadius: 65,
     alignSelf: 'center',
-    marginTop: 10,
+    marginTop: 5,
   },
   cameraBackground: {
     position: 'absolute',
@@ -79,7 +79,7 @@ const signup = StyleSheet.create({
     borderRadius: 1,
   },
   activateStep: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#3d71d9',
   },
   inactivateStep: {
     backgroundColor: '#d6eaf8',
@@ -92,17 +92,17 @@ const signup = StyleSheet.create({
     fontFamily: 'Satoshi-Bold',
     marginHorizontal: 20,
     color: '#1c2833',
-    marginBottom: 4,
-    marginTop: 10,
+    marginBottom: 2,
+    marginTop: 6,
     letterSpacing: 0.2,
   },
   textInputForm: {
     width: '90%',
     maxWidth: 360,
-    height: 50,
-    borderRadius: 14,
+    height: 46,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 6,
     backgroundColor: '#fff',
     alignSelf: 'center',
     fontFamily: 'Satoshi-Medium',
@@ -123,15 +123,15 @@ const signup = StyleSheet.create({
     flexDirection: 'row',
     width: '90%',
     maxWidth: 360,
-    height: 50,
-    borderRadius: 14,
+    height: 46,
+    borderRadius: 12,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'space-between',
     alignSelf: 'center',
     borderWidth: 1.5,
     borderColor: '#d6eaf8',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   icon: {
     maxWidth: 24,
@@ -255,7 +255,7 @@ const signup = StyleSheet.create({
     zIndex: 10, // Make sure text is above animations
   },
   successText: {
-    color: '#3498db',
+    color: '#3d71d9',
     fontSize: 18,
     fontWeight: 'bold',
   },

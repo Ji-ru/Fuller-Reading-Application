@@ -21,6 +21,7 @@ import { UserDocument } from '../../Interfaces/dataInterfaces';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
 import { UsersIcon, SearchIcon, ChevronRightIcon, BookOpenIcon, HistoryIcon } from '../../Components/GlobalUse/Icons';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -104,32 +105,16 @@ export default function MyStudents() {
 
   const renderStudentItem = ({ item, index }: { item: UserDocument; index: number }) => (
     <BounceIn delay={index * 50}>
-      <TouchableOpacity
-        style={S.studentCard}
-        onPress={() =>
-          handleStudentViewStats({
-            studentId: item.uid,
-            studentName: `${item.firstName} ${item.lastName}`.trim(),
-            readingLevel: studentTrends[item.uid]?.label || item.studentData?.reading_Level || 'Baguhan',
-          })
-        }
-        activeOpacity={0.8}
-      >
+      <View style={S.studentCard}>
         <View style={S.cardMain}>
            <View style={S.avatarBox}>
               <Text style={S.avatarText}>{item.firstName?.charAt(0)}{item.lastName?.charAt(0)}</Text>
            </View>
            <View style={S.studentInfo}>
               <Text style={S.studentName} numberOfLines={1}>{item.firstName} {item.lastName}</Text>
-              <View style={[S.levelBadge, { backgroundColor: (studentTrends[item.uid]?.color || F.slate) + '15' }]}>
-                 <Text style={[S.levelText, { color: studentTrends[item.uid]?.color || F.slate }]}>
-                   {studentTrends[item.uid]?.label || 'Kinukuha...'}
-                 </Text>
-              </View>
            </View>
-           <ChevronRightIcon size={20} color={F.slate} />
         </View>
-      </TouchableOpacity>
+      </View>
     </BounceIn>
   );
 
@@ -158,7 +143,7 @@ export default function MyStudents() {
 
         {loading ? (
            <View style={S.loadingBox}>
-              <ActivityIndicator size="large" color={F.primary} />
+              <LoadingDots />
               <Text style={S.loadingText}>Kinukuha ang listahan ng mga mag-aaral...</Text>
            </View>
         ) : (

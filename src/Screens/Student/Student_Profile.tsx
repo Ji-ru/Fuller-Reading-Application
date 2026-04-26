@@ -35,6 +35,7 @@ import {
   TrophyIcon, ThumbsUpIcon, FlexIcon, SproutIcon, RocketIcon, StarIcon,
   LogoutIcon, BurgerIcon
 } from '../../Components/GlobalUse/Icons';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -121,23 +122,12 @@ function DetailModal({
 // ─── Accuracy Ring ────────────────────────────────────────────────────────────
 function AccuracyRing({ value }: { value: number }) {
   const color = value >= 90 ? C.green : value >= 75 ? C.yellow : C.red;
-  const LabelIcon = value >= 90
-    ? () => <TrophyIcon size={16} color={color} />
-    : value >= 75
-      ? () => <ThumbsUpIcon size={16} color={color} />
-      : () => <FlexIcon size={16} color={color} />;
-  const label = value >= 90 ? 'Mahusay!' : value >= 75 ? 'Magaling!' : 'Kaya mo!';
   return (
     <View style={S.ringContainer}>
       <View style={[S.ringOuter, { borderColor: C.greenLight }]}>
         <View style={[S.ringInner, { borderColor: color }]}>
           <Text style={[S.ringValue, { color }]}>{value.toFixed(1)}%</Text>
-          <Text style={S.ringUnit}>katumpakan</Text>
         </View>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-        <LabelIcon />
-        <Text style={[S.ringLabel, { color }]}>{label}</Text>
       </View>
     </View>
   );
@@ -338,43 +328,13 @@ export default function Profile() {
   };
 
 // ─── Jumping Dots Loading ───────────────────────────────────────────────────
-function DotsLoading() {
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    const animate = (anim: Animated.Value, delay: number) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.timing(anim, { toValue: -10, duration: 400, useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 0,   duration: 400, useNativeDriver: true }),
-          Animated.delay(800 - delay),
-        ])
-      );
-    };
-    Animated.parallel([
-      animate(dot1, 0),
-      animate(dot2, 200),
-      animate(dot3, 400),
-    ]).start();
-  }, []);
-
-  return (
-    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginVertical: 20 }}>
-      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#1a7a45', transform: [{ translateY: dot1 }] }} />
-      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#3ccf7e', transform: [{ translateY: dot2 }] }} />
-      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#d4f5e2', transform: [{ translateY: dot3 }] }} />
-    </View>
-  );
-}
 
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <SafeAreaView style={S.loadingBg}>
-        <DotsLoading />
+        <LoadingDots color={C.green} />
         <Text style={S.loadingTitle}>Naglo-load ang profile…</Text>
       </SafeAreaView>
     );
@@ -436,11 +396,9 @@ function DotsLoading() {
             </View>
             <Text style={S.heroName}>{profileData?.firstName} {profileData?.lastName}</Text>
             <Text style={S.heroSub}>
-              Grade {profileData?.studentData?.gradeLevel ?? '—'} • {classData?.className ?? 'Walang klase'}
+              Baitang {profileData?.studentData?.gradeLevel ?? '—'} • {classData?.className ?? 'Walang klase'}
             </Text>
-            {readingStats && readingStats.totalAttempts > 0 && (
-              <AccuracyRing value={readingStats.averageAccuracy} />
-            )}
+            {/* Accuracy display removed */}
           </View>
         </BounceIn>
 
@@ -526,10 +484,10 @@ function DotsLoading() {
               <Text style={S.sectionTitle}>Impormasyon</Text>
             </View>
             <View style={S.infoRow}>
-              <InfoPill iconView={<GenderIcon size={18} color={C.teal} />} label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
+              <InfoPill iconView={<GenderIcon size={18} color={C.green} />} label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
             </View>
             <View style={S.infoRow}>
-              <InfoPill iconView={<MailIcon size={18} color={C.teal} />} label="Email" value={profileData?.email ?? '—'} />
+              <InfoPill iconView={<MailIcon size={18} color={C.green} />} label="Email" value={profileData?.email ?? '—'} />
             </View>
           </View>
         </BounceIn>

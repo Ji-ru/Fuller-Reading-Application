@@ -30,6 +30,7 @@ import {
   StarIcon
 } from '../../Components/GlobalUse/Icons';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import { AssessmentController } from '../../Controller/AssessmentController';
 import { getUserProfile } from '../../Controller/AuthenticationController';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
@@ -151,7 +152,7 @@ export default function StudentViewProfile() {
   if (loading) {
     return (
       <SafeAreaView style={S.loadingContainer}>
-        <ActivityIndicator size="large" color={F.primary} />
+        <LoadingDots />
         <Text style={S.loadingText}>Kinukuha ang istatistika...</Text>
       </SafeAreaView>
     );

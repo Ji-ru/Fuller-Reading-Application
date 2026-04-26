@@ -14,6 +14,7 @@ import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideM
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { BriefcaseIcon, HistoryIcon, UserProfileIcon, BurgerIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import {
   getCurrentUser,
   getUserProfile,
@@ -75,7 +76,7 @@ export default function FacultyProfile() {
     return (
       <SafeAreaView style={S.safeArea}>
         <View style={S.loadingBox}>
-          <ActivityIndicator size="large" color={F.primary} />
+          <LoadingDots />
           <Text style={S.loadingText}>Inihahanda ang iyong Profile...</Text>
         </View>
       </SafeAreaView>

@@ -19,6 +19,7 @@ import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { FacultyColors as F, Radii, Shadows, ACCENT_COLORS } from '../../Utilities/Theme';
 import { BackArrowIcon, CheckCircleIcon, BookOpenIcon, QuoteIcon, TypeIcon } from '../../Components/GlobalUse/Icons';
 import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import auth from '@react-native-firebase/auth';
@@ -201,7 +202,7 @@ export default function FacultyCreateAssessment() {
               <View style={S.formGroup}>
                  <Text style={S.subLabel}>Target na Klase</Text>
                  <View style={S.pickerContainer}>
-                   {loading ? <ActivityIndicator size="small" /> : (
+                   {loading ? <LoadingDots size={6} /> : (
                      <View>
                        {classes.filter(cl => cl.gradeLevel === selectedGradeLevel).length > 0 ? (
                          <ScrollView horizontal showsHorizontalScrollIndicator={false}>

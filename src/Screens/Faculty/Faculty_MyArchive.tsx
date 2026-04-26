@@ -10,6 +10,7 @@ import { useRoute } from '@react-navigation/native';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
 import { BurgerIcon, ArchiveIcon, HistoryIcon, BookOpenIcon, RefreshIcon } from '../../Components/GlobalUse/Icons';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { getAuth } from '@react-native-firebase/auth';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
@@ -108,7 +109,7 @@ export default function MyArchive() {
 
         {loading ? (
             <View style={S.loadingBox}>
-                <ActivityIndicator size="large" color={F.primary} />
+                <LoadingDots />
                 <Text style={S.loadingText}>Kinukuha ang iyong mga archived na records...</Text>
             </View>
         ) : (

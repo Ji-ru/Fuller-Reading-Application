@@ -8,7 +8,6 @@ const readingStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ebf5fb',
-    padding: 10,
   },
 
   insideContainer: {
@@ -19,41 +18,17 @@ const readingStyles = StyleSheet.create({
   // ── Passage Card ────────────────────────────────────────────────────────
   passageContainer: {
     backgroundColor: '#fff',
-    paddingVertical: 28,
+    paddingTop: 28,
+    paddingBottom: 28,
     paddingHorizontal: 24,
     borderRadius: 28,
     marginBottom: 6,
     alignSelf: 'center',
     width: '95%',
     maxWidth: 700,
-    height: 230,
-    minHeight: 230,
-    maxHeight: 230,
+    height: 280,
     borderWidth: 2,
     borderColor: '#d6eaf8',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-
-  passageContainerFeedback: {
-    backgroundColor: '#fff',
-    paddingVertical: 28,
-    paddingHorizontal: 24,
-    borderRadius: 28,
-    marginBottom: 6,
-    alignSelf: 'center',
-    width: '95%',
-    maxWidth: 700,
-    height: 230,
-    minHeight: 230,
-    maxHeight: 230,
-    borderWidth: 2,
-    borderColor: '#154360',
-    shadowColor: '#154360',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 5,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -79,7 +54,7 @@ const readingStyles = StyleSheet.create({
 
   passageScroll: {
     marginTop: 10,
-    paddingBottom: 20,
+    paddingBottom: 30,
   },
 
   passageTitle: {
@@ -113,10 +88,11 @@ const readingStyles = StyleSheet.create({
   },
 
   textLine: {
-    fontSize: 22,
-    lineHeight: 34,
+    fontSize: 24,
+    lineHeight: 36,
     textAlign: 'center',
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Satoshi-Bold',
+    fontWeight: 'bold',
     color: '#1c2833',
     paddingHorizontal: 4,
   },

@@ -196,7 +196,7 @@ export default function UserHomeScreen() {
         {/* ── Quick Actions ────────────────────────────────────────────────── */}
         <View style={S.sectionLabelRow}>
           <View style={S.sectionLabelDot} />
-          <Text style={S.sectionLabel}>IYONG MGA GAGAWIN</Text>
+          <Text style={S.sectionLabel}>IYONG DAPAT GAGAWIN</Text>
         </View>
 
         {/* Primary CTA - Pagbasa */}
@@ -221,31 +221,7 @@ export default function UserHomeScreen() {
           </TouchableOpacity>
         </BounceIn>
 
-        {/* Pagsusulit CTA */}
-        <BounceIn delay={108}>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => animatePress(cardScale2, () => handleNextStep('StudentAssessments'))}
-          >
-            <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
-              <View style={[S.secondaryIconBox, { backgroundColor: C.coral + '15' }]}>
-                <ClipboardListIcon size={28} color={C.coral} />
-              </View>
-              <View style={S.secondaryTextBox}>
-                <Text style={S.secondaryLabel}>Pagsusulit</Text>
-                <Text style={S.secondarySub}>Mga assessment</Text>
-              </View>
-              <View style={[S.secondaryArrow, { backgroundColor: C.coral }]}>
-                <ChevronRightIcon size={20} color={C.white} />
-              </View>
-              {pendingAssessments > 0 && (
-                <View style={S.notifBadge}>
-                  <Text style={S.notifTxt}>{pendingAssessments}</Text>
-                </View>
-              )}
-            </Animated.View>
-          </TouchableOpacity>
-        </BounceIn>
+
 
       </ScrollView>
 
@@ -277,12 +253,12 @@ const S = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingVertical: 8,
     zIndex: 100,
   },
   headerLogo: {
-    width: 90,
-    height: 80,
+    width: 100,
+    height: 90,
   },
   headerMenuBtn: {
     width: 44,

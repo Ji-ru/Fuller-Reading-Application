@@ -71,9 +71,9 @@ function App() {
             <Stack.Screen name="PassageSelection" component={PageSelectionScreen} />
             <Stack.Screen name="ReadingActivity" component={ReadingActivityScreenPage} />
             <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
-            <Stack.Screen name="StudentAssessments" component={StudentAssessments} />
+            {/* <Stack.Screen name="StudentAssessments" component={StudentAssessments} />
             <Stack.Screen name="StudentAssessmentActivity" component={StudentAssessmentActivity} />
-            <Stack.Screen name="StudentAssessmentReview" component={StudentAssessmentReview} />
+            <Stack.Screen name="StudentAssessmentReview" component={StudentAssessmentReview} /> */}
 
             {/* FACULTY PAGES */}
               <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />

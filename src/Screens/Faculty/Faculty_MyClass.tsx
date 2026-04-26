@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import { BurgerIcon, ArchiveIcon, BookOpenIcon, EditIcon, TrashIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
@@ -255,7 +256,7 @@ export default function MyClass() {
 
         {loading ? (
           <View style={S.loadingContainer}>
-            <ActivityIndicator size="large" color={F.primary} />
+            <LoadingDots />
             <Text style={S.loadingText}>Inaayos ang iyong mga klase...</Text>
           </View>
         ) : (

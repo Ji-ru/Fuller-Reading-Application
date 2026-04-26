@@ -40,6 +40,39 @@ const BLUE_SHADES = [
   '#1f618d', // Professional Slate Blue
 ];
 
+// ─── Jumping Dots Loading ───────────────────────────────────────────────────
+function DotsLoading() {
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animate = (anim: Animated.Value, delay: number) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: -10, duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0,   duration: 400, useNativeDriver: true }),
+          Animated.delay(800 - delay),
+        ])
+      );
+    };
+    Animated.parallel([
+      animate(dot1, 0),
+      animate(dot2, 200),
+      animate(dot3, 400),
+    ]).start();
+  }, []);
+
+  return (
+    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginVertical: 20 }}>
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#3d71d9', transform: [{ translateY: dot1 }] }} />
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#5989e5', transform: [{ translateY: dot2 }] }} />
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#3d71d9' + '40', transform: [{ translateY: dot3 }] }} />
+    </View>
+  );
+}
+
 // ─── Header Icons ────────────────────────────────────────────────────────────
 function BackArrow({ color = C.ink }: { color?: string }) {
   return (
@@ -57,17 +90,18 @@ function WordCard({
   item, 
   index, 
   isMastered,
+  accent,
   onPress 
 }: { 
   item: string; 
   index: number; 
   isMastered: boolean;
+  accent: string;
   onPress: (w: string) => void 
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const accent = BLUE_SHADES[index % BLUE_SHADES.length];
   
-  const cardWidth = (SW - 32 - 24) / 4; // 32 margins, 24 gaps
+  const cardWidth = (SW - 32 - 12) / 2; // 32 margins, 12 gap between two cards
 
   const press = () => {
     Animated.sequence([
@@ -79,17 +113,15 @@ function WordCard({
 
   return (
     <BounceIn delay={index * 18}>
-      <TouchableOpacity onPress={press} activeOpacity={0.85} style={{ marginBottom: 8 }}>
-        <Animated.View style={[S.wordGridCard, { width: cardWidth, transform: [{ scale }] }]}>
+      <TouchableOpacity onPress={press} activeOpacity={0.85} style={{ marginBottom: 12 }}>
+        <Animated.View style={[S.wordGridCard, { width: cardWidth, backgroundColor: accent, transform: [{ scale }] }]}>
           {/* Decorative shapes */}
-          <View style={[S.heroCircle, { backgroundColor: accent + '12', top: -10, right: -10, width: 40, height: 40 }]} />
-          <View style={[S.heroCircle, { backgroundColor: accent + '06', bottom: -5, left: -5, width: 30, height: 30 }]} />
-          
-          <View style={[S.wordCardAccentBar, { backgroundColor: accent }]} />
+          <View style={[S.heroCircle, { backgroundColor: 'rgba(255,255,255,0.15)', top: -10, right: -10, width: 40, height: 40 }]} />
+          <View style={[S.heroCircle, { backgroundColor: 'rgba(255,255,255,0.08)', bottom: -5, left: -5, width: 30, height: 30 }]} />
           
           <View style={S.wordGridCardBody}>
              <Text 
-               style={S.wordGridText} 
+               style={[S.wordGridText, { color: C.white }]} 
                numberOfLines={2} 
                adjustsFontSizeToFit 
                minimumFontScale={0.7}
@@ -98,8 +130,8 @@ function WordCard({
              </Text>
 
              {isMastered && (
-               <View style={S.wordGridMastery}>
-                 <CheckCircleIcon size={14} color={C.green} />
+               <View style={[S.wordGridMastery, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                 <CheckCircleIcon size={14} color={C.white} />
                </View>
              )}
           </View>
@@ -114,15 +146,16 @@ function PassageCard({
   item,
   index,
   isMastered,
+  accent,
   onPress,
 }: {
   item: Passage;
   index: number;
   isMastered: boolean;
+  accent: string;
   onPress: (p: Passage) => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const accent = BLUE_SHADES[index % BLUE_SHADES.length];
 
   const press = () => {
     Animated.sequence([
@@ -135,21 +168,21 @@ function PassageCard({
   return (
     <BounceIn delay={index * 36}>
       <TouchableOpacity onPress={press} activeOpacity={0.85}>
-        <Animated.View style={[S.passageCard, { borderLeftColor: accent, transform: [{ scale }], overflow: 'hidden' }]}>
+        <Animated.View style={[S.passageCard, { backgroundColor: accent, transform: [{ scale }], overflow: 'hidden' }]}>
           {/* Decorative shapes to match Hero */}
-          <View style={[S.heroCircle, { backgroundColor: accent + '12', top: -20, right: -20, width: 80, height: 80 }]} />
-          <View style={[S.heroCircle, { backgroundColor: accent + '06', bottom: -15, left: -15, width: 50, height: 50 }]} />
+          <View style={[S.heroCircle, { backgroundColor: 'rgba(255,255,255,0.15)', top: -20, right: -20, width: 80, height: 80 }]} />
+          <View style={[S.heroCircle, { backgroundColor: 'rgba(255,255,255,0.08)', bottom: -15, left: -15, width: 50, height: 50 }]} />
 
           <View style={S.passageCardInner}>
             <View style={{ flex: 1, paddingVertical: 4 }}>
-              <Text style={S.passageCardTitle} numberOfLines={2}>{item.title}</Text>
-              {!!item.author && <Text style={S.passageCardAuthor}>ni {item.author}</Text>}
+              <Text style={[S.passageCardTitle, { color: C.white }]} numberOfLines={2}>{item.title}</Text>
+              {!!item.author && <Text style={[S.passageCardAuthor, { color: 'rgba(255,255,255,0.7)' }]}>ni {item.author}</Text>}
             </View>
-            {isMastered ? (
-              <View style={[S.passageGoBtn, { backgroundColor: C.green + '18' }]}>
-                <CheckCircleIcon size={20} color={C.green} />
-              </View>
-            ) : null}
+            <View style={[S.passageGoBtn, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+              {isMastered && (
+                <CheckCircleIcon size={20} color={C.white} />
+              )}
+            </View>
           </View>
         </Animated.View>
       </TouchableOpacity>
@@ -232,7 +265,12 @@ export default function PageSelectionScreen() {
   };
 
   const handleAlphabetSelect = (alphabet: Alphabet) => {
-    handleReadingNext(alphabet, 'alphabet', [alphabet], 0);
+    const raw = alphabet.letter;
+    const items = [
+      { letter: raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase() },
+      { letter: raw.toLowerCase() }
+    ];
+    handleReadingNext(items[0], 'alphabet', items, 0);
   };
 
   const handleWordSelect = (wordText: string) => {
@@ -381,7 +419,8 @@ export default function PageSelectionScreen() {
         <View style={S.contentArea}>
           {loading ? (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ fontSize: 16, color: C.inkLight, fontWeight: '600' }}> Ang mga Aralin...</Text>
+              <DotsLoading />
+              <Text style={{ fontSize: 16, color: C.inkLight, fontWeight: '600', marginTop: 10 }}>Ang mga Aralin...</Text>
             </View>
           ) : selectedAralin === null ? (
             <>
@@ -447,12 +486,8 @@ export default function PageSelectionScreen() {
                           </View>
                           
                           <View style={S.lessonHeroLetterBig}>
-                            {currentLetterInfo && completedAlpha.has(currentLetterInfo.letter) ? (
+                            {currentLetterInfo && completedAlpha.has(currentLetterInfo.letter) && (
                                <CheckCircleIcon size={48} color={C.white} />
-                            ) : (
-                               <Text style={S.lessonHeroLetterShadow}>
-                                 {currentLetterInfo?.letter}
-                               </Text>
                             )}
                           </View>
                         </View>
@@ -477,6 +512,7 @@ export default function PageSelectionScreen() {
                                 item={wordText}
                                 index={i}
                                 isMastered={currentLetterInfo ? !!completedWordsMap[currentLetterInfo.letter]?.has(wordText) : false}
+                                accent={lessonAccent}
                                 onPress={(w) => handleWordSelect(w)}
                               />
                             ))}
@@ -501,6 +537,7 @@ export default function PageSelectionScreen() {
                               item={p}
                               index={i}
                               isMastered={completedPassages.has(p.title)}
+                              accent={lessonAccent}
                               onPress={handlePassageSelect}
                             />
                           ))}
@@ -554,7 +591,7 @@ function LockedLessonModal({ visible, onClose }: { visible: boolean; onClose: ()
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
         <Animated.View style={[S.lockModalContent, { opacity: fade, transform: [{ translateY: slide }] }]}>
            <View style={S.lockModalIconBox}>
-             <LockIcon size={48} color={C.teal} />
+             <LockIcon size={48} color={C.green} />
            </View>
            
            <Text style={S.lockModalTitle}>Naka-lock ang Aralin</Text>
@@ -579,7 +616,14 @@ function LockedLessonModal({ visible, onClose }: { visible: boolean; onClose: ()
 const S = StyleSheet.create({
   root: { flex: 1 },
   bg: { flex: 1, backgroundColor: C.bg },
-  headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 4, zIndex: 100 },
+  headerBar: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 16, 
+    paddingVertical: 8, 
+    zIndex: 100 
+  },
   headerLogo: { width: 100, height: 90 },
 
   headerMenuBtn: {
@@ -784,17 +828,16 @@ const S = StyleSheet.create({
   // ── Passage Cards ──────────────────────────────────────────────────────
   passageCard: {
     backgroundColor: C.white,
-    borderRadius: 18,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    ...Shadows.card,
+    borderRadius: 22,
+    marginBottom: 16,
+    ...Shadows.cardLift,
     overflow: 'hidden',
   },
   passageCardInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    gap: 12,
+    padding: 20,
+    gap: 16,
   },
   passageEmojiBubble: {
     width: 46,
@@ -804,28 +847,23 @@ const S = StyleSheet.create({
     alignItems: 'center',
   },
   passageCardTitle: {
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: '800',
     color: C.ink,
-    marginBottom: 3,
-    lineHeight: 22,
+    lineHeight: 26,
   },
   passageCardAuthor: {
     fontSize: 13,
+    fontWeight: '600',
     color: C.slate,
-    fontStyle: 'italic',
+    marginTop: 4,
   },
   passageGoBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  passageGoBtnText: {
-    color: C.white,
-    fontSize: 16,
-    fontWeight: '800',
   },
 
   // ── (kept for backwards compat, used by AlphabetTile inside detail) ─
@@ -861,27 +899,23 @@ const S = StyleSheet.create({
   wordGridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'flex-start',
+    gap: 12,
+    justifyContent: 'space-between',
     marginTop: 4,
   },
   wordGridCard: {
-    backgroundColor: C.white,
-    borderRadius: 16,
-    aspectRatio: 1,
-    ...Shadows.card,
-    overflow: 'hidden',
+    borderRadius: 20,
+    aspectRatio: 1.8,
+    ...Shadows.cardLift,
     position: 'relative',
+    overflow: 'hidden',
   },
-  wordCardAccentBar: {
-    height: 3,
-    width: '100%',
-  },
+
   wordGridCardBody: {
-    padding: 8,
+    padding: 10,
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   wordIconCircle: {
     width: 24,
@@ -892,8 +926,8 @@ const S = StyleSheet.create({
     marginBottom: 6,
   },
   wordGridText: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '900',
     color: C.ink,
     textAlign: 'center',
   },
@@ -901,9 +935,11 @@ const S = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
-    backgroundColor: C.green + '15',
-    borderRadius: 8,
-    padding: 2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // ── Legacy / kept for sub-components ───────────────────────────────────
@@ -929,7 +965,7 @@ const S = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: C.teal + '12',
+    backgroundColor: C.green + '12',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -951,7 +987,7 @@ const S = StyleSheet.create({
   },
   lockModalBtn: {
     width: '100%',
-    backgroundColor: C.teal,
+    backgroundColor: C.green,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',

@@ -60,7 +60,7 @@ export default function SignUpOneScreen() {
   const [verificationCode, setVerificationCode] = useState('');
 
   // Cancel Modal State
-  const [showCancelModal, setShowCancelModal] = useState(false);
+
   const [showImageSourceModal, setShowImageSourceModal] = useState(false);
 
   // Validation State
@@ -166,7 +166,7 @@ export default function SignUpOneScreen() {
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
           keyboardShouldPersistTaps="handled"
         >
           <View>
@@ -206,32 +206,41 @@ export default function SignUpOneScreen() {
             {/* PERSONAL INFORMATION */}
             <View>
               {/* FIRST NAME */}
-              <Text style={signup.textform}>
-                Pangalan {isSubmitted && !firstName.trim() && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
-              </Text>
+              <Text style={signup.textform}>Pangalan</Text>
               <TextInput
                 style={[signup.textInputForm, isSubmitted && !firstName.trim() ? { borderColor: '#e74c3c' } : null]}
                 placeholder="e.g Juan "
                 value={firstName}
                 onChangeText={setFirstName}
               />
+              {isSubmitted && !firstName.trim() && (
+                <Text style={[localStyles.requirementInfo, { color: '#e74c3c' }]}>
+                  * Kinakailangan
+                </Text>
+              )}
 
               {/* LAST NAME */}
-              <Text style={signup.textform}>
-                Apelyido {isSubmitted && !lastName.trim() && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
-              </Text>
+              <Text style={signup.textform}>Apelyido</Text>
               <TextInput
                 style={[signup.textInputForm, isSubmitted && !lastName.trim() ? { borderColor: '#e74c3c' } : null]}
                 placeholder="e.g Campus"
                 value={lastName}
                 onChangeText={setLastName}
               />
+              {isSubmitted && !lastName.trim() && (
+                <Text style={[localStyles.requirementInfo, { color: '#e74c3c' }]}>
+                  * Kinakailangan
+                </Text>
+              )}
 
               {/* SEX */}
-              <Text style={signup.textform}>
-                Kasarian {isSubmitted && !gender && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
-              </Text>
+              <Text style={signup.textform}>Kasarian</Text>
               <GenderSelection onGenderSelect={setGender} />
+              {isSubmitted && !gender && (
+                <Text style={[localStyles.requirementInfo, { color: '#e74c3c' }]}>
+                  * Kinakailangan
+                </Text>
+              )}
 
               {/* DATE OF BIRTH */}
               <Text style={signup.textform}>Petsa ng Kapanganakan</Text>
@@ -253,7 +262,7 @@ export default function SignUpOneScreen() {
                 </Text>
                 <Image
                   source={require('../../../assets/icons/Calendar-icon.png')}
-                  style={{ width: 18, height: 18, tintColor: '#8fafa0' }}
+                  style={{ width: 18, height: 18, tintColor: '#3d71d9' }}
                 />
               </TouchableOpacity>
 
@@ -312,9 +321,7 @@ export default function SignUpOneScreen() {
               {/* VERIFICATION CODE - Faculty Only */}
               {role === 'faculty' && (
                 <>
-                  <Text style={signup.textform}>
-                    Faculty Access Code {isSubmitted && !verificationCode.trim() && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
-                  </Text>
+                  <Text style={signup.textform}>Faculty Access Code</Text>
                   <TextInput
                     style={[signup.textInputForm, isSubmitted && !verificationCode.trim() ? { borderColor: '#e74c3c' } : null]}
                     placeholder="Enter Secret Code"
@@ -322,6 +329,11 @@ export default function SignUpOneScreen() {
                     onChangeText={setVerificationCode}
                     autoCapitalize="characters"
                   />
+                  {isSubmitted && !verificationCode.trim() && (
+                    <Text style={[localStyles.requirementInfo, { color: '#e74c3c' }]}>
+                      * Kinakailangan
+                    </Text>
+                  )}
                 </>
               )}
             </View>
@@ -376,13 +388,7 @@ export default function SignUpOneScreen() {
               <Text style={buttons.nextPageText}>Kasunod</Text>
             </TouchableOpacity>
 
-            {/* CANCEL */}
-            <TouchableOpacity
-              style={buttons.cancelButton}
-              onPress={() => setShowCancelModal(true)}
-            >
-              <Text style={buttons.cancelText}>I-kansela</Text>
-            </TouchableOpacity>
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -445,43 +451,7 @@ export default function SignUpOneScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Cancel Confirmation Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showCancelModal}
-        onRequestClose={() => setShowCancelModal(false)}
-      >
-        <View style={localStyles.modalOverlay}>
-          <View style={localStyles.modalContainer}>
-            {/* ICON BOX */}
-            <View style={localStyles.modalIconBox}>
-              <AlertTriangleIcon size={34} color="#e74c3c" />
-            </View>
 
-            {/* TEXT CONTENT */}
-            <Text style={localStyles.modalTitle}>I-kansela ang Pagrehistro?</Text>
-            <Text style={localStyles.modalMessage}>Sigurado ka ba na gusto mong kanselahin? Mawawala ang iyong mga nailagay na impormasyon.</Text>
-
-            {/* BUTTONS */}
-            <View style={localStyles.modalButtonRow}>
-              <TouchableOpacity style={localStyles.modalCancelBtn} onPress={() => setShowCancelModal(false)}>
-                <Text style={localStyles.modalCancelBtnText}>Ipagpatuloy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={localStyles.modalConfirmBtn}
-                onPress={() => {
-                  setShowCancelModal(false);
-                  // Navigate back to Login
-                  handleBackStep(); // or handleCancelRegistration if it resets to login
-                }}
-              >
-                <Text style={localStyles.modalConfirmBtnText}>I-discard</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -549,7 +519,7 @@ const localStyles = StyleSheet.create({
     textAlign: 'center',
   },
   datePreview: {
-    backgroundColor: '#f0faf4',
+    backgroundColor: '#3d71d9' + '12',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -559,13 +529,13 @@ const localStyles = StyleSheet.create({
   datePreviewText: {
     fontSize: 16,
     fontFamily: 'Satoshi-Bold',
-    color: '#1a7a45',
+    color: '#3d71d9',
     textAlign: 'center',
   },
   dateActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 5,
     gap: 12,
   },
   dateCancelBtn: {
@@ -573,19 +543,19 @@ const localStyles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#d4f5e2',
+    borderColor: '#3d71d9' + '20',
     alignItems: 'center',
   },
   dateCancelText: {
     fontSize: 15,
     fontFamily: 'Satoshi-Bold',
-    color: '#8fafa0',
+    color: '#3d71d9',
   },
   dateConfirmBtn: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#1a7a45',
+    backgroundColor: '#3d71d9',
     alignItems: 'center',
   },
   dateConfirmText: {
@@ -706,5 +676,13 @@ const localStyles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Satoshi-Black',
     color: '#fff',
+  },
+  requirementInfo: {
+    fontSize: 10,
+    color: '#8fafa0',
+    marginHorizontal: 24,
+    marginTop: -4,
+    marginBottom: 8,
+    fontFamily: 'Satoshi-Medium',
   },
 });

@@ -43,7 +43,7 @@ export default function SignUpTwoScreen() {
 
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
+
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [modalType, setModalType] = useState<'loading' | 'success'>('loading');
   const [modalMessage, setModalMessage] = useState('');
@@ -174,7 +174,7 @@ export default function SignUpTwoScreen() {
       >
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
         keyboardShouldPersistTaps="handled"
       >
       <View>
@@ -195,7 +195,9 @@ export default function SignUpTwoScreen() {
         <View>
           {/* EMAIL ADDRESS */}
           <Text style={signup.textform}>
-            Email Address {isSubmitted && !email.trim() && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
+            Email Address {isSubmitted && !email.trim() && (
+              <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>
+            )}
           </Text>
           <TextInput
             style={[signup.textInputForm, isSubmitted && !email.trim() ? { borderColor: '#e74c3c' } : null]}
@@ -203,6 +205,11 @@ export default function SignUpTwoScreen() {
             value={email}
             onChangeText={setEmail}
           />
+          {email.trim().length > 0 && !/^\S+@\S+\.\S+$/.test(email) && (
+            <Text style={[localStyles.requirementInfo, { color: '#e74c3c' }]}>
+              * Maling email
+            </Text>
+          )}
           {/* PASSWORD */}
           <Text style={signup.textform}>
             Password {isSubmitted && !password && <Text style={{ color: '#e74c3c', fontSize: 13, fontFamily: 'Satoshi-Bold' }}>* Kinakailangan</Text>}
@@ -276,14 +283,7 @@ export default function SignUpTwoScreen() {
         >
           <Text style={buttons.nextPageText}>Magrehistro</Text>
         </TouchableOpacity>
-        {/* CANCEL */}
-        <TouchableOpacity
-          style={[buttons.cancelButton, modalVisible && { opacity: 0.7 }]}
-          onPress={() => setShowCancelModal(true)}
-          disabled={modalVisible}
-        >
-          <Text style={buttons.cancelText}>I-kansela</Text>
-        </TouchableOpacity>
+
       </View>
       </ScrollView>
       </KeyboardAvoidingView>
@@ -301,7 +301,7 @@ export default function SignUpTwoScreen() {
             {modalType === 'loading' ? (
               // Loading content
               <>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <ActivityIndicator size="large" color="#3d71d9" />
                 <Text style={signup.modalText}>{modalMessage}</Text>
               </>
             ) : (
@@ -336,42 +336,7 @@ export default function SignUpTwoScreen() {
         </View>
       </Modal>
 
-      {/* Cancel Confirmation Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showCancelModal}
-        onRequestClose={() => setShowCancelModal(false)}
-      >
-        <View style={localStyles.modalOverlay}>
-          <View style={localStyles.modalContainer}>
-             {/* ICON BOX */}
-             <View style={localStyles.modalIconBox}>
-                <AlertTriangleIcon size={34} color="#e74c3c" />
-             </View>
 
-             {/* TEXT CONTENT */}
-             <Text style={localStyles.modalTitle}>I-kansela ang Pagrehistro?</Text>
-             <Text style={localStyles.modalMessage}>Sigurado ka ba na gusto mong kanselahin? Mawawala ang iyong mga nailagay na impormasyon.</Text>
-
-             {/* BUTTONS */}
-             <View style={localStyles.modalButtonRow}>
-                <TouchableOpacity style={localStyles.modalCancelBtn} onPress={() => setShowCancelModal(false)}>
-                   <Text style={localStyles.modalCancelBtnText}>Ipagpatuloy</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                   style={localStyles.modalConfirmBtn} 
-                   onPress={() => {
-                     setShowCancelModal(false);
-                     handleCancelRegistration();
-                   }}
-                >
-                   <Text style={localStyles.modalConfirmBtnText}>I-discard</Text>
-                </TouchableOpacity>
-             </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

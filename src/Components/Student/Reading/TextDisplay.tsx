@@ -52,35 +52,15 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   isCompleted = false,
   isCorrect = true,
 }) => {
-  // Format passage text with line breaks
-  const formatText = (text: string) => {
-    return text.split('\n').map((line, index) => (
-      <Text key={index} style={readingStyles.textLine}>
-        {line}
-      </Text>
-    ));
-  };
-
-  const extractPunctuation = (
-    word: string,
-  ): { word: string; punctuation: string } => {
-    const match = word.match(/^([a-zA-Z0-9]+)([.,!?;:'"'"]+)?$/);
-    if (match) {
-      return {
-        word: match[1] || word,
-        punctuation: match[2] || '',
-      };
-    }
-    return { word, punctuation: '' };
-  };
-
-  const renderTextWithMiscues = () => {
+  // Unified renderer — always renders word-by-word to guarantee identical layout
+  const renderPassageText = () => {
     if (!isPassage(material)) return null;
 
-    const originalWords = material.text
-      .split(/\s+/)
-      .filter(word => word.length > 0);
+    const lines = material.text.split('\n');
+    let globalWordIndex = 0;
 
+    // Build miscue map only when showing feedback
+    const showFeedback = !isRecording && isCompleted;
     const miscuesByPosition = new Map<
       number,
       {
@@ -91,105 +71,58 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       }
     >();
 
-    miscues.forEach(miscue => {
-      if (!miscuesByPosition.has(miscue.position)) {
-        miscuesByPosition.set(miscue.position, { insertions: [] });
-      }
+    if (showFeedback) {
+      miscues.forEach(miscue => {
+        if (!miscuesByPosition.has(miscue.position)) {
+          miscuesByPosition.set(miscue.position, { insertions: [] });
+        }
+        const posData = miscuesByPosition.get(miscue.position)!;
+        switch (miscue.type) {
+          case 'substitution': posData.substitution = miscue; break;
+          case 'omission': posData.omission = miscue; break;
+          case 'insertion': posData.insertions.push(miscue); break;
+          case 'repetition': posData.repetition = miscue; break;
+        }
+      });
+    }
 
-      const posData = miscuesByPosition.get(miscue.position)!;
+    return lines.map((line, lineIdx) => {
+      const wordsInLine = line.split(/\s+/).filter(w => w.length > 0);
+      const renderedWords: JSX.Element[] = [];
 
-      switch (miscue.type) {
-        case 'substitution':
-          posData.substitution = miscue;
-          break;
-        case 'omission':
-          posData.omission = miscue;
-          break;
-        case 'insertion':
-          posData.insertions.push(miscue);
-          break;
-        case 'repetition':
-          posData.repetition = miscue;
-          break;
-      }
-    });
+      wordsInLine.forEach((originalWord, inLineIdx) => {
+        const keyBase = `line-${lineIdx}-word-${inLineIdx}`;
 
-    const renderedWords: JSX.Element[] = [];
-    let keyCounter = 0;
+        // Determine color
+        let wordColor = '#1c2833'; // Default black (during reading)
 
-    originalWords.forEach((originalWord, index) => {
-      const { word: cleanWord, punctuation } = extractPunctuation(originalWord);
-      const posData = miscuesByPosition.get(index);
+        if (showFeedback) {
+          const noAudio = !spokenText || spokenText.trim() === '';
+          if (noAudio) {
+            // No audio detected — all words red
+            wordColor = '#e74c3c';
+          } else {
+            const posData = miscuesByPosition.get(globalWordIndex);
+            const hasError = posData?.substitution || posData?.omission || posData?.repetition;
+            wordColor = hasError ? '#e74c3c' : '#1a7a45';
+          }
+        }
 
-      if (posData?.insertions && posData.insertions.length > 0) {
-        posData.insertions.forEach(insertion => {
-          renderedWords.push(
-            <Text key={`insertion-${keyCounter++}`}>
-              <Text style={{ color: '#1A81FF', fontWeight: 'bold' }}>
-                {insertion.spoken}
-              </Text>
-            </Text>,
-          );
-          renderedWords.push(
-            <Text key={`space-insert-${keyCounter++}`}> </Text>,
-          );
-        });
-      }
-
-      if (posData?.repetition) {
         renderedWords.push(
-          <Text key={`word-${index}`}>
-            <Text style={{ color: '#BF00DD', fontWeight: 'bold' }}>
-              {posData.repetition.spoken}
-            </Text>
-            {punctuation && <Text>{punctuation}</Text>}
-          </Text>,
-        );
-      } else if (posData?.substitution) {
-        renderedWords.push(
-          <Text key={`word-${index}`}>
-            <Text style={{ color: '#FF2726', fontWeight: 'bold' }}>
-              {cleanWord}
-            </Text>
-            {punctuation && <Text>{punctuation}</Text>}
-          </Text>,
-        );
-      } else if (posData?.omission) {
-        renderedWords.push(
-          <Text key={`word-${index}`}>
-            <Text style={{ color: '#FF941A', fontWeight: 'bold' }}>
-              {cleanWord}
-            </Text>
-            {punctuation && <Text>{punctuation}</Text>}
-          </Text>,
-        );
-        // Correct word (no miscue)
-        renderedWords.push(
-          <Text key={`word-${index}`} style={{ color: '#1a7a45' }}>
-            {originalWord}
+          <Text key={keyBase} style={{ color: wordColor }}>
+            {originalWord}{' '}
           </Text>
         );
-      }
 
+        globalWordIndex++;
+      });
 
-
-      if (index < originalWords.length - 1) {
-        renderedWords.push(<Text key={`space-${keyCounter++}`}> </Text>);
-      }
+      return (
+        <Text key={`line-${lineIdx}`} style={readingStyles.textLine}>
+          {renderedWords}
+        </Text>
+      );
     });
-
-    return <Text style={readingStyles.textLine}>{renderedWords}</Text>;
-  };
-
-  const renderTextContent = () => {
-    if (isPassage(material)) {
-      if (!isRecording && isCompleted) {
-        return renderTextWithMiscues();
-      }
-
-      return formatText(material.text);
-    }
-    return null;
   };
 
   // ALPHABET DISPLAY
@@ -260,10 +193,11 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
           <ScrollView
             style={readingStyles.passageScroll}
             contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
-            showsVerticalScrollIndicator={true}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={false}
           >
             <View style={readingStyles.textContainer}>
-              {renderTextContent()}
+              {renderPassageText()}
             </View>
           </ScrollView>
         </View>

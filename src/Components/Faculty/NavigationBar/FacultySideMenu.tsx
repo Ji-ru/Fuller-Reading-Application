@@ -106,7 +106,6 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
   const navItems = [
     { id: 'FacultyDashboard', label: 'Dashboard', icon: LayoutIcon },
     { id: 'MyClass', label: 'Mga Klase', icon: BriefcaseIcon },
-    { id: 'FacultyAssessments', label: 'Pagsusulit', icon: ClipboardListIcon },
     { id: 'FacultyReports', label: 'Mga Ulat', icon: BarChartIcon },
     { id: 'Archive', label: 'Archive', icon: ArchiveIcon },
     { id: 'FacultyProfile', label: 'Aking Profile', icon: UserProfileIcon },

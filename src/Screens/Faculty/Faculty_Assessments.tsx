@@ -36,6 +36,7 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { ActivityDocument, ActivityResultDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { FacultyColors as F, ACCENT_COLORS as L, Radii, Shadows } from '../../Utilities/Theme';
 import { getUserProfile } from '../../Controller/AuthenticationController';
@@ -422,7 +423,7 @@ export default function FacultyAssessments() {
 
         {loading ? (
           <View style={S.loadingContainer}>
-            <ActivityIndicator size="large" color={F.primary} />
+            <LoadingDots />
           </View>
         ) : (
           <View style={S.content}>
@@ -608,7 +609,7 @@ export default function FacultyAssessments() {
               <View style={S.resultsContainer}>
                 {resultsLoading ? (
                   <View style={S.loadingArea}>
-                    <ActivityIndicator size="small" color={F.primary} />
+                    <LoadingDots size={8} />
                     <Text style={S.loadingText}>Fetching results...</Text>
                   </View>
                 ) : activityResults.length === 0 ? (

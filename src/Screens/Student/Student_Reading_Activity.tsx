@@ -225,46 +225,8 @@ export default function ReadingActivityScreenPage() {
 
 
 
-  const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
-    setIsTranscribing(true);
-    setFinalTagalogText('');
-    try {
-      const transcription = await transcribeAudioAPI(audioFile);
-      setFinalTagalogText(transcription);
-      setSpokenText(transcription);
-      setRecordingDuration(duration);
-      await analyzeReading(transcription, duration);
-      setIsReadingCompleted(true);
 
-    } catch (error) {
-      console.error(error);
-      const simulatedResponse = getSimulatedResponse(targetText);
-      setSpokenText(simulatedResponse);
-      analyzeReading(simulatedResponse, 0);
-      setIsReadingCompleted(true);
-    } finally {
-      setIsTranscribing(false);
-    }
-  }, [getSimulatedResponse, targetText]);
 
-  const handleRecordToggle = useCallback(async () => {
-    if (isRecording) {
-      try {
-        const audioFile = await stopRecording();
-        setRecordingDuration(recordTime);
-        await handleAudioProcessing(audioFile, recordTime);
-      } catch (error) {
-        Alert.alert('Error', 'Failed to process recording');
-      }
-    } else {
-      setHasShownModalForCurrentAttempt(false);
-      setHasStoredReport(false);
-      setHasStoredCorrectAttempt(false);
-      resetAll();
-      await startRecording(targetText);
-    }
-
-  }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText]);
 
   const convertAccuracyStringToNumber = useCallback((accuracyStr: string): number => {
     const cleanStr = accuracyStr.replace(/[^0-9.]/g, '');
@@ -293,19 +255,28 @@ export default function ReadingActivityScreenPage() {
   }, []);
 
   const handleNext = () => {
-    if (currentIndex < items.length - 1) {
+    if (type === 'alphabet' || type === 'word') {
       resetAll();
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex(prev => (prev + 1) % items.length);
     } else {
-      // Last item - Finish
-      handleBackStep();
+      if (currentIndex < items.length - 1) {
+        resetAll();
+        setCurrentIndex(prev => prev + 1);
+      } else {
+        handleBackStep();
+      }
     }
   };
 
   const handlePrevious = () => {
-    if (currentIndex > 0) {
+    if (type === 'alphabet' || type === 'word') {
       resetAll();
-      setCurrentIndex(prev => prev - 1);
+      setCurrentIndex(prev => (prev - 1 + items.length) % items.length);
+    } else {
+      if (currentIndex > 0) {
+        resetAll();
+        setCurrentIndex(prev => prev - 1);
+      }
     }
   };
 
@@ -392,6 +363,62 @@ export default function ReadingActivityScreenPage() {
 
   };
 
+  // Use a ref to always call the latest analyzeReading (avoids stale closure)
+  const analyzeReadingRef = useRef(analyzeReading);
+  useEffect(() => {
+    analyzeReadingRef.current = analyzeReading;
+  });
+
+  const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
+    setIsTranscribing(true);
+    setFinalTagalogText('');
+    try {
+      const timeoutPromise = new Promise<string>((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 30000)
+      );
+      
+      const transcription = await Promise.race([
+        transcribeAudioAPI(audioFile),
+        timeoutPromise,
+      ]);
+      
+      setFinalTagalogText(transcription);
+      setSpokenText(transcription);
+      setRecordingDuration(duration);
+      await analyzeReadingRef.current(transcription, duration);
+      setIsReadingCompleted(true);
+    } catch (error) {
+      console.error('Audio processing error:', error);
+      const simulatedResponse = getSimulatedResponse(targetText);
+      setSpokenText(simulatedResponse);
+      try {
+        await analyzeReadingRef.current(simulatedResponse, 0);
+      } catch (e) {
+        console.error('Fallback analysis error:', e);
+      }
+      setIsReadingCompleted(true);
+    } finally {
+      setIsTranscribing(false);
+    }
+  }, [getSimulatedResponse, targetText]);
+
+  const handleRecordToggle = useCallback(async () => {
+    if (isRecording) {
+      try {
+        const audioFile = await stopRecording();
+        setRecordingDuration(recordTime);
+        await handleAudioProcessing(audioFile, recordTime);
+      } catch (error) {
+        Alert.alert('Error', 'Failed to process recording');
+      }
+    } else {
+      setHasShownModalForCurrentAttempt(false);
+      setHasStoredReport(false);
+      setHasStoredCorrectAttempt(false);
+      resetAll();
+      await startRecording(targetText);
+    }
+  }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText]);
 
   const storeMiscueReport = useCallback(async (accuracyNum: number, duration: number, miscues: Miscue[], wpm: number) => {
     try {
@@ -425,7 +452,7 @@ export default function ReadingActivityScreenPage() {
 
         <ReadingHeader onBack={handleBackStep} onLogout={handleLogout} />
 
-        <View style={readingStyles.activityContentWrapper}>
+        <View style={[readingStyles.activityContentWrapper, type === 'passage' && { marginTop: 30, gap: 12 }]}>
           <BounceIn key={currentIndex}>
             <PassageDisplay
               material={readingMaterial}
@@ -468,10 +495,6 @@ export default function ReadingActivityScreenPage() {
                 <Text style={[S.feedbackText, isCorrectAttempt ? { color: '#3d71d9' } : { color: '#eb5c6c' }]}>
                   {isCorrectAttempt ? 'Napakahusay!' : 'Subukan muli...'}
                 </Text>
-                
-                {type === 'passage' && (
-                  <Text style={S.accuracySub}>{accuracyString}% Accuracy</Text>
-                )}
               </BounceIn>
             )}
           </View>
@@ -480,12 +503,13 @@ export default function ReadingActivityScreenPage() {
         {/* Stable Footer Controls - Lifted */}
         <View style={[
           readingStyles.footerControls,
-          (type === 'passage' || type === 'alphabet') && { justifyContent: 'center' }
+          (type === 'passage' || (type === 'alphabet' && items.length <= 1)) && { justifyContent: 'center' },
+          type === 'passage' && { bottom: 60 }
         ]}>
-          {(type !== 'passage' && type !== 'alphabet') && (
+          {(type !== 'passage') && (
             <NavArrow
               direction="left"
-              disabled={currentIndex === 0 || isRecording}
+              disabled={((type !== 'alphabet' && type !== 'word') && currentIndex === 0) || isRecording}
               onPress={handlePrevious}
             />
           )}
@@ -497,10 +521,10 @@ export default function ReadingActivityScreenPage() {
             onRecordToggle={handleRecordToggle}
           />
 
-          {(type !== 'passage' && type !== 'alphabet') && (
+          {(type !== 'passage') && (
             <NavArrow
               direction="right"
-              isFinish={currentIndex === items.length - 1}
+              isFinish={(type !== 'alphabet' && type !== 'word') && currentIndex === items.length - 1}
               disabled={isRecording}
               onPress={handleNext}
             />

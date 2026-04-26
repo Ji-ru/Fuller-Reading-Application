@@ -43,7 +43,7 @@ export default function GradeLevelDropDownSelection({ onSelect, transparent }: G
         <Text style={{ fontSize: 15, color: '#1b2e23', fontFamily: 'Satoshi-Medium' }}>
           {selectedValue}
         </Text>
-        <Text style={{ fontSize: 12, color: '#8fafa0' }}>▼</Text>
+        <Text style={{ fontSize: 12, color: '#3d71d9' }}>▼</Text>
       </TouchableOpacity>
 
       <Modal
@@ -120,7 +120,7 @@ const localS = StyleSheet.create({
     alignItems: 'center',
   },
   selectedOption: {
-    backgroundColor: '#f0faf4',
+    backgroundColor: '#3d71d9' + '12',
     borderRadius: 12,
   },
   optionText: {
@@ -129,7 +129,7 @@ const localS = StyleSheet.create({
     color: '#1b2e23',
   },
   selectedOptionText: {
-    color: '#1a7a45',
+    color: '#3d71d9',
     fontFamily: 'Satoshi-Bold',
   },
 });

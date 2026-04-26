@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import { 
   BookOpenIcon, 
   HistoryIcon, 
@@ -21,7 +22,8 @@ import {
   UsersIcon, 
   BriefcaseIcon,
   ClipboardListIcon,
-  BurgerIcon
+  BurgerIcon,
+  BarChartIcon
 } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { AssessmentController } from '../../Controller/AssessmentController';
@@ -131,7 +133,7 @@ export default function FacultyDashboard() {
     if (loading) {
       return (
         <View style={facultyDashboard.loadingContainer}>
-          <ActivityIndicator size="large" color="#4ECDC4" />
+          <LoadingDots />
           <Text style={facultyDashboard.loadingText}>Loading dashboard data...</Text>
         </View>
       );
@@ -160,16 +162,8 @@ export default function FacultyDashboard() {
           <Text style={S.sumVal}>{stats.studentCount}</Text>
           <Text style={S.sumLabel}>Mag-aaral</Text>
         </View>
-        <View style={S.sumCard}>
-          <ClipboardListIcon size={20} color={F.primary} />
-          <Text style={S.sumVal}>{stats.reportCount}</Text>
-          <Text style={S.sumLabel}>Mga Pagsusulit</Text>
-        </View>
-        <View style={S.sumCard}>
-          <TrophyIcon size={20} color={F.primary} />
-          <Text style={S.sumVal}>{stats.avgAccuracy.toFixed(0)}%</Text>
-          <Text style={S.sumLabel}>Galing</Text>
-        </View>
+
+
       </View>
     );
   };
@@ -250,14 +244,15 @@ export default function FacultyDashboard() {
 
                  <TouchableOpacity 
                    style={[S.actionCard, { backgroundColor: F.white }]} 
-                   onPress={() => handleTabNavigation('FacultyAssessments' as any)}
+                   onPress={() => handleTabNavigation('FacultyReports' as any)}
                  >
                    <View style={[S.actionIconBox, { backgroundColor: F.primary + '15' }]}>
-                     <ClipboardListIcon size={24} color={F.primary} />
+                     <BarChartIcon size={24} color={F.primary} />
                    </View>
-                   <Text style={S.actionLabel}>Pagsusulit</Text>
-                   <Text style={S.actionSub}>Gumawa at tingnan ang mga pagsusulit</Text>
+                   <Text style={S.actionLabel}>Mga Ulat</Text>
+                   <Text style={S.actionSub}>Tingnan ang galing ng mag-aaral</Text>
                  </TouchableOpacity>
+
               </View>
             </View>
           </View>

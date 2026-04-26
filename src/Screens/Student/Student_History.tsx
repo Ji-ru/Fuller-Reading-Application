@@ -1,5 +1,5 @@
 import auth from '@react-native-firebase/auth';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Dimensions,
   Image,
@@ -7,7 +7,8 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
@@ -26,6 +27,39 @@ const alphabetData = readingMaterialData?.Alphabet || [];
 const wordsData = readingMaterialData?.Words || [];
 
 const { width: SW } = Dimensions.get('window');
+
+// ─── Jumping Dots Loading ───────────────────────────────────────────────────
+function DotsLoading() {
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animate = (anim: Animated.Value, delay: number) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: -10, duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0,   duration: 400, useNativeDriver: true }),
+          Animated.delay(800 - delay),
+        ])
+      );
+    };
+    Animated.parallel([
+      animate(dot1, 0),
+      animate(dot2, 200),
+      animate(dot3, 400),
+    ]).start();
+  }, []);
+
+  return (
+    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginVertical: 20 }}>
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.greenDeep, transform: [{ translateY: dot1 }] }} />
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.green, transform: [{ translateY: dot2 }] }} />
+      <Animated.View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.green + '40', transform: [{ translateY: dot3 }] }} />
+    </View>
+  );
+}
 
 // ─── Header Icons ────────────────────────────────────────────────────────────
 // No local BackArrow needed, using standardized View style in render
@@ -515,12 +549,8 @@ export default function ReadingHistoryScreen() {
     return (
       <SafeAreaView style={S.bg}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: C.green }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: C.teal }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: C.orange }} />
-          </View>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: C.slate }}>Kinukuha ang iyong kasaysayan...</Text>
+          <DotsLoading />
+          <Text style={{ fontSize: 16, fontWeight: '700', color: C.slate, marginTop: 10 }}>Kinukuha ang iyong kasaysayan...</Text>
         </View>
       </SafeAreaView>
     );

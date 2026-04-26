@@ -15,6 +15,7 @@ export interface StudentSummary {
   totalAssessments: number;
   trend: 'improving' | 'stable' | 'needs_practice';
   readingAccuracy: number;
+  aralinCompleted: number;
 }
 
 export interface ClassSummary {
@@ -50,6 +51,7 @@ export interface StudentReport {
   totalReadingAttempts: number;
   commonMistakes: { word: string; count: number; type: string }[];
   aralinCompleted: number;
+  aralinProgressList: { index: number; label: string; percentage: number; mistakes: { word: string; count: number }[] }[];
   lessonsCompleted: number;
   totalLessons: number;
 }
@@ -169,6 +171,94 @@ export const ReportController = {
     return 'stable';
   },
 
+  /**
+   * Helper to calculate Aralin progress (1-25)
+   */
+  async _calculateAralinProgressDetails(studentId: string): Promise<{ completedCount: number; progressList: { index: number; label: string; percentage: number; mistakes: { word: string; count: number }[] }[] }> {
+    try {
+      const mastery = await MiscueReportController.getStudentDetailedCompletion(studentId);
+      const allReports = await MiscueReportController.getStudentReports(studentId);
+      const progressList: { index: number; label: string; percentage: number; mistakes: { word: string; count: number }[] }[] = [];
+      let completedCount = 0;
+      
+      const alphabetData = readingMaterialData?.Alphabet || [];
+      
+      alphabetData.forEach((aralin, idx) => {
+        const aralinIndex = idx + 1;
+        const letter = aralin.letter;
+        
+        // 1. Calculate Progress
+        let isAlphaDone = 0;
+        let wordCount = 0;
+        let passageCount = 0;
+        let totalWords = 0;
+        let totalPassages = 0;
+
+        if (mastery && mastery.completedAlpha) {
+          isAlphaDone = mastery.completedAlpha.has(letter) ? 1 : 0;
+          wordCount = mastery.completedWords?.[letter]?.size || 0;
+          
+          const subset = readingMaterialData.Words?.filter((w: any) => w.letter === letter) || [];
+          const allWords = subset.flatMap((w: any) => (w.contrasts || []).flatMap((c: any) => c.words || []));
+          const letterLower = letter.toLowerCase();
+          const uniqueWords = Array.from(new Set(allWords)).filter(
+            (word: any) => word?.trim().toLowerCase() !== letterLower
+          );
+          totalWords = uniqueWords.length;
+
+          const currentPassages = readingMaterialData?.Passages?.filter((p: any) => p.aralin === aralinIndex) || [];
+          passageCount = currentPassages.filter((p: any) => mastery.completedPassages.has(p.title)).length;
+          totalPassages = currentPassages.length;
+        }
+
+        const totalPossible = 1 + totalWords + totalPassages;
+        const masteredCount = isAlphaDone + Math.min(wordCount, totalWords) + Math.min(passageCount, totalPassages);
+        const progressPerc = totalPossible > 0 ? Math.round((masteredCount / totalPossible) * 100) : 0;
+        if (progressPerc === 100) completedCount++;
+
+        // 2. Gather Mistakes for this Aralin
+        const aralinMistakeFreq: Record<string, number> = {};
+        const aralinPassageTitles = readingMaterialData?.Passages?.filter((p: any) => p.aralin === aralinIndex).map((p: any) => p.title) || [];
+        
+        const aralinReports = allReports.filter(r => {
+          if (r.passageTitle === `Alphabet - ${letter}`) return true;
+          if (r.passageTitle === `Words for ${letter}`) return true;
+          if (aralinPassageTitles.includes(r.passageTitle)) return true;
+          return false;
+        });
+
+        aralinReports.forEach(r => {
+          r.miscues?.forEach(m => {
+            const w = m.expectedWord || m.spokenWord;
+            if (w) aralinMistakeFreq[w] = (aralinMistakeFreq[w] || 0) + 1;
+          });
+        });
+
+        const mistakes = Object.entries(aralinMistakeFreq)
+          .map(([word, count]) => ({ word, count }))
+          .sort((a,b) => b.count - a.count)
+          .slice(0, 5);
+        
+        progressList.push({
+          index: aralinIndex,
+          label: ARALIN_LABELS[aralinIndex] || letter,
+          percentage: progressPerc,
+          mistakes
+        });
+      });
+
+      return { completedCount, progressList };
+    } catch (e) {
+      console.log('Aralin progress details error:', e);
+      return { completedCount: 0, progressList: [] };
+    }
+  },
+
+  async _calculateAralinProgress(studentId: string): Promise<number> {
+    const { completedCount } = await this._calculateAralinProgressDetails(studentId);
+    return completedCount;
+  },
+
   // ═══════════════════════════════════════════════════════════════════════════
   // PER CLASS REPORT
   // ═══════════════════════════════════════════════════════════════════════════
@@ -213,6 +303,9 @@ export const ReportController = {
         readingAccuracy = stats.averageAccuracy;
       } catch { /* no reading data */ }
 
+      // Get Aralin completion
+      const aralinCompleted = await this._calculateAralinProgress(student.uid);
+
       summaries.push({
         uid: student.uid,
         name: `${student.firstName} ${student.lastName}`,
@@ -220,6 +313,7 @@ export const ReportController = {
         totalAssessments: sResults.length,
         trend: this._calculateTrend(scores),
         readingAccuracy: Math.round(readingAccuracy),
+        aralinCompleted,
       });
     }
 
@@ -328,40 +422,7 @@ export const ReportController = {
     } catch { /* no data */ }
 
     // Get Aralin progress (1-25)
-    let aralinCompleted = 0;
-    try {
-      const mastery = await MiscueReportController.getStudentDetailedCompletion(studentId);
-      if (mastery && mastery.completedAlpha && mastery.completedWords && mastery.completedPassages) {
-        let completedCount = 0;
-        const alphabetData = readingMaterialData?.Alphabet || [];
-        
-        alphabetData.forEach((aralin, idx) => {
-          const letter = aralin.letter;
-          const isAlphaDone = mastery.completedAlpha.has(letter) ? 1 : 0;
-          const wordCount = mastery.completedWords?.[letter]?.size || 0;
-          
-          // Compute total words for letter
-          const subset = readingMaterialData.Words?.filter((w: any) => w.letter === letter) || [];
-          const allWords = subset.flatMap((w: any) => (w.contrasts || []).flatMap((c: any) => c.words || []));
-          const letterLower = letter.toLowerCase();
-          const uniqueWords = Array.from(new Set(allWords)).filter(
-            (word: any) => word?.trim().toLowerCase() !== letterLower
-          );
-          const totalWords = uniqueWords.length;
-
-          const currentPassages = readingMaterialData?.Passages?.filter((p: any) => p.aralin === idx + 1) || [];
-          const passageCount = currentPassages.filter((p: any) => mastery.completedPassages.has(p.title)).length;
-          const totalPassages = currentPassages.length;
-
-          const totalPossible = 1 + totalWords + totalPassages;
-          const masteredCount = isAlphaDone + Math.min(wordCount, totalWords) + Math.min(passageCount, totalPassages);
-
-          const progressPerc = totalPossible > 0 ? Math.round((masteredCount / totalPossible) * 100) : 0;
-          if (progressPerc === 100) completedCount++;
-        });
-        aralinCompleted = completedCount;
-      }
-    } catch (e) { console.log('Aralin completion error:', e); }
+    const { completedCount: aralinCompleted, progressList: aralinProgressList } = await this._calculateAralinProgressDetails(studentId);
 
     // Get lesson progress based on active activities
     const completedActivityIds = new Set(results.map(r => r.activityId));
@@ -388,6 +449,7 @@ export const ReportController = {
       totalReadingAttempts,
       commonMistakes,
       aralinCompleted,
+      aralinProgressList,
       lessonsCompleted,
       totalLessons: activeActivities.length,
     };

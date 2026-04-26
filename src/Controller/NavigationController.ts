@@ -65,9 +65,9 @@ export type RootStackParamList = {
   FacultyAssessments: undefined;
   FacultyCreateAssessment: { activity?: any }; // Optional activity for editing
   FacultyReports: undefined;
-  StudentAssessments: undefined;
-  StudentAssessmentActivity: { activityId: string };
-  StudentAssessmentReview: { result: ActivityResultDocument };
+  // StudentAssessments: undefined,
+  // StudentAssessmentActivity: { activityId: string },
+  // StudentAssessmentReview: { result: ActivityResultDocument },
 };
 
 
@@ -248,13 +248,13 @@ export const useNavigationHelper = () => {
     navigation.navigate('StudentViewProfile', studentData);
   };
 
-  const handleAssessmentNext = (activityId: string) => {
-    navigation.navigate('StudentAssessmentActivity', { activityId });
-  };
+  // const handleAssessmentNext = (activityId: string) => {
+  //   navigation.navigate('StudentAssessmentActivity', { activityId });
+  // };
 
-  const handleAssessmentReview = (result: ActivityResultDocument) => {
-    navigation.navigate('StudentAssessmentReview', { result });
-  };
+  // const handleAssessmentReview = (result: ActivityResultDocument) => {
+  //   navigation.navigate('StudentAssessmentReview', { result });
+  // };
 
   // Handles Back Button in any page the current user is in
   const handleBackStep = () => {
@@ -306,8 +306,8 @@ export const useNavigationHelper = () => {
     handleHistoryNext,
     handleClassStudents,
     handleStudentViewStats,
-    handleAssessmentNext,
-    handleAssessmentReview,
+    // handleAssessmentNext,
+    // handleAssessmentReview,
     handleBackStep,
     handleLogout,
     handleCancelRegistration,
