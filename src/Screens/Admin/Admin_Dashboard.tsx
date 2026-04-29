@@ -26,6 +26,8 @@ import UsersRegisteredChart from '../../Components/Admin/UsersRegisteredChart';
 import ClassStatusChart from '../../Components/Admin/ClassStatusChart';
 import ClassesPerGradeChart from '../../Components/Admin/ClassesPerGradeChart';
 import ReadingLevelDistributionChart from '../../Components/Admin/ReadingLevelDistributionChart';
+import { FullerProgressionFunnelChart } from '../../Components/Admin/FullerProgressionFunnelChart';
+
 import { sw, sh, sf } from '../../Utils/responsive';
 
 const COLORS = {
@@ -65,13 +67,13 @@ export default function AdminDashboard() {
       id: 'activity-logs',
       label: 'Activity Logs',
       icon: require('../../../assets/icons/Logs-icon.png'),
-      onPress: () => {},
+      onPress: () => { },
     },
     {
       id: 'settings',
       label: 'Settings',
       icon: require('../../../assets/icons/Settings-icon.png'),
-      onPress: () => {},
+      onPress: () => { },
     },
   ];
 
@@ -200,8 +202,11 @@ export default function AdminDashboard() {
               <ClassesPerGradeChart
                 acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
               />
+              <FullerProgressionFunnelChart
+                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
+              />
             </View>
-            
+
             <View style={{ height: sh(40) }} />
           </View>
         </View>

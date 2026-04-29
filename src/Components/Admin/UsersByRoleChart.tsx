@@ -27,7 +27,7 @@ const COLORS = {
 };
 
 const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
-  const { roleCounts, totalUsers, isLoading, errorMessage } = useUserAnalytics(acadYear, false);
+  const { roleCounts, totalUsers, isLoading, errorMessage } = useUserAnalytics(acadYear, true);
 
   if (isLoading) {
     return (
@@ -71,6 +71,7 @@ const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
         <View>
           <Text style={styles.title}>Users by Role</Text>
           <Text style={styles.subtitle}>Total Users: {totalUsers}</Text>
+          <Text style={styles.description}>Shows the distribution of system users between students and faculty.</Text>
         </View>
       </View>
       
@@ -126,6 +127,12 @@ const styles = StyleSheet.create({
     fontSize: sf(13),
     fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
   },
   chartWrapper: {
     alignItems: 'center',

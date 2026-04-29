@@ -85,6 +85,7 @@ const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) =
         <View>
           <Text style={styles.title}>Classes per Grade Level</Text>
           <Text style={styles.subtitle}>Total Classes: {totalClasses}</Text>
+          <Text style={styles.description}>Visualizes the distribution of classes across different grade levels.</Text>
         </View>
       </View>
 
@@ -141,6 +142,12 @@ const styles = StyleSheet.create({
     fontSize: sf(13),
     fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
   },
   chartWrapper: {
     justifyContent: 'center',

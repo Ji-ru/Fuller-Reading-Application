@@ -82,6 +82,7 @@ const ClassStatusChart: React.FC<ClassStatusChartProps> = ({acadYear}) => {
         <View>
           <Text style={styles.title}>Active vs Archived Classes</Text>
           <Text style={styles.subtitle}>Total Classes: {totalClasses}</Text>
+          <Text style={styles.description}>Compares active and archived classes to track current classroom activity.</Text>
         </View>
       </View>
       
@@ -137,6 +138,12 @@ const styles = StyleSheet.create({
     fontSize: sf(13),
     fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
   },
   chartWrapper: {
     alignItems: 'center',

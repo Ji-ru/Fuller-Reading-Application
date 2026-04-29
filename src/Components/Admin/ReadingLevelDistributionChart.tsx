@@ -142,6 +142,7 @@ const ReadingLevelDistributionChart: React.FC<ReadingLevelDistributionChartProps
         <View>
           <Text style={styles.title}>Reading Level Distribution</Text>
           <Text style={styles.subtitle}>Students by proficiency</Text>
+          <Text style={styles.description}>Breakdown of students' reading proficiency levels (Beginner, Intermediate, and Advanced).</Text>
         </View>
       </View>
 
@@ -310,6 +311,12 @@ const styles = StyleSheet.create({
     fontSize: sf(13),
     fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
   },
   filtersRow: {
     flexDirection: 'row',

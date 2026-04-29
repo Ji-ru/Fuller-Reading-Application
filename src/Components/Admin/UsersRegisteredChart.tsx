@@ -35,7 +35,7 @@ const chartConfig = {
 };
 
 const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
-  const { monthlyRegistrations, isLoading, errorMessage } = useUserAnalytics(acadYear, false);
+  const { monthlyRegistrations, isLoading, errorMessage } = useUserAnalytics(acadYear, true);
 
   if (isLoading) {
     return (
@@ -92,6 +92,7 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
         <View>
           <Text style={styles.title}>Users Registered Over Time</Text>
           <Text style={styles.subtitle}>Monthly sign-ups</Text>
+          <Text style={styles.description}>Tracks the number of new user registrations per month to monitor platform adoption.</Text>
         </View>
       </View>
 
@@ -148,6 +149,12 @@ const styles = StyleSheet.create({
     fontSize: sf(13),
     fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
   },
   chartWrapper: {
     justifyContent: 'center',

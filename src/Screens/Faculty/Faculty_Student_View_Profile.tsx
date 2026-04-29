@@ -17,6 +17,7 @@ import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_St
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
 import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
+import StudentTotalActivityToday from '../../Components/Faculty/StudentView_Status/StudentTotalActivityToday';
 import facultyStudentView from '../../UI_Designs/FacultyStudentViewStyles';
 
 /**
@@ -105,6 +106,11 @@ export default function StudentViewProfile() {
             <Text style={facultyStudentView.studentMeta}>
               Reading Level: {readingLevel}
             </Text>
+          </View>
+
+          {/* TOTAL ACTIVITY TODAY */}
+          <View style={facultyStudentView.section}>
+            <StudentTotalActivityToday studentId={studentId} />
           </View>
 
           {/* ALPHABET MASTERY AND ACCURACY */}

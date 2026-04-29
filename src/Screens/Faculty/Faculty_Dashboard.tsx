@@ -96,7 +96,7 @@ export default function FacultyDashboard() {
   // EVENT HANDLER
   // ========================================================================
 
-const academicYears = React.useMemo(() => {
+  const academicYears = React.useMemo(() => {
     return Array.from(
       new Set(classHealthData.map(item => item.acadYear).filter(Boolean)),
     );
@@ -153,7 +153,7 @@ const academicYears = React.useMemo(() => {
             />
             {/* READING STATUS FILTERS */}
             <View style={facultyDashboard.filtersRow}>
-              
+
               {/* Academic Year */}
               <View style={facultyDashboard.filterItem}>
                 <Text style={facultyDashboard.filterLabel}>Academic Year</Text>
@@ -322,14 +322,14 @@ const academicYears = React.useMemo(() => {
               filter={readingStatusFilter}
               onFilterChange={handleReadingFilterChange}
             />
-            <ClassAlphabetMastery
+            {/* <ClassAlphabetMastery
               facultyId={auth.currentUser?.uid || ''}
               filter={readingStatusFilter}
             />
             <ClassWordMastery
               facultyId={auth.currentUser?.uid || ''}
               filter={readingStatusFilter}
-            />
+            /> */}
             <AccuracyTrendsChart
               facultyId={auth.currentUser?.uid}
               filter={readingStatusFilter}
