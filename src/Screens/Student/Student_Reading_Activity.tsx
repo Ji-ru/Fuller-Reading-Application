@@ -985,7 +985,21 @@ export default function ReadingActivityScreenPage() {
   return (
     <SafeAreaView style={readingStyles.container}>
       <ImageBackground
-        source={!isReadingCompleted ? isPassage(readingMaterial) ? getPassageImage(readingMaterial.image) : isAlphabet(readingMaterial) ? require('../../../assets/images/RA-Alphabet-Result-bg.png') : isWords(readingMaterial) ? require('../../../assets/images/RA-Word-Result-bg.png') : undefined : require('../../../assets/images/RA-Passage-Result-bg.png')}
+        source={
+              isReadingCompleted
+                ? isAlphabet(readingMaterial)
+                  ? require('../../../assets/images/RA-Alphabet-Result-bg.png')
+                  : isWords(readingMaterial)
+                    ? require('../../../assets/images/RA-Word-Result-bg.png')
+                    : require('../../../assets/images/RA-Passage-Result-bg.png')
+                : isPassage(readingMaterial)
+                  ? getPassageImage(readingMaterial.image)
+                  : isAlphabet(readingMaterial)
+                    ? require('../../../assets/images/RA-Alphabet-Result-bg.png')
+                    : isWords(readingMaterial)
+                      ? require('../../../assets/images/RA-Word-Result-bg.png')
+                      : undefined
+            }
         style={readingStyles.bgImage}
         imageStyle={!isReadingCompleted ? readingStyles.backgroundImage : readingStyles.backgroundResultImage}
         resizeMode='cover'

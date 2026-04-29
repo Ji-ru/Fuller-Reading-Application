@@ -199,10 +199,10 @@ export default function Profile() {
                   source={require('../../../assets/icons/BackButton-icon.png')}
                 />
               </TouchableOpacity>
-              <Image
+              {/* <Image
                 style={upperNav.ciscLogo}
                 source={require('../../../assets/images/cisckids.png')}
-              />
+              /> */}
               <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
                 <Image style={upperNav.menuIcon} source={require('../../../assets/icons/Menu-icon.png')} />
               </TouchableOpacity>

@@ -96,10 +96,10 @@ export default function AdminDashboard() {
 
           {/* Header */}
           <View style={upperNav.header}>
-            <Image
+            {/* <Image
               style={upperNav.ciscLogo}
               source={require('../../../assets/images/cisckids.png')}
-            />
+            /> */}
             <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
               <Image
                 style={upperNav.menuIcon}

@@ -262,10 +262,10 @@ export default function StudentMyClass() {
                         source={require('../../../assets/icons/BackButton-icon.png')}
                     />
                 </TouchableOpacity>
-                <Image
+                {/* <Image
                     style={upperNav.ciscLogo}
                     source={require('../../../assets/images/cisckids.png')}
-                />
+                /> */}
                 <TouchableOpacity style={upperNav.touchable} onPress={() => setMenuVisible(!menuVisible)}>
                     <Image
                         style={upperNav.menuIcon}
