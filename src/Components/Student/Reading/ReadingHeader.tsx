@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
-import user from '../../../UI_Designs/UserStyle';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import LogoutModal from '../../GlobalUse/Logout_Modal';
 import upperNav from '../../../UI_Designs/UpperNavigation';
 
@@ -10,6 +9,44 @@ interface ReadingHeaderProps {
   onLogout: () => void;
   menuVisible: boolean;
 }
+
+const C = {
+  white: '#ffffff',
+  darkBlue: '#163F6C',
+  ink: '#1b2e23',
+};
+
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+    </View>
+  );
+}
+
+const headerStyles = StyleSheet.create({
+  menuBtn: {
+    width: 48, height: 48,
+    borderRadius: 14,
+    backgroundColor: C.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
+  },
+  backBtn: {
+    width: 45, height: 45, borderRadius: 10,
+    backgroundColor: C.darkBlue,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  backArrowText: {
+    fontSize: 40, fontFamily: 'Nunito-Bold',
+    color: C.white, lineHeight: 28, marginLeft: -2, paddingBottom: 2
+  },
+});
 
 export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
   onBack,
@@ -27,7 +64,7 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
 
   const confirmLogout = () => {
     setLogoutModalVisible(false);
-    onLogout(); // Call parent's logout function
+    onLogout(); 
   };
 
   const cancelLogout = () => {
@@ -37,21 +74,17 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
   return (
     <>
       <View style={upperNav.header}>
-        <TouchableOpacity style={upperNav.touchable} onPress={onBack}>
-          <Image
-            style={upperNav.backButtonIcon}
-            source={require('../../../../assets/icons/BackButton-icon.png')}
-          />
+        <TouchableOpacity style={headerStyles.backBtn} onPress={onBack} activeOpacity={0.7}>
+          <Text style={headerStyles.backArrowText}>‹</Text>
         </TouchableOpacity>
+
         <Image
           style={upperNav.ciscLogo}
           source={require('../../../../assets/images/cisckids.png')}
         />
-        <TouchableOpacity style={upperNav.touchable} onPress={onMenuToggle}>
-          <Image
-            style={upperNav.menuIcon}
-            source={require('../../../../assets/icons/Menu-icon.png')}
-          />
+
+        <TouchableOpacity style={headerStyles.menuBtn} onPress={onMenuToggle} activeOpacity={0.7}>
+          <MenuBars />
         </TouchableOpacity>
       </View>
 

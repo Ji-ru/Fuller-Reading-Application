@@ -1,5 +1,5 @@
 import React, { JSX, useEffect, useRef } from 'react';
-import { View, Text, Image, ScrollView, Animated } from 'react-native';
+import { View, Text, Image, ScrollView, Animated, StyleSheet } from 'react-native';
 import Svg, {
   Circle,
   Ellipse,
@@ -107,6 +107,114 @@ export const getPassageGreetingContent = (
   return { type: 'tryAgain', title: "Let's Try Again!", message: 'Practice makes perfect! Give it another try.' };
 };
 
+// ─── WordProgressDots ────────────────────────────────────────────────────────
+// Renders a stepper-style indicator showing the student's position in the lesson.
+// Dots fill left-to-right as words are completed (matches the illustration).
+
+const MAX_VISIBLE_DOTS = 10;
+
+const WordProgressDots: React.FC<{ total: number; current: number }> = ({
+  total,
+  current,
+}) => {
+  if (total <= 1) return null;
+
+  if (total > MAX_VISIBLE_DOTS) {
+    return (
+      <View style={dotStyles.counterWrap}>
+        <Text style={dotStyles.counterText}>
+          {current + 1} / {total}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={dotStyles.row}>
+      {Array.from({ length: total }).map((_, i) => {
+        const isDone = i < current;
+        const isActive = i === current;
+        return (
+          <React.Fragment key={i}>
+            <View
+              style={[
+                dotStyles.dot,
+                isDone && dotStyles.dotDone,
+                isActive && dotStyles.dotActive,
+              ]}
+            />
+            {i < total - 1 && (
+              <View style={[dotStyles.line, isDone && dotStyles.lineDone]} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </View>
+  );
+};
+
+const dotStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    marginBottom: 4,
+    paddingHorizontal: 8,
+  },
+  dot: {
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: '#D7E9FF',
+    borderWidth: 2.5,
+    borderColor: '#3B7FC9',
+  },
+  dotDone: {
+    backgroundColor: '#3B7FC9',
+    borderColor: '#2455A4',
+  },
+  dotActive: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#1A3F6F',
+    borderColor: '#1A3F6F',
+    shadowColor: '#1A3F6F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  line: {
+    height: 3,
+    width: 16,
+    backgroundColor: '#D7E9FF',
+    marginHorizontal: 2,
+    borderRadius: 2,
+  },
+  lineDone: {
+    backgroundColor: '#3B7FC9',
+  },
+  counterWrap: {
+    marginTop: 14,
+    marginBottom: 4,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(59,127,201,0.12)',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 5,
+    borderWidth: 1.5,
+    borderColor: '#3B7FC9',
+  },
+  counterText: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 15,
+    color: '#1A3F6F',
+    letterSpacing: 0.5,
+  },
+});
+
 // ─── PassageDisplay ───────────────────────────────────────────────────────────
 
 interface PassageDisplayProps {
@@ -125,6 +233,9 @@ interface PassageDisplayProps {
   onTryAgain?: () => void;
   onNextItem?: () => void;
   hasNextItem?: boolean;
+  // ── Word progress indicator ──────────────────────────────────────────────
+  currentWordIndex?: number;   // 0-based index of the current word in the lesson
+  lessonWordCount?: number;    // total number of words in the current lesson
 }
 
 export const PassageDisplay: React.FC<PassageDisplayProps> = ({
@@ -142,6 +253,8 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   onTryAgain,
   onNextItem,
   hasNextItem,
+  currentWordIndex = 0,
+  lessonWordCount = 1,
 }) => {
 
   const formatText = (text: string) => text.split('\n').map((line, index) => (
@@ -301,6 +414,10 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
             {word}
           </Text>
         </View>
+
+        {/* ── Word Progress Dots ─────────────────────────────────────────── */}
+        {/* Renders below the word card; fills left-to-right as navigation advances */}
+        <WordProgressDots current={currentWordIndex} total={lessonWordCount} />
       </View>
     );
   }

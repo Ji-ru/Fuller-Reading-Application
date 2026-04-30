@@ -251,21 +251,19 @@ const selection = StyleSheet.create({
     color: '#2CA96A',
   },
   letterArrowContainer: {
-    width: sw(32),
-    height: sw(32),
-    borderRadius: sw(16),
-    backgroundColor: '#bcdcff',
+    width: sw(36),
+    height: sw(36),
+    borderRadius: sw(18),
+    backgroundColor: '#3B7FC9',
     justifyContent: 'center',
     alignItems: 'center',
-    alignContent: 'center',
-
     marginLeft: sw(12),
   },
   letterArrow: {
-    fontSize: sf(20),
-    paddingBottom: sh(10),
-    color: '#3B7FC9',
+    fontSize: sf(22),
+    color: '#ffffff',
     fontFamily: 'Nunito-Bold',
+    lineHeight: sf(26),
   },
 
   // BACK TO LETTERS BUTTON

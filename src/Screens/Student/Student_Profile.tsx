@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,9 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
+  Animated,
+  TextInput,
 } from 'react-native';
-import { TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
@@ -24,6 +25,27 @@ import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { sw, sh, sf } from '../../Utils/responsive';
+import Svg, { Text as SvgText } from 'react-native-svg';
+
+// ─── Palette (aligned with Reading Selection blue/cyan theme) ─────────────────
+const C = {
+  bg: '#ECFBFF',
+  primary: '#3B7FC9',
+  primaryDark: '#2E5C8A',
+  primaryDeep: '#163F6C',
+  primaryLight: '#D7E9FF',
+  tabBg: '#c0e8f2',
+  accent: '#38B6FF',
+  card: '#FFFFFF',
+  ink: '#1F2937',
+  inkLight: '#6B7280',
+  slate: '#9CA3AF',
+  border: '#E5E7EB',
+  inputBg: '#F3F8FF',
+  coral: '#e74c3c',
+  green: '#2CA96A',
+  orange: '#FF7043',
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface StudentStats {
@@ -41,6 +63,85 @@ interface ProgressData {
   passageTitle: string;
 }
 
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+    </View>
+  );
+}
+
+const headerStyles = StyleSheet.create({
+  menuBtn: {
+    width: 48, height: 48,
+    borderRadius: 14,
+    backgroundColor: C.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
+  },
+  backBtn: {
+    width: 45, height: 45, borderRadius: 10,
+    backgroundColor: C.primaryDeep,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  backArrowText: {
+    fontSize: 40, fontFamily: 'Nunito-Bold',
+    color: C.card, lineHeight: 28, marginLeft: -2, paddingBottom: 2
+  },
+});
+
+// ─── FadeSlideIn ──────────────────────────────────────────────────────────────
+function FadeSlideIn({
+  children,
+  delay = 0,
+  direction = 'up',
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  direction?: 'up' | 'down' | 'left' | 'right';
+}) {
+  const translateVal = useRef(new Animated.Value(
+    direction === 'up' ? 30 : direction === 'down' ? -30 : direction === 'left' ? 30 : -30
+  )).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.parallel([
+        Animated.spring(translateVal, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 8,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, []);
+
+  const isHorizontal = direction === 'left' || direction === 'right';
+  const transform = isHorizontal
+    ? [{ translateX: translateVal }]
+    : [{ translateY: translateVal }];
+
+  return (
+    <Animated.View style={{ transform, opacity }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Profile() {
   const auth = getAuth();
 
@@ -164,66 +265,80 @@ export default function Profile() {
   // ── Loading / error states ──────────────────────────────────────────────────
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <SafeAreaView style={S.loadingContainer}>
+        <ActivityIndicator size="large" color={C.primary} />
+        <Text style={S.loadingText}>Loading profile...</Text>
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchProfileData}>
-          <Text style={styles.retryButtonText}>Retry</Text>
+      <SafeAreaView style={S.loadingContainer}>
+        <Text style={S.errorText}>{error}</Text>
+        <TouchableOpacity style={S.retryButton} onPress={fetchProfileData}>
+          <Text style={S.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={S.container}>
       <BubbleBackground />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.innerContainer}>
 
-          {/* HEADER */}
-          <View style={styles.header}>
-            <View style={upperNav.header}>
-              <TouchableOpacity style={upperNav.touchable} onPress={() => handleBackStep()}>
-                <Image
-                  style={upperNav.backButtonIcon}
-                  source={require('../../../assets/icons/BackButton-icon.png')}
-                />
-              </TouchableOpacity>
-              {/* <Image
-                style={upperNav.ciscLogo}
-                source={require('../../../assets/images/cisckids.png')}
-              /> */}
-              <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-                <Image style={upperNav.menuIcon} source={require('../../../assets/icons/Menu-icon.png')} />
-              </TouchableOpacity>
-            </View>
+      {/* HEADER */}
+      <View style={S.headerWrapper}>
+        <View style={upperNav.header}>
+          <TouchableOpacity style={headerStyles.backBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
+            <Text style={headerStyles.backArrowText}>‹</Text>
+          </TouchableOpacity>
 
-            {menuVisible && (
-              <View style={upperNav.dropdownMenu}>
-                <TouchableOpacity onPress={handleLogoutPress} style={styles.logoutButton}>
-                  <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
-                  <Text style={upperNav.logoutText}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            {menuVisible && (
-              <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
-            )}
+          <Svg height={60} width={200}>
+            <SvgText
+              x={100} y={35} fontSize={23}
+              fontFamily="Nunito-Black" textAnchor="middle"
+              fill="none" stroke={C.primaryLight}
+              strokeWidth={8} strokeLinejoin="round"
+            >
+              My Profile
+            </SvgText>
+            <SvgText
+              x={100} y={35} fontSize={23}
+              fontFamily="Nunito-Black" textAnchor="middle"
+              fill={C.primary}
+            >
+              My Profile
+            </SvgText>
+          </Svg>
+
+          <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
+            <MenuBars />
+          </TouchableOpacity>
+        </View>
+
+        {menuVisible && (
+          <View style={upperNav.dropdownMenu}>
+            <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
+              <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
+              <Text style={upperNav.logoutText}>Logout</Text>
+            </TouchableOpacity>
           </View>
+        )}
+        {menuVisible && (
+          <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
+        )}
+      </View>
 
-          {/* PROFILE HEADER / CARD */}
-          <View style={styles.profileHeader}>
-            <View style={styles.profileImageContainer}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={S.scrollContent}
+      >
+        {/* ── Avatar Card ──────────────────────────────────────────────── */}
+        <FadeSlideIn delay={60}>
+          <View style={S.avatarCard}>
+            <View style={S.avatarRing}>
               <Image
                 source={
                   profileData?.profileImageUrl
@@ -232,75 +347,61 @@ export default function Profile() {
                       ? require('../../../assets/images/Male-profile.png')
                       : require('../../../assets/images/Female-profile.png')
                 }
-                style={styles.profileImage}
+                style={S.avatarImage}
               />
             </View>
-            <Text style={styles.studentName}>
+            <Text style={S.studentName}>
               {profileData?.firstName} {profileData?.lastName}
             </Text>
-            <Text style={styles.studentRole}>Student</Text>
+            <View style={S.roleBadge}>
+              <Text style={S.roleBadgeText}>Student</Text>
+            </View>
           </View>
+        </FadeSlideIn>
 
-          {/* BASIC INFORMATION */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Basic Information</Text>
+        {/* ── Basic Information ─────────────────────────────────────────── */}
+        <FadeSlideIn delay={180}>
+          <View style={S.section}>
+            <View style={S.sectionHeaderRow}>
+              <View style={S.sectionTitleRow}>
+                <Text style={S.sectionTitle}>Basic Information</Text>
+              </View>
               {!isEditing && (
-                <TouchableOpacity onPress={() => setIsEditing(true)}>
-                  <Text style={styles.editButtonTextPrimary}>Edit</Text>
+                <TouchableOpacity style={S.editPill} onPress={() => setIsEditing(true)}>
+                  <Text style={S.editPillText}>Edit</Text>
                 </TouchableOpacity>
               )}
             </View>
 
             {isEditing ? (
-              <View style={styles.formContainer}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>First Name</Text>
-                  <TextInput style={styles.textInput} value={firstName} onChangeText={setFirstName} />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>
-                    Middle Name <Text style={styles.optionalText}>(Optional)</Text>
-                  </Text>
-                  <TextInput style={styles.textInput} value={middleName} onChangeText={setMiddleName} />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Last Name</Text>
-                  <TextInput style={styles.textInput} value={lastName} onChangeText={setLastName} />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Birthdate (YYYY-MM-DD)</Text>
-                  <TextInput style={styles.textInput} value={dateOfBirth} onChangeText={setDateOfBirth} />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Sex (male/female)</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={sex}
-                    onChangeText={setSex}
-                    autoCapitalize="none"
-                  />
-                </View>
-                <View style={styles.actionRow}>
-                  <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} disabled={isSaving}>
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
+              <View style={S.formContainer}>
+                <FormField label="First Name" value={firstName} onChange={setFirstName} />
+                <FormField label="Middle Name" value={middleName} onChange={setMiddleName} optional />
+                <FormField label="Last Name" value={lastName} onChange={setLastName} />
+                <FormField label="Birthdate (YYYY-MM-DD)" value={dateOfBirth} onChange={setDateOfBirth} />
+                <FormField label="Sex (male / female)" value={sex} onChange={setSex} autoCapitalize="none" />
+
+                <View style={S.actionRow}>
+                  <TouchableOpacity style={S.cancelButton} onPress={handleCancel} disabled={isSaving}>
+                    <Text style={S.cancelButtonText}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isSaving}>
+                  <TouchableOpacity style={S.saveButton} onPress={handleSave} disabled={isSaving}>
                     {isSaving
                       ? <ActivityIndicator color="#ffffff" size="small" />
-                      : <Text style={styles.saveButtonText}>Save</Text>
+                      : <Text style={S.saveButtonText}>Save</Text>
                     }
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
-              <View style={styles.infoGrid}>
-                <InfoItem label="First Name" value={profileData?.firstName || 'N/A'} />
-                <InfoItem label="Middle Name" value={profileData?.middleName || 'N/A'} />
-                <InfoItem label="Last Name" value={profileData?.lastName || 'N/A'} />
+              <View style={S.infoGrid}>
+                <InfoItem label="First Name" value={profileData?.firstName || 'N/A'} delay={220} />
+                <InfoItem label="Middle Name" value={profileData?.middleName || 'N/A'} delay={260} />
+                <InfoItem label="Last Name" value={profileData?.lastName || 'N/A'} delay={300} />
                 <InfoItem
                   label="Birthdate"
                   value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)}
+                  delay={340}
                 />
                 <InfoItem
                   label="Sex"
@@ -308,31 +409,41 @@ export default function Profile() {
                     profileData?.sex === 'male' ? 'Male' :
                       profileData?.sex === 'female' ? 'Female' : 'N/A'
                   }
+                  delay={380}
                 />
               </View>
             )}
           </View>
+        </FadeSlideIn>
 
-          {/* ACADEMIC INFORMATION */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Academic Information</Text>
-            <View style={styles.infoGrid}>
+        {/* ── Academic Information ──────────────────────────────────────── */}
+        <FadeSlideIn delay={300}>
+          <View style={S.section}>
+            <View style={S.sectionTitleRow}>
+              <Text style={S.sectionTitle}>Academic Information</Text>
+            </View>
+            <View style={S.infoGrid}>
               <InfoItem
                 label="Grade Level"
                 value={`Grade ${profileData?.studentData?.gradeLevel || 'N/A'}`}
+                delay={360}
               />
               <InfoItem
                 label="Class"
                 value={classData?.className || 'Not assigned'}
+                delay={400}
               />
               <InfoItem
                 label="Reading Level"
                 value={getReadingLevelLabel(profileData?.studentData?.reading_Level)}
+                delay={440}
               />
             </View>
           </View>
+        </FadeSlideIn>
 
-        </View>
+        {/* bottom spacer */}
+        <View style={{ height: sh(24) }} />
       </ScrollView>
 
       <LogoutModal
@@ -351,95 +462,289 @@ export default function Profile() {
   );
 }
 
-// ─── InfoItem ─────────────────────────────────────────────────────────────────
-const InfoItem = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.infoItem}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
+// ─── FormField ────────────────────────────────────────────────────────────────
+const FormField = ({
+  label,
+  value,
+  onChange,
+  optional = false,
+  autoCapitalize,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  optional?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+}) => (
+  <View style={S.inputGroup}>
+    <Text style={S.inputLabel}>
+      {label}
+      {optional && <Text style={S.optionalText}> (Optional)</Text>}
+    </Text>
+    <TextInput
+      style={S.textInput}
+      value={value}
+      onChangeText={onChange}
+      autoCapitalize={autoCapitalize}
+      placeholderTextColor={C.slate}
+    />
   </View>
 );
 
+// ─── InfoItem (with per-item animation) ───────────────────────────────────────
+const InfoItem = ({
+  label,
+  value,
+  delay = 0,
+}: {
+  label: string;
+  value: string;
+  delay?: number;
+}) => (
+  <FadeSlideIn delay={delay} direction="left">
+    <View style={S.infoItem}>
+      <Text style={S.infoLabel}>{label}</Text>
+      <Text style={S.infoValue}>{value}</Text>
+    </View>
+  </FadeSlideIn>
+);
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  innerContainer: { flexGrow: 1, paddingBottom: sh(24) },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
-  loadingText: { marginTop: sh(12), fontSize: sf(16), color: '#64748b' },
-  errorText: { fontSize: sf(16), color: '#ef4444', textAlign: 'center', marginBottom: sh(16), paddingHorizontal: sw(32) },
-  retryButton: { backgroundColor: '#3b82f6', paddingHorizontal: sw(24), paddingVertical: sh(12), borderRadius: sw(8) },
-  retryButtonText: { color: 'white', fontSize: sf(16), fontWeight: '600' },
-  header: { position: 'relative', zIndex: 100 },
-  logoutButton: { flexDirection: 'row', alignItems: 'center', padding: sw(16), borderRadius: sw(12) },
-
-  profileHeader: {
+const S = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
+  scrollContent: {
+    paddingHorizontal: sw(16),
+    paddingBottom: sh(24),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: sh(24),
-    backgroundColor: 'white',
-    marginTop: sh(16),
-    padding: sw(20),
-    borderRadius: sw(16),
-    elevation: 4,
+    backgroundColor: C.bg,
   },
-  profileImageContainer: {
-    width: sw(100), height: sw(100), borderRadius: sw(50),
-    backgroundColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center',
-    marginBottom: sh(12), borderWidth: 3, borderColor: '#3b82f6',
+  loadingText: {
+    marginTop: sh(12),
+    fontSize: sf(16),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
   },
-  profileImage: { width: sw(94), height: sw(94), borderRadius: sw(47) },
-  studentName: { fontSize: sf(24), fontWeight: 'bold', color: '#1e293b', marginBottom: sh(4) },
-  studentRole: { fontSize: sf(16), color: '#64748b' },
+  errorText: {
+    fontSize: sf(16),
+    fontFamily: 'Nunito-Medium',
+    color: C.coral,
+    textAlign: 'center',
+    marginBottom: sh(16),
+    paddingHorizontal: sw(32),
+  },
+  retryButton: {
+    backgroundColor: C.primary,
+    paddingHorizontal: sw(24),
+    paddingVertical: sh(12),
+    borderRadius: sw(20),
+  },
+  retryButtonText: {
+    color: C.card,
+    fontSize: sf(16),
+    fontFamily: 'Nunito-Bold',
+  },
 
+  // Header
+  headerWrapper: {
+    position: 'relative',
+    zIndex: 100,
+    paddingTop: sh(4),
+    paddingHorizontal: sw(5),
+  },
+
+  // Avatar card
+  avatarCard: {
+    alignItems: 'center',
+    backgroundColor: C.card,
+    borderRadius: sw(20),
+    paddingVertical: sh(28),
+    paddingHorizontal: sw(20),
+    marginTop: sh(12),
+    borderWidth: 3,
+    borderColor: C.accent,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(3) },
+    shadowOpacity: 0.1,
+    shadowRadius: sw(10),
+  },
+  avatarRing: {
+    width: sw(110),
+    height: sw(110),
+    borderRadius: sw(55),
+    borderWidth: 4,
+    borderColor: C.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: C.primaryLight,
+    marginBottom: sh(14),
+  },
+  avatarImage: {
+    width: sw(96),
+    height: sw(96),
+    borderRadius: sw(48),
+  },
+  studentName: {
+    fontSize: sf(24),
+    fontFamily: 'Nunito-Black',
+    color: C.ink,
+    marginBottom: sh(6),
+  },
+  roleBadge: {
+    backgroundColor: C.tabBg,
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(4),
+    borderRadius: sw(12),
+  },
+  roleBadgeText: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
+  },
+
+  // Section card
   section: {
-    backgroundColor: 'white',
-    marginHorizontal: sw(16),
+    backgroundColor: C.card,
     marginTop: sh(16),
+    borderRadius: sw(16),
+    padding: sw(18),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(2) },
+    shadowOpacity: 0.08,
+    shadowRadius: sw(8),
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: sh(16),
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(8),
+    marginBottom: sh(12),
+  },
+  sectionIcon: {
+    fontSize: sf(20),
+  },
+  sectionTitle: {
+    fontSize: sf(18),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+  },
+
+  // Edit pill
+  editPill: {
+    backgroundColor: C.primaryLight,
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(5),
+    borderRadius: sw(12),
+  },
+  editPillText: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
+  },
+
+  // Info grid
+  infoGrid: {
+    gap: sh(4),
+  },
+  infoItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: C.inputBg,
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(12),
+    borderRadius: sw(12),
+    marginBottom: sh(6),
+  },
+  infoLabel: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+  },
+  infoValue: {
+    fontSize: sf(15),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+  },
+
+  // Form
+  formContainer: {
+    marginTop: sh(4),
+  },
+  inputGroup: {
+    marginBottom: sh(14),
+  },
+  inputLabel: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+    marginBottom: sh(6),
+  },
+  optionalText: {
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Regular',
+    color: C.slate,
+  },
+  textInput: {
+    borderWidth: 2,
+    borderColor: C.border,
+    borderRadius: sw(12),
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(10),
+    fontSize: sf(15),
+    fontFamily: 'Nunito-Medium',
+    color: C.ink,
+    backgroundColor: C.inputBg,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: sw(12),
+    marginTop: sh(8),
   },
   cancelButton: {
     paddingVertical: sh(10),
     paddingHorizontal: sw(20),
     borderRadius: sw(20),
     borderWidth: 2,
-    borderColor: '#FF7043',
-    backgroundColor: '#ffffff',
+    borderColor: C.orange,
+    backgroundColor: C.card,
   },
   cancelButtonText: {
-    color: '#FF7043',
-    fontFamily: 'Satoshi-Bold',
+    color: C.orange,
+    fontFamily: 'Nunito-Bold',
     fontSize: sf(14),
   },
   saveButton: {
     paddingVertical: sh(10),
     paddingHorizontal: sw(24),
     borderRadius: sw(20),
-    backgroundColor: '#38B6FF',
+    backgroundColor: C.accent,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: sw(80),
     elevation: 4,
-    shadowColor: '#38B6FF',
+    shadowColor: C.accent,
     shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.3,
     shadowRadius: sw(6),
   },
-  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: sh(16) },
-  sectionTitle: { fontSize: sf(20), fontWeight: 'bold', color: '#1e293b', marginBottom: sh(16) },
-  editButtonTextPrimary: { fontSize: sf(14), color: '#3b82f6', fontWeight: '600' },
-
-  infoGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  infoItem: { width: '48%', marginBottom: sh(16) },
-  infoLabel: { fontSize: sf(14), color: '#64748b', marginBottom: sh(4) },
-  infoValue: { fontSize: sf(16), fontWeight: '600', color: '#1e293b' },
-
-  formContainer: { marginTop: sh(8) },
-  inputGroup: { marginBottom: sh(14) },
-  inputLabel: { fontSize: sf(14), color: '#475569', marginBottom: sh(6), fontWeight: '500' },
-  optionalText: { fontSize: sf(12), color: '#94a3b8', fontWeight: '400' },
-  textInput: {
-    borderWidth: 1, borderColor: '#e2e8f0', borderRadius: sw(8),
-    paddingHorizontal: sw(12), paddingVertical: sh(10),
-    fontSize: sf(15), color: '#1e293b', backgroundColor: '#f8fafc',
+  saveButtonText: {
+    fontSize: sf(14),
+    color: C.card,
+    fontFamily: 'Nunito-Bold',
   },
-  actionRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: sw(12), marginTop: sh(8) },
-  saveButtonText: { fontSize: sf(14), color: 'white', fontWeight: '600' },
 });

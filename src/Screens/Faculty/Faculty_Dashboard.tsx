@@ -322,14 +322,14 @@ export default function FacultyDashboard() {
               filter={readingStatusFilter}
               onFilterChange={handleReadingFilterChange}
             />
-            {/* <ClassAlphabetMastery
+            <ClassAlphabetMastery
               facultyId={auth.currentUser?.uid || ''}
               filter={readingStatusFilter}
             />
             <ClassWordMastery
               facultyId={auth.currentUser?.uid || ''}
               filter={readingStatusFilter}
-            /> */}
+            />
             <AccuracyTrendsChart
               facultyId={auth.currentUser?.uid}
               filter={readingStatusFilter}

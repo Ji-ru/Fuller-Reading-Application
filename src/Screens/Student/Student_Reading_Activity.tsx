@@ -1,7 +1,7 @@
 // React
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, Image, StyleSheet } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 
 // Styles
@@ -139,6 +139,23 @@ export default function ReadingActivityScreenPage() {
   // Navigation
   const { handleLogout, handleBackStep, handleReplaceStep } = useNavigationHelper();
 
+  const wordPositionInfo = useMemo(() => {
+    if (type === 'word' && wordContext && isWords(readingMaterial)) {
+      const chapters = readingMaterialData.Words[0].chapters;
+      const chapter = chapters.find((c: any) => c.chapter_id === wordContext.chapterId);
+      if (chapter) {
+        const lesson = chapter.lessons.find((l: any) => l.lesson_id === wordContext.lessonId);
+        if (lesson) {
+          const index = lesson.words.findIndex((w: string) => w === wordContext.targetWord);
+          if (index !== -1) {
+            return { index, total: lesson.words.length, lessonWords: lesson.words, lesson };
+          }
+        }
+      }
+    }
+    return { index: 0, total: 1, lessonWords: [], lesson: null };
+  }, [readingMaterial, type, wordContext]);
+
   const getNextReadingItem = useCallback(() => {
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
       const alphaList = readingMaterialData.Alphabet;
@@ -153,21 +170,9 @@ export default function ReadingActivityScreenPage() {
         return { type: 'passage', readingMaterial: passList[index + 1], wordContext: undefined };
       }
     } else if (type === 'word' && isWords(readingMaterial) && wordContext) {
-      const chapters = readingMaterialData.Words[0].chapters;
-      const chapterIdx = chapters.findIndex((c: any) => c.chapter_id === wordContext.chapterId);
-      if (chapterIdx === -1) return null;
-
-      const chapter = chapters[chapterIdx];
-      const lessonIdx = chapter.lessons.findIndex((l: any) => l.lesson_id === wordContext.lessonId);
-      if (lessonIdx === -1) return null;
-
-      const lesson = chapter.lessons[lessonIdx];
-      const wordIdx = lesson.words.findIndex((w: string) => w === wordContext.targetWord);
-
-      // Found the word
-      if (wordIdx >= 0 && wordIdx < lesson.words.length - 1) {
-        // Next word in same lesson
-        const nextWordText = lesson.words[wordIdx + 1];
+      const { index, total, lessonWords, lesson } = wordPositionInfo;
+      if (index >= 0 && index < total - 1 && lesson) {
+        const nextWordText = lessonWords[index + 1];
         const nextWordData = {
           letter: lesson.letter || '?',
           contrasts: [{ phoneme: lesson.title, ipa: '', words: [nextWordText] }]
@@ -175,52 +180,9 @@ export default function ReadingActivityScreenPage() {
         const nextContext = { ...wordContext, targetWord: nextWordText };
         return { type: 'word', readingMaterial: nextWordData, wordContext: nextContext };
       }
-
-      // Not in same lesson, try next lesson in same chapter
-      if (lessonIdx < chapter.lessons.length - 1) {
-        const nextLesson = chapter.lessons[lessonIdx + 1];
-        if (nextLesson.words && nextLesson.words.length > 0) {
-          const nextWordText = nextLesson.words[0];
-          const nextWordData = {
-            letter: nextLesson.letter || '?',
-            contrasts: [{ phoneme: nextLesson.title, ipa: '', words: [nextWordText] }]
-          };
-          const nextContext = {
-            chapterId: chapter.chapter_id,
-            chapterTitle: chapter.title,
-            lessonId: nextLesson.lesson_id,
-            lessonTitle: nextLesson.title,
-            targetWord: nextWordText
-          };
-          return { type: 'word', readingMaterial: nextWordData, wordContext: nextContext };
-        }
-      }
-
-      // Try next chapter
-      if (chapterIdx < chapters.length - 1) {
-        const nextChapter = chapters[chapterIdx + 1];
-        if (nextChapter.lessons && nextChapter.lessons.length > 0) {
-          const nextLesson = nextChapter.lessons[0];
-          if (nextLesson.words && nextLesson.words.length > 0) {
-            const nextWordText = nextLesson.words[0];
-            const nextWordData = {
-              letter: nextLesson.letter || '?',
-              contrasts: [{ phoneme: nextLesson.title, ipa: '', words: [nextWordText] }]
-            };
-            const nextContext = {
-              chapterId: nextChapter.chapter_id,
-              chapterTitle: nextChapter.title,
-              lessonId: nextLesson.lesson_id,
-              lessonTitle: nextLesson.title,
-              targetWord: nextWordText
-            };
-            return { type: 'word', readingMaterial: nextWordData, wordContext: nextContext };
-          }
-        }
-      }
     }
     return null;
-  }, [readingMaterial, type, wordContext]);
+  }, [readingMaterial, type, wordContext, wordPositionInfo]);
 
   const [nextItem, setNextItem] = useState<{ type: any; readingMaterial: any; wordContext: any } | null>(null);
   const [prevItem, setPrevItem] = useState<{ type: any; readingMaterial: any; wordContext: any } | null>(null);
@@ -239,20 +201,9 @@ export default function ReadingActivityScreenPage() {
         return { type: 'passage', readingMaterial: passList[index - 1], wordContext: undefined };
       }
     } else if (type === 'word' && isWords(readingMaterial) && wordContext) {
-      const chapters = readingMaterialData.Words[0].chapters;
-      const chapterIdx = chapters.findIndex((c: any) => c.chapter_id === wordContext.chapterId);
-      if (chapterIdx === -1) return null;
-
-      const chapter = chapters[chapterIdx];
-      const lessonIdx = chapter.lessons.findIndex((l: any) => l.lesson_id === wordContext.lessonId);
-      if (lessonIdx === -1) return null;
-
-      const lesson = chapter.lessons[lessonIdx];
-      const wordIdx = lesson.words.findIndex((w: string) => w === wordContext.targetWord);
-
-      // Previous word in same lesson
-      if (wordIdx > 0) {
-        const prevWordText = lesson.words[wordIdx - 1];
+      const { index, lessonWords, lesson } = wordPositionInfo;
+      if (index > 0 && lesson) {
+        const prevWordText = lessonWords[index - 1];
         const prevWordData = {
           letter: lesson.letter || '?',
           contrasts: [{ phoneme: lesson.title, ipa: '', words: [prevWordText] }]
@@ -260,52 +211,9 @@ export default function ReadingActivityScreenPage() {
         const prevContext = { ...wordContext, targetWord: prevWordText };
         return { type: 'word', readingMaterial: prevWordData, wordContext: prevContext };
       }
-
-      // Previous lesson in same chapter
-      if (lessonIdx > 0) {
-        const prevLesson = chapter.lessons[lessonIdx - 1];
-        if (prevLesson.words && prevLesson.words.length > 0) {
-          const prevWordText = prevLesson.words[prevLesson.words.length - 1];
-          const prevWordData = {
-            letter: prevLesson.letter || '?',
-            contrasts: [{ phoneme: prevLesson.title, ipa: '', words: [prevWordText] }]
-          };
-          const prevContext = {
-            chapterId: chapter.chapter_id,
-            chapterTitle: chapter.title,
-            lessonId: prevLesson.lesson_id,
-            lessonTitle: prevLesson.title,
-            targetWord: prevWordText
-          };
-          return { type: 'word', readingMaterial: prevWordData, wordContext: prevContext };
-        }
-      }
-
-      // Previous chapter
-      if (chapterIdx > 0) {
-        const prevChapter = chapters[chapterIdx - 1];
-        if (prevChapter.lessons && prevChapter.lessons.length > 0) {
-          const prevLesson = prevChapter.lessons[prevChapter.lessons.length - 1];
-          if (prevLesson.words && prevLesson.words.length > 0) {
-            const prevWordText = prevLesson.words[prevLesson.words.length - 1];
-            const prevWordData = {
-              letter: prevLesson.letter || '?',
-              contrasts: [{ phoneme: prevLesson.title, ipa: '', words: [prevWordText] }]
-            };
-            const prevContext = {
-              chapterId: prevChapter.chapter_id,
-              chapterTitle: prevChapter.title,
-              lessonId: prevLesson.lesson_id,
-              lessonTitle: prevLesson.title,
-              targetWord: prevWordText
-            };
-            return { type: 'word', readingMaterial: prevWordData, wordContext: prevContext };
-          }
-        }
-      }
     }
     return null;
-  }, [readingMaterial, type, wordContext]);
+  }, [readingMaterial, type, wordContext, wordPositionInfo]);
 
   useEffect(() => {
     setNextItem(getNextReadingItem());
@@ -420,6 +328,7 @@ export default function ReadingActivityScreenPage() {
     }
     return 0;
   }, [readingMaterial, type]);
+
 
   /**
    * Effects to mount or initialize the permission and audio recording
@@ -986,20 +895,20 @@ export default function ReadingActivityScreenPage() {
     <SafeAreaView style={readingStyles.container}>
       <ImageBackground
         source={
-              isReadingCompleted
-                ? isAlphabet(readingMaterial)
-                  ? require('../../../assets/images/RA-Alphabet-Result-bg.png')
-                  : isWords(readingMaterial)
-                    ? require('../../../assets/images/RA-Word-Result-bg.png')
-                    : require('../../../assets/images/RA-Passage-Result-bg.png')
-                : isPassage(readingMaterial)
-                  ? getPassageImage(readingMaterial.image)
-                  : isAlphabet(readingMaterial)
-                    ? require('../../../assets/images/RA-Alphabet-Result-bg.png')
-                    : isWords(readingMaterial)
-                      ? require('../../../assets/images/RA-Word-Result-bg.png')
-                      : undefined
-            }
+          isReadingCompleted
+            ? isAlphabet(readingMaterial)
+              ? require('../../../assets/images/RA-Alphabet-Result-bg.png')
+              : isWords(readingMaterial)
+                ? require('../../../assets/images/RA-Word-Result-bg.png')
+                : require('../../../assets/images/RA-Passage-Result-bg.png')
+            : isPassage(readingMaterial)
+              ? getPassageImage(readingMaterial.image)
+              : isAlphabet(readingMaterial)
+                ? require('../../../assets/images/RA-Alphabet-Result-bg.png')
+                : isWords(readingMaterial)
+                  ? require('../../../assets/images/RA-Word-Result-bg.png')
+                  : undefined
+        }
         style={readingStyles.bgImage}
         imageStyle={!isReadingCompleted ? readingStyles.backgroundImage : readingStyles.backgroundResultImage}
         resizeMode='cover'
@@ -1075,20 +984,10 @@ export default function ReadingActivityScreenPage() {
                 onTryAgain={handleTryAgain}
                 onNextItem={handleNextPress}
                 hasNextItem={!!nextItem}
+                currentWordIndex={wordPositionInfo.index}
+                lessonWordCount={wordPositionInfo.total}
               />
 
-              {/* Transcribing Loading Indicator Modal */}
-              <Modal transparent={true} visible={isLoading} animationType="fade">
-                <View style={readingStyles.loadingModalOverlay}>
-                  <View style={readingStyles.loadingModalContent}>
-                    <Image
-                      source={require('../../../assets/images/Thinking-image.png')}
-                      style={readingStyles.loadingModalImage}
-                    />
-                    <Text style={readingStyles.loadingModalTitle}>Please wait a moment.</Text>
-                  </View>
-                </View>
-              </Modal>
 
               {!isLoading && !isRecording && isReadingCompleted && type === 'passage' && (
                 <FeedbackResult
@@ -1125,22 +1024,33 @@ export default function ReadingActivityScreenPage() {
           )}
         </View>
 
-        {/* Recording Controls with Nav Arrows - Only show when not completed */}
+        {/* ── Recording Controls + Word Navigation ─────────────────────────── */}
+        {/* Shows the Previous / Microphone / Next row while reading is active.    */}
+        {/* Nav buttons are disabled during recording to prevent accidental skips. */}
         {!isReadingCompleted && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingBottom: 25, paddingHorizontal: 16 }}>
-            {/* Previous Arrow */}
-            {prevItem ? (
-              <TouchableOpacity
-                onPress={handlePrevPress}
-                style={[readingStyles.navArrowItem, { marginRight: 22 }]}
-              >
-                <Text style={readingStyles.navArrowText}>{'<'}</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={[readingStyles.navArrowEmpty, { marginRight: 22 }]} />
-            )}
+          <View style={navRowStyles.wrapper}>
 
-            {/* Microphone */}
+            {/* ── Previous Word Button ─────────────── */}
+            <TouchableOpacity
+              onPress={handlePrevPress}
+              disabled={!prevItem || isRecording || isLoading}
+              style={[
+                navRowStyles.navBtn,
+                (!prevItem || isRecording || isLoading) && navRowStyles.navBtnDisabled,
+              ]}
+              activeOpacity={0.75}
+            >
+              <Text
+                style={[
+                  navRowStyles.navArrow,
+                  (!prevItem || isRecording || isLoading) && navRowStyles.navArrowDisabled,
+                ]}
+              >
+                {'‹'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* ── Microphone (center, primary CTA) ─── */}
             <RecordingControls
               isRecording={isRecording}
               isLoading={isLoading}
@@ -1149,17 +1059,44 @@ export default function ReadingActivityScreenPage() {
               onRecordToggle={handleRecordToggle}
             />
 
-            {/* Next Arrow */}
-            {nextItem ? (
-              <TouchableOpacity
-                onPress={handleNextPress}
-                style={[readingStyles.navArrowItem, { marginLeft: 22 }]}
+            {/* ── Next Word Button ──────────────────── */}
+            <TouchableOpacity
+              onPress={handleNextPress}
+              disabled={!nextItem || isRecording || isLoading}
+              style={[
+                navRowStyles.navBtn,
+                (!nextItem || isRecording || isLoading) && navRowStyles.navBtnDisabled,
+              ]}
+              activeOpacity={0.75}
+            >
+              <Text
+                style={[
+                  navRowStyles.navArrow,
+                  (!nextItem || isRecording || isLoading) && navRowStyles.navArrowDisabled,
+                ]}
               >
-                <Text style={readingStyles.navArrowText}>{'>'}</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={[readingStyles.navArrowEmpty, { marginLeft: 22 }]} />
-            )}
+                {'›'}
+              </Text>
+            </TouchableOpacity>
+
+          </View>
+        )}
+
+        {/* ── Transcribing Loading Indicator Overlay ───────────────────────── */}
+        {isLoading && (
+          <View style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            justifyContent: 'center', alignItems: 'center',
+            zIndex: 1000,
+          }}>
+            <View style={readingStyles.loadingModalContent}>
+              <Image
+                source={require('../../../assets/images/Thinking-image.png')}
+                style={readingStyles.loadingModalImage}
+              />
+              <Text style={readingStyles.loadingModalTitle}>Please wait a moment.</Text>
+            </View>
           </View>
         )}
 
@@ -1236,3 +1173,52 @@ export default function ReadingActivityScreenPage() {
     </SafeAreaView>
   );
 }
+
+// ─── Navigation Row Styles ────────────────────────────────────────────────────
+// Redesigned to match the illustration:
+//   [◁ Prev]  [🎤 Mic]  [Next ▷]
+// Circular buttons, disabled state when no prev/next item or while recording.
+
+const NAV_BTN_SIZE = 62;
+
+const navRowStyles = StyleSheet.create({
+  wrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 25,
+    paddingHorizontal: 16,
+    gap: 20,
+  },
+  navBtn: {
+    width: NAV_BTN_SIZE,
+    height: NAV_BTN_SIZE,
+    borderRadius: NAV_BTN_SIZE / 2,
+    backgroundColor: '#3B7FC9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#2455A4',
+    shadowColor: '#1A3F6F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  navBtnDisabled: {
+    backgroundColor: '#D7E9FF',
+    borderColor: '#B0CCEB',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  navArrow: {
+    fontSize: 38,
+    lineHeight: 44,
+    color: '#FFFFFF',
+    fontFamily: 'Nunito-Black',
+    textAlign: 'center',
+  },
+  navArrowDisabled: {
+    color: '#8BA8C4',
+  },
+});

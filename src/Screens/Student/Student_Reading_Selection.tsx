@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -7,6 +7,9 @@ import {
   Image,
   FlatList,
   ScrollView,
+  Animated,
+  StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
@@ -22,6 +25,187 @@ import Svg, { Text as SvgText } from 'react-native-svg';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
 
 const currentStudentId = getAuth().currentUser?.uid ?? '';
+const { width: SW } = Dimensions.get('window');
+
+const C = {
+  ink: '#1b2e23',
+  white: '#ffffff',
+  coral: '#e74c3c',
+  green: '#2ecc71',
+  darkBlue: '#163F6C',
+  slate: '#9CA3AF',
+  inkLight: '#6B7280',
+};
+
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+    </View>
+  );
+}
+
+const headerStyles = StyleSheet.create({
+  menuBtn: {
+    width: 48, height: 48,
+    borderRadius: 14,
+    backgroundColor: C.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
+  },
+  backBtn: {
+    width: 45, height: 45, borderRadius: 10,
+    backgroundColor: C.darkBlue,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  backArrowText: {
+    fontSize: 40, fontFamily: 'Nunito-Bold',
+    color: C.white, lineHeight: 28, marginLeft: -2, paddingBottom: 2
+  },
+  dropdown: {
+    position: 'absolute', top: 72, right: 20,
+    backgroundColor: C.white, borderRadius: 14,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14, shadowRadius: 12, elevation: 10,
+    minWidth: 160, zIndex: 1000, paddingVertical: 4,
+  },
+  dropdownItem: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14,
+  },
+  dropdownIcon: { width: 20, height: 20, marginRight: 12, tintColor: C.coral },
+  dropdownText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.coral },
+});
+
+// ─── BounceIn ─────────────────────────────────────────────────────────────────
+function BounceIn({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+}) {
+  const scale = useRef(new Animated.Value(0.82)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 65, friction: 7 }),
+        Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
+  return (
+    <Animated.View style={{ transform: [{ scale }], opacity }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// ─── Floating image ───────────────────────────────────────────────────────────
+function FloatingImage({ source, style }: { source: any; style: any }) {
+  const floatY = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatY, { toValue: -10, duration: 1800, useNativeDriver: true }),
+        Animated.timing(floatY, { toValue: 0, duration: 1800, useNativeDriver: true }),
+      ]),
+    ).start();
+  }, []);
+  return (
+    <Animated.Image
+      source={source}
+      style={[style, { transform: [{ translateY: floatY }] }]}
+      resizeMode="contain"
+    />
+  );
+}
+
+const greetStyles = StyleSheet.create({
+  greetCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.white,
+    borderRadius: 24,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 20,
+    paddingLeft: 24,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, shadowRadius: 12, elevation: 5,
+    overflow: 'hidden',
+  },
+  greetLeft: { flex: 1 },
+  greetTime: {
+    fontSize: SW * 0.028,
+    fontFamily: 'Nunito-ExtraBold',
+    color: '#3B7FC9',
+    letterSpacing: 1.2,
+    marginBottom: 2,
+  },
+  greetName: {
+    fontSize: SW * 0.075,
+    fontFamily: 'Nunito-Black',
+    color: C.ink,
+    lineHeight: SW * 0.085,
+    marginBottom: 4,
+  },
+  greetSub: {
+    fontSize: SW * 0.03,
+    fontFamily: 'Nunito-Medium',
+    color: C.slate,
+    lineHeight: SW * 0.04,
+    maxWidth: SW * 0.45,
+  },
+  greetImage: {
+    width: SW * 0.25,
+    height: SW * 0.25,
+    marginRight: 20,
+  },
+});
+
+// ─── FadeSlideIn ──────────────────────────────────────────────────────────────
+function FadeSlideIn({
+  children,
+  delay = 0,
+  direction = 'up',
+  style,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  direction?: 'up' | 'down' | 'left' | 'right';
+  style?: any;
+}) {
+  const offset = direction === 'up' ? 30 : direction === 'down' ? -30 : direction === 'left' ? 30 : -30;
+  const translateVal = useRef(new Animated.Value(offset)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.parallel([
+        Animated.spring(translateVal, { toValue: 0, useNativeDriver: true, tension: 50, friction: 8 }),
+        Animated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
+
+  const isH = direction === 'left' || direction === 'right';
+  return (
+    <Animated.View style={[{ transform: [isH ? { translateX: translateVal } : { translateY: translateVal }], opacity }, style]}>
+      {children}
+    </Animated.View>
+  );
+}
 
 const alphabetData = readingMaterialData?.Alphabet || [];
 const passages = readingMaterialData?.Passages || [];
@@ -140,22 +324,24 @@ export default function PageSelectionScreen() {
   const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => {
     const bgColor = READING_COLORS[index % READING_COLORS.length];
     return (
-      <TouchableOpacity
-        style={[selection.alphabetItem, { backgroundColor: bgColor }]}
-        onPress={() => handleAlphabetSelect(item)}
-        activeOpacity={0.8}
-      >
-        {/* Highlight dot – top-left glow like reference image */}
-        <View style={selection.alphabetHighlightDot} />
-        <View style={selection.alphabetContainer}>
-          <Text style={[selection.alphabetLetter, { fontFamily: 'Nunito-Bold' }]}>{item.letter}</Text>
-        </View>
-      </TouchableOpacity>
+      <FadeSlideIn delay={60 + index * 30} style={{ width: '23%' }}>
+        <TouchableOpacity
+          style={[selection.alphabetItem, { backgroundColor: bgColor, width: '100%' }]}
+          onPress={() => handleAlphabetSelect(item)}
+          activeOpacity={0.8}
+        >
+          {/* Highlight dot – top-left glow like reference image */}
+          <View style={selection.alphabetHighlightDot} />
+          <View style={selection.alphabetContainer}>
+            <Text style={[selection.alphabetLetter, { fontFamily: 'Nunito-Bold' }]}>{item.letter}</Text>
+          </View>
+        </TouchableOpacity>
+      </FadeSlideIn>
     );
   };
 
   // --- CHAPTER CARD (Step 1) – reuses letterCard styles ---
-  const renderChapterCard = ({ item }: { item: any }) => {
+  const renderChapterCard = ({ item, index }: { item: any; index: number }) => {
     const totalLessons = item.lessons?.length || 0;
     const totalWords = item.lessons?.reduce((sum: number, l: any) => sum + (l.words?.length || 0), 0) || 0;
     const completedCount = item.lessons?.reduce((sum: number, l: any) => {
@@ -163,36 +349,38 @@ export default function PageSelectionScreen() {
     }, 0) || 0;
 
     return (
-      <TouchableOpacity
-        style={selection.letterCard}
-        onPress={() => handleChapterSelect(item)}
-        activeOpacity={0.7}
-      >
-        <View style={selection.letterCardContent}>
-          {/* Chapter icon (using book emoji, can be replaced with any icon) */}
-          <View style={selection.letterIconContainer}>
-            <Text style={selection.letterIconText}>📘</Text>
-          </View>
+      <FadeSlideIn delay={80 + (index ?? 0) * 60}>
+        <TouchableOpacity
+          style={selection.letterCard}
+          onPress={() => handleChapterSelect(item)}
+          activeOpacity={0.7}
+        >
+          <View style={selection.letterCardContent}>
+            {/* Chapter icon (using book emoji, can be replaced with any icon) */}
+            <View style={selection.letterIconContainer}>
+              <Text style={selection.letterIconText}>📘</Text>
+            </View>
 
-          {/* Chapter info */}
-          <View style={selection.letterInfo}>
-            <Text style={selection.letterTitle}>{item.title}</Text>
-            <Text style={selection.letterSubtitle}>
-              {totalLessons} lesson{totalLessons !== 1 ? 's' : ''} · {totalWords} words
-            </Text>
-            {completedCount > 0 && (
-              <Text style={selection.letterProgress}>
-                {completedCount}/{totalWords} completed
+            {/* Chapter info */}
+            <View style={selection.letterInfo}>
+              <Text style={selection.letterTitle}>{item.title}</Text>
+              <Text style={selection.letterSubtitle}>
+                {totalLessons} lesson{totalLessons !== 1 ? 's' : ''} · {totalWords} words
               </Text>
-            )}
-          </View>
+              {completedCount > 0 && (
+                <Text style={selection.letterProgress}>
+                  {completedCount}/{totalWords} completed
+                </Text>
+              )}
+            </View>
 
-          {/* Arrow */}
-          <View style={selection.letterArrowContainer}>
-            <Text style={selection.letterArrow}>→</Text>
+            {/* Arrow */}
+            <View style={selection.letterArrowContainer}>
+              <Text style={selection.letterArrow}>›</Text>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </FadeSlideIn>
     );
   };
 
@@ -228,47 +416,51 @@ export default function PageSelectionScreen() {
     if (words.length === 0) return null;
 
     return (
-      <View key={`${lesson.lesson_id}-${index}`} style={selection.phonemeSection}>
-        <View style={selection.phonemHeader}>
-          <View style={selection.phonemeIconContainer}>
-            <Text style={selection.phonemeIcon}>📖</Text>
+      <FadeSlideIn key={`${lesson.lesson_id}-${index}`} delay={100 + index * 80}>
+        <View style={selection.phonemeSection}>
+          <View style={selection.phonemHeader}>
+            <View style={selection.phonemeIconContainer}>
+              <Text style={selection.phonemeIcon}>📖</Text>
+            </View>
+            <View style={selection.phonemeInfo}>
+              <Text style={selection.phonemeTitle}>{lesson.title}</Text>
+              <Text style={selection.phonemeIPA}>{words.length} words</Text>
+            </View>
           </View>
-          <View style={selection.phonemeInfo}>
-            <Text style={selection.phonemeTitle}>{lesson.title}</Text>
-            <Text style={selection.phonemeIPA}>{words.length} words</Text>
-          </View>
-        </View>
 
-        <View style={selection.wordsGrid}>
-          {words.map((word: string, idx: number) => renderWordInLesson(word, idx, lesson))}
+          <View style={selection.wordsGrid}>
+            {words.map((word: string, idx: number) => renderWordInLesson(word, idx, lesson))}
+          </View>
         </View>
-      </View>
+      </FadeSlideIn>
     );
   };
 
   const renderPassageItem = ({ item, index }: { item: Passage; index: number }) => {
     const accentColor = READING_COLORS[index % READING_COLORS.length];
     return (
-      <View style={selection.itemWrapper}>
-        <TouchableOpacity
-          style={selection.item}
-          onPress={() => handlePassageSelect(item)}
-          activeOpacity={0.8}
-        >
-          {/* Colored accent bar on the left edge */}
-          <View style={selection.passageAccentBar} />
-          <View style={selection.insidePassageListContainer}>
-            <Image
-              style={selection.readingImage}
-              source={getPassageImage(item.image)}
-            />
-            <View style={selection.titleAuthorWrapper}>
-              <Text style={selection.title}>{item.title}</Text>
-              <Text style={selection.author}>By {item.author}</Text>
+      <FadeSlideIn delay={60 + index * 60}>
+        <View style={selection.itemWrapper}>
+          <TouchableOpacity
+            style={selection.item}
+            onPress={() => handlePassageSelect(item)}
+            activeOpacity={0.8}
+          >
+            {/* Colored accent bar on the left edge */}
+            <View style={selection.passageAccentBar} />
+            <View style={selection.insidePassageListContainer}>
+              <Image
+                style={selection.readingImage}
+                source={getPassageImage(item.image)}
+              />
+              <View style={selection.titleAuthorWrapper}>
+                <Text style={selection.title}>{item.title}</Text>
+                <Text style={selection.author}>By {item.author}</Text>
+              </View>
             </View>
-          </View>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </View>
+      </FadeSlideIn>
     );
   };
 
@@ -278,13 +470,11 @@ export default function PageSelectionScreen() {
         <BubbleBackground />
 
         {/* Header – unchanged */}
-        <View>
+        {/* Header */}
+        <View style={{ zIndex: 100 }}>
           <View style={upperNav.header}>
-            <TouchableOpacity style={upperNav.touchable} onPress={handleBackStep}>
-              <Image
-                source={require('../../../assets/icons/BackButton-icon.png')}
-                style={upperNav.backButtonIcon}
-              />
+            <TouchableOpacity style={headerStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
+              <Text style={headerStyles.backArrowText}>‹</Text>
             </TouchableOpacity>
             {/* <Text style={selection.label}>Reading Materials</Text> */}
             <Svg height={60} width={220}>
@@ -312,23 +502,20 @@ export default function PageSelectionScreen() {
                 Reading Materials
               </SvgText>
             </Svg>
-            <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-              <Image
-                style={upperNav.menuIcon}
-                source={require('../../../assets/icons/Menu-icon.png')}
-              />
+            <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
+              <MenuBars />
             </TouchableOpacity>
           </View>
         </View>
 
         {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
-            <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
+          <View style={headerStyles.dropdown}>
+            <TouchableOpacity onPress={handleLogoutPress} style={headerStyles.dropdownItem} activeOpacity={0.75}>
               <Image
                 source={require('../../../assets/icons/Logout-icon.png')}
-                style={upperNav.logoutIcon}
+                style={headerStyles.dropdownIcon}
               />
-              <Text style={upperNav.logoutText}>Logout</Text>
+              <Text style={headerStyles.dropdownText}>Logout</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -341,16 +528,22 @@ export default function PageSelectionScreen() {
           />
         )}
 
-        <View style={selection.image_text_container}>
-          <Image
-            style={selection.image}
-            source={require('../../../assets/images/Abc-Reading.png')}
-          />
-          <View style={selection.textContainer}>
-            <Text style={selection.text}>Let the reading</Text>
-            <Text style={selection.beginText}>BEGIN!</Text>
+        <BounceIn delay={40}>
+          <View style={greetStyles.greetCard}>
+            <View style={greetStyles.greetLeft}>
+              <Text style={greetStyles.greetTime}>LET THE READING</Text>
+              <Text style={greetStyles.greetName}>BEGIN!</Text>
+              <Text style={greetStyles.greetSub}>
+                Explore fun chapters, words, and passages!
+              </Text>
+            </View>
+
+            <FloatingImage
+              source={require('../../../assets/images/Abc-Reading.png')}
+              style={greetStyles.greetImage}
+            />
           </View>
-        </View>
+        </BounceIn>
 
         {/* Tabs – unchanged */}
         <View style={selection.tabContainer}>
@@ -395,7 +588,9 @@ export default function PageSelectionScreen() {
         <View style={selection.contentContainer}>
           {activeTab === 'alphabet' && (
             <>
-              <Text style={selection.sublabel}>Select a letter to read:</Text>
+              <FadeSlideIn delay={40}>
+                <Text style={selection.sublabel}>Select a letter to read:</Text>
+              </FadeSlideIn>
               <FlatList
                 data={alphabetData}
                 renderItem={renderAlphabetItem}
@@ -413,7 +608,9 @@ export default function PageSelectionScreen() {
             <View style={selection.wordSelectionContainer}>
               {!selectedChapter ? (
                 <>
-                  <Text style={selection.sublabel}>Choose a chapter and lesson to read:</Text>
+                  <FadeSlideIn delay={40}>
+                    <Text style={selection.sublabel}>Choose a chapter and lesson to read:</Text>
+                  </FadeSlideIn>
                   <FlatList
                     data={chapters}
                     renderItem={renderChapterCard}
@@ -424,24 +621,26 @@ export default function PageSelectionScreen() {
                 </>
               ) : (
                 <>
-                  <View style={selection.combinedHeaderRow}>
-                    <TouchableOpacity
-                      style={selection.combinedBackBtn}
-                      onPress={handleBackToChapters}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={selection.combinedBackArrow}>←</Text>
-                    </TouchableOpacity>
+                  <FadeSlideIn delay={40} direction="left">
+                    <View style={selection.combinedHeaderRow}>
+                      <TouchableOpacity
+                        style={selection.combinedBackBtn}
+                        onPress={handleBackToChapters}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={selection.combinedBackArrow}>‹</Text>
+                      </TouchableOpacity>
 
-                    <View style={selection.combinedTitleCol}>
-                      <Text style={selection.combinedTitle} numberOfLines={2}>
-                        {selectedChapter.title}
-                      </Text>
-                      <Text style={selection.combinedSubtitle}>
-                        {selectedChapter.lessons?.length || 0} lesson(s)
-                      </Text>
+                      <View style={selection.combinedTitleCol}>
+                        <Text style={selection.combinedTitle} numberOfLines={2}>
+                          {selectedChapter.title}
+                        </Text>
+                        <Text style={selection.combinedSubtitle}>
+                          {selectedChapter.lessons?.length || 0} lesson(s)
+                        </Text>
+                      </View>
                     </View>
-                  </View>
+                  </FadeSlideIn>
 
                   <ScrollView
                     showsVerticalScrollIndicator={false}
@@ -458,7 +657,9 @@ export default function PageSelectionScreen() {
 
           {activeTab === 'passage' && (
             <View style={selection.passageListContainer}>
-              <Text style={selection.sublabel}>Select a passage to read:</Text>
+              <FadeSlideIn delay={40}>
+                <Text style={selection.sublabel}>Select a passage to read:</Text>
+              </FadeSlideIn>
               {passages.length > 0 ? (
                 <FlatList
                   data={passages}

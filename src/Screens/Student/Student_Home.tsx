@@ -16,21 +16,21 @@ import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 const { width: SW } = Dimensions.get('window');
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
+// ─── Palette (aligned with Reading Selection blue/cyan theme) ─────────────────
 const C = {
-  green:      '#2ecc71',
-  greenDark:  '#27ae60',
-  greenDeep:  '#1a7a45',
-  greenLight: '#d4f5e2',
-  greenPale:  '#f0faf4',
-  teal:       '#1abc9c',
-  orange:     '#f39c12',
-  coral:      '#e74c3c',
-  white:      '#ffffff',
-  ink:        '#1b2e23',
-  inkLight:   '#4a6358',
-  slate:      '#8fafa0',
-  bg:         '#e8f5f0',   // light mint — matches screenshot background
+  green: '#3B7FC9',        // primary blue (was green)
+  greenDark: '#2E5C8A',    // deeper blue (was greenDark)
+  greenDeep: '#163F6C',    // deep navy (was greenDeep)
+  greenLight: '#D7E9FF',   // light blue tint (was greenLight)
+  greenPale: '#E8F4FF',    // pale blue (was greenPale)
+  teal: '#38B6FF',         // bright cyan (was teal)
+  orange: '#f39c12',
+  coral: '#e74c3c',
+  white: '#ffffff',
+  ink: '#1F2937',          // neutral dark (was green-ink)
+  inkLight: '#6B7280',     // neutral gray (was green-inkLight)
+  slate: '#9CA3AF',        // neutral slate (was green-slate)
+  bg: '#ECFBFF',           // light cyan (was light mint)
 };
 
 // ─── BounceIn ─────────────────────────────────────────────────────────────────
@@ -41,14 +41,14 @@ function BounceIn({
   children: React.ReactNode;
   delay?: number;
 }) {
-  const scale   = useRef(new Animated.Value(0.82)).current;
+  const scale = useRef(new Animated.Value(0.82)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.sequence([
       Animated.delay(delay),
       Animated.parallel([
-        Animated.spring(scale,   { toValue: 1, useNativeDriver: true, tension: 65, friction: 7 }),
-        Animated.timing(opacity, { toValue: 1, duration: 220,         useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 65, friction: 7 }),
+        Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
       ]),
     ]).start();
   }, []);
@@ -66,7 +66,7 @@ function FloatingImage({ source, style }: { source: any; style: any }) {
     Animated.loop(
       Animated.sequence([
         Animated.timing(floatY, { toValue: -10, duration: 1800, useNativeDriver: true }),
-        Animated.timing(floatY, { toValue:   0, duration: 1800, useNativeDriver: true }),
+        Animated.timing(floatY, { toValue: 0, duration: 1800, useNativeDriver: true }),
       ]),
     ).start();
   }, []);
@@ -111,7 +111,7 @@ function ActivityButton({
   const press = () => {
     Animated.sequence([
       Animated.timing(scale, { toValue: 0.96, duration: 70, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1,    useNativeDriver: true, tension: 80 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 80 }),
     ]).start();
     onPress();
   };
@@ -161,9 +161,9 @@ function getTimeGreeting(): string {
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function UserHomeScreen() {
-  const [menuVisible,   setMenuVisible]   = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
-  const [firstName,     setFirstName]     = useState('Learner');
+  const [firstName, setFirstName] = useState('Learner');
 
   const { handleLogout, handleNextStep } = useNavigationHelper();
 
@@ -230,7 +230,7 @@ export default function UserHomeScreen() {
             <Text style={S.greetTime}>{getTimeGreeting().toUpperCase()}</Text>
             <Text style={S.greetName}>{firstName}!</Text>
             <Text style={S.greetSub}>
-              Let's practice your reading skills today!
+              Let's check your reading skills today!
             </Text>
           </View>
 
@@ -258,7 +258,7 @@ export default function UserHomeScreen() {
           sublabel="Practice reading passages"
           primary
           onPress={() =>
-            handleNextStep('StudentTabs' as any, { screen: 'StudentLibrary' } as any)
+            handleNextStep('PassageSelection')
           }
           delay={140}
         />
@@ -273,7 +273,7 @@ export default function UserHomeScreen() {
           emoji="👤"
           label="My Profile"
           sublabel="View your progress and details"
-          onPress={() => handleNextStep('StudentProfile' as any)}
+          onPress={() => handleNextStep('Profile')}
           delay={260}
         />
       </View>
@@ -303,7 +303,7 @@ const S = StyleSheet.create({
   },
   headerLogo: {
     fontSize: 18,
-    fontWeight: '900',
+    fontFamily: 'Nunito-Black',
     color: C.greenDeep,
     letterSpacing: 0.5,
   },
@@ -331,7 +331,7 @@ const S = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 14,
   },
   dropdownIcon: { width: 20, height: 20, marginRight: 12, tintColor: C.coral },
-  dropdownText: { fontSize: 15, fontWeight: '700', color: C.coral },
+  dropdownText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.coral },
 
   // Greeting card — white rounded card matching screenshot
   greetCard: {
@@ -352,21 +352,21 @@ const S = StyleSheet.create({
   greetLeft: { flex: 1 },
   greetTime: {
     fontSize: 12,
-    fontWeight: '800',
+    fontFamily: 'Nunito-ExtraBold',
     color: C.green,
     letterSpacing: 1.2,
     marginBottom: 4,
   },
   greetName: {
     fontSize: 38,
-    fontWeight: '900',
+    fontFamily: 'Nunito-Black',
     color: C.ink,
     lineHeight: 46,
     marginBottom: 8,
   },
   greetSub: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'Nunito-Medium',
     color: C.slate,
     lineHeight: 19,
     maxWidth: SW * 0.45,
@@ -392,7 +392,7 @@ const S = StyleSheet.create({
   },
   sectionLabelText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontFamily: 'Nunito-ExtraBold',
     color: C.inkLight,
     letterSpacing: 1.5,
   },
@@ -439,10 +439,10 @@ const S = StyleSheet.create({
 
   // Button text
   actBtnLabel: {
-    fontSize: 17, fontWeight: '800', color: C.white, marginBottom: 3,
+    fontSize: 17, fontFamily: 'Nunito-ExtraBold', color: C.white, marginBottom: 3,
   },
   actBtnSublabel: {
-    fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '500',
+    fontSize: 12, color: 'rgba(255,255,255,0.75)', fontFamily: 'Nunito-Medium',
   },
 
   // Arrow circle
@@ -450,5 +450,5 @@ const S = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18,
     justifyContent: 'center', alignItems: 'center',
   },
-  actBtnArrowText: { fontSize: 22, fontWeight: '700', color: C.white, lineHeight: 26 },
+  actBtnArrowText: { fontSize: 22, fontFamily: 'Nunito-Bold', color: C.white, lineHeight: 26 },
 });
