@@ -146,21 +146,10 @@ const readingStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   recordingStatusPill: {
-    backgroundColor: 'rgba(44, 215, 47, 0.08)',
-    paddingVertical: sh(6),
-    paddingHorizontal: sw(16),
-    borderRadius: sw(20),
     marginBottom: sh(12),
-    borderWidth: 1.5,
-    borderColor: 'rgba(27, 246, 118, 0.2)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: sw(8),
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
   recordingStatusDot: {
     width: sw(8),
@@ -174,7 +163,7 @@ const readingStyles = StyleSheet.create({
   recordingStatusText: {
     fontSize: sf(14),
     fontFamily: 'Nunito-Bold',
-    color: '#050505ff',
+    color: '#388E3C',
     letterSpacing: 0.3,
   },
   recordingStatusTextActive: {
