@@ -24,7 +24,7 @@ import login from '../UI_Designs/LoginStyles';
 import { useNavigationHelper } from '../Controller/NavigationController';
 import { loginUser } from '../Controller/AuthenticationController';
 import { initiateGoogleSignUp } from '../Utilities/googleAuthUtils';
-import { getAuth } from '@react-native-firebase/auth';
+import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -69,7 +69,7 @@ export default function LoginScreen() {
   useEffect(() => {
     const auth = getAuth();
     // onAuthStateChanged fires immediately with the current user state
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       // If a Firebase session already exists on the device, jump to Loading
       if (user && isMounted.current) {
         handleReplaceStep('Loading');

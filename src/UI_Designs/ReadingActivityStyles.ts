@@ -101,10 +101,10 @@ const readingStyles = StyleSheet.create({
   },
 
   textLine: {
-    fontSize: sf(23),
+    fontSize: sf(25),
     lineHeight: sf(30),
     textAlign: 'center',
-    fontFamily: 'Nunito-Regular',
+    fontFamily: 'Andika-Bold',
   },
   readingImage: {
     width: sw(230),

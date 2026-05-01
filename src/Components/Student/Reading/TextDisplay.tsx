@@ -75,11 +75,35 @@ interface AlphabetCharacterProps {
 const AlphabetCharacter: React.FC<AlphabetCharacterProps> = ({ letter }) => {
   return (
     <View style={[readingStyles.wordContainer, { height: 260, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 20 }]}>
-      <Text style={{ fontSize: 180, fontFamily: 'MochibopBold', color: '#1A3F6F' }}>
+      <Text style={{ fontSize: 180, fontFamily: 'Andika-Bold', color: '#1A3F6F' }}>
         {letter.toUpperCase()}
       </Text>
-      <Text style={{ fontSize: 150, fontFamily: 'MochibopBold', color: '#3B7FC9' }}>
+      <Text style={{ fontSize: 150, fontFamily: 'Andika-Bold', color: '#3B7FC9' }}>
         {letter.toLowerCase()}
+      </Text>
+    </View>
+  );
+};
+
+interface WordCharacterProps {
+  word: string;
+}
+
+export const WordCharacter: React.FC<WordCharacterProps> = ({ word }) => {
+  return (
+    <View style={[readingStyles.wordContainer, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 }]}>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        style={{
+          fontSize: 160,
+          fontFamily: 'Andika-Regular',
+          color: '#1A3F6F',
+          textAlign: 'center',
+          width: '100%'
+        }}
+      >
+        {word}
       </Text>
     </View>
   );
@@ -397,21 +421,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         <View style={readingStyles.bubbleTopRight} pointerEvents="none" />
         <View style={readingStyles.bubbleBottomRight} pointerEvents="none" />
 
-        <View style={[readingStyles.wordContainer, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 }]}>
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            style={{
-              fontSize: 160,
-              fontFamily: 'Nunito-Black',
-              color: '#1A3F6F',
-              textAlign: 'center',
-              width: '100%'
-            }}
-          >
-            {word}
-          </Text>
-        </View>
+        <WordCharacter word={word} />
 
         {/* ── Word Progress Dots ─────────────────────────────────────────── */}
         {/* Renders below the word card; fills left-to-right as navigation advances */}

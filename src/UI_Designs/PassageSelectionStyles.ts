@@ -164,7 +164,7 @@ const selection = StyleSheet.create({
   },
   alphabetLetter: {
     fontSize: sf(55),
-    fontFamily: 'MochibopBold',
+    fontFamily: 'Andika-Bold',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0,0,0,0.15)',
     textShadowOffset: { width: 0, height: sw(1) },
@@ -172,7 +172,7 @@ const selection = StyleSheet.create({
   },
   alphabetLetterSmall: {
     fontSize: sf(45),
-    fontFamily: 'MochibopBold',
+    fontFamily: 'Andika-Bold',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0,0,0,0.15)',
     textShadowOffset: { width: 0, height: sw(1) },
