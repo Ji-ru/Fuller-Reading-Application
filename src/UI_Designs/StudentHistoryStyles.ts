@@ -3,13 +3,13 @@ import { sw, sh, sf } from '../Utils/responsive';
 
 const C = {
   bg: '#ECFBFF',
-  primary: '#3B7FC9',
-  primaryLight: '#D7E9FF',
+  primary: '#1B5E20',
+  primaryLight: '#81C784',
   tabBg: '#c0e8f2',
   accent: '#38B6FF',
   card: '#FFFFFF',
-  ink: '#1F2937',
-  inkLight: '#6B7280',
+  ink: '#1B2B22',
+  inkLight: '#6B8E6B',
   border: '#E5E7EB',
   inputBg: '#F3F8FF',
   green: '#2CA96A',
@@ -59,7 +59,7 @@ const historyStyles = StyleSheet.create({
     shadowOpacity: 0.10,
     shadowRadius: sw(8),
     borderWidth: 2,
-    borderColor: C.accent,
+    borderColor: C.green,
   },
   statItem: {
     alignItems: 'center',
@@ -112,7 +112,7 @@ const historyStyles = StyleSheet.create({
     borderColor: 'transparent',
   },
   passageCardExpanded: {
-    borderColor: C.accent,
+    borderColor: C.green,
   },
   passageHeader: {
     flexDirection: 'row',

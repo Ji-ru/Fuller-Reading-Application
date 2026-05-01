@@ -60,7 +60,7 @@ const headerStyles = StyleSheet.create({
   },
   backBtn: {
     width: 45, height: 45, borderRadius: 10,
-    backgroundColor: C.darkBlue,
+    backgroundColor: '#2ecc71',
     justifyContent: 'center', alignItems: 'center',
   },
   backArrowText: {
@@ -262,14 +262,14 @@ export default function ReadingHistoryScreen() {
           <SvgText
             x={110} y={35} fontSize={23}
             fontFamily="Nunito-Black" textAnchor="middle"
-            fill="none" stroke="#D7E9FF" strokeWidth={8} strokeLinejoin="round"
+            fill="none" stroke="#E8F5E9" strokeWidth={8} strokeLinejoin="round"
           >
             Reading History
           </SvgText>
           <SvgText
             x={110} y={35} fontSize={23}
             fontFamily="Nunito-Black" textAnchor="middle"
-            fill="#3B7FC9"
+            fill="#1B5E20"
           >
             Reading History
           </SvgText>
@@ -608,7 +608,7 @@ const tabStyles = StyleSheet.create({
     marginHorizontal: sw(16),
     marginTop: sh(12),
     marginBottom: sh(4),
-    backgroundColor: '#c0e8f2',
+    backgroundColor: '#E8F5E9',
     borderRadius: sw(12),
     padding: sw(4),
     elevation: 2,
@@ -624,9 +624,9 @@ const tabStyles = StyleSheet.create({
     borderRadius: sw(8),
   },
   tabActive: {
-    backgroundColor: '#3B7FC9',
+    backgroundColor: '#388E3C',
     elevation: 3,
-    shadowColor: '#4F46E5',
+    shadowColor: '#1B5E20',
     shadowOffset: { width: 0, height: sw(1) },
     shadowOpacity: 0.22,
     shadowRadius: sw(2.22),
@@ -634,7 +634,7 @@ const tabStyles = StyleSheet.create({
   tabText: {
     fontSize: sf(13),
     fontFamily: 'Nunito-ExtraBold',
-    color: '#3B7FC9',
+    color: '#388E3C',
   },
   tabTextActive: {
     color: '#ffffff',

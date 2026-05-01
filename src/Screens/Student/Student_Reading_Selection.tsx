@@ -60,7 +60,7 @@ const headerStyles = StyleSheet.create({
   },
   backBtn: {
     width: 45, height: 45, borderRadius: 10,
-    backgroundColor: C.darkBlue,
+    backgroundColor: C.green,
     justifyContent: 'center', alignItems: 'center',
   },
   backArrowText: {
@@ -361,7 +361,7 @@ export default function PageSelectionScreen() {
           <View style={selection.letterCardContent}>
             {/* Chapter icon (using book emoji, can be replaced with any icon) */}
             <View style={selection.letterIconContainer}>
-              <Text style={selection.letterIconText}>📘</Text>
+              <Text style={selection.letterIconText}>📙</Text>
             </View>
 
             {/* Chapter info */}
@@ -488,7 +488,7 @@ export default function PageSelectionScreen() {
                 fontFamily="Nunito-Black"
                 textAnchor="middle"     // center align
                 fill="none"          // inside color
-                stroke="#D7E9FF"        // outline color
+                stroke="#E8F5E9"        // outline color
                 strokeWidth={8}         // outline thickness
                 strokeLinejoin='round'
               >
@@ -500,7 +500,7 @@ export default function PageSelectionScreen() {
                 fontSize={23}
                 fontFamily="Nunito-Black"
                 textAnchor="middle"
-                fill="#3B7FC9"
+                fill="#1B5E20"
               >
                 Reading Materials
               </SvgText>

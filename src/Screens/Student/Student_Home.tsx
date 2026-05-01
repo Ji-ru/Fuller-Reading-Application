@@ -16,21 +16,22 @@ import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 const { width: SW } = Dimensions.get('window');
 
-// ─── Palette (aligned with Reading Selection blue/cyan theme) ─────────────────
+// ─── Palette ─────────────────
 const C = {
-  green: '#3B7FC9',        // primary blue (was green)
-  greenDark: '#2E5C8A',    // deeper blue (was greenDark)
-  greenDeep: '#163F6C',    // deep navy (was greenDeep)
-  greenLight: '#D7E9FF',   // light blue tint (was greenLight)
-  greenPale: '#E8F4FF',    // pale blue (was greenPale)
-  teal: '#38B6FF',         // bright cyan (was teal)
-  orange: '#f39c12',
-  coral: '#e74c3c',
+  green: '#66BB6A',        // primary green (lighter and brighter)
+  greenDark: '#388E3C',    // slightly lighter deep green
+  greenDeep: '#1B5E20',    // deep pine green (remains the same for depth)
+  greenLight: '#A5D6A7',   // soft mint background (lighter)
+  greenPale: '#E8F5E9',    // very pale green (softer, lighter)
+
+  teal: '#4DB6AC',         // fresher teal, less intense
+  orange: '#F39C12',       // warm contrast
+  coral: '#FF7043',        // gentle coral (lighter shade)
   white: '#ffffff',
-  ink: '#1F2937',          // neutral dark (was green-ink)
-  inkLight: '#6B7280',     // neutral gray (was green-inkLight)
-  slate: '#9CA3AF',        // neutral slate (was green-slate)
-  bg: '#ECFBFF',           // light cyan (was light mint)
+  ink: '#1B2B22',          // dark greenish black (remains same for text)
+  inkLight: '#6B8E6B',     // softened text green, lighter than previous
+  slate: '#A5B8A7',        // green-gray with a lighter tone
+  bg: '#F1FBF4',           // light mint green (remains the same)
 };
 
 // ─── BounceIn ─────────────────────────────────────────────────────────────────
