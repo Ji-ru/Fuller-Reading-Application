@@ -75,10 +75,10 @@ interface AlphabetCharacterProps {
 const AlphabetCharacter: React.FC<AlphabetCharacterProps> = ({ letter }) => {
   return (
     <View style={[readingStyles.wordContainer, { height: 260, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 20 }]}>
-      <Text style={{ fontSize: 180, fontFamily: 'Nunito-Black', color: '#1A3F6F' }}>
+      <Text style={{ fontSize: 180, fontFamily: 'MochibopBold', color: '#1A3F6F' }}>
         {letter.toUpperCase()}
       </Text>
-      <Text style={{ fontSize: 180, fontFamily: 'Nunito-Black', color: '#3B7FC9' }}>
+      <Text style={{ fontSize: 150, fontFamily: 'MochibopBold', color: '#3B7FC9' }}>
         {letter.toLowerCase()}
       </Text>
     </View>
@@ -99,17 +99,15 @@ export const getPassageGreetingContent = (
   accuracy: number,
 ): PassageGreetingContent => {
   if (accuracy >= 90) {
-    return { type: 'passageSuccess', title: 'Excellent Reading!', message: 'You read with 90%+ accuracy! Amazing work! 🎉' };
+    return { type: 'passageSuccess', title: 'Excellent Reading!', message: 'Amazing!' };
   }
   if (accuracy >= 50) {
-    return { type: 'goodJob', title: 'Good Job!', message: 'Keep it up. You can do it better!' };
+    return { type: 'goodJob', title: 'Good Job!', message: 'Keep it up!' };
   }
-  return { type: 'tryAgain', title: "Let's Try Again!", message: 'Practice makes perfect! Give it another try.' };
+  return { type: 'tryAgain', title: "Try Again!", message: 'Oops! Try again!' };
 };
 
 // ─── WordProgressDots ────────────────────────────────────────────────────────
-// Renders a stepper-style indicator showing the student's position in the lesson.
-// Dots fill left-to-right as words are completed (matches the illustration).
 
 const MAX_VISIBLE_DOTS = 10;
 
@@ -430,8 +428,8 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       )}
       {!isRecording && isReadingCompleted && passageGreeting && (
         <Svg height={35} width={350}>
-          <SvgText x={180} y={25} fontSize={30} fontFamily="DynaPuff-Bold" textAnchor="middle" fill="none" stroke="#FFFFFF" strokeWidth={6} strokeLinejoin="round">{passageGreeting.title}</SvgText>
-          <SvgText x={180} y={25} fontSize={30} fontFamily="DynaPuff-Bold" textAnchor="middle" fill="#7A5A2B">{passageGreeting.title}</SvgText>
+          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="none" stroke="#D7E9FF" strokeWidth={6} strokeLinejoin="round">{passageGreeting.title}</SvgText>
+          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="#3B7FC9">{passageGreeting.title}</SvgText>
         </Svg>
       )}
 

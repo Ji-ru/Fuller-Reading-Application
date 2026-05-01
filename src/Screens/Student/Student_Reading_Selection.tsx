@@ -333,7 +333,10 @@ export default function PageSelectionScreen() {
           {/* Highlight dot – top-left glow like reference image */}
           <View style={selection.alphabetHighlightDot} />
           <View style={selection.alphabetContainer}>
-            <Text style={[selection.alphabetLetter, { fontFamily: 'Nunito-Bold' }]}>{item.letter}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
+              <Text style={selection.alphabetLetter}>{item.letter.toUpperCase()}</Text>
+              <Text style={selection.alphabetLetterSmall}>{item.letter.toLowerCase()}</Text>
+            </View>
           </View>
         </TouchableOpacity>
       </FadeSlideIn>
@@ -527,7 +530,7 @@ export default function PageSelectionScreen() {
             activeOpacity={1}
           />
         )}
-
+        {/* 
         <BounceIn delay={40}>
           <View style={greetStyles.greetCard}>
             <View style={greetStyles.greetLeft}>
@@ -543,7 +546,7 @@ export default function PageSelectionScreen() {
               style={greetStyles.greetImage}
             />
           </View>
-        </BounceIn>
+        </BounceIn> */}
 
         {/* Tabs – unchanged */}
         <View style={selection.tabContainer}>

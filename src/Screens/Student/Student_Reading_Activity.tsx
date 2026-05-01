@@ -24,6 +24,7 @@ import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
 import { makeTodayKey } from '../../Utilities/currentDateUtils';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
 import { useGlobalMusic } from '../../Components/GlobalUse/Background/GlobalMusicContext';
+import { BubbleBackgroundUpper } from '../../Components/GlobalUse/BubbleBackground';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 
 // Auth Firebase
@@ -894,23 +895,9 @@ export default function ReadingActivityScreenPage() {
   return (
     <SafeAreaView style={readingStyles.container}>
       <ImageBackground
-        source={
-          isReadingCompleted
-            ? isAlphabet(readingMaterial)
-              ? require('../../../assets/images/RA-Alphabet-Result-bg.png')
-              : isWords(readingMaterial)
-                ? require('../../../assets/images/RA-Word-Result-bg.png')
-                : require('../../../assets/images/RA-Passage-Result-bg.png')
-            : isPassage(readingMaterial)
-              ? getPassageImage(readingMaterial.image)
-              : isAlphabet(readingMaterial)
-                ? require('../../../assets/images/RA-Alphabet-Result-bg.png')
-                : isWords(readingMaterial)
-                  ? require('../../../assets/images/RA-Word-Result-bg.png')
-                  : undefined
-        }
+        source={isPassage(readingMaterial) ? getPassageImage(readingMaterial.image) : undefined}
         style={readingStyles.bgImage}
-        imageStyle={!isReadingCompleted ? readingStyles.backgroundImage : readingStyles.backgroundResultImage}
+        imageStyle={readingStyles.backgroundImage}
         resizeMode='cover'
       >
         <View style={{ flex: 1 }}>
@@ -926,6 +913,9 @@ export default function ReadingActivityScreenPage() {
           >
 
             <View style={readingStyles.insideContainer}>
+
+              {/* Bubble background — visible after reading is completed */}
+              {(isAlphabet(readingMaterial) || isWords(readingMaterial)) && <BubbleBackgroundUpper />}
 
               {/* Header */}
               <ReadingHeader
@@ -1170,7 +1160,7 @@ export default function ReadingActivityScreenPage() {
           </View>
         )}
       </ImageBackground>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
 

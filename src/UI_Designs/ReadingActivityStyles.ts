@@ -815,11 +815,11 @@ const readingStyles = StyleSheet.create({
     zIndex: 1,
   },
   starWrapper: {
-    marginHorizontal: sw(-14),
+    marginHorizontal: sw(-10),
   },
   starIcon: {
-    width: sw(155),
-    height: sw(155),
+    width: sw(130),
+    height: sw(130),
   },
   starSection: {
     position: 'relative',
@@ -1170,7 +1170,7 @@ const readingStyles = StyleSheet.create({
   // ALPHABET DESIGN
   scene: {
     alignItems: 'center',
-    marginTop: sh(8),
+    marginTop: sh(50),
     marginBottom: sh(4),
   },
   promptRow: {

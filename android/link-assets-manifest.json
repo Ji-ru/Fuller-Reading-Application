@@ -2,6 +2,30 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "assets/fonts/ABeeZee-Italic.ttf",
+      "sha1": "4cd05e902627ecef635f39ed5205b308b7c79657"
+    },
+    {
+      "path": "assets/fonts/ABeeZee-Regular.ttf",
+      "sha1": "72ddd982161bb773f6ef80ec7b9d650c2daf2b9e"
+    },
+    {
+      "path": "assets/fonts/Andika-Bold.ttf",
+      "sha1": "6caea12a3c9e9be1fb25144b1db593f67bd3b9be"
+    },
+    {
+      "path": "assets/fonts/Andika-BoldItalic.ttf",
+      "sha1": "45591fb9b25d9a38d81306b8304121ac11797348"
+    },
+    {
+      "path": "assets/fonts/Andika-Italic.ttf",
+      "sha1": "d72c97655b7db9ec43d3cbcd41251f27304d7f22"
+    },
+    {
+      "path": "assets/fonts/Andika-Regular.ttf",
+      "sha1": "3d18c8d0872e29bab32d53cc781eaf7399a28ec7"
+    },
+    {
       "path": "assets/fonts/Comfortaa-Bold.ttf",
       "sha1": "afce338e253d70672cca8c92a314d1ef5711fec9"
     },
@@ -26,56 +50,12 @@
       "sha1": "6fad4695109ca85bcd67c75e18bd611425f26b7c"
     },
     {
-      "path": "assets/fonts/DynaPuff_Condensed-Bold.ttf",
-      "sha1": "d3867d142781200f7cabe9b4b6632d0d2d1e639b"
+      "path": "assets/fonts/Mochibop.ttf",
+      "sha1": "789ef89f104debfe734b0236a4c951694a93ef37"
     },
     {
-      "path": "assets/fonts/DynaPuff_Condensed-Medium.ttf",
-      "sha1": "c941a403622cc394315dfadba0e29a4044d48126"
-    },
-    {
-      "path": "assets/fonts/DynaPuff_Condensed-Regular.ttf",
-      "sha1": "435003ae2ceb24991b0451f66f63e370615acabf"
-    },
-    {
-      "path": "assets/fonts/DynaPuff_Condensed-SemiBold.ttf",
-      "sha1": "82d98f677866209613b26b9d92011c221d3b9ff0"
-    },
-    {
-      "path": "assets/fonts/DynaPuff_SemiCondensed-Bold.ttf",
-      "sha1": "94309e37db527a2a5a1ee987490326a16c6c8388"
-    },
-    {
-      "path": "assets/fonts/DynaPuff_SemiCondensed-Medium.ttf",
-      "sha1": "f9aaa29a976e4a32a5cdd11beeb099c18d62921c"
-    },
-    {
-      "path": "assets/fonts/DynaPuff_SemiCondensed-Regular.ttf",
-      "sha1": "2c3a63d63bb74bfe100c3611baee17bd10d2c286"
-    },
-    {
-      "path": "assets/fonts/DynaPuff_SemiCondensed-SemiBold.ttf",
-      "sha1": "de3d650daf6b81af39ff60d122f3308a4e1e79ff"
-    },
-    {
-      "path": "assets/fonts/DynaPuff-Bold.ttf",
-      "sha1": "ea4f50c41169e410e4bc6ef142211d857fc9ef87"
-    },
-    {
-      "path": "assets/fonts/DynaPuff-Medium.ttf",
-      "sha1": "65f06e873cc7e5f1bb4237018f59aa2053dca97d"
-    },
-    {
-      "path": "assets/fonts/DynaPuff-Regular.ttf",
-      "sha1": "fa1f1d5512f3d88b604a4b2f3072f96366ac0536"
-    },
-    {
-      "path": "assets/fonts/DynaPuff-SemiBold.ttf",
-      "sha1": "970c61744a9bab29554c9d951bf0b33f3b774c06"
-    },
-    {
-      "path": "assets/fonts/DynaPuff-VariableFont_wdth,wght.ttf",
-      "sha1": "05e2c6f176d083d91527e597eae8aad8b9fb3f1b"
+      "path": "assets/fonts/MochibopBold.ttf",
+      "sha1": "2dea54df80b0c15fc42d8d6bc60252989999fd0e"
     },
     {
       "path": "assets/fonts/Nunito-Black.ttf",
@@ -142,6 +122,10 @@
       "sha1": "96d4f551a905d9dd509fec0ae085f35666d8f797"
     },
     {
+      "path": "assets/fonts/Nunito-VariableFont_wght.ttf",
+      "sha1": "21dd5ae8c31a1825d210234af3b0c04a882de724"
+    },
+    {
       "path": "assets/fonts/sassoon-primary-std.otf",
       "sha1": "2d98bd2f6cae39c23a84d8f7b39f2610cfcb1a09"
     },
@@ -192,6 +176,10 @@
     {
       "path": "assets/fonts/Satoshi-VariableItalic.ttf",
       "sha1": "62c34444221ff17e93a8e1cadfea5a8c68ea705b"
+    },
+    {
+      "path": "assets/fonts/Talina.otf",
+      "sha1": "dee1eb5aa59065cafd760a69403bb42197fbb797"
     }
   ]
 }

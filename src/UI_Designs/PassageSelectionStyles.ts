@@ -164,7 +164,15 @@ const selection = StyleSheet.create({
   },
   alphabetLetter: {
     fontSize: sf(55),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'MochibopBold',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowOffset: { width: 0, height: sw(1) },
+    textShadowRadius: sw(2),
+  },
+  alphabetLetterSmall: {
+    fontSize: sf(45),
+    fontFamily: 'MochibopBold',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0,0,0,0.15)',
     textShadowOffset: { width: 0, height: sw(1) },
