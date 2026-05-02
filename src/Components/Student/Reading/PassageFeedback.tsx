@@ -20,22 +20,22 @@ interface ReadingFeedbackProps {
 
 const C = {
   white: '#FFFFFF',
-  primary: '#3B7FC9',
-  primaryLight: '#D7E9FF',
-  accent: '#38B6FF',
+  primary: '#008443',
+  primaryLight: '#c0e8f2',
+  accent: '#2ca96a',
   card: '#FFFFFF',
   ink: '#1F2937',
   inkLight: '#6B7280',
   border: '#E5E7EB',
   inputBg: '#F3F8FF',
   success: '#2CA96A',
-  successBg: '#D4F1E8',
+  successBg: '#F1FBF4',
   warning: '#F08C3A',
   warningBg: '#FEF3C7',
   error: '#EF4444',
   errorBg: '#FDE2E2',
-  info: '#3B82F6',
-  infoBg: '#E0E7FF',
+  info: '#57b8b3',
+  infoBg: '#E0F2F1',
 };
 
 const S = StyleSheet.create({
@@ -119,7 +119,7 @@ const S = StyleSheet.create({
   },
   miscueRowSubstitution: { backgroundColor: '#FFEBEB', borderColor: '#FFBABA' },
   miscueRowOmission: { backgroundColor: '#FFF3E0', borderColor: '#FFD9AA' },
-  miscueRowInsertion: { backgroundColor: '#EAF2FF', borderColor: '#B5D3FF' },
+  miscueRowInsertion: { backgroundColor: '#E0F2F1', borderColor: '#B2DFDB' },
   miscueRowRepetition: { backgroundColor: '#F8EBFF', borderColor: '#EAC2FF' },
   miscueTag: {
     borderRadius: sw(8),
@@ -131,7 +131,7 @@ const S = StyleSheet.create({
   },
   miscueTagSubstitution: { backgroundColor: '#FF2726' },
   miscueTagOmission: { backgroundColor: '#FF941A' },
-  miscueTagInsertion: { backgroundColor: '#1A81FF' },
+  miscueTagInsertion: { backgroundColor: '#26A69A' },
   miscueTagRepetition: { backgroundColor: '#BF00DD' },
   miscueTagText: {
     fontSize: sf(12),

@@ -31,7 +31,7 @@ const C = {
   ink: '#1b2e23',
   white: '#ffffff',
   coral: '#e74c3c',
-  green: '#2ecc71',
+  green: '#2ca96a',
   darkBlue: '#163F6C',
   slate: '#9CA3AF',
   inkLight: '#6B7280',
@@ -60,7 +60,7 @@ const headerStyles = StyleSheet.create({
   },
   backBtn: {
     width: 45, height: 45, borderRadius: 10,
-    backgroundColor: C.green,
+    backgroundColor: '#008443',
     justifyContent: 'center', alignItems: 'center',
   },
   backArrowText: {

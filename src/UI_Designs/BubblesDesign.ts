@@ -18,12 +18,12 @@ const bubbles = StyleSheet.create({
     borderRadius: 9999,
   },
 
-  // ========== TOP BUBBLES (Lighter Green Theme) ==========
+  // ========== TOP BUBBLES ==========
 
   bubbleTopRight: {
     width: sw(235),
     height: sw(235),
-    backgroundColor: '#66BB6A', // updated light green
+    backgroundColor: '#57b8b3',
     opacity: 0.6,
     top: sh(-90),
     right: sw(-80),
@@ -31,7 +31,7 @@ const bubbles = StyleSheet.create({
   bubbleMiddleRight1: {
     width: sw(150),
     height: sw(150),
-    backgroundColor: '#81C784', // soft green
+    backgroundColor: '#008443',
     opacity: 0.4,
     top: sh(-90),
     right: sw(-80),
@@ -39,7 +39,7 @@ const bubbles = StyleSheet.create({
   bubbleMiddleRight2: {
     width: sw(150),
     height: sw(150),
-    backgroundColor: '#66BB6A', // medium green
+    backgroundColor: '#84d6f2',
     opacity: 0.45,
     top: sh(20),
     right: sw(-80),
@@ -47,7 +47,7 @@ const bubbles = StyleSheet.create({
   bubbleTopLeft1: {
     width: sw(50),
     height: sw(50),
-    backgroundColor: '#A5D6A7', // light mint green
+    backgroundColor: '#c0e8f2',
     opacity: 0.5,
     top: sh(10),
     left: sw(160),
@@ -55,7 +55,7 @@ const bubbles = StyleSheet.create({
   bubbleTopLeft2: {
     width: sw(40),
     height: sw(40),
-    backgroundColor: '#C8E6C9', // very light green
+    backgroundColor: '#57b8b3',
     opacity: 0.45,
     top: sh(130),
     left: sw(140),
@@ -63,7 +63,7 @@ const bubbles = StyleSheet.create({
   bubbleTopLeft3: {
     width: sw(25),
     height: sw(25),
-    backgroundColor: '#A5D6A7', // light mint green
+    backgroundColor: '#008443',
     opacity: 0.5,
     top: sh(150),
     left: sw(250),
@@ -71,7 +71,7 @@ const bubbles = StyleSheet.create({
   bubbleTopLeft4: {
     width: sw(25),
     height: sw(25),
-    backgroundColor: '#E8F5E9', // pale green
+    backgroundColor: '#84d6f2',
     opacity: 0.4,
     top: sh(250),
     left: sw(350),
@@ -79,18 +79,18 @@ const bubbles = StyleSheet.create({
   bubbleTopLeft5: {
     width: sw(15),
     height: sw(15),
-    backgroundColor: '#E8F5E9', // pale green
+    backgroundColor: '#c0e8f2',
     opacity: 0.35,
     top: sh(200),
     left: sw(350),
   },
 
-  // ========== BOTTOM BUBBLES (Lighter Green Theme) ==========
+  // ========== BOTTOM BUBBLES ==========
 
   bubbleBottomLeft1: {
     width: sw(270),
     height: sw(270),
-    backgroundColor: '#1B5E20', // darkest green (still keeping the contrast)
+    backgroundColor: '#008443',
     opacity: 0.5,
     bottom: sh(-310),
     left: sw(-110),
@@ -98,7 +98,7 @@ const bubbles = StyleSheet.create({
   bubbleBottomLeft2: {
     width: sw(150),
     height: sw(150),
-    backgroundColor: '#C5E1A5', // soft lime
+    backgroundColor: '#84d6f2',
     opacity: 0.4,
     bottom: sh(-150),
     left: sw(-50),
@@ -106,7 +106,7 @@ const bubbles = StyleSheet.create({
   bubbleBottomLeft3: {
     width: sw(200),
     height: sw(200),
-    backgroundColor: '#66BB6A', // medium green
+    backgroundColor: '#57b8b3',
     opacity: 0.5,
     bottom: sh(-270),
     left: sw(20),
@@ -114,7 +114,7 @@ const bubbles = StyleSheet.create({
   bubbleBottomLeft4: {
     width: sw(210),
     height: sw(210),
-    backgroundColor: '#388E3C', // still a strong green, adjusted to fit the lighter theme
+    backgroundColor: '#c0e8f2',
     opacity: 0.45,
     bottom: sh(-340),
     left: sw(50),
@@ -122,7 +122,7 @@ const bubbles = StyleSheet.create({
   bubbleBottomLeft5: {
     width: sw(25),
     height: sw(25),
-    backgroundColor: '#C5E1A5', // soft lime
+    backgroundColor: '#57b8b3',
     opacity: 0.4,
     bottom: sh(-40),
     left: sw(150),
@@ -130,7 +130,7 @@ const bubbles = StyleSheet.create({
   bubbleBottomLeft6: {
     width: sw(30),
     height: sw(30),
-    backgroundColor: '#AED581', // light green
+    backgroundColor: '#84d6f2',
     opacity: 0.45,
     bottom: sh(30),
     left: sw(100),
@@ -138,7 +138,7 @@ const bubbles = StyleSheet.create({
   bubbleBottomLeft7: {
     width: sw(15),
     height: sw(15),
-    backgroundColor: '#D0F0C0', // very soft green
+    backgroundColor: '#c0e8f2',
     opacity: 0.4,
     bottom: sh(-20),
     left: sw(225),
@@ -146,7 +146,7 @@ const bubbles = StyleSheet.create({
   bubbleBottomLeft8: {
     width: sw(30),
     height: sw(30),
-    backgroundColor: '#81C784', // balanced green
+    backgroundColor: '#008443',
     opacity: 0.45,
     bottom: sh(-90),
     left: sw(200),

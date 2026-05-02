@@ -18,13 +18,13 @@ const { width: SW } = Dimensions.get('window');
 
 // ─── Palette ─────────────────
 const C = {
-  green: '#66BB6A',        // primary green (lighter and brighter)
-  greenDark: '#388E3C',    // slightly lighter deep green
-  greenDeep: '#1B5E20',    // deep pine green (remains the same for depth)
-  greenLight: '#A5D6A7',   // soft mint background (lighter)
+  green: '#2ca96a',        // primary green
+  greenDark: '#008443',    // slightly lighter deep green
+  greenDeep: '#008443',    // deep pine green (remains the same for depth)
+  greenLight: '#c0e8f2',   // soft mint background (lighter)
   greenPale: '#E8F5E9',    // very pale green (softer, lighter)
 
-  teal: '#4DB6AC',         // fresher teal, less intense
+  teal: '#57b8b3',         // fresher teal, less intense
   orange: '#F39C12',       // warm contrast
   coral: '#FF7043',        // gentle coral (lighter shade)
   white: '#ffffff',
@@ -271,11 +271,18 @@ export default function UserHomeScreen() {
           delay={200}
         />
         <ActivityButton
+          emoji="🏫"
+          label="My Class"
+          sublabel="View your class and classmates"
+          onPress={() => handleNextStep('StudentMyClass')}
+          delay={260}
+        />
+        <ActivityButton
           emoji="👤"
           label="My Profile"
           sublabel="View your progress and details"
           onPress={() => handleNextStep('Profile')}
-          delay={260}
+          delay={320}
         />
       </View>
 
@@ -305,7 +312,7 @@ const S = StyleSheet.create({
   headerLogo: {
     fontSize: 18,
     fontFamily: 'Nunito-Black',
-    color: C.greenDeep,
+    color: C.green, // the user requested #2ca96a for this, which is now C.green
     letterSpacing: 0.5,
   },
   menuBtn: {

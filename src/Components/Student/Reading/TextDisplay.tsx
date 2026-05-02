@@ -29,22 +29,22 @@ import { FeedbackResult } from './PassageFeedback';
 const P = {
   letterFill: '#84D6F2',
   letterDark: '#4DB8DF',
-  letterStroke: '#38B6FF',
+  letterStroke: '#2ca96a',
   letterShade: '#5EC5E5',
   letterHilit: '#B8EDFB',
   eyeBase: '#57b8b3',
   eyeBaseDark: '#2C6975',
   eyeWhite: '#FFFFFF',
-  iris: '#1A3F6F',
-  pupil: '#0D1B2A',
+  iris: '#008443',
+  pupil: '#005028',
   shine: '#FFFFFF',
   arm: '#57b8b3',
   armStroke: '#2C6975',
   leg: '#57b8b3',
   legStroke: '#2C6975',
-  shoe: '#3B7FC9',
-  shoeStroke: '#2455A4',
-  shoeHilit: '#7FB3E8',
+  shoe: '#008443',
+  shoeStroke: '#006a35',
+  shoeHilit: '#2ca96a',
   blush: '#FFB3B3',
   shadow: 'rgba(0,0,0,0.10)',
 };
@@ -75,10 +75,10 @@ interface AlphabetCharacterProps {
 const AlphabetCharacter: React.FC<AlphabetCharacterProps> = ({ letter }) => {
   return (
     <View style={[readingStyles.wordContainer, { height: 260, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 20 }]}>
-      <Text style={{ fontSize: 180, fontFamily: 'Andika-Bold', color: '#1A3F6F' }}>
+      <Text style={{ fontSize: 180, fontFamily: 'Andika-Bold', color: '#008443' }}>
         {letter.toUpperCase()}
       </Text>
-      <Text style={{ fontSize: 150, fontFamily: 'Andika-Bold', color: '#3B7FC9' }}>
+      <Text style={{ fontSize: 150, fontFamily: 'Andika-Bold', color: '#2ca96a' }}>
         {letter.toLowerCase()}
       </Text>
     </View>
@@ -98,7 +98,7 @@ export const WordCharacter: React.FC<WordCharacterProps> = ({ word }) => {
         style={{
           fontSize: 160,
           fontFamily: 'Andika-Regular',
-          color: '#1A3F6F',
+          color: '#008443',
           textAlign: 'center',
           width: '100%'
         }}
@@ -188,21 +188,21 @@ const dotStyles = StyleSheet.create({
     width: 13,
     height: 13,
     borderRadius: 7,
-    backgroundColor: '#D7E9FF',
+    backgroundColor: '#c0e8f2',
     borderWidth: 2.5,
-    borderColor: '#3B7FC9',
+    borderColor: '#008443',
   },
   dotDone: {
-    backgroundColor: '#3B7FC9',
-    borderColor: '#2455A4',
+    backgroundColor: '#008443',
+    borderColor: '#006a35',
   },
   dotActive: {
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#1A3F6F',
-    borderColor: '#1A3F6F',
-    shadowColor: '#1A3F6F',
+    backgroundColor: '#008443',
+    borderColor: '#008443',
+    shadowColor: '#008443',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 4,
@@ -211,28 +211,28 @@ const dotStyles = StyleSheet.create({
   line: {
     height: 3,
     width: 16,
-    backgroundColor: '#D7E9FF',
+    backgroundColor: '#c0e8f2',
     marginHorizontal: 2,
     borderRadius: 2,
   },
   lineDone: {
-    backgroundColor: '#3B7FC9',
+    backgroundColor: '#008443',
   },
   counterWrap: {
     marginTop: 14,
     marginBottom: 4,
     alignSelf: 'center',
-    backgroundColor: 'rgba(59,127,201,0.12)',
+    backgroundColor: 'rgba(0, 132, 67, 0.12)',
     borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 5,
     borderWidth: 1.5,
-    borderColor: '#3B7FC9',
+    borderColor: '#008443',
   },
   counterText: {
     fontFamily: 'Nunito-Bold',
     fontSize: 15,
-    color: '#1A3F6F',
+    color: '#008443',
     letterSpacing: 0.5,
   },
 });
@@ -322,7 +322,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
       if (posData?.insertions?.length) {
         posData.insertions.forEach(ins => {
-          renderedWords.push(<Text key={`ins-${keyCounter++}`}><Text style={{ color: '#1A81FF', fontFamily: errorFont, fontWeight: 'bold' }}>{ins.spoken}</Text></Text>);
+          renderedWords.push(<Text key={`ins-${keyCounter++}`}><Text style={{ color: '#2ca96a', fontFamily: errorFont, fontWeight: 'bold' }}>{ins.spoken}</Text></Text>);
           renderedWords.push(<Text key={`spi-${keyCounter++}`}> </Text>);
         });
       }
@@ -438,8 +438,8 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       )}
       {!isRecording && isReadingCompleted && passageGreeting && (
         <Svg height={35} width={350}>
-          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="none" stroke="#D7E9FF" strokeWidth={6} strokeLinejoin="round">{passageGreeting.title}</SvgText>
-          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="#3B7FC9">{passageGreeting.title}</SvgText>
+          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="none" stroke="#c0e8f2" strokeWidth={6} strokeLinejoin="round">{passageGreeting.title}</SvgText>
+          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="#008443">{passageGreeting.title}</SvgText>
         </Svg>
       )}
 

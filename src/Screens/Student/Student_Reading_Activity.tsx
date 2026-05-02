@@ -1143,14 +1143,14 @@ export default function ReadingActivityScreenPage() {
                     backgroundColor: '#F0F4FF', alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: '#3B7FC9', fontFamily: 'Nunito-Bold', fontSize: 14 }}>Dismiss</Text>
+                  <Text style={{ color: '#008443', fontFamily: 'Nunito-Bold', fontSize: 14 }}>Dismiss</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() => { clearSttError(); handleTryAgain(); }}
                   style={{
                     flex: 1, paddingVertical: 12, borderRadius: 12,
-                    backgroundColor: '#3B7FC9', alignItems: 'center',
+                    backgroundColor: '#008443', alignItems: 'center',
                   }}
                 >
                   <Text style={{ color: '#FFFFFF', fontFamily: 'Nunito-Bold', fontSize: 14 }}>Try Again</Text>
@@ -1184,20 +1184,20 @@ const navRowStyles = StyleSheet.create({
     width: NAV_BTN_SIZE,
     height: NAV_BTN_SIZE,
     borderRadius: NAV_BTN_SIZE / 2,
-    backgroundColor: '#3B7FC9',
+    backgroundColor: '#008443',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#2455A4',
-    shadowColor: '#1A3F6F',
+    borderColor: '#006a35',
+    shadowColor: '#005028',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.28,
     shadowRadius: 6,
     elevation: 6,
   },
   navBtnDisabled: {
-    backgroundColor: '#D7E9FF',
-    borderColor: '#B0CCEB',
+    backgroundColor: '#c0e8f2',
+    borderColor: '#84d6f2',
     shadowOpacity: 0,
     elevation: 0,
   },

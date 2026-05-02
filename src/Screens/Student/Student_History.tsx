@@ -60,7 +60,7 @@ const headerStyles = StyleSheet.create({
   },
   backBtn: {
     width: 45, height: 45, borderRadius: 10,
-    backgroundColor: '#2ecc71',
+    backgroundColor: '#008443',
     justifyContent: 'center', alignItems: 'center',
   },
   backArrowText: {

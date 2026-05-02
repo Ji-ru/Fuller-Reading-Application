@@ -27,20 +27,20 @@ export const StudentColors = {
 } as const;
 
 export const FacultyColors = {
-  // Primary – rich, professional green
-  primary:       '#2E7D32',  
-  primaryDark:   '#1B5E20',  
-  primaryDeep:   '#0F3D16',  
-  primaryLight:  '#DFF3E3',  
-  primaryPale:   '#F1FBF4', 
+  // Primary – updated to requested green palette
+  primary:       '#008443',  
+  primaryDark:   '#006a35',  
+  primaryDeep:   '#005028',  
+  primaryLight:  '#2ca96a',  
+  primaryPale:   '#c0e8f2', 
 
   // Accent – complementary but still restrained
-  teal:       '#1B998B',  
+  teal:       '#57b8b3',  
   orange:     '#C77700',  
   yellow:     '#C9B458',  
   red:        '#D64550',  
   coral:      '#E57373',  
-  sky:        '#4CAF50',  
+  sky:        '#84d6f2',  
   purple:     '#6A4C93',  
 
   // Neutrals (slightly green-tinted for cohesion)

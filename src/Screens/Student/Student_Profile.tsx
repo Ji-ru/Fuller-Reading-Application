@@ -29,13 +29,13 @@ import Svg, { Text as SvgText } from 'react-native-svg';
 
 // ─── Palette (aligned with Reading Selection blue/cyan theme) ─────────────────
 const C = {
-  bg: '#ECFBFF',
-  primary: '#3B7FC9',
-  primaryDark: '#2E5C8A',
-  primaryDeep: '#163F6C',
-  primaryLight: '#D7E9FF',
+  bg: '#F1FBF4',
+  primary: '#008443',
+  primaryDark: '#006a35',
+  primaryDeep: '#005028',
+  primaryLight: '#c0e8f2',
   tabBg: '#c0e8f2',
-  accent: '#38B6FF',
+  accent: '#2ca96a',
   card: '#FFFFFF',
   ink: '#1F2937',
   inkLight: '#6B7280',
@@ -86,7 +86,7 @@ const headerStyles = StyleSheet.create({
   },
   backBtn: {
     width: 45, height: 45, borderRadius: 10,
-    backgroundColor: C.primaryDeep,
+    backgroundColor: '#008443',
     justifyContent: 'center', alignItems: 'center',
   },
   backArrowText: {
@@ -568,7 +568,7 @@ const S = StyleSheet.create({
     paddingHorizontal: sw(20),
     marginTop: sh(12),
     borderWidth: 3,
-    borderColor: C.accent,
+    borderColor: '#2ca96a',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: sw(3) },
@@ -737,7 +737,7 @@ const S = StyleSheet.create({
     alignItems: 'center',
     minWidth: sw(80),
     elevation: 4,
-    shadowColor: C.accent,
+    shadowColor: '#2ca96a',
     shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.3,
     shadowRadius: sw(6),
