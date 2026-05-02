@@ -323,21 +323,42 @@ export default function PageSelectionScreen() {
 
   const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => {
     const bgColor = READING_COLORS[index % READING_COLORS.length];
+    const completed = isAlphabetCompleted(item.letter);
+  
     return (
-      <FadeSlideIn delay={60 + index * 30} style={{ width: '23%' }}>
+      <FadeSlideIn delay={60 + index * 25} style={{ width: '23%' }}>
         <TouchableOpacity
           style={[selection.alphabetItem, { backgroundColor: bgColor, width: '100%' }]}
           onPress={() => handleAlphabetSelect(item)}
-          activeOpacity={0.8}
+          activeOpacity={0.78}
         >
-          {/* Highlight dot – top-left glow like reference image */}
+          {/* Gloss dot */}
           <View style={selection.alphabetHighlightDot} />
+  
+          {/* Uppercase + lowercase side by side, baseline-aligned */}
           <View style={selection.alphabetContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
-              <Text style={selection.alphabetLetter}>{item.letter.toUpperCase()}</Text>
-              <Text style={selection.alphabetLetterSmall}>{item.letter.toLowerCase()}</Text>
-            </View>
+            <Text
+              style={selection.alphabetLetter}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {item.letter.toUpperCase()}
+            </Text>
+            <Text
+              style={selection.alphabetLetterSmall}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {item.letter.toLowerCase()}
+            </Text>
           </View>
+  
+          {/* Completed badge — top-right */}
+          {completed && (
+            <View style={selection.completedBadge}>
+              <Text style={selection.completedCheckmark}>✓</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </FadeSlideIn>
     );

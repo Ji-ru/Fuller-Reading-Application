@@ -1,5 +1,10 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import { sw, sh, sf } from '../Utils/responsive';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Tile is 23% of screen width with 10px gaps — compute exact usable size
+const TILE_SIZE = (SCREEN_WIDTH - sw(20) - sw(10) * 3) * 0.23;
 
 const selection = StyleSheet.create({
   // ==========================================
@@ -123,87 +128,101 @@ const selection = StyleSheet.create({
   },
 
   // ==========================================
-  // ALPHABET TAB STYLES
+  // ALPHABET TAB STYLES  ← FIXED
   // ==========================================
   alphabetListContainer: {
     paddingHorizontal: sw(10),
-    paddingVertical: sh(10),
+    paddingTop: sh(8),
+    paddingBottom: sh(20),
   },
   alphabetRow: {
     justifyContent: 'flex-start',
     gap: sw(10),
-    marginBottom: sh(12),
+    marginBottom: sw(10),
   },
+
+  // Tile: fixed square based on computed TILE_SIZE so nothing overflows
   alphabetItem: {
-    width: '23%',
-    aspectRatio: 1,
-    borderRadius: sw(20),
+    width: TILE_SIZE,
+    height: TILE_SIZE,
+    borderRadius: sw(16),
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: sw(3) },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.22,
     shadowRadius: sw(4),
     position: 'relative',
     overflow: 'hidden',
   },
+
+  // Small gloss dot — top-left
   alphabetHighlightDot: {
     position: 'absolute',
-    top: sw(8),
-    left: sw(8),
-    width: sw(10),
-    height: sw(10),
+    top: sw(7),
+    left: sw(7),
+    width: sw(9),
+    height: sw(9),
     borderRadius: sw(5),
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: 'rgba(255,255,255,0.50)',
   },
+
+  // Row so Aa sit side by side, baseline-aligned
   alphabetContainer: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'baseline',
     justifyContent: 'center',
-    padding: sw(6),
+    paddingHorizontal: sw(4),
   },
+
+  // Uppercase — fits within ~half the tile
   alphabetLetter: {
-    fontSize: sf(55),
+    fontSize: TILE_SIZE * 0.38,
     fontFamily: 'Andika-Bold',
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowColor: 'rgba(0,0,0,0.18)',
     textShadowOffset: { width: 0, height: sw(1) },
     textShadowRadius: sw(2),
+    lineHeight: TILE_SIZE * 0.44,
   },
+
+  // Lowercase — visibly smaller, slight left margin for spacing
   alphabetLetterSmall: {
-    fontSize: sf(45),
+    fontSize: TILE_SIZE * 0.28,
     fontFamily: 'Andika-Bold',
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.15)',
+    color: 'rgba(255,255,255,0.85)',
+    textShadowColor: 'rgba(0,0,0,0.12)',
     textShadowOffset: { width: 0, height: sw(1) },
     textShadowRadius: sw(2),
+    lineHeight: TILE_SIZE * 0.32,
+    marginLeft: sw(2),
   },
-  // Completed badge for alphabet
+
+  // Completed badge
   completedBadge: {
     position: 'absolute',
-    top: sw(2),
-    right: sw(2),
-    width: sw(20),
-    height: sw(20),
-    borderRadius: sw(10),
-    backgroundColor: '#2CA96A',
+    top: sw(4),
+    right: sw(4),
+    width: sw(18),
+    height: sw(18),
+    borderRadius: sw(9),
+    backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   completedCheckmark: {
-    fontSize: sf(12),
-    color: '#FFFFFF',
+    fontSize: sf(11),
+    color: '#2CA96A',
     fontFamily: 'Nunito-Bold',
   },
 
   // ==========================================
-  // WORD TAB - NEW REDESIGNED STYLES
+  // WORD TAB STYLES
   // ==========================================
   wordSelectionContainer: {
     flex: 1,
   },
-
-  // LETTER CARDS (Step 1 - Letter Selection)
   letterListContainer: {
     paddingHorizontal: sw(10),
     paddingBottom: sh(20),
@@ -273,11 +292,6 @@ const selection = StyleSheet.create({
     fontFamily: 'Nunito-Bold',
     lineHeight: sf(26),
   },
-
-  // BACK TO LETTERS BUTTON
-  // ==========================================
-  // CHAPTER HEADER (COMBINED ROW)
-  // ==========================================
   combinedHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -328,8 +342,6 @@ const selection = StyleSheet.create({
     fontFamily: 'Nunito-Medium',
     color: '#6B7280',
   },
-
-  // PHONEME CATEGORIES (Step 2 - Word Selection)
   phonemeListContainer: {
     paddingHorizontal: sw(10),
     paddingBottom: sh(20),
@@ -379,8 +391,6 @@ const selection = StyleSheet.create({
     fontFamily: 'Nunito-Medium',
     color: '#6B7280',
   },
-
-  // WORD BUBBLES
   wordsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -426,7 +436,7 @@ const selection = StyleSheet.create({
   },
 
   // ==========================================
-  // LEGACY WORD STYLES (for backward compatibility)
+  // LEGACY WORD STYLES
   // ==========================================
   word: {
     fontSize: sf(30),
