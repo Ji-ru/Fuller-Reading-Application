@@ -219,6 +219,24 @@ export default function UserHomeScreen() {
               </View>
             </Animated.View>
           </TouchableOpacity>
+                    <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => animatePress(cardScale1, () => handleNextStep('ReadingHistory'))}
+          >
+            <Animated.View style={[S.primaryCard, { transform: [{ scale: cardScale1 }] }]}>
+              <View style={S.primaryCardGlow} />
+              <View style={S.primaryIconBox}>
+                <BookIcon size={32} color={C.white} />
+              </View>
+              <View style={S.primaryTextBox}>
+                <Text style={S.primaryLabel}>Kasaysayan</Text>
+                <Text style={S.primarySub}>Nakaraang Pagbasa</Text>
+              </View>
+              <View style={S.primaryArrow}>
+                <ChevronRightIcon size={20} color={C.white} />
+              </View>
+            </Animated.View>
+          </TouchableOpacity>
         </BounceIn>
 
 

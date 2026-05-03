@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const srcDir = 'c:\\src\\marungko\\Fuller-Reading-Application\\src';
+const srcDir = 'C:\\rubi_web\\CISC_Capstone\\MarungkoReading\\src';
 
 const replacements = [
   { old: 'cisckids.png', new: 'cisckids copy.png' },

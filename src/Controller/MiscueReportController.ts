@@ -13,7 +13,7 @@ export const MiscueReportController = {
     accuracy: number,
     wordPerMin: number,
     totalWords: number,
-    recordingDuration?: string
+    recordingDuration: string
   ): Promise<string> {
     try {
       const user = auth().currentUser;
@@ -398,5 +398,46 @@ export const MiscueReportController = {
       console.error('PROGRESS ERROR:', error);
       throw error;
     }
-  }, 
+  },
+
+  // ================= WORD MASTERY ANALYTICS =================
+  async getWordMasteryData(studentId: string) {
+    try {
+      const [alphaSnap, wordSnap, reportSnap] = await Promise.all([
+        firestore().collection('alphabetCompleted').where('studentId', '==', studentId).get(),
+        firestore().collection('wordCompleted').where('studentId', '==', studentId).get(),
+        firestore().collection('miscueReports').where('studentId', '==', studentId).get(),
+      ]);
+
+      const masteredLetters = alphaSnap.docs.map(d => ({
+        letter: d.data().letter as string,
+        timestamp: d.data().createdAt?.toDate?.() || new Date(d.data().createdAt || 0)
+      }));
+      
+      const masteredWords = wordSnap.docs.map(d => ({
+        word: d.data().word as string,
+        letter: d.data().letter as string,
+        timestamp: d.data().createdAt?.toDate?.() || new Date(d.data().createdAt || 0)
+      }));
+      
+      // Track which words have been tried (but maybe not mastered)
+      const triedWords = new Set<string>();
+      reportSnap.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.passageTitle && data.passageTitle.startsWith('Words for ')) {
+          // This is a bit tricky since we don't store which specific word was tried in a session 
+          // unless it's in the miscues or if we assume the whole set was tried.
+          // For now, let's use the wordCompleted as the source of truth for "Mastered".
+        }
+      });
+
+      return {
+        masteredLetters,
+        masteredWords,
+      };
+    } catch (error) {
+      console.error('WORD MASTERY DATA ERROR:', error);
+      return { masteredLetters: [], masteredWords: [] };
+    }
+  },
 };

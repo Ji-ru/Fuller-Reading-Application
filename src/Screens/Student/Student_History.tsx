@@ -19,6 +19,8 @@ import { AssessmentController } from '../../Controller/AssessmentController';
 import { getUserProfile } from '../../Controller/AuthenticationController';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
+import PassageHistoryTab from '../../Components/Student/PassageHistoryTab';
+import PerformanceTab from '../../Components/Student/PerformanceTab';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { ACCENT_COLORS, StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
@@ -192,13 +194,13 @@ function TalataDetailItem({ report, index, accent }: { report: ReportData; index
         </View>
         <View style={S.statDivider} />
         <View style={S.statBox}>
-          <TimerIcon size={14} color={C.slate} style={{ marginBottom: 4 }} />
+          <TimerIcon size={14} color={C.slate} />
           <Text style={S.statVal}>{report.recordingDuration || '0:00'}</Text>
           <Text style={S.statLab}>Tagal</Text>
         </View>
         <View style={S.statDivider} />
         <View style={S.statBox}>
-          <ZapIcon size={14} color={C.slate} style={{ marginBottom: 4 }} />
+          <ZapIcon size={14} color={C.slate} />
           <Text style={S.statVal}>{report.wordPerMin}</Text>
           <Text style={S.statLab}>Bilis</Text>
         </View>
@@ -258,72 +260,32 @@ function AralinMasteryCard({ group }: { group: AralinGroupedData }) {
 
 // (Deleted old AralinGroup component since we use AralinMasteryCard now)
 
-function AssessmentResultCard({ result, index }: { result: any, index: number }) {
-  const dateStr = result.completedAt?.toDate?.()
-    ? result.completedAt.toDate().toLocaleDateString('fil-PH', { month: 'short', day: 'numeric', year: 'numeric' })
-    : new Date(result.completedAt || 0).toLocaleDateString('fil-PH', { month: 'short', day: 'numeric', year: 'numeric' });
-
-  return (
-    <BounceIn delay={index * 30}>
-      <View style={S.assessCard}>
-        <View style={S.assessIconBox}>
-          <ClipboardListIcon size={24} color={C.white} />
-        </View>
-        <View style={{ flex: 1, marginLeft: 16 }}>
-          <Text style={S.assessMeta}>{result.type}</Text>
-          <Text style={S.assessTitle}>{result.title}</Text>
-          <View style={S.assessScoreRow}>
-            <View style={S.scorePill}>
-              <Text style={S.scorePillVal}>{result.score} / {result.totalItems}</Text>
-            </View>
-            <Text style={S.assessDate}>{dateStr}</Text>
-          </View>
-        </View>
-        <TrophyIcon size={24} color={C.yellow} />
-      </View>
-    </BounceIn>
-  );
-}
-
-function GalingResultCard({ result, index }: { result: any, index: number }) {
-  const perc = Math.round((result.score / result.totalItems) * 100);
-  const color = perc >= 80 ? C.green : perc >= 50 ? C.orange : C.coral;
-  
-  const dateStr = result.completedAt?.toDate?.()
-    ? result.completedAt.toDate().toLocaleDateString('fil-PH', { month: 'short', day: 'numeric' })
-    : new Date(result.completedAt || 0).toLocaleDateString('fil-PH', { month: 'short', day: 'numeric' });
-
-  return (
-    <BounceIn delay={index * 30}>
-      <View style={S.galingCard}>
-        <View style={{ flex: 1 }}>
-          <Text style={S.assessMeta}>{result.type}</Text>
-          <Text style={S.assessTitle}>{result.title}</Text>
-          <Text style={[S.assessDate, { marginTop: 2 }]}>{dateStr}</Text>
-        </View>
-        <View style={[S.percBadge, { backgroundColor: color + '12', borderColor: color }]}>
-          <Text style={[S.percText, { color }]}>{perc}%</Text>
-        </View>
-      </View>
-    </BounceIn>
-  );
-}
+// Assessment cards omitted from history tab per requirement
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ReadingHistoryScreen() {
   const [groupedReports, setGroupedReports] = useState<AralinGroupedData[]>([]);
+  const [allReports, setAllReports] = useState<MiscueReportDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'aralin' | 'assessment' | 'galing'>('aralin');
-  const [aralinDone, setAralinDone] = useState(0);
-  const [assessmentsDone, setAssessmentsDone] = useState(0);
-  const [assessmentAvg, setAssessmentAvg] = useState(0);
-  const [assessmentHistory, setAssessmentHistory] = useState<any[]>([]);
-  const [totalAttempts, setTotalAttempts] = useState(0);
+  const [activeTab, setActiveTab] = useState<'history' | 'passage' | 'performance'>('history');
+  const slideAnimation = useRef(new Animated.Value(0)).current;
 
-  const { handleLogout, handleBackStep } = useNavigationHelper();
+  const [aralinDone, setAralinDone] = useState(0);
+  const [totalAttempts, setTotalAttempts] = useState(0);
+  const [studentName, setStudentName] = useState('Mag-aaral');
+
+  const { handleLogout, handleBackStep, handleNextStep } = useNavigationHelper();
+
+  // Tab Slide Animation
+  useEffect(() => {
+    Animated.timing(slideAnimation, {
+      toValue: activeTab === 'performance' ? 2 : activeTab === 'passage' ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [activeTab]);
 
   useEffect(() => { fetchReports(); }, []);
 
@@ -333,6 +295,11 @@ export default function ReadingHistoryScreen() {
       const user = auth().currentUser;
       if (!user) return;
 
+      const profile = await getUserProfile(user.uid);
+      if (profile?.firstName) {
+        setStudentName(profile.firstName);
+      }
+
       const [reports, mastered, detailedMastery] = await Promise.all([
         MiscueReportController.getStudentReports(user.uid),
         MiscueReportController.getStudentMasteredLessons(user.uid),
@@ -341,45 +308,9 @@ export default function ReadingHistoryScreen() {
 
       const grouped = groupReportsByAralin(reports, detailedMastery);
       setGroupedReports(grouped);
+      setAllReports(reports as MiscueReportDocument[]);
       setTotalAttempts(reports.length);
       setAralinDone(grouped.length);
-
-      // Fetch Assessment Stats
-      const profile = await getUserProfile(user.uid);
-      const classCode = profile?.studentData?.classCode;
-
-      if (classCode) {
-        const actList = await AssessmentController.getStudentActivities(classCode);
-        let completedCount = 0;
-        let totalCorrect = 0;
-        let totalPossible = 0;
-        const historyList: any[] = [];
-
-        for (const act of actList) {
-          const res = await AssessmentController.getStudentResult(act.activityId);
-          if (res) {
-            completedCount++;
-            totalCorrect += res.score;
-            totalPossible += res.totalItems;
-            historyList.push({
-              ...res,
-              title: act.title,
-              type: act.type || 'Assessment',
-            });
-          }
-        }
-
-        // Sort history by newest first
-        historyList.sort((a, b) => {
-          const At = a.completedAt?.toDate?.() || new Date(a.completedAt || 0);
-          const Bt = b.completedAt?.toDate?.() || new Date(b.completedAt || 0);
-          return Bt.getTime() - At.getTime();
-        });
-
-        setAssessmentsDone(completedCount);
-        setAssessmentAvg(totalPossible > 0 ? (totalCorrect / totalPossible) * 100 : 0);
-        setAssessmentHistory(historyList);
-      }
 
     } catch (e) {
       console.log("Error fetching history:", e);
@@ -583,82 +514,95 @@ export default function ReadingHistoryScreen() {
           </View>
         </View>
 
-        {/* ── Hero ─────────────────────────────────────────────────────────── */}
-        <BounceIn delay={24}>
-          <View style={[S.heroBanner, { backgroundColor: C.greenDeep }]}>
-            <View>
-              <Text style={[S.heroSub, { color: 'rgba(255,255,255,0.7)' }]}>Kamusta, Mag-aaral!</Text>
-              <Text style={[S.heroTitle, { color: C.white }]}>Ang iyong{'\n'}Kasaysayan</Text>
-            </View>
-            <View style={S.heroStars}>
-              <HistoryIcon size={52} color={C.white} />
+        {/* Tab Switcher */}
+        <View style={S.tabContainer}>
+          <View style={S.tabBackground}>
+            <Animated.View
+              style={[
+                S.activeTabIndicator,
+                {
+                  transform: [{
+                    translateX: slideAnimation.interpolate({
+                      inputRange: [0, 1, 2],
+                      outputRange: [0, (SW - 32 - 8) / 3, (2 * (SW - 32 - 8)) / 3]
+                    })
+                  }]
+                }
+              ]}
+            />
+            <TouchableOpacity 
+              style={S.tabButton} 
+              onPress={() => setActiveTab('history')}
+              activeOpacity={0.8}
+            >
+              <Text style={[S.tabText, activeTab === 'history' && S.tabTextActive]}>Kasaysayan</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={S.tabButton} 
+              onPress={() => setActiveTab('passage')}
+              activeOpacity={0.8}
+            >
+              <Text style={[S.tabText, activeTab === 'passage' && S.tabTextActive]}>Mga Talata</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={S.tabButton} 
+              onPress={() => setActiveTab('performance')}
+              activeOpacity={0.8}
+            >
+              <Text style={[S.tabText, activeTab === 'performance' && S.tabTextActive]}>Pagganap</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {activeTab === 'history' ? (
+          <View>
+            {/* ── Hero ─────────────────────────────────────────────────────────── */}
+            <BounceIn delay={24}>
+              <View style={[S.heroBanner, { backgroundColor: C.greenDeep }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[S.heroSub, { color: 'rgba(255,255,255,0.7)' }]}>Magandang araw, {studentName}!</Text>
+                  <Text style={[S.heroTitle, { color: C.white }]}>Kasaysayan ng{'\n'}Iyong Pagbabasa</Text>
+                </View>
+                <View style={S.heroStatsBoxWrapper}>
+                  <View style={S.heroStatBox}>
+                    <Text style={S.heroStatLabel}>Aralins Done:</Text>
+                    <Text style={S.heroStatVal}>{aralinDone}</Text>
+                  </View>
+                  <View style={S.heroStatBox}>
+                    <Text style={S.heroStatLabel}>Total Attempts:</Text>
+                    <Text style={S.heroStatVal}>{totalAttempts}</Text>
+                  </View>
+                </View>
+              </View>
+            </BounceIn>
+
+            {/* ── Aralin Mastary Roadmap ────────────────────────────────────────── */}
+            <View style={{ paddingHorizontal: 16, paddingBottom: 40, marginTop: 20 }}>
+              {groupedReports.map((aralinGroup, i) => (
+                <AralinMasteryCard key={aralinGroup.aralinIndex} group={aralinGroup} />
+              ))}
+
+              {groupedReports.length === 0 && !isLoading && (
+                <View style={S.emptyState}>
+                  <HistoryIcon size={64} color={C.greenLight} />
+                  <Text style={S.emptyTitle}>Wala pang kasaysayan</Text>
+                  <Text style={S.emptyHint}>
+                    Simulan ang iyong paglalakbay sa pagbabasa para makita ang iyong pag-unlad dito!
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
-        </BounceIn>
-
-        {/* ── Summary statistics (4 Columns) ─────────────────────────────────── */}
-        {!isLoading && groupedReports.length > 0 && (
-          <BounceIn delay={48}>
-            <View style={S.summaryGrid}>
-              <TouchableOpacity
-                style={[S.sumCard, { backgroundColor: C.greenDeep }, activeFilter === 'aralin' && S.sumCardActive]}
-                onPress={() => setActiveFilter(activeFilter === 'aralin' ? 'all' : 'aralin')}
-              >
-                <BookOpenIcon size={18} color={C.white} />
-                <Text style={[S.sumVal, { color: C.white }]}>{aralinDone}</Text>
-                <Text style={[S.sumLabel, { color: 'rgba(255,255,255,0.8)' }]}>Aralin</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[S.sumCard, { backgroundColor: C.green }, activeFilter === 'assessment' && S.sumCardActive]}
-                onPress={() => setActiveFilter(activeFilter === 'assessment' ? 'all' : 'assessment')}
-              >
-                <ClipboardListIcon size={18} color={C.white} />
-                <Text style={[S.sumVal, { color: C.white }]}>{assessmentsDone}</Text>
-                <Text style={[S.sumLabel, { color: 'rgba(255,255,255,0.8)' }]}>Assessment</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[S.sumCard, { backgroundColor: C.purple }, activeFilter === 'galing' && S.sumCardActive]}
-                onPress={() => setActiveFilter(activeFilter === 'galing' ? 'all' : 'galing')}
-              >
-                <StarIcon size={18} color={C.white} />
-                <Text style={[S.sumVal, { color: C.white }]}>{assessmentAvg.toFixed(0)}%</Text>
-                <Text style={[S.sumLabel, { color: 'rgba(255,255,255,0.8)' }]}>Galing</Text>
-              </TouchableOpacity>
-            </View>
-          </BounceIn>
+        ) : activeTab === 'passage' ? (
+          <PassageHistoryTab 
+            reports={allReports} 
+            onStartReading={() => handleNextStep('PassageSelection')} 
+          />
+        ) : (
+          <PerformanceTab studentId={auth().currentUser?.uid || ''} reports={allReports} />
         )}
-
-        {/* ── Aralin Mastary Roadmap ────────────────────────────────────────── */}
-        <View style={{ paddingHorizontal: 16, paddingBottom: 40, marginTop: 4 }}>
-          {activeFilter === 'all' || activeFilter === 'aralin' ? (
-            groupedReports.map((aralinGroup, i) => (
-              <AralinMasteryCard key={aralinGroup.aralinIndex} group={aralinGroup} />
-            ))
-          ) : activeFilter === 'assessment' ? (
-            assessmentHistory.map((res, i) => (
-              <AssessmentResultCard key={res.activityId} result={res} index={i} />
-            ))
-          ) : (
-            assessmentHistory.map((res, i) => (
-              <GalingResultCard key={res.activityId} result={res} index={i} />
-            ))
-          )}
-
-          {(((activeFilter === 'assessment' || activeFilter === 'galing') && assessmentHistory.length === 0) ||
-            (activeFilter !== 'assessment' && activeFilter !== 'galing' && groupedReports.length === 0)) && !isLoading && (
-              <View style={S.emptyState}>
-                <HistoryIcon size={64} color={C.greenLight} />
-                <Text style={S.emptyTitle}>Wala pang kasaysayan</Text>
-                <Text style={S.emptyHint}>
-                  {activeFilter === 'assessment' || activeFilter === 'galing'
-                    ? 'Kumuha ng iyong unang assessment para makita ang iyong mga resulta dito!'
-                    : 'Simulan ang iyong paglalakbay sa pagbabasa para makita ang iyong pag-unlad dito!'}
-                </Text>
-              </View>
-            )}
-        </View>
 
         <LogoutModal
           visible={logoutVisible}
@@ -695,30 +639,50 @@ const S = StyleSheet.create({
   },
   menuIcon: { width: 22, height: 22, tintColor: C.ink },
 
+  // Tab Switcher
+  tabContainer: { paddingHorizontal: 16, marginTop: 10, marginBottom: 5 },
+  tabBackground: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 20,
+    padding: 4,
+    position: 'relative'
+  },
+  activeTabIndicator: {
+    position: 'absolute',
+    width: '33.33%',
+    height: '100%',
+    backgroundColor: C.white,
+    borderRadius: 16,
+    top: 4,
+    left: 4,
+    ...Shadows.subtle
+  },
+  tabButton: { flex: 1, paddingVertical: 12, alignItems: 'center', zIndex: 1 },
+  tabText: { fontSize: 14, fontWeight: '700', color: C.slate },
+  tabTextActive: { color: C.greenDeep, fontWeight: '900' },
+
   // Hero
   heroBanner: {
     marginHorizontal: 16, marginTop: 10,
     backgroundColor: C.white, borderRadius: Radii.xl,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 18,
     ...Shadows.cardLift,
   },
   heroSub: { fontSize: 13, color: C.slate, fontWeight: '600' },
-  heroTitle: { fontSize: 22, fontWeight: '900', color: C.greenDeep, lineHeight: 28, marginTop: 2 },
+  heroTitle: { fontSize: 22, fontWeight: '900', color: C.greenDeep, lineHeight: 28, marginTop: 2, marginBottom: 12 },
   heroStars: { alignItems: 'center', gap: 4 },
-
-
-  // Summary pills
-  summaryGrid: {
-    flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 16, marginTop: 12,
+  heroStatsBoxWrapper: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 8
   },
-  sumCard: {
-    flex: 1, borderRadius: 20, paddingVertical: 14,
-    alignItems: 'center', justifyContent: 'center', ...Shadows.card,
-  },
-  sumVal: { fontSize: 18, fontWeight: '900', marginTop: 4 },
-  sumLabel: { fontSize: 10, fontWeight: '700', marginTop: 1, textTransform: 'uppercase' },
-  sumCardActive: { borderWidth: 3, borderColor: C.white, opacity: 1 },
+  heroStatBox: { alignItems: 'center' },
+  heroStatLabel: { fontSize: 11, color: 'rgba(255,255,255,0.9)', fontWeight: '700', textTransform: 'uppercase' },
+  heroStatVal: { fontSize: 20, fontWeight: '900', color: C.white, marginTop: 2 },
 
   activeFilterChip: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -788,7 +752,7 @@ const S = StyleSheet.create({
     borderLeftWidth: 5, borderLeftColor: C.purple
   },
   percBadge: {
-    width: 65, height: 65, borderRadius: 32, borderWeight: 2,
+    width: 65, height: 65, borderRadius: 32,
     justifyContent: 'center', alignItems: 'center', borderWidth: 2
   },
   percText: { fontSize: 18, fontWeight: '900' },

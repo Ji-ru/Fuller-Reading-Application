@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const dir = 'c:\\src\\marungko\\Fuller-Reading-Application\\src\\UI_Designs';
+const dir = 'C:\\rubi_web\\CISC_Capstone\\MarungkoReading\\src\\UI_Designs';
 
 const colorMap = {
   '#f0faf4': '#ebf5fb',
