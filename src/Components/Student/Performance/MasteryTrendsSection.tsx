@@ -6,6 +6,7 @@ import { MiscueReportController } from '../../../Controller/MiscueReportControll
 interface MasteryTrendsSectionProps {
   studentId: string;
   timeFilter: 'week' | 'month' | 'year';
+  reports?: any[];
 }
 
 interface TrendSlot {
@@ -14,7 +15,7 @@ interface TrendSlot {
   items: string[]; // List of letters/words mastered in this slot
 }
 
-export default function MasteryTrendsSection({ studentId, timeFilter }: MasteryTrendsSectionProps) {
+export default function MasteryTrendsSection({ studentId, timeFilter, reports }: MasteryTrendsSectionProps) {
   const [loading, setLoading] = useState(true);
   const [masteryData, setMasteryData] = useState<{
     masteredLetters: Array<{ letter: string; timestamp: Date }>;
@@ -27,11 +28,20 @@ export default function MasteryTrendsSection({ studentId, timeFilter }: MasteryT
     const fetch = async () => {
       setLoading(true);
       const data = await MiscueReportController.getWordMasteryData(studentId);
+
+      if (reports && reports.length > 0) {
+        const dummyLetters = reports.filter(r => r.reportId?.startsWith('dummy')).map(r => ({
+          letter: r.passageTitle?.split(' ')[1] || 'M',
+          timestamp: r.timestamp?.toDate?.() || new Date(r.timestamp)
+        }));
+        data.masteredLetters = [...data.masteredLetters, ...dummyLetters];
+      }
+
       setMasteryData(data);
       setLoading(false);
     };
     if (studentId) fetch();
-  }, [studentId]);
+  }, [studentId, reports]);
 
   const slots = useMemo(() => {
     const now = new Date();
@@ -46,7 +56,7 @@ export default function MasteryTrendsSection({ studentId, timeFilter }: MasteryT
         const targetDate = new Date();
         targetDate.setDate(now.getDate() - i);
         const dayLabel = targetDate.toLocaleDateString('en-US', { weekday: 'short' });
-        
+
         const slotItems = allItems.filter(item => {
           const d = new Date(item.date);
           return d.toDateString() === targetDate.toDateString();
@@ -60,9 +70,9 @@ export default function MasteryTrendsSection({ studentId, timeFilter }: MasteryT
         start.setDate(now.getDate() - (i + 1) * 7);
         const end = new Date();
         end.setDate(now.getDate() - i * 7);
-        
-        const weekLabel = i === 0 ? 'Ngayon' : `Wk ${4-i}`;
-        
+
+        const weekLabel = i === 0 ? 'Ngayon' : `Wk ${4 - i}`;
+
         const slotItems = allItems.filter(item => {
           const d = new Date(item.date);
           return d >= start && d < end;
@@ -78,7 +88,7 @@ export default function MasteryTrendsSection({ studentId, timeFilter }: MasteryT
       months.forEach((m, idx) => {
         const monthIdx = (idx + 5) % 12;
         const year = monthIdx >= 5 ? currentYear : currentYear + 1;
-        
+
         const slotItems = allItems.filter(item => {
           const d = new Date(item.date);
           return d.getMonth() === monthIdx && d.getFullYear() === year;
@@ -114,14 +124,14 @@ export default function MasteryTrendsSection({ studentId, timeFilter }: MasteryT
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={S.chartScroll}>
         <View style={S.chartRow}>
           {slots.map((slot, idx) => (
-            <TouchableOpacity 
-              key={idx} 
+            <TouchableOpacity
+              key={idx}
               onPress={() => setSelectedSlotIdx(idx)}
               activeOpacity={0.7}
             >
-              <BarItem 
-                slot={slot} 
-                maxCount={maxCount} 
+              <BarItem
+                slot={slot}
+                maxCount={maxCount}
                 isActive={selectedSlotIdx === idx}
               />
             </TouchableOpacity>

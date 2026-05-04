@@ -43,7 +43,7 @@ The tabs will:
 │     ├─ Section 1: WORD MASTERY ANALYTICS                    │
 │     │  └─ Progressive Disclosure (WordMasteryPlan style)     │
 │     └─ Section 2: PASSAGE ANALYTICS                         │
-│        ├─ Subsection 2A: Reading Time Activity (Area Chart) │
+│        ├─ Subsection 2A: Reading Time Activity (Bar Chart)  │
 │        ├─ Subsection 2B: Speed & Accuracy (Gauges + Line)   │
 │        └─ Subsection 2C: Miscue Insights (Donut + Lists)    │
 │                                                              │
@@ -178,8 +178,8 @@ State Variables:
 │  │   └─ Caches: wordMasteryData (static per reload)                │
 │  │                                                                   │
 │  ├─ use_StudentReadingTime.ts                                       │
-│  │   ├─ fetchReadingTimeByPeriod(studentId, filter)                │
-│  │   └─ Aggregates: readingDurationSeconds → minutes               │
+│  │   ├─ fetchReadingSessionsByPeriod(studentId, filter)            │
+│  │   └─ Aggregates: passagesReadCount from dailySessions           │
 │  │                                                                   │
 │  ├─ use_StudentAccuracySpeedTrends.ts                               │
 │  │   ├─ fetchTrendData(studentId, filter)                          │
@@ -220,7 +220,7 @@ State Variables:
 │  │   └─ Returns: { completedAlpha: Set, completedWords: Map, ... } │
 │  │                                                                   │
 │  ├─ calculateReadingTimeAnalytics(studentId, filter)                │
-│  │   ├─ Aggregates: readingDurationSeconds from dailySessions       │
+│  │   ├─ Aggregates: passagesReadCount from dailySessions            │
 │  │   └─ Groups: by day/week/month per filter                       │
 │  │                                                                   │
 │  ├─ calculateAccuracySpeedTrends(studentId, filter)                 │
@@ -292,27 +292,43 @@ State Variables:
 
 ---
 
-#### SUBSECTION 2A: READING TIME ACTIVITY (AREA CHART)
+#### SUBSECTION 2A: READING TIME ACTIVITY (BAR CHART)
 
 **Data Aggregation:**
 - **Function:** `MiscueReportController.calculateReadingTimeAnalytics(studentId, filter)`
-  - Reads: `dailySessions` collection filtered by date range
+  - Reads: `studentAnalytics/{studentId}/dailySessions/{YYYY-MM-DD}` collection
   - Groups: By day (Week), week (Month), month (Year)
-  - Sums: `readingDurationSeconds` per group
-  - Returns: `[{ date, duration_minutes }, ...]`
+  - Aggregates: `passagesReadCount` per group
+  - Returns: `[{ label, count }, ...]` and `totalSessions` (sum of counts)
 
 **Caching:**
 - **Hook:** `use_StudentReadingTime(studentId, filter)`
   - Calls: `calculateReadingTimeAnalytics()` on mount
   - Caches: By filter key (Week/Month/Year)
-  - Returns: Cached array of data points
+  - Returns: `{ data: Array<{label, count}>, totalSessions, loading, error }`
 
-**Subcomponent:**
+**Subcomponent Visualization:**
 - **Component:** `ReadingTimeChart.tsx`
   - Consumes: `use_StudentReadingTime()` hook
-  - Displays: Area chart using `react-native-gifted-charts`
-  - X-axis: Date labels (Mon, Wk 1, Jun, etc.)
-  - Y-axis: Duration in minutes
+  - Visual: Vertical bar chart built with `View` + `StyleSheet` (no third-party libraries)
+  - **Layout:**
+    - Title: "Oras ng Pagbasa ng Mga Talata" (Font: Poppins)
+    - Header Accessory: Small blue pill showing "Total: X sessions"
+    - Bar Container: Uses `onLayout` to calculate equal width for each bar
+    - Bars: Primary blue (#3B7FC9), borderTopLeftRadius: 6, borderTopRightRadius: 6
+    - Bar Height: Max height 80px (normalized: `(count / maxCount) * 80`)
+    - Min Height: 4px (if count > 0, otherwise 0/invisible)
+    - X-Axis: Centered labels below bars (Mon, Wk 1, Jan, etc.)
+  - **Constraints:**
+    - No `readingDurationSeconds` usage
+    - No animations
+    - No Y-axis lines or numeric labels
+    - No `react-native-gifted-charts`
+
+**States:**
+- **Loading:** ActivityIndicator + "Loading reading data..."
+- **Error:** Red card with ⚠️ icon + "Failed to load reading data"
+- **Empty:** 📚 emoji + "Walang aktibidad sa panahong ito."
 
 ---
 
@@ -447,7 +463,7 @@ src/
 │     │  └─ Layers 1-4 for word mastery progressive disclosure
 │     │
 │     ├─ ReadingTimeChart.tsx
-│     │  └─ Area chart for reading duration
+│     │  └─ Custom vertical bar chart for passage sessions
 │     │
 │     ├─ AccuracySpeedChart.tsx
 │     │  ├─ Summary strip (metrics)
@@ -717,40 +733,36 @@ All subsections use the same **filter state** (Week/Month/Year) selected at the 
 
 ---
 
-### Subsection 2A: Reading Time Activity (Area Chart)
+### Subsection 2A: Reading Time Activity (Bar Chart)
 
-**Question:** "How much time did the student spend reading passages this period?"
+**Question:** "How many passages did the student read in this period?"
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│  Oras ng Pagbasa ng Mga Talata                             │
+│  Oras ng Pagbasa ng Mga Talata          [ Total: X sess ]  │
 ├────────────────────────────────────────────────────────────┤
 │                                                            │
-│                    ╱╲                                      │
-│              ╱╲╱  ╱  ╲                  Peak: 45 min       │
-│    ╱╲╱╲╱╱  ╱        ╲  ╱                                  │
-│  ╱╱                    ╲╱                                  │
-│  ─────────────────────────────                            │
-│  Mon  Tue  Wed  Thu  Fri  Sat  Sun                         │
-│  (Week view)                                               │
+│          ┌──┐                                              │
+│          │  │        ┌──┐                                  │
+│    ┌──┐  │  │  ┌──┐  │  │                                  │
+│    │  │  │  │  │  │  │  │                                  │
+│  ──┴──┴──┴──┴──┴──┴──┴──┴───────────────────               │
+│    Mon   Tue   Wed   Thu   Fri   Sat   Sun                 │
 │                                                            │
 └────────────────────────────────────────────────────────────┘
 ```
 
 **Specs:**
-- X-Axis: Days (Week), Weeks (Month), or Months (Year)
-- Y-Axis: Total reading duration in minutes
-- Area fill: Semi-transparent blue gradient (#5989e5 @ 40% opacity)
-- Line: Solid primary blue
-- Animations: Smooth draw-in on mount
-
-**Data Mapping:**
-- Aggregate `readingDurationSeconds` from `dailySessions` for the period
-- Convert to minutes: `readingDurationSeconds / 60`
-- Group by day/week/month depending on filter
-- Sum any multiple passages read on same day
-
-**Library:** `react-native-gifted-charts` (LineChart with areaChart props)
+- **Type:** Custom Bar Chart (View-only)
+- **Primary Metric:** `passagesReadCount` from `dailySessions`
+- **Color:** #3B7FC9 (Primary Blue)
+- **Bar Shape:** Rounded top corners (6)
+- **Max Height:** 80px (Normalized based on highest count in set)
+- **States:** 
+  - Loading: ActivityIndicator
+  - Error: Red card styling
+  - Empty: 📚 emoji + "Walang aktibidad sa panahong ito."
+- **Constraints:** No duration logic, no third-party libraries, no Y-axis labels.
 
 ---
 

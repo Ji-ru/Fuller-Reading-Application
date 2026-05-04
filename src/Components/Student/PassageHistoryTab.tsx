@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import { StudentColors as C, Radii, Shadows, ACCENT_COLORS } from '../../Utilities/Theme';
+import { DUMMY_REPORTS } from '../../Utilities/DummyPerformanceData'; // DUMMY DATA
 import { BounceIn } from '../GlobalUse/Animations';
 import { 
   BookOpenIcon, 
@@ -26,7 +27,8 @@ interface PassageGroup {
   reports: MiscueReportDocument[];
 }
 
-export default function PassageHistoryTab({ reports, onStartReading }: PassageHistoryTabProps) {
+export default function PassageHistoryTab({ reports: realReports, onStartReading }: PassageHistoryTabProps) {
+  const reports = [...(realReports || []), ...DUMMY_REPORTS]; // MERGED DUMMY DATA
   const [expandedPassages, setExpandedPassages] = useState<Set<number>>(new Set());
 
   // Filter only passages (Talata) and group by passageTitle
@@ -263,7 +265,7 @@ export default function PassageHistoryTab({ reports, onStartReading }: PassageHi
                                   {subLabel !== 'None' && (
                                     <View style={S.miscueRow}>
                                       <View style={[S.miscueTag, S.miscueTagSubstitution]}>
-                                        <Text style={[S.miscueTagText, { color: C.red }]}>✎ Palit</Text>
+                                        <Text style={[S.miscueTagText, { color: C.red }]}>✎ Pagpapalit</Text>
                                       </View>
                                       <Text style={S.miscueDetail} numberOfLines={2}>{subLabel}</Text>
                                     </View>
@@ -271,7 +273,7 @@ export default function PassageHistoryTab({ reports, onStartReading }: PassageHi
                                   {omitLabel !== 'None' && (
                                     <View style={S.miscueRow}>
                                       <View style={[S.miscueTag, S.miscueTagOmission]}>
-                                        <Text style={[S.miscueTagText, { color: C.orange }]}>- Kulang</Text>
+                                        <Text style={[S.miscueTagText, { color: C.orange }]}>- Pagkakaltas</Text>
                                       </View>
                                       <Text style={S.miscueDetail} numberOfLines={2}>{omitLabel}</Text>
                                     </View>
@@ -279,7 +281,7 @@ export default function PassageHistoryTab({ reports, onStartReading }: PassageHi
                                   {insLabel !== 'None' && (
                                     <View style={S.miscueRow}>
                                       <View style={[S.miscueTag, S.miscueTagInsertion]}>
-                                        <Text style={[S.miscueTagText, { color: C.teal }]}>+ Singit</Text>
+                                        <Text style={[S.miscueTagText, { color: C.teal }]}>+ Pagdaragdag</Text>
                                       </View>
                                       <Text style={S.miscueDetail} numberOfLines={2}>{insLabel}</Text>
                                     </View>
@@ -287,7 +289,7 @@ export default function PassageHistoryTab({ reports, onStartReading }: PassageHi
                                   {repLabel !== 'None' && (
                                     <View style={S.miscueRow}>
                                       <View style={[S.miscueTag, S.miscueTagRepetition]}>
-                                        <Text style={[S.miscueTagText, { color: C.purple }]}>↺ Ulit</Text>
+                                        <Text style={[S.miscueTagText, { color: C.purple }]}>↺ Pag-uulit</Text>
                                       </View>
                                       <Text style={S.miscueDetail} numberOfLines={2}>{repLabel}</Text>
                                     </View>
@@ -554,7 +556,7 @@ const S = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
     marginRight: 10,
-    minWidth: 85,
+    minWidth: 100,
     alignItems: 'center',
   },
   miscueTagSubstitution: { backgroundColor: C.red + '15' },

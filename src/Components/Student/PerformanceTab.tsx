@@ -3,93 +3,128 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
 import { BounceIn } from '../GlobalUse/Animations';
 import WordMasterySection from './Performance/WordMasterySection';
-import MasteryTrendsSection from './Performance/MasteryTrendsSection';
-import { TrendUpIcon, TrophyIcon, StarIcon } from '../GlobalUse/Icons';
+import ReadingTimeChart from './Performance/ReadingTimeChart';
+import AccuracySpeedChart from './Performance/AccuracySpeedChart';
+import MiscueInsightsChart from './Performance/MiscueInsightsChart';
+import { TrendUpIcon, StarIcon, BookOpenIcon, ZapIcon, AlertTriangleIcon } from '../GlobalUse/Icons';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
+import { DUMMY_REPORTS } from '../../Utilities/DummyPerformanceData'; // DUMMY DATA
 
 interface PerformanceTabProps {
   studentId: string;
   reports: MiscueReportDocument[];
 }
 
-export default function PerformanceTab({ studentId, reports }: PerformanceTabProps) {
+export default function PerformanceTab({ studentId, reports: realReports }: PerformanceTabProps) {
+  const reports = [...(realReports || []), ...DUMMY_REPORTS]; // MERGED DUMMY DATA
   const [timeFilter, setTimeFilter] = useState<'week' | 'month' | 'year'>('week');
-  const [isWordMasteryExpanded, setIsWordMasteryExpanded] = useState(true); // Default to expanded for better visibility in redo
 
   return (
-    <ScrollView style={S.container} contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
-      {/* Header Info */}
-      <BounceIn delay={100}>
-        <View style={S.headerSection}>
+    <ScrollView style={S.root} contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
+
+      {/* ── HEADER ── */}
+      <BounceIn delay={80}>
+        <View style={S.header}>
           <Text style={S.headerTitle}>Dashboard ng Pagganap</Text>
-          <Text style={S.headerSubtitle}>Subaybayan ang iyong galing sa pagbabasa</Text>
+          <Text style={S.headerSub}>Subaybayan ang iyong galing sa pagbabasa</Text>
         </View>
       </BounceIn>
 
-      {/* Main Dashboard Card */}
-      <BounceIn delay={200}>
-        <View style={S.dashboardCard}>
-          {/* Time Filter inside the card */}
-            <View style={S.filterWrapper}>
-              <View style={S.filterContainer}>
-                {(['week', 'month', 'year'] as const).map((filter) => (
-                  <TouchableOpacity
-                    key={filter}
-                    onPress={() => setTimeFilter(filter)}
-                    style={[S.filterPill, timeFilter === filter && S.filterPillActive]}
-                  >
-                    <Text style={[S.filterText, timeFilter === filter && S.filterTextActive]}>
-                      {filter === 'week' ? 'Linggo' : filter === 'month' ? 'Buwan' : 'Taon'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-          {/* Mastery Trends Section (Moved to top) */}
-          <View style={S.sectionContainer}>
-            <View style={S.sectionHeader}>
-              <View style={S.sectionTitleRow}>
-                <View style={[S.iconCircle, { backgroundColor: C.teal + '15' }]}>
-                  <TrendUpIcon size={18} color={C.teal} />
-                </View>
-                <Text style={S.sectionTitle}>Mastery ng mga Talata</Text>
-              </View>
-            </View>
-
-            <MasteryTrendsSection 
-              studentId={studentId} 
-              timeFilter={timeFilter} 
-            />
-          </View>
-
-          <View style={S.divider} />
-
-          {/* Word Mastery Section */}
-          <View style={S.sectionContainer}>
-            <View style={S.sectionHeader}>
-              <View style={S.sectionTitleRow}>
-                <View style={[S.iconCircle, { backgroundColor: C.green + '15' }]}>
-                  <StarIcon size={18} color={C.green} />
-                </View>
-                <Text style={S.sectionTitle}>Mastery ng mga Salita</Text>
-              </View>
+      {/* ── TIME FILTER (sticky, always visible) ── */}
+      <BounceIn delay={140}>
+        <View style={S.filterBar}>
+          {(['week', 'month', 'year'] as const).map(f => {
+            const active = timeFilter === f;
+            return (
               <TouchableOpacity
-                onPress={() => setIsWordMasteryExpanded(!isWordMasteryExpanded)}
-                style={S.expandButton}
+                key={f}
+                onPress={() => setTimeFilter(f)}
+                style={[S.filterPill, active && S.filterActive]}
+                activeOpacity={0.7}
               >
-                <Text style={S.expandButtonText}>
-                  {isWordMasteryExpanded ? 'I-collapse' : 'Tingnan Lahat'}
+                <Text style={[S.filterLabel, active && S.filterLabelActive]}>
+                  {f === 'week' ? 'Linggo' : f === 'month' ? 'Buwan' : 'Taon'}
                 </Text>
               </TouchableOpacity>
-            </View>
+            );
+          })}
+        </View>
+      </BounceIn>
 
-            <WordMasterySection
-              studentId={studentId}
-              timeFilter={timeFilter}
-              expanded={isWordMasteryExpanded}
-            />
+      {/* ══════════════════════════════════════════════════════
+           SECTION 1 — WORD MASTERY ANALYTICS
+         ══════════════════════════════════════════════════════ */}
+      <BounceIn delay={200}>
+        <View style={S.sectionCard}>
+          <View style={S.sectionHeaderRow}>
+            <View style={[S.iconDot, { backgroundColor: C.green + '18' }]}>
+              <StarIcon size={16} color={C.green} />
+            </View>
+            <Text style={S.sectionTitle}>Mastery ng mga Salita</Text>
           </View>
+
+          <WordMasterySection
+            studentId={studentId}
+            timeFilter={timeFilter}
+          />
+        </View>
+      </BounceIn>
+
+      {/* ══════════════════════════════════════════════════════
+           SECTION 2 — PASSAGE ANALYTICS
+         ══════════════════════════════════════════════════════ */}
+
+      {/* Subsection 2A: Reading Time Activity */}
+      <BounceIn delay={300}>
+        <View style={S.sectionCard}>
+          <View style={S.sectionHeaderRow}>
+            <View style={[S.iconDot, { backgroundColor: C.teal + '18' }]}>
+              <BookOpenIcon size={16} color={C.teal} />
+            </View>
+            <Text style={S.sectionTitle}>Pagbasa ng Mga Talata</Text>
+          </View>
+
+          <ReadingTimeChart
+            studentId={studentId}
+            timeFilter={timeFilter}
+            reports={reports}
+          />
+        </View>
+      </BounceIn>
+
+      {/* Subsection 2B: Speed & Accuracy */}
+      <BounceIn delay={400}>
+        <View style={S.sectionCard}>
+          <View style={S.sectionHeaderRow}>
+            <View style={[S.iconDot, { backgroundColor: C.orange + '18' }]}>
+              <ZapIcon size={16} color={C.orange} />
+            </View>
+            <Text style={S.sectionTitle}>Accuracy at Bilis</Text>
+          </View>
+
+          <AccuracySpeedChart
+            studentId={studentId}
+            timeFilter={timeFilter}
+            reports={reports}
+          />
+        </View>
+      </BounceIn>
+
+      {/* Subsection 2C: Miscue Insights */}
+      <BounceIn delay={500}>
+        <View style={S.sectionCard}>
+          <View style={S.sectionHeaderRow}>
+            <View style={[S.iconDot, { backgroundColor: '#eb5c6c18' }]}>
+              <AlertTriangleIcon size={16} color="#eb5c6c" />
+            </View>
+            <Text style={S.sectionTitle}>Miscue Insights</Text>
+          </View>
+
+          <MiscueInsightsChart
+            studentId={studentId}
+            timeFilter={timeFilter}
+            reports={reports}
+          />
         </View>
       </BounceIn>
 
@@ -98,8 +133,9 @@ export default function PerformanceTab({ studentId, reports }: PerformanceTabPro
   );
 }
 
+// ─── STYLES ──────────────────────────────────────────────────────────────────
 const S = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
   },
   content: {
@@ -107,112 +143,78 @@ const S = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 40,
   },
-  headerSection: {
-    marginBottom: 20,
-    paddingLeft: 4,
+
+  /* Header */
+  header: {
+    marginBottom: 18,
+    paddingLeft: 2,
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: '900',
     color: C.ink,
-    marginBottom: 4,
+    letterSpacing: -0.3,
   },
-  headerSubtitle: {
-    fontSize: 14,
+  headerSub: {
+    fontSize: 13,
     color: C.slate,
     fontWeight: '600',
+    marginTop: 3,
   },
-  dashboardCard: {
-    backgroundColor: C.white,
-    borderRadius: Radii.lg,
-    padding: 16,
-    ...Shadows.card,
-    borderWidth: 1,
-    borderColor: C.greenPale,
-  },
-  filterWrapper: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  filterContainer: {
+
+  /* Filter Bar */
+  filterBar: {
     flexDirection: 'row',
     backgroundColor: C.bg,
     padding: 4,
     borderRadius: Radii.pill,
+    marginBottom: 20,
+    alignSelf: 'center',
   },
   filterPill: {
-    paddingHorizontal: 18,
-    paddingVertical: 7,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
     borderRadius: Radii.pill,
   },
-  filterPillActive: {
+  filterActive: {
     backgroundColor: C.white,
     ...Shadows.subtle,
   },
-  filterText: {
+  filterLabel: {
     fontSize: 13,
     fontWeight: '800',
     color: C.slate,
   },
-  filterTextActive: {
+  filterLabelActive: {
     color: C.green,
   },
-  sectionContainer: {
-    marginVertical: 10,
+
+  /* Section Card (each section is its own card) */
+  sectionCard: {
+    backgroundColor: C.white,
+    borderRadius: Radii.lg,
+    padding: 18,
+    marginBottom: 16,
+    ...Shadows.card,
+    borderWidth: 1,
+    borderColor: C.greenPale,
   },
-  sectionHeader: {
+  sectionHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  iconDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
     color: C.ink,
   },
-  expandButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  expandButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: C.green,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: C.bg,
-    marginVertical: 20,
-  },
-  placeholderBox: {
-    backgroundColor: C.bg + '50',
-    padding: 30,
-    borderRadius: Radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: C.bg,
-    borderStyle: 'dashed',
-  },
-  placeholderText: {
-    fontSize: 13,
-    color: C.slate,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginTop: 12,
-    fontWeight: '600',
-  }
 });
