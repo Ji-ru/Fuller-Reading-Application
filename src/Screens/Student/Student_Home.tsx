@@ -7,6 +7,7 @@ import {
   Animated,
   StyleSheet,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -223,68 +224,74 @@ export default function UserHomeScreen() {
         </>
       )}
 
-      {/* ── Greeting Card ──────────────────────────────────────────────── */}
-      <BounceIn delay={40}>
-        <View style={S.greetCard}>
-          {/* Text side */}
-          <View style={S.greetLeft}>
-            <Text style={S.greetTime}>{getTimeGreeting().toUpperCase()}</Text>
-            <Text style={S.greetName}>{firstName}!</Text>
-            <Text style={S.greetSub}>
-              Let's check your reading skills today!
-            </Text>
-          </View>
+      {/* ── Scrollable Content ─────────────────────────────────────────── */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        {/* ── Greeting Card ──────────────────────────────────────────────── */}
+        <BounceIn delay={40}>
+          <View style={S.greetCard}>
+            {/* Text side */}
+            <View style={S.greetLeft}>
+              <Text style={S.greetTime}>{getTimeGreeting().toUpperCase()}</Text>
+              <Text style={S.greetName}>{firstName}!</Text>
+              <Text style={S.greetSub}>
+                Let's check your reading skills today!
+              </Text>
+            </View>
 
-          {/* Floating illustration */}
-          <FloatingImage
-            source={require('../../../assets/images/Imagination-Reading.png')}
-            style={S.greetImage}
+            {/* Floating illustration */}
+            <FloatingImage
+              source={require('../../../assets/images/Imagination-Reading.png')}
+              style={S.greetImage}
+            />
+          </View>
+        </BounceIn>
+
+        {/* ── Section label ──────────────────────────────────────────────── */}
+        <BounceIn delay={100}>
+          <View style={S.sectionLabel}>
+            <View style={S.sectionDot} />
+            <Text style={S.sectionLabelText}>YOUR ACTIVITIES</Text>
+          </View>
+        </BounceIn>
+
+        {/* ── Activity Buttons ───────────────────────────────────────────── */}
+        <View style={S.btnsContainer}>
+          <ActivityButton
+            emoji="📖"
+            label="Start Reading"
+            sublabel="Practice reading passages"
+            primary
+            onPress={() =>
+              handleNextStep('PassageSelection')
+            }
+            delay={140}
+          />
+          <ActivityButton
+            emoji="📋"
+            label="Reading History"
+            sublabel="View past reading sessions"
+            onPress={() => handleNextStep('ReadingHistory')}
+            delay={200}
+          />
+          <ActivityButton
+            emoji="🏫"
+            label="My Class"
+            sublabel="View your class and classmates"
+            onPress={() => handleNextStep('StudentMyClass')}
+            delay={260}
+          />
+          <ActivityButton
+            emoji="👤"
+            label="My Profile"
+            sublabel="View your progress and details"
+            onPress={() => handleNextStep('Profile')}
+            delay={320}
           />
         </View>
-      </BounceIn>
-
-      {/* ── Section label ──────────────────────────────────────────────── */}
-      <BounceIn delay={100}>
-        <View style={S.sectionLabel}>
-          <View style={S.sectionDot} />
-          <Text style={S.sectionLabelText}>YOUR ACTIVITIES</Text>
-        </View>
-      </BounceIn>
-
-      {/* ── Activity Buttons ───────────────────────────────────────────── */}
-      <View style={S.btnsContainer}>
-        <ActivityButton
-          emoji="📖"
-          label="Start Reading"
-          sublabel="Practice reading passages"
-          primary
-          onPress={() =>
-            handleNextStep('PassageSelection')
-          }
-          delay={140}
-        />
-        <ActivityButton
-          emoji="📋"
-          label="Reading History"
-          sublabel="View past reading sessions"
-          onPress={() => handleNextStep('ReadingHistory')}
-          delay={200}
-        />
-        <ActivityButton
-          emoji="🏫"
-          label="My Class"
-          sublabel="View your class and classmates"
-          onPress={() => handleNextStep('StudentMyClass')}
-          delay={260}
-        />
-        <ActivityButton
-          emoji="👤"
-          label="My Profile"
-          sublabel="View your progress and details"
-          onPress={() => handleNextStep('Profile')}
-          delay={320}
-        />
-      </View>
+      </ScrollView>
 
       <LogoutModal
         visible={logoutVisible}

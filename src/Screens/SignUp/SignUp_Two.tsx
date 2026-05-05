@@ -3,7 +3,7 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, Image, TextInput, TouchableOpacity,
-  Modal, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard,
+  Modal, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Keyboard,
 } from 'react-native';
 import signup from '../../UI_Designs/SignUpStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -201,9 +201,12 @@ export default function SignUpTwoScreen() {
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
-            <View>
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View>
               <Text style={signup.label}>Register</Text>
 
               {/* Step indicator */}
@@ -313,9 +316,8 @@ export default function SignUpTwoScreen() {
               >
                 <Text style={buttons.cancelSignUpText}>Cancel</Text>
               </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <ActionSheetModal

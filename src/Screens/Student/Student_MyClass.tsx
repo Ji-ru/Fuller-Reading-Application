@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Text as SvgText } from 'react-native-svg';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getAuth } from '@react-native-firebase/auth';
-import { joinClass, getStudentClass } from '../../Controller/AuthenticationController';
+import { joinClass, getStudentClass, leaveClass } from '../../Controller/AuthenticationController';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
@@ -24,27 +24,27 @@ import { sw, sh, sf } from '../../Utils/responsive';
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
 const COLORS = {
-    teal:          '#57b8b3',
-    tealDark:      '#2C6975',
-    tealLight:     '#ECFBFF',
-    tealMid:       '#A8DDD9',
-    text:          '#1E1E1E',
+    teal: '#57b8b3',
+    tealDark: '#2C6975',
+    tealLight: '#ECFBFF',
+    tealMid: '#A8DDD9',
+    text: '#1E1E1E',
     textSecondary: '#666666',
-    textMuted:     '#AAAAAA',
-    surface:       '#FFFFFF',
-    background:    '#F4F7FA',
-    border:        '#E4EAF0',
-    danger:        '#D32F2F',
-    dangerLight:   '#FFF0F0',
-    success:       '#4CAF50',
-    warning:       '#F59E0B',
-    warningLight:  '#FFFBEB',
+    textMuted: '#AAAAAA',
+    surface: '#FFFFFF',
+    background: '#F4F7FA',
+    border: '#E4EAF0',
+    danger: '#D32F2F',
+    dangerLight: '#FFF0F0',
+    success: '#4CAF50',
+    warning: '#F59E0B',
+    warningLight: '#FFFBEB',
     warningBorder: '#FDE68A',
 };
 
 const C = {
     white: '#ffffff',
-    ink:   '#1b2e23',
+    ink: '#1b2e23',
 };
 
 // ─── MenuBars (from History) ──────────────────────────────────────────────────
@@ -168,28 +168,82 @@ const JoinSuccessPopup: React.FC<JoinSuccessPopupProps> = ({ visible, className,
     </Modal>
 );
 
+// ─── LeaveClassPopup ─────────────────────────────────────────────────────────
+
+interface LeaveClassPopupProps {
+    visible: boolean;
+    className: string;
+    leaving: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+}
+
+const LeaveClassPopup: React.FC<LeaveClassPopupProps> = ({ visible, className, leaving, onClose, onConfirm }) => (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+        <View style={popupStyles.overlay}>
+            <View style={popupStyles.card}>
+                <View style={[popupStyles.iconCircle, popupStyles.iconCircleDanger]}>
+                    <Text style={popupStyles.iconEmoji}>🚪</Text>
+                </View>
+                <Text style={popupStyles.title}>Leave Class?</Text>
+                <Text style={popupStyles.body}>
+                    Are you sure you want to leave{'\n'}
+                    <Text style={popupStyles.bodyBold}>{className}</Text>?
+                    {'\n\n'}
+                    You will no longer be part of this class.
+                </Text>
+                <View style={popupStyles.buttonRow}>
+                    <TouchableOpacity
+                        style={[popupStyles.actionButton, popupStyles.actionButtonCancel, { flex: 1, marginRight: sw(8) }]}
+                        onPress={onClose}
+                        disabled={leaving}
+                        activeOpacity={0.82}
+                    >
+                        <Text style={popupStyles.actionButtonCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[popupStyles.actionButton, popupStyles.actionButtonDanger, { flex: 1, marginLeft: sw(8) }]}
+                        onPress={onConfirm}
+                        disabled={leaving}
+                        activeOpacity={0.82}
+                    >
+                        {leaving ? (
+                            <ActivityIndicator size="small" color="#FFF" />
+                        ) : (
+                            <Text style={popupStyles.actionButtonText}>Leave</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+    </Modal>
+);
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function StudentMyClass() {
     const currentUser = getAuth().currentUser;
-    const studentId   = currentUser?.uid || '';
+    const studentId = currentUser?.uid || '';
 
     const { handleLogout, handleBackStep } = useNavigationHelper();
-    const [menuVisible,   setMenuVisible]   = useState(false);
+    const [menuVisible, setMenuVisible] = useState(false);
     const [logoutVisible, setLogoutVisible] = useState(false);
 
     const [enrolledClass, setEnrolledClass] = useState<ClassDocument | null>(null);
-    const [loadingClass,  setLoadingClass]  = useState(true);
-    const [classError,    setClassError]    = useState('');
+    const [loadingClass, setLoadingClass] = useState(true);
+    const [classError, setClassError] = useState('');
 
     const [joinModalVisible, setJoinModalVisible] = useState(false);
-    const [joinCode,         setJoinCode]          = useState('');
-    const [joining,          setJoining]            = useState(false);
-    const [joinError,        setJoinError]          = useState('');
+    const [joinCode, setJoinCode] = useState('');
+    const [joining, setJoining] = useState(false);
+    const [joinError, setJoinError] = useState('');
 
     const [alreadyEnrolledVisible, setAlreadyEnrolledVisible] = useState(false);
-    const [successPopupVisible,    setSuccessPopupVisible]    = useState(false);
-    const [joinedClassName,        setJoinedClassName]        = useState('');
+    const [successPopupVisible, setSuccessPopupVisible] = useState(false);
+    const [joinedClassName, setJoinedClassName] = useState('');
+
+    const [leaveModalVisible, setLeaveModalVisible] = useState(false);
+    const [leaving, setLeaving] = useState(false);
 
     const fetchEnrolledClass = async () => {
         if (!studentId) return;
@@ -234,9 +288,26 @@ export default function StudentMyClass() {
 
     const closeJoinModal = () => { setJoinModalVisible(false); setJoinCode(''); setJoinError(''); };
 
+    const handleLeavePress = () => setLeaveModalVisible(true);
+
+    const handleLeaveClass = async () => {
+        if (!enrolledClass || !studentId) return;
+        setLeaving(true);
+        try {
+            await leaveClass(studentId, enrolledClass.classId);
+            setEnrolledClass(null);
+            setLeaveModalVisible(false);
+        } catch (error: any) {
+            console.error('Error leaving class:', error);
+            // Optionally, we could show a toast or error message here
+        } finally {
+            setLeaving(false);
+        }
+    };
+
     const handleLogoutPress = () => { setMenuVisible(false); setLogoutVisible(true); };
-    const confirmLogout     = async () => { setLogoutVisible(false); await handleLogout(); };
-    const cancelLogout      = () => setLogoutVisible(false);
+    const confirmLogout = async () => { setLogoutVisible(false); await handleLogout(); };
+    const cancelLogout = () => setLogoutVisible(false);
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -290,8 +361,6 @@ export default function StudentMyClass() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.pageTitle}>My Class</Text>
-                <Text style={styles.pageSubtitle}>View your current enrollment</Text>
 
                 {loadingClass && (
                     <View style={styles.stateBox}>
@@ -355,9 +424,9 @@ export default function StudentMyClass() {
                         <View style={styles.cardDivider} />
 
                         <View style={styles.infoGrid}>
-                            <InfoRow icon="🎓" label="Grade Level"   value={`Grade ${enrolledClass.gradeLevel}`} />
+                            <InfoRow icon="🎓" label="Grade Level" value={`Grade ${enrolledClass.gradeLevel}`} />
                             <InfoRow icon="📅" label="Academic Year" value={enrolledClass.acadYear} />
-                            <InfoRow icon="👥" label="Classmates"    value={`${enrolledClass.studentIds?.length ?? 0} students`} />
+                            <InfoRow icon="👥" label="Classmates" value={`${enrolledClass.studentIds?.length ?? 0} students`} />
                         </View>
 
                         <View style={styles.codeCard}>
@@ -365,6 +434,14 @@ export default function StudentMyClass() {
                             <Text style={styles.codeCardValue}>{enrolledClass.classCode}</Text>
                             <Text style={styles.codeCardHint}>Share this code with classmates</Text>
                         </View>
+
+                        <TouchableOpacity 
+                            style={styles.leaveClassButton}
+                            onPress={handleLeavePress}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={styles.leaveClassText}>Leave Class</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
             </ScrollView>
@@ -435,6 +512,13 @@ export default function StudentMyClass() {
 
             <AlreadyEnrolledPopup visible={alreadyEnrolledVisible} onClose={() => setAlreadyEnrolledVisible(false)} />
             <JoinSuccessPopup visible={successPopupVisible} className={joinedClassName} onClose={() => setSuccessPopupVisible(false)} />
+            <LeaveClassPopup 
+                visible={leaveModalVisible} 
+                className={enrolledClass?.className || ''} 
+                leaving={leaving} 
+                onClose={() => setLeaveModalVisible(false)} 
+                onConfirm={handleLeaveClass} 
+            />
         </SafeAreaView>
     );
 }
@@ -460,6 +544,7 @@ const popupStyles = StyleSheet.create({
     },
     iconCircleWarning: { backgroundColor: COLORS.warningLight, borderColor: COLORS.warningBorder },
     iconCircleSuccess: { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' },
+    iconCircleDanger: { backgroundColor: COLORS.dangerLight, borderColor: '#FECACA' },
     iconEmoji: { fontSize: sf(34) },
     title: {
         fontSize: sf(22), fontFamily: 'Satoshi-Bold', color: COLORS.text,
@@ -475,29 +560,33 @@ const popupStyles = StyleSheet.create({
         alignItems: 'center', elevation: 2,
         shadowOffset: { width: 0, height: sw(3) }, shadowOpacity: 0.22, shadowRadius: sw(6),
     },
+    buttonRow: { flexDirection: 'row', width: '100%' },
+    actionButtonCancel: { backgroundColor: '#F3F4F6', elevation: 0, shadowOpacity: 0 },
+    actionButtonCancelText: { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: '#4B5563' },
     actionButtonWarning: { backgroundColor: COLORS.warning, shadowColor: COLORS.warning },
-    actionButtonSuccess: { backgroundColor: COLORS.teal,    shadowColor: COLORS.tealDark },
+    actionButtonSuccess: { backgroundColor: COLORS.teal, shadowColor: COLORS.tealDark },
+    actionButtonDanger: { backgroundColor: COLORS.danger, shadowColor: '#991B1B' },
     actionButtonText: { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: '#FFF' },
 });
 
 // ─── Page styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-    safeArea:      { flex: 1, backgroundColor: COLORS.background },
-    scroll:        { flex: 1 },
+    safeArea: { flex: 1, backgroundColor: COLORS.background, padding: sh(4), paddingTop: sh(20) },
+    scroll: { flex: 1 },
     scrollContent: { paddingHorizontal: sw(20), paddingTop: sh(16), paddingBottom: sh(120) },
 
-    pageTitle:    { fontSize: sf(30), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(4) },
+    pageTitle: { fontSize: sf(30), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(4) },
     pageSubtitle: { fontSize: sf(14), fontFamily: 'Satoshi-Regular', color: COLORS.textSecondary, marginBottom: sh(28) },
 
-    stateBox:  { alignItems: 'center', justifyContent: 'center', paddingVertical: sh(56), gap: sw(12) },
+    stateBox: { alignItems: 'center', justifyContent: 'center', paddingVertical: sh(56), gap: sw(12) },
     stateText: { fontSize: sf(15), fontFamily: 'Satoshi-Medium', color: COLORS.textSecondary },
 
-    errorBox:   { backgroundColor: COLORS.dangerLight, borderRadius: sw(16), paddingHorizontal: sw(24) },
-    errorIcon:  { fontSize: sf(32) },
-    errorText:  { fontSize: sf(15), fontFamily: 'Satoshi-Medium', color: COLORS.danger, textAlign: 'center' },
-    retryButton:{ marginTop: sh(4), backgroundColor: COLORS.teal, paddingHorizontal: sw(28), paddingVertical: sh(10), borderRadius: sw(20) },
-    retryText:  { color: '#FFF', fontFamily: 'Satoshi-Bold', fontSize: sf(15) },
+    errorBox: { backgroundColor: COLORS.dangerLight, borderRadius: sw(16), paddingHorizontal: sw(24) },
+    errorIcon: { fontSize: sf(32) },
+    errorText: { fontSize: sf(15), fontFamily: 'Satoshi-Medium', color: COLORS.danger, textAlign: 'center' },
+    retryButton: { marginTop: sh(4), backgroundColor: COLORS.teal, paddingHorizontal: sw(28), paddingVertical: sh(10), borderRadius: sw(20) },
+    retryText: { color: '#FFF', fontFamily: 'Satoshi-Bold', fontSize: sf(15) },
 
     emptyCard: {
         backgroundColor: COLORS.surface, borderRadius: sw(20), padding: sw(32),
@@ -510,9 +599,9 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.tealLight, alignItems: 'center',
         justifyContent: 'center', marginBottom: sh(20),
     },
-    emptyIcon:      { width: sw(52), height: sw(52), tintColor: COLORS.teal },
-    emptyTitle:     { fontSize: sf(22), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(10) },
-    emptyBody:      { fontSize: sf(14), fontFamily: 'Satoshi-Regular', color: COLORS.textSecondary, textAlign: 'center', lineHeight: sf(22) },
+    emptyIcon: { width: sw(52), height: sw(52), tintColor: COLORS.teal },
+    emptyTitle: { fontSize: sf(22), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(10) },
+    emptyBody: { fontSize: sf(14), fontFamily: 'Satoshi-Regular', color: COLORS.textSecondary, textAlign: 'center', lineHeight: sf(22) },
     emptyHighlight: { fontFamily: 'Satoshi-Bold', color: COLORS.teal },
 
     classCard: {
@@ -521,43 +610,46 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: sw(4) }, shadowOpacity: 0.12, shadowRadius: sw(12),
     },
     cardAccentStrip: { height: sw(6), backgroundColor: COLORS.teal },
-    statusRow:       { paddingHorizontal: sw(20), paddingTop: sh(16), paddingBottom: sh(4) },
-    statusPill:      { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: sw(12), paddingVertical: sh(4), borderRadius: sw(20), gap: sw(6) },
-    statusActive:    { backgroundColor: '#E8F5E9' },
-    statusArchived:  { backgroundColor: '#F5F5F5' },
-    statusDot:       { width: sw(7), height: sw(7), borderRadius: sw(4) },
-    statusText:      { fontSize: sf(12), fontFamily: 'Satoshi-Bold', textTransform: 'uppercase', letterSpacing: sf(0.5) },
-    cardClassName:   { fontSize: sf(26), fontFamily: 'Satoshi-Bold', color: COLORS.text, paddingHorizontal: sw(20), paddingTop: sh(8), paddingBottom: sh(20) },
-    cardDivider:     { height: sw(1), backgroundColor: COLORS.border, marginHorizontal: sw(20), marginBottom: sh(20) },
-    infoGrid:        { paddingHorizontal: sw(20), gap: sw(14), marginBottom: sh(24) },
-    infoRow:         { flexDirection: 'row', alignItems: 'center', gap: sw(14) },
-    infoIcon:        { fontSize: sf(22), width: sw(32), textAlign: 'center' },
-    infoText:        { flex: 1 },
-    infoLabel:       { fontSize: sf(11), fontFamily: 'Satoshi-Medium', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: sf(0.5), marginBottom: sh(1) },
-    infoValue:       { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: COLORS.text },
-    codeCard:        { backgroundColor: COLORS.tealLight, marginHorizontal: sw(20), marginBottom: sh(20), borderRadius: sw(14), padding: sw(16), alignItems: 'center', borderWidth: 1, borderColor: COLORS.tealMid },
-    codeCardLabel:   { fontSize: sf(11), fontFamily: 'Satoshi-Medium', color: COLORS.tealDark, textTransform: 'uppercase', letterSpacing: sf(0.6), marginBottom: sh(4) },
-    codeCardValue:   { fontSize: sf(28), fontFamily: 'Satoshi-Bold', color: COLORS.tealDark, letterSpacing: sf(4), marginBottom: sh(4) },
-    codeCardHint:    { fontSize: sf(12), fontFamily: 'Satoshi-Regular', color: COLORS.teal },
+    statusRow: { paddingHorizontal: sw(20), paddingTop: sh(16), paddingBottom: sh(4) },
+    statusPill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: sw(12), paddingVertical: sh(4), borderRadius: sw(20), gap: sw(6) },
+    statusActive: { backgroundColor: '#E8F5E9' },
+    statusArchived: { backgroundColor: '#F5F5F5' },
+    statusDot: { width: sw(7), height: sw(7), borderRadius: sw(4) },
+    statusText: { fontSize: sf(12), fontFamily: 'Satoshi-Bold', textTransform: 'uppercase', letterSpacing: sf(0.5) },
+    cardClassName: { fontSize: sf(26), fontFamily: 'Satoshi-Bold', color: COLORS.text, paddingHorizontal: sw(20), paddingTop: sh(8), paddingBottom: sh(20) },
+    cardDivider: { height: sw(1), backgroundColor: COLORS.border, marginHorizontal: sw(20), marginBottom: sh(20) },
+    infoGrid: { paddingHorizontal: sw(20), gap: sw(14), marginBottom: sh(24) },
+    infoRow: { flexDirection: 'row', alignItems: 'center', gap: sw(14) },
+    infoIcon: { fontSize: sf(22), width: sw(32), textAlign: 'center' },
+    infoText: { flex: 1 },
+    infoLabel: { fontSize: sf(11), fontFamily: 'Satoshi-Medium', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: sf(0.5), marginBottom: sh(1) },
+    infoValue: { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: COLORS.text },
+    codeCard: { backgroundColor: COLORS.tealLight, marginHorizontal: sw(20), marginBottom: sh(20), borderRadius: sw(14), padding: sw(16), alignItems: 'center', borderWidth: 1, borderColor: COLORS.tealMid },
+    codeCardLabel: { fontSize: sf(11), fontFamily: 'Satoshi-Medium', color: COLORS.tealDark, textTransform: 'uppercase', letterSpacing: sf(0.6), marginBottom: sh(4) },
+    codeCardValue: { fontSize: sf(28), fontFamily: 'Satoshi-Bold', color: COLORS.tealDark, letterSpacing: sf(4), marginBottom: sh(4) },
+    codeCardHint: { fontSize: sf(12), fontFamily: 'Satoshi-Regular', color: COLORS.teal },
+
+    leaveClassButton: { marginHorizontal: sw(20), marginBottom: sh(24), alignItems: 'center', paddingVertical: sh(12), backgroundColor: '#FFF0F0', borderRadius: sw(12) },
+    leaveClassText: { fontSize: sf(14), fontFamily: 'Satoshi-Bold', color: COLORS.danger },
 
     fabContainer: { position: 'absolute', bottom: sh(28), left: sw(20), right: sw(20) },
-    fabButton:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: sh(16), borderRadius: sw(18), gap: sw(8), elevation: 6, shadowColor: COLORS.tealDark, shadowOffset: { width: 0, height: sw(4) }, shadowOpacity: 0.25, shadowRadius: sw(10) },
-    fabButtonActive:   { backgroundColor: COLORS.teal },
+    fabButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: sh(16), borderRadius: sw(18), gap: sw(8), elevation: 6, shadowColor: COLORS.tealDark, shadowOffset: { width: 0, height: sw(4) }, shadowOpacity: 0.25, shadowRadius: sw(10) },
+    fabButtonActive: { backgroundColor: COLORS.teal },
     fabButtonDisabled: { backgroundColor: '#B0C4C3' },
     fabIcon: { fontSize: sf(20), color: '#FFF', lineHeight: sf(22) },
     fabText: { fontSize: sf(17), fontFamily: 'Satoshi-Bold', color: '#FFF' },
 
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-    modalSheet:   { backgroundColor: COLORS.surface, borderTopLeftRadius: sw(28), borderTopRightRadius: sw(28), padding: sw(28), paddingBottom: sh(48) },
-    sheetHandle:  { width: sw(44), height: sw(4), borderRadius: sw(2), backgroundColor: COLORS.border, alignSelf: 'center', marginBottom: sh(24) },
-    modalTitle:    { fontSize: sf(24), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(6) },
+    modalSheet: { backgroundColor: COLORS.surface, borderTopLeftRadius: sw(28), borderTopRightRadius: sw(28), padding: sw(28), paddingBottom: sh(48) },
+    sheetHandle: { width: sw(44), height: sw(4), borderRadius: sw(2), backgroundColor: COLORS.border, alignSelf: 'center', marginBottom: sh(24) },
+    modalTitle: { fontSize: sf(24), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(6) },
     modalSubtitle: { fontSize: sf(14), fontFamily: 'Satoshi-Regular', color: COLORS.textSecondary, marginBottom: sh(28), lineHeight: sf(20) },
 
     codeInputWrapper: { borderWidth: 1.5, borderColor: COLORS.border, borderRadius: sw(14), backgroundColor: '#FAFAFA', marginBottom: sh(12) },
-    codeInputError:   { borderColor: COLORS.danger },
-    codeInput:        { paddingHorizontal: sw(16), paddingVertical: sh(16), fontSize: sf(22), fontFamily: 'Satoshi-Bold', color: COLORS.text, letterSpacing: sf(4) },
+    codeInputError: { borderColor: COLORS.danger },
+    codeInput: { paddingHorizontal: sw(16), paddingVertical: sh(16), fontSize: sf(22), fontFamily: 'Satoshi-Bold', color: COLORS.text, letterSpacing: sf(4) },
 
-    inlineErrorBox:  { backgroundColor: COLORS.dangerLight, borderRadius: sw(10), paddingHorizontal: sw(14), paddingVertical: sh(10), marginBottom: sh(20) },
+    inlineErrorBox: { backgroundColor: COLORS.dangerLight, borderRadius: sw(10), paddingHorizontal: sw(14), paddingVertical: sh(10), marginBottom: sh(20) },
     inlineErrorText: { fontSize: sf(13), fontFamily: 'Satoshi-Medium', color: COLORS.danger, textAlign: 'center' },
 
     modalButtons: { flexDirection: 'row', gap: sw(12), marginTop: sh(8) },

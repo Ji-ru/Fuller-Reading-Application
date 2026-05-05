@@ -23,6 +23,7 @@ import {
   limit,
   serverTimestamp,
   arrayUnion,
+  arrayRemove,
   startAfter,
   Timestamp,
   orderBy,
@@ -540,6 +541,31 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     return { success: true, classId, className: classData.className };
   } catch (error: any) {
     throw new Error('Failed to join class: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   LEAVE CLASS
+------------------------------------------------------------- */
+export const leaveClass = async (studentId: string, classId: string) => {
+  try {
+    // Remove student from class - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await updateDoc(classRef, {
+      studentIds: arrayRemove(studentId),
+      updatedAt: serverTimestamp(),
+    });
+
+    // Update student's classCode to empty - MODULAR API
+    const studentRef = doc(db, 'users', studentId);
+    await updateDoc(studentRef, {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to leave class: ' + error.message);
   }
 };
 

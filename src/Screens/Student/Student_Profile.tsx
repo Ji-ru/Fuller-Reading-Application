@@ -513,6 +513,8 @@ const InfoItem = ({
 const S = StyleSheet.create({
   container: {
     flex: 1,
+    padding: sh(4),
+    paddingTop: sh(15),
     backgroundColor: C.bg,
   },
   scrollContent: {
