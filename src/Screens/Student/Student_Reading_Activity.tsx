@@ -70,6 +70,10 @@ export default function ReadingActivityScreenPage() {
   const [hasCheckedExisting, setHasCheckedExisting] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
 
+  const [selectedModel, setSelectedModel] = useState<
+  'hubert' | 'wav2vec2' | 'whisper' | 'assemblyai' | 'deepgram'
+>('hubert');
+
   // State for storing Alphabet Sessions 
   const alphabetSessionIdRef = useRef<string | null>(null);
   const attemptedSetRef = useRef(new Set<string>());
@@ -128,7 +132,18 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, processAudioWithHubert, processAudioWithWav2Vec2, processAudioWithWhisper, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
+const {
+  isLoading,
+  processAudioWithAssemblyAI,
+  processAudioWithDeepgram,
+  processAudioWithHubert,
+  processAudioWithWav2Vec2,
+  processAudioWithWhisper,
+  sttErrorVisible,
+  sttErrorMessage,
+  clearSttError,
+} = useSpeechToText();
+
 
   // Access Global Music Context
   const { playMusic, pauseMusic } = useGlobalMusic();
@@ -417,38 +432,66 @@ export default function ReadingActivityScreenPage() {
    * @param duration - Duration of the recording (seconds)
    */
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
+  const handleAudioProcessing = useCallback(
+  async (audioFile: string, duration: number) => {
     try {
       if (!audioFile) {
         throw new Error('No audio file provided');
       }
-      // const transcription = await processAudioWithGoogle(audioFile);
-      // const transcription = await processAudioWithAssemblyAI(audioFile);
-      // const transcription = await processAudioWithDeepgram(audioFile);
-      // const transcription = await processAudioWithPuter(audioFile);
-      // const transcription = await processAudioWithWav2Vec2(audioFile);
-      const transcription = await processAudioWithHubert(audioFile);
-      // const transcription = await processAudioWithWhisper(audioFile);
-      setSpokenText(transcription);
-      console.log('THIS IS THE SPOKEN: ' + transcription);
-      // console.log('THIS IS THE UTTERANCES: ' + transcription);
 
-      // Also update the state for display if needed
+      let transcription = '';
+
+      switch (selectedModel) {
+        case 'hubert':
+          transcription = await processAudioWithHubert(audioFile);
+          break;
+
+        case 'wav2vec2':
+          transcription = await processAudioWithWav2Vec2(audioFile);
+          break;
+
+        case 'whisper':
+          transcription = await processAudioWithWhisper(audioFile);
+          break;
+
+        case 'assemblyai':
+          transcription = await processAudioWithAssemblyAI(audioFile);
+          break;
+
+        case 'deepgram': {
+          const result = await processAudioWithDeepgram(audioFile);
+          transcription = result.fulltext || '';
+          break;
+        }
+
+        default:
+          transcription = await processAudioWithHubert(audioFile);
+      }
+
+      setSpokenText(transcription);
       setRecordingDuration(duration);
 
       await analyzeReading(transcription, duration);
       setIsReadingCompleted(true);
     } catch (error) {
-      // Fallback on error: 0% accuracy instead of 100% simulated response
-      console.log('Audio processing failed, falling back to 0%', error);
+      console.log('Audio processing failed', error);
+
       setSpokenText('');
       setRecordingDuration(duration);
-      // Send an empty string to trigger 0% accuracy analysis
+
       await analyzeReading('', duration);
       setIsReadingCompleted(true);
     }
-    // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithHubert, getSimulatedResponse, targetText]);
+  },
+  [
+    selectedModel,
+    processAudioWithHubert,
+    processAudioWithWav2Vec2,
+    processAudioWithWhisper,
+    processAudioWithAssemblyAI,
+    processAudioWithDeepgram,
+  ],
+);
 
   /**
    * Handles the record/play toggle for recording user speech:
@@ -959,6 +1002,67 @@ export default function ReadingActivityScreenPage() {
                     : 'Passage Reading'}
               </SvgText>
             </Svg>): null} */}
+
+            <View
+              style={{
+                paddingHorizontal: 18,
+                marginBottom: 12,
+                zIndex: 20,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontFamily: 'Nunito-Bold',
+                  color: '#2B2B2B',
+                  marginBottom: 6,
+                }}
+              >
+                Speech Model
+              </Text>
+
+              <View
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: '#DCE8E1',
+                  overflow: 'hidden',
+                }}
+              >
+                {[
+                  { key: 'hubert', label: 'HuBERT' },
+                  { key: 'wav2vec2', label: 'Wav2Vec2' },
+                  { key: 'whisper', label: 'Whisper' },
+                  { key: 'assemblyai', label: 'AssemblyAI' },
+                  { key: 'deepgram', label: 'Deepgram' },
+                ].map((item) => {
+                  const active = selectedModel === item.key;
+
+                  return (
+                    <TouchableOpacity
+                      key={item.key}
+                      onPress={() => setSelectedModel(item.key as any)}
+                      style={{
+                        paddingVertical: 12,
+                        paddingHorizontal: 14,
+                        backgroundColor: active ? '#EAF7EF' : '#FFFFFF',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: active ? 'Nunito-Bold' : 'Nunito-Medium',
+                          color: active ? '#008443' : '#333333',
+                          fontSize: 14,
+                        }}
+                      >
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
 
               <PassageDisplay
                 material={readingMaterial}
