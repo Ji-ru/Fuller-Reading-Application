@@ -1,10 +1,21 @@
 import { StyleSheet } from 'react-native';
 import { sw, sh, sf } from '../Utils/responsive';
 
+// ─── Palette (mirrors Student_Home) ──────────────────────────────────────────
+const C = {
+  green:     '#2ca96a',
+  greenDark: '#008443',
+  greenPale: '#E8F5E9',
+  bg:        '#F1FBF4',
+  white:     '#ffffff',
+  ink:       '#1B2B22',
+  inkLight:  '#6B8E6B',
+};
+
 const loading = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f6ff',
+    backgroundColor: C.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: sw(20),
@@ -17,56 +28,59 @@ const loading = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Progress Container Styles
+  // Progress container — pinned to bottom
   progressContainer: {
     position: 'absolute',
-    bottom: sh(40), // Position at bottom of container
+    bottom: sh(40),
     left: sw(20),
     right: sw(20),
     alignItems: 'center',
   },
 
-  // Progress Bar Background
+  // Progress bar track
   progressBarBackground: {
     width: '100%',
-    height: sh(12),
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    height: sh(10),
+    backgroundColor: C.greenPale,
     borderRadius: sw(6),
     overflow: 'hidden',
-    marginBottom: sh(8),
+    marginBottom: sh(10),
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: '#A5D6A7',
   },
 
-  // Progress Bar Fill
+  // Progress bar fill
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3d71d9',
+    backgroundColor: C.green,
     borderRadius: sw(6),
   },
 
-  // Progress Percentage Text
+  // Percentage label
   progressText: {
     fontSize: sf(18),
-    color: '#3d71d9',
-    fontFamily: 'Satoshi-Bold',
+    color: C.greenDark,
+    fontFamily: 'Nunito-ExtraBold',
     marginBottom: sh(8),
   },
 
-  // Status Message Text
+  // Status pill
   statusText: {
     fontSize: sf(14),
-    color: '#333',
+    color: C.ink,
     textAlign: 'center',
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Nunito-Medium',
     marginBottom: sh(12),
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    paddingHorizontal: sw(16),
-    paddingVertical: sh(6),
-    borderRadius: sw(15),
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    paddingHorizontal: sw(18),
+    paddingVertical: sh(7),
+    borderRadius: sw(20),
+    // borderWidth: 1,
+    // borderColor: '#C8E6C9',
+    overflow: 'hidden',
   },
 
-  // Loading Spinner
+  // Spinner
   loadingSpinner: {
     marginTop: sh(4),
   },
