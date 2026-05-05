@@ -4,9 +4,12 @@ import {
   TimeRange,
   wordSessionsByRange,
   buildWordChapterProgress,
+  buildWordPeriodSlots,
+  computeWordAccuracySummary,
+  getDefaultSlotIndex,
   WordChapterProgress,
 } from '../../Controller/SessionReportContoller';
-import { WordSessionData } from '../../Interfaces/dataInterfaces';
+import { WordSessionData, WordPeriodSlot, WordAccuracySummary } from '../../Interfaces/dataInterfaces';
 
 export function useStudentWordMastery(studentId: string, timeRange: TimeRange) {
   const [sessions, setSessions] = useState<WordSessionData[]>([]);
@@ -60,6 +63,22 @@ export function useStudentWordMastery(studentId: string, timeRange: TimeRange) {
     setChapters(computedChapters);
   }, [computedChapters]);
 
-  return { chapters, loading, error };
+  // Period slots for bar chart (accuracy per day/week/month)
+  const slots: WordPeriodSlot[] = useMemo(
+    () => buildWordPeriodSlots(sessions, timeRange),
+    [sessions, timeRange],
+  );
+
+  const summary: WordAccuracySummary = useMemo(
+    () => computeWordAccuracySummary(slots),
+    [slots],
+  );
+
+  const defaultIndex: number = useMemo(
+    () => getDefaultSlotIndex(slots as any),
+    [slots],
+  );
+
+  return { chapters, slots, summary, defaultIndex, loading, error };
 }
 

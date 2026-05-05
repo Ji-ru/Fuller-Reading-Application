@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
-import { getUsersByRole } from '../../Controller/AuthenticationController';
+import {
+  collection,
+  getDocs,
+  getFirestore,
+  query,
+  where,
+} from '@react-native-firebase/firestore';
 
 interface UserAnalyticsData {
   roleCounts: { students: number; faculty: number };
@@ -10,6 +16,30 @@ interface UserAnalyticsData {
   isLoading: boolean;
   errorMessage: string | null;
 }
+
+const db = getFirestore();
+
+const chunkArray = <T,>(items: T[], chunkSize: number): T[][] => {
+  if (items.length === 0) return [];
+  const chunks: T[][] = [];
+
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize));
+  }
+
+  return chunks;
+};
+
+const dedupeByUid = (users: UserDocument[]): UserDocument[] => {
+  const byUid = new Map<string, UserDocument>();
+  users.forEach(user => {
+    if (user.uid) {
+      byUid.set(user.uid, user);
+    }
+  });
+
+  return Array.from(byUid.values());
+};
 
 /**
  * Custom hook to fetch and aggregate user data from Firestore.
@@ -24,13 +54,93 @@ export const useUserAnalytics = (acadYear?: string, filterByAcadYear: boolean = 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchAndAggregateUsers = async () => {
       try {
-        setIsLoading(true);
-        setErrorMessage(null);
+        if (isActive) {
+          setIsLoading(true);
+          setErrorMessage(null);
+        }
 
-        // Get users filtered by role and academic year
-        const { students, faculty } = await getUsersByRole(undefined, acadYear);
+        let students: UserDocument[] = [];
+        let faculty: UserDocument[] = [];
+
+        if (!filterByAcadYear || !acadYear) {
+          // Fast path: one users query and split client-side.
+          const usersSnapshot = await getDocs(
+            query(collection(db, 'users'), where('role', 'in', ['student', 'faculty'])),
+          );
+
+          const allUsers = usersSnapshot.docs.map(doc => doc.data() as UserDocument);
+          students = allUsers.filter((u: UserDocument) => u.role === 'student');
+          faculty = allUsers.filter((u: UserDocument) => u.role === 'faculty');
+        } else {
+          // Academic-year path: resolve valid classes first, then query only matching users.
+          const classesSnapshot = await getDocs(
+            query(collection(db, 'classes'), where('acadYear', '==', acadYear)),
+          );
+
+          const classCodes = Array.from(
+            new Set(
+              classesSnapshot.docs
+                .map(doc => {
+                  const data = doc.data() as { classCode?: string };
+                  return data.classCode;
+                })
+                .filter((code): code is string => !!code),
+            ),
+          );
+
+          const classIds = Array.from(
+            new Set(
+              classesSnapshot.docs
+                .map(doc => {
+                  const data = doc.data() as { classId?: string };
+                  return data.classId || doc.id;
+                })
+                .filter((id): id is string => !!id),
+            ),
+          );
+
+          const studentChunks = chunkArray(classCodes, 10);
+          const facultyChunks = chunkArray(classIds, 10);
+
+          const studentSnapshots = await Promise.all(
+            studentChunks.map(chunk =>
+              getDocs(
+                query(
+                  collection(db, 'users'),
+                  where('role', '==', 'student'),
+                  where('studentData.classCode', 'in', chunk),
+                ),
+              ),
+            ),
+          );
+
+          const facultySnapshots = await Promise.all(
+            facultyChunks.map(chunk =>
+              getDocs(
+                query(
+                  collection(db, 'users'),
+                  where('role', '==', 'faculty'),
+                  where('facultyData.assignedClassIds', 'array-contains-any', chunk),
+                ),
+              ),
+            ),
+          );
+
+          students = dedupeByUid(
+            studentSnapshots.flatMap(snapshot =>
+              snapshot.docs.map(doc => doc.data() as UserDocument),
+            ),
+          );
+          faculty = dedupeByUid(
+            facultySnapshots.flatMap(snapshot =>
+              snapshot.docs.map(doc => doc.data() as UserDocument),
+            ),
+          );
+        }
 
         const studentCount = students.length;
         const facultyCount = faculty.length;
@@ -48,7 +158,7 @@ export const useUserAnalytics = (acadYear?: string, filterByAcadYear: boolean = 
 
         const sortedMonths = Object.keys(monthMap).sort();
         const monthlyData = sortedMonths.map(month => ({ yearMonth: month, count: monthMap[month] }));
-        console.log("Month Data: " + JSON.stringify(monthlyData))
+
         // Reading levels (students only)
         let beginnerCount = 0, intermediateCount = 0, advancedCount = 0;
         students.forEach((student: UserDocument) => {
@@ -58,20 +168,29 @@ export const useUserAnalytics = (acadYear?: string, filterByAcadYear: boolean = 
           else if (level === 'advanced') advancedCount++;
         });
 
-        setRoleCounts({ students: studentCount, faculty: facultyCount });
-        setMonthlyRegistrations(monthlyData);
-        setReadingLevels({ beginner: beginnerCount, intermediate: intermediateCount, advanced: advancedCount });
-        setTotalUsers(studentCount + facultyCount);
+        if (isActive) {
+          setRoleCounts({ students: studentCount, faculty: facultyCount });
+          setMonthlyRegistrations(monthlyData);
+          setReadingLevels({ beginner: beginnerCount, intermediate: intermediateCount, advanced: advancedCount });
+          setTotalUsers(studentCount + facultyCount);
+        }
       } catch (error: any) {
-        setErrorMessage(error.message);
+        if (isActive) {
+          setErrorMessage(error.message);
+        }
         console.error('[useUserAnalytics] Failed to fetch users:', error);
       } finally {
-        setIsLoading(false);
+        if (isActive) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchAndAggregateUsers();
-  }, [acadYear]);
+    return () => {
+      isActive = false;
+    };
+  }, [acadYear, filterByAcadYear]);
 
   return {
     roleCounts,

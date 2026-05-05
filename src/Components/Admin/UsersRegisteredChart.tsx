@@ -10,36 +10,38 @@ const screenWidth = Dimensions.get('window').width;
 interface UsersRegisteredProps {
   acadYear?: string;
 }
+
+const COLORS = {
+  primary: '#4ECDC4',
+  cardBackground: '#FFFFFF',
+  textPrimary: '#2D3436',
+  textSecondary: '#636E72',
+  error: '#FF7675',
+};
+
 const chartConfig = {
   backgroundColor: '#FFFFFF',
   backgroundGradientFrom: '#FFFFFF',
-  backgroundGradientTo: '#FFFFFF',
+  backgroundGradientTo: '#F8F9FA',
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(61, 113, 217, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(30, 30, 30, ${opacity})`,
+  color: (opacity = 1) => `rgba(78, 205, 196, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(45, 52, 54, ${opacity})`,
   style: { borderRadius: 16 },
-  propsForDots: { r: '4', strokeWidth: '2', stroke: '#3d71d9' },
+  propsForDots: { r: '4', strokeWidth: '2', stroke: '#4ECDC4' },
+  propsForBackgroundLines: {
+    strokeDasharray: '', // solid background lines
+    stroke: '#F1F2F6',
+  },
 };
 
-const COLORS = {
-  cardBackground: '#FFFFFF',
-  textPrimary: '#1E1E1E',
-  textSecondary: '#999999',
-  error: '#FE5A59',
-};
-
-/**
- * Displays a line chart showing the number of new user registrations per month.
- * Data is derived from the monthlyRegistrations field of useUserAnalytics.
- */
 const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
-  const { monthlyRegistrations, isLoading, errorMessage } = useUserAnalytics(acadYear, false);
+  const { monthlyRegistrations, isLoading, errorMessage } = useUserAnalytics(acadYear, true);
 
   if (isLoading) {
     return (
       <View style={styles.card}>
         <Text style={styles.title}>Users Registered Over Time</Text>
-        <ActivityIndicator size="small" color="#3d71d9" />
+        <ActivityIndicator size="small" color={COLORS.primary} />
       </View>
     );
   }
@@ -53,17 +55,18 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
     );
   }
 
-  // If no data, show a placeholder
   if (monthlyRegistrations.length === 0) {
     return (
       <View style={styles.card}>
-        <Text style={styles.title}>Users Registered Over Time</Text>
-        <Text style={styles.subtitle}>No registration data available</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.accentBar} />
+          <Text style={styles.title}>Users Registered Over Time</Text>
+        </View>
+        <Text style={styles.noDataText}>No registration data available</Text>
       </View>
     );
   }
 
-  // Extract month labels (e.g., "Jan") and counts
   const labels = monthlyRegistrations.map(item => {
     const [year, month] = item.yearMonth.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1);
@@ -75,8 +78,8 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
     datasets: [
       {
         data: monthlyRegistrations.map(item => item.count),
-        color: (opacity = 1) => `rgba(61, 113, 217, ${opacity})`,
-        strokeWidth: sw(2),
+        color: (opacity = 1) => `rgba(78, 205, 196, ${opacity})`,
+        strokeWidth: sw(3),
       },
     ],
     legend: ['New Users'],
@@ -84,17 +87,29 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Users Registered Over Time</Text>
-      <Text style={styles.subtitle}>Monthly sign-ups</Text>
-      <LineChart
-        data={data}
-        width={screenWidth - 64}
-        height={200}
-        chartConfig={chartConfig}
-        bezier
-        style={{ marginVertical: 8, borderRadius: 16 }}
-        formatYLabel={(y) => Math.round(Number(y)).toString()}
-      />
+      <View style={styles.headerRow}>
+        <View style={styles.accentBar} />
+        <View>
+          <Text style={styles.title}>Users Registered Over Time</Text>
+          <Text style={styles.subtitle}>Monthly sign-ups</Text>
+          <Text style={styles.description}>Tracks the number of new user registrations per month to monitor platform adoption.</Text>
+        </View>
+      </View>
+
+      <View style={styles.chartWrapper}>
+        <LineChart
+          data={data}
+          width={screenWidth - sw(48)}
+          height={sh(200)}
+          chartConfig={chartConfig}
+          bezier
+          style={{ marginVertical: sh(8), borderRadius: sw(16) }}
+          formatYLabel={(y) => Math.round(Number(y)).toString()}
+          withInnerLines={true}
+          withOuterLines={false}
+          withVerticalLines={false}
+        />
+      </View>
     </View>
   );
 };
@@ -102,30 +117,61 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: sw(14),
+    borderRadius: sw(20),
     padding: sw(20),
-    marginBottom: sh(16),
-    elevation: 3,
+    marginBottom: sh(20),
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.08,
-    shadowRadius: sw(6),
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.05,
+    shadowRadius: sw(10),
+    elevation: 4,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: sh(16),
+  },
+  accentBar: {
+    width: sw(4),
+    height: sh(24),
+    backgroundColor: COLORS.primary,
+    borderRadius: sw(2),
+    marginRight: sw(10),
   },
   title: {
-    fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(18),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textPrimary,
-    marginBottom: sh(4),
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
-    marginBottom: sh(16),
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
+  },
+  chartWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: -sw(16),
+  },
+  noDataText: {
+    fontSize: sf(14),
+    fontFamily: 'Comfortaa-Regular',
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: sh(20),
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
+    marginTop: sh(10),
   },
 });
 

@@ -1,43 +1,68 @@
-// screens/SignUp/Choose_User_Role.tsx
-// Changes vs. original:
-//   • Accepts optional googleEmail + googleIdToken route params.
-//   • When those params exist the screen forwards them to SignUpOne so they
-//     eventually reach SignUpTwo, where the email field is pre-filled.
-//   • For non-Google sign-up nothing changes — handleRoleSelection() is still
-//     used when the screen receives no google params.
-
 import React from 'react';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import {
+  View, Text, Image, TouchableOpacity, StyleSheet,
+} from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../Controller/NavigationController';
+import Svg, { Text as SvgText } from 'react-native-svg';
 
 import chooseRole from '../../UI_Designs/ChooseRoleStyle';
 import buttons from '../../UI_Designs/ButtonStyles';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-import Svg, { Text as SvgText } from 'react-native-svg';
 
 type ChooseRoleRouteProp = RouteProp<RootStackParamList, 'ChooseRole'>;
+
+const C = {
+  green:      '#2ca96a',
+  greenDark:  '#008443',
+  greenPale:  '#E8F5E9',
+  white:      '#ffffff',
+  ink:        '#1B2B22',
+};
+
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+    </View>
+  );
+}
+
+const H = StyleSheet.create({
+  backBtn: {
+    width: 45, height: 45, borderRadius: 10,
+    backgroundColor: C.greenDark,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  backArrowText: {
+    fontSize: 40, fontFamily: 'Nunito-Bold',
+    color: C.white, lineHeight: 28, marginLeft: -2, paddingBottom: 2,
+  },
+  menuBtn: {
+    width: 48, height: 48, borderRadius: 14,
+    backgroundColor: C.white,
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
+  },
+});
 
 export default function ChooseRole() {
   const { handleRoleSelection, handleBackStep, handleNextStep } = useNavigationHelper();
 
-  // ── Read optional Google params passed from LoginScreen ────────────────────
-  const route = useRoute<ChooseRoleRouteProp>();
+  const route       = useRoute<ChooseRoleRouteProp>();
   const googleEmail = route.params?.googleEmail;
-
   const isGoogleSignUp = Boolean(googleEmail);
 
-  // ── Role selection ─────────────────────────────────────────────────────────
-  /**
-   * For Google sign-up: navigate manually so we can attach the Google params.
-   * For email sign-up:  use the existing handleRoleSelection() — no changes.
-   */
   const onRoleSelected = (role: 'student' | 'faculty') => {
     if (isGoogleSignUp) {
-      handleNextStep('SignUpOne', { role, googleEmail });  // ← consistent with the rest
+      handleNextStep('SignUpOne', { role, googleEmail });
     } else {
       handleRoleSelection(role);
     }
@@ -48,86 +73,33 @@ export default function ChooseRole() {
       <View>
         <BubbleBackground />
 
-        {/* Header */}
-        <View>
-          <View style={upperNav.header}>
-            <TouchableOpacity onPress={() => handleBackStep()}>
-              <Image
-                source={require('../../../assets/icons/BackButton-icon.png')}
-                style={upperNav.backButtonIcon}
-              />
-            </TouchableOpacity>
-            <Image
-              style={upperNav.ciscLogo}
-              source={require('../../../assets/images/cisckids.png')}
-            />
-          </View>
-        </View>
+        {/* ── Header ─────────────────────────────────────────────────── */}
+        <View style={upperNav.header}>
+          <TouchableOpacity style={H.backBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
+            <Text style={H.backArrowText}>‹</Text>
+          </TouchableOpacity>
 
-        {/* Title — clarify when using Google */}
-        {/* <Text style={chooseRole.title}>
-          {isGoogleSignUp
-            ? `Signing up with ${googleEmail}`
-            : 'Welcome! Choose your role.'}
-        </Text> */}
-        <Svg height={60} width={400} style={{ marginTop: 50 }}>
-          <SvgText
-            x={200}                 // center X
-            y={45}                  // baseline Y
-            fontSize={40}
-            fontFamily="DynaPuff-Bold"
-            textAnchor="middle"     // center align
-            fill="none"          // inside color
-            stroke="#D7E9FF"        // outline color
-            strokeWidth={8}         // outline thickness
-            strokeLinejoin='round'
-          >
-            {isGoogleSignUp
-              ? `Signing up with`
-              : 'Welcome! '}
-          </SvgText>
-          <SvgText
-            x={200}
-            y={45}
-            fontSize={40}
-            fontFamily="DynaPuff-Bold"
-            textAnchor="middle"
-            fill="#3B7FC9"
-          >
-            {isGoogleSignUp
-              ? `Signing up with`
-              : 'Welcome! '}
-          </SvgText>
-        </Svg>
-        <Svg height={60} width={400}>
-          <SvgText
-            x={200}                 // center X
-            y={45}                  // baseline Y
-            fontSize={40}
-            fontFamily="DynaPuff-Bold"
-            textAnchor="middle"     // center align
-            fill="none"          // inside color
-            stroke="#D7E9FF"        // outline color
-            strokeWidth={8}         // outline thickness
-            strokeLinejoin='round'
-          >
-            {isGoogleSignUp
-              ? `${googleEmail}`
-              : 'Who are you?.'}
-          </SvgText>
-          <SvgText
-            x={200}
-            y={45}
-            fontSize={40}
-            fontFamily="DynaPuff-Bold"
-            textAnchor="middle"
-            fill="#3B7FC9"
-          >
-            {isGoogleSignUp
-              ? `${googleEmail}`
-              : 'Who are you?.'}
-          </SvgText>
-        </Svg>
+          <Svg height={60} width={220}>
+            <SvgText
+              x={110} y={35} fontSize={23}
+              fontFamily="Nunito-Black" textAnchor="middle"
+              fill="none" stroke={C.greenPale}
+              strokeWidth={8} strokeLinejoin="round"
+            >
+              Choose Role
+            </SvgText>
+            <SvgText
+              x={110} y={35} fontSize={23}
+              fontFamily="Nunito-Black" textAnchor="middle"
+              fill={C.greenDark}
+            >
+              Choose Role
+            </SvgText>
+          </Svg>
+
+          {/* Spacer to balance header — no menu needed on this screen */}
+          <View style={{ width: 48 }} />
+        </View>
 
         {/* Illustration */}
         <View style={chooseRole.imageContainer}>
@@ -143,14 +115,14 @@ export default function ChooseRole() {
             style={buttons.studentButton}
             onPress={() => onRoleSelected('student')}
           >
-            <Text style={buttons.nextPageText}>I am a Student</Text>
+            <Text style={[buttons.nextPageText, { color: C.white }]}>I am a Student</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={buttons.teacherButton}
             onPress={() => onRoleSelected('faculty')}
           >
-            <Text style={buttons.nextPageText}>I am a Teacher</Text>
+            <Text style={[buttons.nextPageText, { color: C.green }]}>I am a Teacher</Text>
           </TouchableOpacity>
         </View>
       </View>

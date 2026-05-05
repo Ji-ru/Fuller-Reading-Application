@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,46 +7,47 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
-  ImageSourcePropType
+  Animated,
+  TextInput,
 } from 'react-native';
-import { TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
 import {
   getUserProfile,
   getCurrentUser,
   getClassByCode,
+  updateStudentBasicInfo,
 } from '../../Controller/AuthenticationController';
-import { updateStudentBasicInfo } from '../../Controller/AuthenticationController';
 import { getAuth } from '@react-native-firebase/auth';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
-import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
-import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Status/Student_Accuracy_Chart';
-import StudentMiscueAnalytics from '../../Components/Faculty/StudentView_Status/Student_MiscueChart';
-import StudentTopMiscuePassageAndWords from '../../Components/Faculty/StudentView_Status/Student_TopPassage&TopWords';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
-import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
 import { sw, sh, sf } from '../../Utils/responsive';
+import Svg, { Text as SvgText } from 'react-native-svg';
 
-/**
- * ==========================================================================
- * STUDENT PROFILE COMPONENT
- * ==========================================================================
- * Comprehensive student profile with:
- * - Basic and academic information
- * - Reading performance statistics
- * - Interactive progress visualizations
- * - Trend analysis
- * ==========================================================================
- */
+// ─── Palette (aligned with Reading Selection blue/cyan theme) ─────────────────
+const C = {
+  bg: '#F1FBF4',
+  primary: '#008443',
+  primaryDark: '#006a35',
+  primaryDeep: '#005028',
+  primaryLight: '#c0e8f2',
+  tabBg: '#c0e8f2',
+  accent: '#2ca96a',
+  card: '#FFFFFF',
+  ink: '#1F2937',
+  inkLight: '#6B7280',
+  slate: '#9CA3AF',
+  border: '#E5E7EB',
+  inputBg: '#F3F8FF',
+  coral: '#e74c3c',
+  green: '#2CA96A',
+  orange: '#FF7043',
+};
 
-// ========================================================================
-// TYPE DEFINITIONS
-// ========================================================================
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface StudentStats {
   totalAttempts: number;
   averageAccuracy: number;
@@ -62,93 +63,126 @@ interface ProgressData {
   passageTitle: string;
 }
 
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+    </View>
+  );
+}
+
+const headerStyles = StyleSheet.create({
+  menuBtn: {
+    width: 48, height: 48,
+    borderRadius: 14,
+    backgroundColor: C.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
+  },
+  backBtn: {
+    width: 45, height: 45, borderRadius: 10,
+    backgroundColor: '#008443',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  backArrowText: {
+    fontSize: 40, fontFamily: 'Nunito-Bold',
+    color: C.card, lineHeight: 28, marginLeft: -2, paddingBottom: 2
+  },
+});
+
+// ─── FadeSlideIn ──────────────────────────────────────────────────────────────
+function FadeSlideIn({
+  children,
+  delay = 0,
+  direction = 'up',
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  direction?: 'up' | 'down' | 'left' | 'right';
+}) {
+  const translateVal = useRef(new Animated.Value(
+    direction === 'up' ? 30 : direction === 'down' ? -30 : direction === 'left' ? 30 : -30
+  )).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.parallel([
+        Animated.spring(translateVal, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 8,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, []);
+
+  const isHorizontal = direction === 'left' || direction === 'right';
+  const transform = isHorizontal
+    ? [{ translateX: translateVal }]
+    : [{ translateY: translateVal }];
+
+  return (
+    <Animated.View style={{ transform, opacity }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Profile() {
   const auth = getAuth();
-  // ========================================================================
-  // STATE MANAGEMENT
-  // ========================================================================
 
-  /** Controls visibility of dropdown menu */
+  // ── State ───────────────────────────────────────────────────────────────────
   const [menuVisible, setMenuVisible] = useState(false);
-
-  /** Controls visibility of logout confirmation modal */
   const [logoutVisible, setLogoutVisible] = useState(false);
-
-  /** Stores current user's profile data from Firestore */
   const [profileData, setProfileData] = useState<UserDocument | null>(null);
-
-  /** Stores class information if student is enrolled */
   const [classData, setClassData] = useState<ClassDocument | null>(null);
-
-  /** Stores comprehensive reading statistics */
-  const [readingStats, setReadingStats] = useState<StudentStats | null>(null);
-
-
-  /** Stores progress data points for charts */
-  const [progressData, setProgressData] = useState<ProgressData[]>([]);
-
-  /** Loading state for async data fetching */
   const [loading, setLoading] = useState(true);
-
-  /** Error message for display if data fetching fails */
   const [error, setError] = useState<string | null>(null);
 
-  /** Active Tab State for segmented control layout (profile | performance | activity) */
-  const [activeTab, setActiveTab] = useState<'profile' | 'performance' | 'activity'>('profile');
-
-  // Edit states for Basic Information
+  // Edit states
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
   const [firstName, setFirstName] = useState('');
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
   const [sex, setSex] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
 
-  /** Profile image set */
-  // ========================================================================
-  // HOOKS
-  // ========================================================================
+  // ── Custom Alert State ──────────────────────────────────────────────────────
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: '', message: '' });
 
+  const showAlert = (title: string, message: string) => {
+    setAlertData({ title, message });
+    setAlertVisible(true);
+  };
+
+  // ── Hooks ───────────────────────────────────────────────────────────────────
   const { handleLogout, handleBackStep } = useNavigationHelper();
 
-  // ========================================================================
-  // LIFECYCLE
-  // ========================================================================
+  useEffect(() => { fetchProfileData(); }, []);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
-
-  // ========================================================================
-  // DATA FETCHING
-  // ========================================================================
-
-  /**
-   * ==========================================================================
-   * FETCH PROFILE DATA
-   * ==========================================================================
-   * Orchestrates fetching of all profile-related data:
-   * 1. User profile from Authentication
-   * 2. Class information if student is enrolled
-   * 3. Reading statistics and analytics
-   * 4. Progress data for visualizations
-   *
-   * @throws Sets error state if any fetch operation fails
-   * ==========================================================================
-   */
+  // ── Data fetching ───────────────────────────────────────────────────────────
   const fetchProfileData = async () => {
     try {
       setLoading(true);
       const currentUser = getCurrentUser();
+      if (!currentUser) { setError('No user logged in'); return; }
 
-      if (!currentUser) {
-        setError('No user logged in');
-        return;
-      }
-
-      // Fetch user profile
       const profile = await getUserProfile(currentUser.uid);
       setProfileData(profile);
 
@@ -160,39 +194,20 @@ export default function Profile() {
         setDateOfBirth(profile.studentData?.dateOfBirth || '');
       }
 
-      // Fetch class data if student has a class
       if (profile?.studentData?.classCode) {
         const classInfo = await getClassByCode(profile.studentData.classCode);
-        console.log(profile.studentData.classCode);
         setClassData(classInfo);
       }
     } catch (err: any) {
-      console.error('Error fetching profile data:', err);
       setError(err.message || 'Failed to load profile data');
     } finally {
       setLoading(false);
     }
   };
 
-  // ========================================================================
-  // UTILITY FUNCTIONS
-  // ========================================================================
+  // ── Utilities ───────────────────────────────────────────────────────────────
+  const formatDateOfBirth = (dateString?: string) => dateString || 'Not set';
 
-  /**
-   * Formats date of birth string to readable format
-   * @param dateString - Date string to format
-   * @returns Formatted date or 'Not set'
-   */
-  const formatDateOfBirth = (dateString?: string) => {
-    if (!dateString) return 'Not set';
-    return dateString; // Already formatted from backend
-  };
-
-  /**
-   * Gets readable reading level label
-   * @param level - Reading level code
-   * @returns Formatted reading level
-   */
   const getReadingLevelLabel = (level?: string) => {
     const levels: Record<string, string> = {
       beginner: 'Beginner',
@@ -203,34 +218,17 @@ export default function Profile() {
     return levels[level || 'beginner'] || 'Beginner';
   };
 
-  // ========================================================================
-  // EVENT HANDLERS
-  // ========================================================================
-
-  const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
-  };
-
-  const handleLogoutPress = () => {
-    setMenuVisible(false);
-    setLogoutVisible(true);
-  };
-
-  const confirmLogout = async () => {
-    setLogoutVisible(false);
-    await handleLogout();
-  };
-
-  const cancelLogout = () => {
-    setLogoutVisible(false);
-  };
+  // ── Event handlers ──────────────────────────────────────────────────────────
+  const toggleMenu = () => setMenuVisible(v => !v);
+  const handleLogoutPress = () => { setMenuVisible(false); setLogoutVisible(true); };
+  const confirmLogout = async () => { setLogoutVisible(false); await handleLogout(); };
+  const cancelLogout = () => setLogoutVisible(false);
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !sex.trim()) {
-      Alert.alert('Validation Error', 'First Name, Last Name, and Sex are required.');
+      showAlert('Validation Error', 'First Name, Last Name, and Sex are required.');
       return;
     }
-
     setIsSaving(true);
     try {
       const user = getCurrentUser();
@@ -243,11 +241,11 @@ export default function Profile() {
           dateOfBirth: dateOfBirth.trim(),
         });
         setIsEditing(false);
-        Alert.alert('Success', 'Profile updated successfully!');
+        showAlert('Success', 'Profile updated successfully!');
         fetchProfileData();
       }
     } catch (err: any) {
-      Alert.alert('Update Failed', err.message || 'An error occurred while updating.');
+      showAlert('Update Failed', err.message || 'An error occurred while updating.');
     } finally {
       setIsSaving(false);
     }
@@ -264,454 +262,366 @@ export default function Profile() {
     }
   };
 
-  // ========================================================================
-  // LOADING STATE
-  // ========================================================================
-
+  // ── Loading / error states ──────────────────────────────────────────────────
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <SafeAreaView style={S.loadingContainer}>
+        <ActivityIndicator size="large" color={C.primary} />
+        <Text style={S.loadingText}>Loading profile...</Text>
       </SafeAreaView>
     );
   }
 
-  // ========================================================================
-  // ERROR STATE
-  // ========================================================================
-
   if (error) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchProfileData}>
-          <Text style={styles.retryButtonText}>Retry</Text>
+      <SafeAreaView style={S.loadingContainer}>
+        <Text style={S.errorText}>{error}</Text>
+        <TouchableOpacity style={S.retryButton} onPress={fetchProfileData}>
+          <Text style={S.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  // ========================================================================
-  // COMPUTED VALUES
-  // ========================================================================
-
-  const topMiscuedPassage = readingStats?.passagePerformance?.[0] || null;
-  const hasProgressData = progressData.length > 0;
-
-  // ========================================================================
-  // MAIN RENDER
-  // ========================================================================
-  console.log("The current user: " + getCurrentUser);
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.innerContainer}>
+    <SafeAreaView style={S.container}>
+      <BubbleBackground />
 
-          {/* BUBBLE DECORATIONS */}
-          <BubbleBackground />
+      {/* HEADER */}
+      <View style={S.headerWrapper}>
+        <View style={upperNav.header}>
+          <TouchableOpacity style={headerStyles.backBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
+            <Text style={headerStyles.backArrowText}>‹</Text>
+          </TouchableOpacity>
 
+          <Svg height={60} width={200}>
+            <SvgText
+              x={100} y={35} fontSize={23}
+              fontFamily="Nunito-Black" textAnchor="middle"
+              fill="none" stroke={C.primaryLight}
+              strokeWidth={8} strokeLinejoin="round"
+            >
+              My Profile
+            </SvgText>
+            <SvgText
+              x={100} y={35} fontSize={23}
+              fontFamily="Nunito-Black" textAnchor="middle"
+              fill={C.primary}
+            >
+              My Profile
+            </SvgText>
+          </Svg>
 
-          {/* HEADER */}
-          <View style={styles.header}>
-            <View style={upperNav.header}>
-              <TouchableOpacity
-                style={upperNav.touchable}
-                onPress={() => handleBackStep()}
-              >
-                <Image
-                  style={upperNav.backButtonIcon}
-                  source={require('../../../assets/icons/BackButton-icon.png')}
-                />
-              </TouchableOpacity>
+          <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
+            <MenuBars />
+          </TouchableOpacity>
+        </View>
 
-              <Image
-                style={upperNav.ciscLogo}
-                source={require('../../../assets/images/cisckids.png')}
-              />
-              <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-                <Image
-                  style={upperNav.menuIcon}
-                  source={require('../../../assets/icons/Menu-icon.png')}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* DROPDOWN MENU */}
-            {menuVisible && (
-              <View style={upperNav.dropdownMenu}>
-                <TouchableOpacity
-                  onPress={handleLogoutPress}
-                  style={styles.logoutButton}
-                >
-                  <Image
-                    source={require('../../../assets/icons/Logout-icon.png')}
-                    style={upperNav.logoutIcon}
-                  />
-                  <Text style={upperNav.logoutText}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* OVERLAY TO CLOSE MENU */}
-            {menuVisible && (
-              <TouchableOpacity
-                style={upperNav.closeMenu}
-                onPress={() => setMenuVisible(false)}
-                activeOpacity={1}
-              />
-            )}
+        {menuVisible && (
+          <View style={upperNav.dropdownMenu}>
+            <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
+              <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
+              <Text style={upperNav.logoutText}>Logout</Text>
+            </TouchableOpacity>
           </View>
+        )}
+        {menuVisible && (
+          <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
+        )}
+      </View>
 
-          {/* PROFILE HEADER */}
-          <View style={styles.profileHeader}>
-            <View style={styles.profileImageContainer}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={S.scrollContent}
+      >
+        {/* ── Avatar Card ──────────────────────────────────────────────── */}
+        <FadeSlideIn delay={60}>
+          <View style={S.avatarCard}>
+            <View style={S.avatarRing}>
               <Image
                 source={
                   profileData?.profileImageUrl
-                    ? { uri: profileData.profileImageUrl } : profileData?.sex === 'male' ?
-                      require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png')
+                    ? { uri: profileData.profileImageUrl }
+                    : profileData?.sex === 'male'
+                      ? require('../../../assets/images/Male-profile.png')
+                      : require('../../../assets/images/Female-profile.png')
                 }
-                style={styles.profileImage}
+                style={S.avatarImage}
               />
             </View>
-            <Text style={styles.studentName}>
+            <Text style={S.studentName}>
               {profileData?.firstName} {profileData?.lastName}
             </Text>
-            <Text style={styles.studentRole}>Student</Text>
+            <View style={S.roleBadge}>
+              <Text style={S.roleBadgeText}>Student</Text>
+            </View>
           </View>
+        </FadeSlideIn>
 
-          {/* NEW: TAB NAVIGATION CONTAINER */}
-          {/* Segmented controls allowing users to switch between Information, Performance, and Activity features */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity 
-              style={[styles.tabButton, activeTab === 'profile' && styles.activeTab]}
-              onPress={() => setActiveTab('profile')}
-            >
-              <Text style={[styles.tabText, activeTab === 'profile' && styles.activeTabText]}>Profile</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.tabButton, activeTab === 'performance' && styles.activeTab]}
-              onPress={() => setActiveTab('performance')}
-            >
-              <Text style={[styles.tabText, activeTab === 'performance' && styles.activeTabText]}>Performance</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.tabButton, activeTab === 'activity' && styles.activeTab]}
-              onPress={() => setActiveTab('activity')}
-            >
-              <Text style={[styles.tabText, activeTab === 'activity' && styles.activeTabText]}>Activity</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* DYNAMIC CONTENT RENDER: Based on activeTab state */}
-          {activeTab === 'profile' && (
-            <>
-              {/* BASIC INFORMATION */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Basic Information</Text>
-                  {!isEditing ? (
-                    <TouchableOpacity onPress={() => setIsEditing(true)}>
-                      <Text style={styles.editButtonTextPrimary}>Edit</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-
-                {isEditing ? (
-                  <View style={styles.formContainer}>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>First Name</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={firstName}
-                        onChangeText={setFirstName}
-                      />
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Middle Name <Text style={styles.optionalText}>(Optional)</Text></Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={middleName}
-                        onChangeText={setMiddleName}
-                      />
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Last Name</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={lastName}
-                        onChangeText={setLastName}
-                      />
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Birthdate (YYYY-MM-DD)</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={dateOfBirth}
-                        onChangeText={setDateOfBirth}
-                      />
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Sex (male/female)</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={sex}
-                        onChangeText={setSex}
-                        autoCapitalize="none"
-                      />
-                    </View>
-                    <View style={styles.actionRow}>
-                      <TouchableOpacity 
-                        style={styles.cancelButton} 
-                        onPress={handleCancel}
-                        disabled={isSaving}
-                      >
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={styles.saveButton} 
-                        onPress={handleSave}
-                        disabled={isSaving}
-                      >
-                        {isSaving ? (
-                          <ActivityIndicator color="#ffffff" size="small" />
-                        ) : (
-                          <Text style={styles.saveButtonText}>Save</Text>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ) : (
-                  <View style={styles.infoGrid}>
-                    <InfoItem
-                      label="First Name"
-                      value={profileData?.firstName || 'N/A'}
-                    />
-                    <InfoItem
-                      label="Middle Name"
-                      value={profileData?.middleName || 'N/A'}
-                    />
-                    <InfoItem
-                      label="Last Name"
-                      value={profileData?.lastName || 'N/A'}
-                    />
-                    <InfoItem
-                      label="Birthdate"
-                      value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)}
-                    />
-                    <InfoItem
-                      label="Sex"
-                      value={
-                        profileData?.sex === 'male'
-                          ? 'Male'
-                          : profileData?.sex === 'female'
-                            ? 'Female'
-                            : 'N/A'
-                      }
-                    />
-                  </View>
-                )}
+        {/* ── Basic Information ─────────────────────────────────────────── */}
+        <FadeSlideIn delay={180}>
+          <View style={S.section}>
+            <View style={S.sectionHeaderRow}>
+              <View style={S.sectionTitleRow}>
+                <Text style={S.sectionTitle}>Basic Information</Text>
               </View>
+              {!isEditing && (
+                <TouchableOpacity style={S.editPill} onPress={() => setIsEditing(true)}>
+                  <Text style={S.editPillText}>Edit</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
-              {/* ACADEMIC INFORMATION */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Academic Information</Text>
-                <View style={styles.infoGrid}>
-                  <InfoItem
-                    label="Grade Level"
-                    value={`Grade ${profileData?.studentData?.gradeLevel || 'N/A'}`}
-                  />
-                  <InfoItem
-                    label="Class"
-                    value={classData?.className || 'Not assigned'}
-                  />
-                  <InfoItem
-                    label="Reading Level"
-                    value={getReadingLevelLabel(
-                      profileData?.studentData?.reading_Level,
-                    )}
-                  />
+            {isEditing ? (
+              <View style={S.formContainer}>
+                <FormField label="First Name" value={firstName} onChange={setFirstName} />
+                <FormField label="Middle Name" value={middleName} onChange={setMiddleName} optional />
+                <FormField label="Last Name" value={lastName} onChange={setLastName} />
+                <FormField label="Birthdate (YYYY-MM-DD)" value={dateOfBirth} onChange={setDateOfBirth} />
+                <FormField label="Sex (male / female)" value={sex} onChange={setSex} autoCapitalize="none" />
+
+                <View style={S.actionRow}>
+                  <TouchableOpacity style={S.cancelButton} onPress={handleCancel} disabled={isSaving}>
+                    <Text style={S.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={S.saveButton} onPress={handleSave} disabled={isSaving}>
+                    {isSaving
+                      ? <ActivityIndicator color="#ffffff" size="small" />
+                      : <Text style={S.saveButtonText}>Save</Text>
+                    }
+                  </TouchableOpacity>
                 </View>
               </View>
-            </>
-          )}
-
-          {activeTab === 'performance' && (
-            <>
-              <View style={styles.section}>
-                {/* ALPHABET AND ACCURACY */}
-                <StudentAlphabetMastery studentId={auth.currentUser?.uid || ''} />
+            ) : (
+              <View style={S.infoGrid}>
+                <InfoItem label="First Name" value={profileData?.firstName || 'N/A'} delay={220} />
+                <InfoItem label="Middle Name" value={profileData?.middleName || 'N/A'} delay={260} />
+                <InfoItem label="Last Name" value={profileData?.lastName || 'N/A'} delay={300} />
+                <InfoItem
+                  label="Birthdate"
+                  value={formatDateOfBirth(profileData?.studentData?.dateOfBirth)}
+                  delay={340}
+                />
+                <InfoItem
+                  label="Sex"
+                  value={
+                    profileData?.sex === 'male' ? 'Male' :
+                      profileData?.sex === 'female' ? 'Female' : 'N/A'
+                  }
+                  delay={380}
+                />
               </View>
+            )}
+          </View>
+        </FadeSlideIn>
 
-              <View style={styles.section}>
-                {/* WORD AND ACCURACY */}
-                <StudentWordMastery studentId={auth.currentUser?.uid || ''} />
-              </View>
+        {/* ── Academic Information ──────────────────────────────────────── */}
+        <FadeSlideIn delay={300}>
+          <View style={S.section}>
+            <View style={S.sectionTitleRow}>
+              <Text style={S.sectionTitle}>Academic Information</Text>
+            </View>
+            <View style={S.infoGrid}>
+              <InfoItem
+                label="Grade Level"
+                value={`Grade ${profileData?.studentData?.gradeLevel || 'N/A'}`}
+                delay={360}
+              />
+              <InfoItem
+                label="Class"
+                value={classData?.className || 'Not assigned'}
+                delay={400}
+              />
+              <InfoItem
+                label="Reading Level"
+                value={getReadingLevelLabel(profileData?.studentData?.reading_Level)}
+                delay={440}
+              />
+            </View>
+          </View>
+        </FadeSlideIn>
 
-              {/* READING STATISTICS */}
-              <View style={styles.section}>
-                {/* ACCURACY TRENDS */}
-                <StudentAccuracyTrendsChart studentId={auth.currentUser?.uid || ''} />
-              </View>
-
-              <View style={styles.section}>
-                {/* MISCUE TYPE CHART */}
-                <StudentMiscueAnalytics studentId={auth.currentUser?.uid || ''} />
-                {/* TOP MISCUED PASSAGE AND MOST COMMON MISCUE WORDS  */}
-                <StudentTopMiscuePassageAndWords studentId={auth.currentUser?.uid || ''} />
-              </View>
-            </>
-          )}
-
-          {activeTab === 'activity' && (
-            <>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Activity Tracking</Text>
-                {/* ACTIVITY TRACKING */}
-                <StudentActivityTrackingCard studentId={auth.currentUser?.uid || ''} />
-              </View>
-            </>
-          )}
-
-          {/* READING PROGRESS CHARTS */}
-
-        </View>
-
+        {/* bottom spacer */}
+        <View style={{ height: sh(24) }} />
       </ScrollView>
 
-      {/* LOGOUT MODAL */}
       <LogoutModal
         visible={logoutVisible}
         onCancel={cancelLogout}
         onConfirm={confirmLogout}
       />
+
+      <AlertModal
+        visible={alertVisible}
+        title={alertData.title}
+        message={alertData.message}
+        onClose={() => setAlertVisible(false)}
+      />
     </SafeAreaView>
   );
 }
 
-// ============================================================================
-// CHILD COMPONENTS
-// ============================================================================
-
-/**
- * ==========================================================================
- * INFO ITEM COMPONENT
- * ==========================================================================
- * Displays a label-value pair in the info grid
- * @param label - Display label
- * @param value - Display value
- * ==========================================================================
- */
-const InfoItem = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.infoItem}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
+// ─── FormField ────────────────────────────────────────────────────────────────
+const FormField = ({
+  label,
+  value,
+  onChange,
+  optional = false,
+  autoCapitalize,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  optional?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+}) => (
+  <View style={S.inputGroup}>
+    <Text style={S.inputLabel}>
+      {label}
+      {optional && <Text style={S.optionalText}> (Optional)</Text>}
+    </Text>
+    <TextInput
+      style={S.textInput}
+      value={value}
+      onChangeText={onChange}
+      autoCapitalize={autoCapitalize}
+      placeholderTextColor={C.slate}
+    />
   </View>
 );
 
+// ─── InfoItem (with per-item animation) ───────────────────────────────────────
+const InfoItem = ({
+  label,
+  value,
+  delay = 0,
+}: {
+  label: string;
+  value: string;
+  delay?: number;
+}) => (
+  <FadeSlideIn delay={delay} direction="left">
+    <View style={S.infoItem}>
+      <Text style={S.infoLabel}>{label}</Text>
+      <Text style={S.infoValue}>{value}</Text>
+    </View>
+  </FadeSlideIn>
+);
 
-// ============================================================================
-// STYLES
-// ============================================================================
-
-const styles = StyleSheet.create({
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const S = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    padding: sh(4),
+    paddingTop: sh(15),
+    backgroundColor: C.bg,
   },
-  innerContainer: {
-    flexGrow: 1,
+  scrollContent: {
+    paddingHorizontal: sw(16),
     paddingBottom: sh(24),
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: C.bg,
   },
   loadingText: {
     marginTop: sh(12),
     fontSize: sf(16),
-    color: '#64748b',
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
   },
   errorText: {
     fontSize: sf(16),
-    color: '#ef4444',
+    fontFamily: 'Nunito-Medium',
+    color: C.coral,
     textAlign: 'center',
     marginBottom: sh(16),
     paddingHorizontal: sw(32),
   },
   retryButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: C.primary,
     paddingHorizontal: sw(24),
     paddingVertical: sh(12),
-    borderRadius: sw(8),
+    borderRadius: sw(20),
   },
   retryButtonText: {
-    color: 'white',
+    color: C.card,
     fontSize: sf(16),
-    fontWeight: '600',
+    fontFamily: 'Nunito-Bold',
   },
-  header: {
+
+  // Header
+  headerWrapper: {
     position: 'relative',
     zIndex: 100,
+    paddingTop: sh(4),
+    paddingHorizontal: sw(5),
   },
-  logoutButton: {
-    flexDirection: 'row',
+
+  // Avatar card
+  avatarCard: {
     alignItems: 'center',
-    padding: sw(16),
-    borderRadius: sw(12),
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: sh(24),
-    backgroundColor: 'white',
-    marginHorizontal: sw(16),
-    marginTop: sh(16),
-    borderRadius: sw(16),
+    backgroundColor: C.card,
+    borderRadius: sw(20),
+    paddingVertical: sh(28),
+    paddingHorizontal: sw(20),
+    marginTop: sh(12),
+    borderWidth: 3,
+    borderColor: '#2ca96a',
     elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(3) },
+    shadowOpacity: 0.1,
+    shadowRadius: sw(10),
   },
-  profileImageContainer: {
-    width: sw(100),
-    height: sw(100),
-    borderRadius: sw(50),
-    backgroundColor: '#e2e8f0',
+  avatarRing: {
+    width: sw(110),
+    height: sw(110),
+    borderRadius: sw(55),
+    borderWidth: 4,
+    borderColor: C.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: sh(12),
-    borderWidth: 3,
-    borderColor: '#3b82f6',
+    backgroundColor: C.primaryLight,
+    marginBottom: sh(14),
   },
-  profileImage: {
-    width: sw(94),
-    height: sw(94),
-    borderRadius: sw(47),
+  avatarImage: {
+    width: sw(96),
+    height: sw(96),
+    borderRadius: sw(48),
   },
   studentName: {
     fontSize: sf(24),
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: sh(4),
+    fontFamily: 'Nunito-Black',
+    color: C.ink,
+    marginBottom: sh(6),
   },
-  studentRole: {
-    fontSize: sf(16),
-    color: '#64748b',
+  roleBadge: {
+    backgroundColor: C.tabBg,
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(4),
+    borderRadius: sw(12),
   },
+  roleBadgeText: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
+  },
+
+  // Section card
   section: {
-    backgroundColor: 'white',
-    marginHorizontal: sw(10),
+    backgroundColor: C.card,
     marginTop: sh(16),
-    padding: sw(20),
     borderRadius: sw(16),
-    elevation: 4,
-  },
-  sectionTitle: {
-    fontSize: sf(20),
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: sh(16),
+    padding: sw(18),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(2) },
+    shadowOpacity: 0.08,
+    shadowRadius: sw(8),
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -719,547 +629,124 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: sh(16),
   },
-  editButtonTextPrimary: {
-    color: '#3b82f6',
-    fontSize: sf(16),
-    fontWeight: '600',
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(8),
+    marginBottom: sh(12),
   },
+  sectionIcon: {
+    fontSize: sf(20),
+  },
+  sectionTitle: {
+    fontSize: sf(18),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+  },
+
+  // Edit pill
+  editPill: {
+    backgroundColor: C.primaryLight,
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(5),
+    borderRadius: sw(12),
+  },
+  editPillText: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
+  },
+
+  // Info grid
+  infoGrid: {
+    gap: sh(4),
+  },
+  infoItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: C.inputBg,
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(12),
+    borderRadius: sw(12),
+    marginBottom: sh(6),
+  },
+  infoLabel: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+  },
+  infoValue: {
+    fontSize: sf(15),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+  },
+
+  // Form
   formContainer: {
-    marginTop: sh(8),
+    marginTop: sh(4),
   },
   inputGroup: {
-    marginBottom: sh(16),
+    marginBottom: sh(14),
   },
   inputLabel: {
     fontSize: sf(14),
-    fontWeight: '600',
-    color: '#64748b',
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
     marginBottom: sh(6),
   },
   optionalText: {
-    fontWeight: '400',
-    fontStyle: 'italic',
     fontSize: sf(12),
+    fontFamily: 'Nunito-Regular',
+    color: C.slate,
   },
   textInput: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: sw(8),
-    paddingHorizontal: sw(12),
+    borderWidth: 2,
+    borderColor: C.border,
+    borderRadius: sw(12),
+    paddingHorizontal: sw(14),
     paddingVertical: sh(10),
-    fontSize: sf(16),
-    color: '#1e293b',
-    backgroundColor: '#f8fafc',
+    fontSize: sf(15),
+    fontFamily: 'Nunito-Medium',
+    color: C.ink,
+    backgroundColor: C.inputBg,
   },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: sh(16),
     gap: sw(12),
+    marginTop: sh(8),
   },
   cancelButton: {
     paddingVertical: sh(10),
     paddingHorizontal: sw(20),
-    borderRadius: sw(8),
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
+    borderRadius: sw(20),
+    borderWidth: 2,
+    borderColor: C.orange,
+    backgroundColor: C.card,
   },
   cancelButtonText: {
-    color: '#64748b',
+    color: C.orange,
+    fontFamily: 'Nunito-Bold',
     fontSize: sf(14),
-    fontWeight: '600',
   },
   saveButton: {
     paddingVertical: sh(10),
     paddingHorizontal: sw(24),
-    borderRadius: sw(8),
-    backgroundColor: '#3b82f6',
+    borderRadius: sw(20),
+    backgroundColor: C.accent,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: sw(80),
+    elevation: 4,
+    shadowColor: '#2ca96a',
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.3,
+    shadowRadius: sw(6),
   },
   saveButtonText: {
-    color: '#ffffff',
     fontSize: sf(14),
-    fontWeight: '600',
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  infoItem: {
-    width: '48%',
-    marginBottom: sh(16),
-  },
-  infoLabel: {
-    fontSize: sf(14),
-    color: '#64748b',
-    marginBottom: sh(4),
-  },
-  infoValue: {
-    fontSize: sf(16),
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: sh(16),
-  },
-  statCard: {
-    backgroundColor: '#f1f5f9',
-    padding: sw(10),
-    borderRadius: sw(12),
-    alignItems: 'center',
-    marginHorizontal: sw(2),
-  },
-  statNumber: {
-    fontSize: sf(20),
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: sh(4),
-  },
-  statLabel: {
-    fontSize: sf(12),
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  miscueCard: {
-    backgroundColor: '#fef2f2',
-    padding: sw(16),
-    borderRadius: sw(12),
-    marginTop: sh(12),
-    borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
-  },
-  miscueTitle: {
-    fontSize: sf(16),
-    fontWeight: '600',
-    color: '#dc2626',
-    marginBottom: sh(8),
-  },
-  miscuePassage: {
-    fontSize: sf(14),
-    color: '#1e293b',
-    marginBottom: sh(8),
-  },
-  miscueStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  miscueStat: {
-    fontSize: sf(14),
-    color: '#64748b',
-  },
-  miscueStatValue: {
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  wordList: {
-    marginTop: sh(8),
-  },
-  wordItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: sh(6),
-    borderBottomWidth: 1,
-    borderBottomColor: '#fecaca',
-  },
-  wordText: {
-    fontSize: sf(14),
-    color: '#1e293b',
-    fontStyle: 'italic',
-  },
-  wordCount: {
-    fontSize: sf(12),
-    color: '#64748b',
-  },
-  chartContainer: {
-    marginBottom: sh(24),
-  },
-  chartSubtitle: {
-    fontSize: sf(16),
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: sh(12),
-  },
-  chartWrapper: {
-    flexDirection: 'row',
-    backgroundColor: '#f8fafc',
-    borderRadius: sw(12),
-    padding: sw(16),
-    minHeight: sw(160),
-  },
-  yAxis: {
-    justifyContent: 'space-between',
-    paddingRight: sw(8),
-    height: sw(120),
-  },
-  yAxisLabel: {
-    fontSize: sf(10),
-    color: '#94a3b8',
-    fontWeight: '500',
-  },
-  chartScroll: {
-    flex: 1,
-  },
-  chartBarsContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: sw(120),
-    paddingHorizontal: sw(4),
-  },
-  chartBarWrapper: {
-    alignItems: 'center',
-    marginHorizontal: sw(6),
-  },
-  chartBarColumn: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  chartValue: {
-    fontSize: sf(11),
-    fontWeight: '700',
-    marginBottom: sh(4),
-  },
-  chartBar: {
-    width: sw(16),
-    borderTopLeftRadius: sw(8),
-    borderTopRightRadius: sw(8),
-    minHeight: sw(4),
-  },
-  chartConnector: {
-    position: 'absolute',
-    top: '50%',
-    right: sw(-6),
-    width: sw(12),
-    height: sw(2),
-    opacity: 0.4,
-  },
-  chartLabel: {
-    fontSize: sf(10),
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  wpmChartContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: sw(100),
-    paddingHorizontal: sw(10),
-    marginTop: sh(10),
-  },
-
-  wpmBarContainer: {
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: sw(4),
-  },
-
-  wpmBar: {
-    width: sw(20),
-    backgroundColor: '#10b981',
-    borderTopLeftRadius: sw(4),
-    borderTopRightRadius: sw(4),
-    marginBottom: sh(4),
-  },
-
-  wpmBarValue: {
-    fontSize: sf(11),
-    fontWeight: '600',
-    color: '#065f46',
-    marginBottom: sh(2),
-  },
-
-  wpmBarLabel: {
-    fontSize: sf(10),
-    color: '#64748b',
-    textAlign: 'center',
-  },
-
-  statsSummaryContainer: {
-    backgroundColor: '#f8fafc',
-    borderRadius: sw(12),
-    padding: sw(16),
-    marginTop: sh(10),
-  },
-
-  statsSummaryTitle: {
-    fontSize: sf(16),
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: sh(16),
-  },
-
-  statBox: {
-    alignItems: 'center',
-    flex: 1,
-    padding: sw(12),
-    backgroundColor: 'white',
-    borderRadius: sw(8),
-    marginHorizontal: sw(4),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.05,
-    shadowRadius: sw(2),
-    elevation: 1,
-  },
-
-  statBoxNumber: {
-    fontSize: sf(20),
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: sh(4),
-  },
-
-  statBoxLabel: {
-    fontSize: sf(12),
-    color: '#64748b',
-    textAlign: 'center',
-  },
-
-  trendContainer: {
-    backgroundColor: 'white',
-    borderRadius: sw(8),
-    padding: sw(12),
-  },
-
-  trendTitle: {
-    fontSize: sf(14),
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: sh(8),
-  },
-
-  trendIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  trendText: {
-    fontSize: sf(14),
-    color: '#64748b',
-  },
-
-  trendArrow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  trendUp: {
-    fontSize: sf(20),
-    marginRight: sw(6),
-  },
-
-  trendUpText: {
-    fontSize: sf(14),
-    color: '#10b981',
-    fontWeight: '600',
-  },
-
-  trendDown: {
-    fontSize: sf(20),
-    marginRight: sw(6),
-  },
-
-  trendDownText: {
-    fontSize: sf(14),
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-
-  trendNeutral: {
-    fontSize: sf(20),
-    marginRight: sw(6),
-  },
-
-  trendNeutralText: {
-    fontSize: sf(14),
-    color: '#f59e0b',
-    fontWeight: '600',
-  },
-  // WPM Chart styles
-  wpmBarWrapper: {
-    alignItems: 'center',
-    marginHorizontal: sw(4),
-  },
-  wpmValue: {
-    fontSize: sf(11),
-    fontWeight: '600',
-    color: '#065f46',
-    marginBottom: sh(4),
-  },
-  wpmLabel: {
-    fontSize: sf(10),
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  // Performance Summary styles
-  summaryContainer: {
-    backgroundColor: '#f8fafc',
-    borderRadius: sw(12),
-    padding: sw(16),
-    marginTop: sh(16),
-  },
-  summaryTitle: {
-    fontSize: sf(16),
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: sh(16),
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: sh(16),
-  },
-  summaryCard: {
-    backgroundColor: 'white',
-    padding: sw(12),
-    borderRadius: sw(8),
-    alignItems: 'center',
-    marginHorizontal: sw(4),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.05,
-    shadowRadius: sw(2),
-    elevation: 1,
-  },
-  summaryNumber: {
-    fontSize: sf(20),
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: sh(4),
-  },
-  summaryLabel: {
-    fontSize: sf(12),
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  trendContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  trendEmoji: {
-    fontSize: sf(20),
-    marginRight: sw(6),
-  },
-
-  // Refresh Button
-  refreshButton: {
-    backgroundColor: '#3b82f6',
-    marginHorizontal: sw(16),
-    marginVertical: sh(24),
-    paddingVertical: sh(16),
-    borderRadius: sw(12),
-    alignItems: 'center',
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: sw(4) },
-    shadowOpacity: 0.2,
-    shadowRadius: sw(8),
-    elevation: 4,
-  },
-  refreshButtonText: {
-    color: 'white',
-    fontSize: sf(16),
-    fontWeight: '600',
-  },
-
-  noDataText: {
-    textAlign: 'center',
-    color: '#94a3b8',
-    fontStyle: 'italic',
-    marginTop: sh(16),
-  },
-
-  summarySubtext: {
-    fontSize: sf(10),
-    color: '#64748b',
-    marginTop: sh(2),
-  },
-
-  trendRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: sh(8),
-  },
-
-  trendLabel: {
-    fontSize: sf(14),
-    color: '#475569',
-    fontWeight: '500',
-  },
-
-  trendValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  trendValue: {
-    fontSize: sf(14),
-    color: '#1e293b',
-  },
-
-  positiveTrend: {
-    color: '#10b981',
-    fontWeight: '600',
-    marginLeft: sw(4),
-  },
-
-  negativeTrend: {
-    color: '#ef4444',
-    fontWeight: '600',
-    marginLeft: sw(4),
-  },
-
-  overallTrendContainer: {
-    marginTop: sh(12),
-    paddingTop: sh(12),
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-  },
-
-  overallTrendLabel: {
-    fontSize: sf(14),
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: sh(8),
-  },
-
-  // NEW STYLES: Tab Navigation
-  tabContainer: {
-    flexDirection: 'row',
-    marginHorizontal: sw(10),
-    marginTop: sh(16),
-    backgroundColor: '#fff',
-    borderRadius: sw(12),
-    padding: sw(6),
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.1,
-    shadowRadius: sw(2),
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: sh(10),
-    alignItems: 'center',
-    borderRadius: sw(8),
-  },
-  activeTab: {
-    backgroundColor: '#3b82f6',
-  },
-  tabText: {
-    fontSize: sf(14),
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  activeTabText: {
-    color: '#ffffff',
+    color: C.card,
+    fontFamily: 'Nunito-Bold',
   },
 });

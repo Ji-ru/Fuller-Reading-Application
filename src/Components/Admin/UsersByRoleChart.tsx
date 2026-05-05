@@ -10,31 +10,25 @@ const screenWidth = Dimensions.get('window').width;
 interface UsersByRoleChartProps {
   acadYear?: string;
 }
-/** Shared chart styling */
+
 const chartConfig = {
   color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
   strokeWidth: sw(2),
   useShadowColorFromDataset: false,
 };
 
-// Color palette for graphs
 const COLORS = {
-  student: '#3d71d9',
-  faculty: '#57b8b3',
+  student: '#4ECDC4',
+  faculty: '#96CEB4',
   cardBackground: '#FFFFFF',
-  textPrimary: '#1E1E1E',
-  textSecondary: '#999999',
-  error: '#FE5A59',
+  textPrimary: '#2D3436',
+  textSecondary: '#636E72',
+  error: '#FF7675',
 };
 
-/**
- * Displays a pie chart showing the distribution of users by role (students vs faculty).
- * Data is fetched from the useUserAnalytics hook.
- */
 const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
-  const { roleCounts, totalUsers, isLoading, errorMessage } = useUserAnalytics(acadYear, false);
+  const { roleCounts, totalUsers, isLoading, errorMessage } = useUserAnalytics(acadYear, true);
 
-  // Loading state
   if (isLoading) {
     return (
       <View style={styles.card}>
@@ -44,7 +38,6 @@ const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
     );
   }
 
-  // Error state
   if (errorMessage) {
     return (
       <View style={styles.card}>
@@ -54,17 +47,16 @@ const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
     );
   }
 
-  // Prepare data for PieChart
   const pieData = [
     {
-      name: `Students (${roleCounts.students})`,
+      name: `Students`,
       population: roleCounts.students,
       color: COLORS.student,
       legendFontColor: COLORS.textPrimary,
       legendFontSize: sw(12),
     },
     {
-      name: `Faculty (${roleCounts.faculty})`,
+      name: `Faculty`,
       population: roleCounts.faculty,
       color: COLORS.faculty,
       legendFontColor: COLORS.textPrimary,
@@ -74,18 +66,28 @@ const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Users by Role</Text>
-      <Text style={styles.subtitle}>Total Users: {totalUsers}</Text>
-      <PieChart
-        data={pieData}
-        width={screenWidth - 64} // account for card padding
-        height={180}
-        chartConfig={chartConfig}
-        accessor="population"
-        backgroundColor="transparent"
-        paddingLeft="15"
-        absolute // show numbers on slices
-      />
+      <View style={styles.headerRow}>
+        <View style={styles.accentBar} />
+        <View>
+          <Text style={styles.title}>Users by Role</Text>
+          <Text style={styles.subtitle}>Total Users: {totalUsers}</Text>
+          <Text style={styles.description}>Shows the distribution of system users between students and faculty.</Text>
+        </View>
+      </View>
+      
+      <View style={styles.chartWrapper}>
+        <PieChart
+          data={pieData}
+          width={screenWidth - sw(40)}
+          height={sh(180)}
+          chartConfig={chartConfig}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="0"
+          center={[sw(10), 0]}
+          absolute
+        />
+      </View>
     </View>
   );
 };
@@ -93,30 +95,54 @@ const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: sw(14),
+    borderRadius: sw(20),
     padding: sw(20),
-    marginBottom: sh(16),
-    elevation: 3,
+    marginBottom: sh(20),
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.08,
-    shadowRadius: sw(6),
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.05,
+    shadowRadius: sw(10),
+    elevation: 4,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: sh(16),
+  },
+  accentBar: {
+    width: sw(4),
+    height: sh(24),
+    backgroundColor: COLORS.student,
+    borderRadius: sw(2),
+    marginRight: sw(10),
   },
   title: {
-    fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(18),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textPrimary,
-    marginBottom: sh(4),
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
-    marginBottom: sh(16),
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
+  },
+  chartWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -sw(15),
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
+    marginTop: sh(10),
   },
 });
 

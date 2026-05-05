@@ -6,31 +6,34 @@ import { useClassMetrics } from '../../Hooks/Admin/useClassMetrics';
 import { sw, sh, sf } from '../../Utils/responsive';
 
 const screenWidth = Dimensions.get('window').width;
+
 interface ClassesPerGradeChartProps {
   acadYear?: string;
 }
+
+const COLORS = {
+  primary: '#45B7D1',
+  cardBackground: '#FFFFFF',
+  textPrimary: '#2D3436',
+  textSecondary: '#636E72',
+  error: '#FF7675',
+};
+
 const chartConfig = {
   backgroundColor: '#FFFFFF',
   backgroundGradientFrom: '#FFFFFF',
-  backgroundGradientTo: '#FFFFFF',
+  backgroundGradientTo: '#F8F9FA',
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(61, 113, 217, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(30, 30, 30, ${opacity})`,
+  color: (opacity = 1) => `rgba(69, 183, 209, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(45, 52, 54, ${opacity})`,
   style: { borderRadius: 16 },
-  barPercentage: sw(0.7),
+  barPercentage: sw(0.6),
+  propsForBackgroundLines: {
+    strokeDasharray: '', // solid background lines
+    stroke: '#F1F2F6',
+  },
 };
 
-const COLORS = {
-  cardBackground: '#FFFFFF',
-  textPrimary: '#1E1E1E',
-  textSecondary: '#999999',
-  error: '#FE5A59',
-};
-
-/**
- * Displays a bar chart showing the number of classes per grade level.
- * Uses the useClassMetrics hook to fetch gradeDistribution.
- */
 const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) => {
   const {
     gradeDistribution,
@@ -48,7 +51,7 @@ const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) =
     return (
       <View style={styles.card}>
         <Text style={styles.title}>Classes per Grade Level</Text>
-        <ActivityIndicator size="small" color="#3d71d9" />
+        <ActivityIndicator size="small" color={COLORS.primary} />
       </View>
     );
   }
@@ -67,7 +70,7 @@ const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) =
     .map(Number)
     .sort((a, b) => a - b);
 
-  const labels = sortedGrades.map(grade => `Grade ${grade}`);
+  const labels = sortedGrades.map(grade => `G${grade}`);
   const dataValues = sortedGrades.map(grade => gradeDistribution[grade]);
 
   const barData = {
@@ -77,19 +80,29 @@ const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) =
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Classes per Grade Level</Text>
-      <Text style={styles.subtitle}>Total Classes: {totalClasses}</Text>
-      <BarChart
-        data={barData}
-        width={screenWidth - 64}
-        height={200}
-        chartConfig={chartConfig}
-        yAxisLabel=""          // Required by TypeScript
-        yAxisSuffix=""         // Required by TypeScript
-        style={{ marginVertical: 8, borderRadius: 16 }}
-        fromZero
-        showValuesOnTopOfBars
-      />
+      <View style={styles.headerRow}>
+        <View style={styles.accentBar} />
+        <View>
+          <Text style={styles.title}>Classes per Grade Level</Text>
+          <Text style={styles.subtitle}>Total Classes: {totalClasses}</Text>
+          <Text style={styles.description}>Visualizes the distribution of classes across different grade levels.</Text>
+        </View>
+      </View>
+
+      <View style={styles.chartWrapper}>
+        <BarChart
+          data={barData}
+          width={screenWidth - sw(48)}
+          height={sh(200)}
+          chartConfig={chartConfig}
+          yAxisLabel=""
+          yAxisSuffix=""
+          style={{ marginVertical: sh(8), borderRadius: sw(16) }}
+          fromZero
+          showValuesOnTopOfBars
+          withInnerLines={true}
+        />
+      </View>
     </View>
   );
 };
@@ -97,30 +110,54 @@ const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) =
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: sw(14),
+    borderRadius: sw(20),
     padding: sw(20),
-    marginBottom: sh(16),
-    elevation: 3,
+    marginBottom: sh(20),
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.08,
-    shadowRadius: sw(6),
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.05,
+    shadowRadius: sw(10),
+    elevation: 4,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: sh(16),
+  },
+  accentBar: {
+    width: sw(4),
+    height: sh(24),
+    backgroundColor: COLORS.primary,
+    borderRadius: sw(2),
+    marginRight: sw(10),
   },
   title: {
-    fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(18),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textPrimary,
-    marginBottom: sh(4),
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
-    marginBottom: sh(16),
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
+  },
+  chartWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: -sw(16),
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
+    marginTop: sh(10),
   },
 });
 

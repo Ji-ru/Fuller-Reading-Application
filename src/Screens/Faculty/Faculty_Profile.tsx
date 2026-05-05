@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import facultyProfile from '../../UI_Designs/FacultyProfile';
+import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
+import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { getCurrentUser, getUserProfile, updateFacultyProfile } from '../../Controller/AuthenticationController';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
@@ -16,6 +18,16 @@ export default function FacultyProfile() {
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
 
   // Profile States
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +70,7 @@ export default function FacultyProfile() {
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Could not load profile data.');
+      showAlert('Error', 'Could not load profile data.');
     } finally {
       setIsLoading(false);
     }
@@ -82,10 +94,10 @@ export default function FacultyProfile() {
           sex: sex.trim(),
         });
         setIsEditing(false);
-        Alert.alert('Success', 'Profile updated successfully!');
+        showAlert('Success', 'Profile updated successfully!');
       }
     } catch (error: any) {
-      Alert.alert('Update Failed', error.message || 'An error occurred while updating.');
+      showAlert('Update Failed', error.message || 'An error occurred while updating.');
     } finally {
       setIsSaving(false);
     }
@@ -125,22 +137,20 @@ export default function FacultyProfile() {
         <BubbleBackground />
 
         {/* HEADER */}
-        <View style={upperNav.header}>
-          <Image
-            style={upperNav.ciscLogo}
-            source={require('../../../assets/images/cisckids.png')}
-          />
-          <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-            <Image
-              style={upperNav.menuIcon}
-              source={require('../../../assets/icons/Menu-icon.png')}
-            />
+        <View style={facultyDashboard.header}>
+          <Text style={facultyDashboard.headerLogo}>CISC KIDS</Text>
+          <TouchableOpacity
+            style={facultyDashboard.menuBtn}
+            onPress={() => setMenuVisible(v => !v)}
+            activeOpacity={0.7}
+          >
+            <MenuBars />
           </TouchableOpacity>
         </View>
 
         {/* MAIN SCROLL CONTENT */}
-        <ScrollView 
-          contentContainerStyle={facultyProfile.scrollContent} 
+        <ScrollView
+          contentContainerStyle={facultyProfile.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -154,18 +164,18 @@ export default function FacultyProfile() {
             </View>
           ) : (
             <View style={facultyProfile.profileCard}>
-              
+
               {/* Floating Avatar */}
-            <View style={facultyProfile.avatarContainer}>
-              <Image
-                source={
-                  profileData?.profileImageUrl
-                    ? { uri: profileData.profileImageUrl } : profileData?.sex === 'male' ?
-                      require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png')
-                }
-                style={facultyProfile.avatarIcon}
-              />
-            </View>
+              <View style={facultyProfile.avatarContainer}>
+                <Image
+                  source={
+                    profileData?.profileImageUrl
+                      ? { uri: profileData.profileImageUrl } : profileData?.sex === 'male' ?
+                        require('../../../assets/images/Male-profile.png') : require('../../../assets/images/Female-profile.png')
+                  }
+                  style={facultyProfile.avatarIcon}
+                />
+              </View>
 
               {/* FIRST NAME */}
               <View style={facultyProfile.inputGroup}>
@@ -245,16 +255,16 @@ export default function FacultyProfile() {
               {/* ACTION BUTTONS */}
               {isEditing ? (
                 <View style={facultyProfile.actionRow}>
-                  <TouchableOpacity 
-                    style={facultyProfile.cancelButton} 
+                  <TouchableOpacity
+                    style={facultyProfile.cancelButton}
                     onPress={handleCancel}
                     disabled={isSaving}
                   >
                     <Text style={facultyProfile.cancelButtonText}>Cancel</Text>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={facultyProfile.saveButton} 
+
+                  <TouchableOpacity
+                    style={facultyProfile.saveButton}
                     onPress={handleSave}
                     disabled={isSaving}
                   >
@@ -267,8 +277,8 @@ export default function FacultyProfile() {
                 </View>
               ) : (
                 <View style={facultyProfile.actionRow}>
-                  <TouchableOpacity 
-                    style={facultyProfile.editButton} 
+                  <TouchableOpacity
+                    style={facultyProfile.editButton}
                     onPress={() => setIsEditing(true)}
                   >
                     <Text style={facultyProfile.editButtonText}>Edit Profile</Text>
@@ -282,36 +292,52 @@ export default function FacultyProfile() {
 
         {/* DROPDOWN MENU */}
         {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
+          <>
             <TouchableOpacity
-              onPress={handleLogoutPress}
-              style={upperNav.logoutButton}
-            >
-              <Image
-                source={require('../../../assets/icons/Logout-icon.png')}
-                style={upperNav.logoutIcon}
-              />
-              <Text style={upperNav.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
+              style={StyleSheet.absoluteFillObject as any}
+              onPress={() => setMenuVisible(false)}
+              activeOpacity={1}
+            />
+            <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Image
+                  source={require('../../../assets/icons/Logout-icon.png')}
+                  style={facultyDashboard.dropdownIcon}
+                />
+                <Text style={facultyDashboard.dropdownText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </>
         )}
 
-        {/* OVERLAY TO CLOSE MENU */}
-        {menuVisible && (
-          <TouchableOpacity
-            style={upperNav.closeMenu}
-            onPress={() => setMenuVisible(false)}
-            activeOpacity={1}
-          />
-        )}
-        
-        {/* LOGOUT MODAL */}
         <LogoutModal
           visible={logoutVisible}
           onCancel={cancelLogout}
           onConfirm={confirmLogout}
         />
+
+        <AlertModal
+          visible={alertVisible}
+          title={alertTitle}
+          message={alertMessage}
+          onClose={() => setAlertVisible(false)}
+        />
       </View>
     </SafeAreaView>
+  );
+}
+
+// ─── Hamburger icon ───────────────────────────────────────────────────────────
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+    </View>
   );
 }

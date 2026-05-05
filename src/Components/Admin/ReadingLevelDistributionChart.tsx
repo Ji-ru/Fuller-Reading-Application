@@ -18,15 +18,15 @@ const chartConfig = {
 };
 
 const COLORS = {
-  beginner: '#3d71d9',
-  intermediate: '#57b8b3',
-  advanced: '#F4A261',
+  beginner: '#4ECDC4',
+  intermediate: '#45B7D1',
+  advanced: '#FFE66D',
   cardBackground: '#FFFFFF',
-  textPrimary: '#1E1E1E',
-  textSecondary: '#999999',
-  error: '#FE5A59',
-  border: '#E8E8E8',
-  primaryDim: '#EFF4FF',
+  textPrimary: '#2D3436',
+  textSecondary: '#636E72',
+  error: '#FF7675',
+  border: '#F1F2F6',
+  primaryDim: '#E8F8F7',
 };
 
 /**
@@ -113,32 +113,38 @@ const ReadingLevelDistributionChart: React.FC<ReadingLevelDistributionChartProps
 
   const pieData = [
     {
-      name: `Beginner (${readingLevels.beginner})`,
+      name: `Beginner`,
       population: readingLevels.beginner,
       color: COLORS.beginner,
       legendFontColor: COLORS.textPrimary,
-      legendFontSize: sw(12),
+      legendFontSize: sw(11),
     },
     {
-      name: `Intermediate (${readingLevels.intermediate})`,
+      name: `Intermediate`,
       population: readingLevels.intermediate,
       color: COLORS.intermediate,
       legendFontColor: COLORS.textPrimary,
-      legendFontSize: sw(12),
+      legendFontSize: sw(11),
     },
     {
-      name: `Advanced (${readingLevels.advanced})`,
+      name: `Advanced`,
       population: readingLevels.advanced,
       color: COLORS.advanced,
       legendFontColor: COLORS.textPrimary,
-      legendFontSize: sw(12),
+      legendFontSize: sw(11),
     },
   ];
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Reading Level Distribution</Text>
-      <Text style={styles.subtitle}>Students by proficiency</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.accentBar} />
+        <View>
+          <Text style={styles.title}>Reading Level Distribution</Text>
+          <Text style={styles.subtitle}>Students by proficiency</Text>
+          <Text style={styles.description}>Breakdown of students' reading proficiency levels (Beginner, Intermediate, and Advanced).</Text>
+        </View>
+      </View>
 
       {/* Filters Row */}
       <View style={styles.filtersRow}>
@@ -153,10 +159,10 @@ const ReadingLevelDistributionChart: React.FC<ReadingLevelDistributionChartProps
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.filterButtonText}>
+            <Text style={styles.filterButtonText} numberOfLines={1}>
               {selectedGrade === 'Overall' ? 'All Grades' : `Grade ${selectedGrade}`}
             </Text>
-            <Text style={{ fontSize: 10, color: COLORS.textSecondary }}>
+            <Text style={styles.dropdownIco}>
               {showGradeDropdown ? '▲' : '▼'}
             </Text>
           </TouchableOpacity>
@@ -199,10 +205,10 @@ const ReadingLevelDistributionChart: React.FC<ReadingLevelDistributionChartProps
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.filterButtonText}>
+            <Text style={styles.filterButtonText} numberOfLines={1}>
               {selectedClassLabel}
             </Text>
-            <Text style={{ fontSize: 10, color: COLORS.textSecondary }}>
+            <Text style={styles.dropdownIco}>
               {showClassDropdown ? '▲' : '▼'}
             </Text>
           </TouchableOpacity>
@@ -247,18 +253,23 @@ const ReadingLevelDistributionChart: React.FC<ReadingLevelDistributionChartProps
       </View>
 
       {totalStudents === 0 ? (
-        <Text style={styles.noDataText}>No student data available for this filter.</Text>
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No student data available for this filter.</Text>
+        </View>
       ) : (
-        <PieChart
-          data={pieData}
-          width={screenWidth - 64}
-          height={200}
-          chartConfig={chartConfig}
-          accessor="population"
-          backgroundColor="transparent"
-          paddingLeft="15"
-          absolute
-        />
+        <View style={styles.chartWrapper}>
+          <PieChart
+            data={pieData}
+            width={screenWidth - sw(40)}
+            height={sh(180)}
+            chartConfig={chartConfig}
+            accessor="population"
+            backgroundColor="transparent"
+            paddingLeft="0"
+            center={[sw(10), 0]}
+            absolute
+          />
+        </View>
       )}
     </View>
   );
@@ -267,31 +278,49 @@ const ReadingLevelDistributionChart: React.FC<ReadingLevelDistributionChartProps
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: sw(14),
+    borderRadius: sw(20),
     padding: sw(20),
-    marginBottom: sh(16),
-    elevation: 3,
+    marginBottom: sh(20),
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.08,
-    shadowRadius: sw(6),
-    zIndex: 1, // To allow dropdown to overflow nicely if needed, but react native usually needs careful z-indexing
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.05,
+    shadowRadius: sw(10),
+    elevation: 4,
+    zIndex: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: sh(16),
+  },
+  accentBar: {
+    width: sw(4),
+    height: sh(24),
+    backgroundColor: COLORS.beginner,
+    borderRadius: sw(2),
+    marginRight: sw(10),
   },
   title: {
-    fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(18),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textPrimary,
-    marginBottom: sh(4),
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
-    marginBottom: sh(16),
+  },
+  description: {
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Regular',
+    color: '#7F8C8D',
+    marginTop: sh(4),
   },
   filtersRow: {
     flexDirection: 'row',
-    gap: sw(12),
+    gap: sw(10),
     marginBottom: sh(20),
     zIndex: 10,
   },
@@ -301,26 +330,34 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   filterLabel: {
-    fontSize: sf(12),
-    fontFamily: 'Satoshi-Medium',
+    fontSize: sf(11),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textSecondary,
     marginBottom: sh(6),
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   filterButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: sw(12),
+    paddingHorizontal: sw(10),
     paddingVertical: sh(10),
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: sw(8),
+    borderColor: '#E9ECEF',
+    borderRadius: sw(12),
   },
   filterButtonText: {
-    fontSize: sf(13),
-    fontFamily: 'Satoshi-Medium',
+    fontSize: sf(12),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textPrimary,
+    flex: 1,
+    marginRight: sw(4),
+  },
+  dropdownIco: {
+    fontSize: sf(10),
+    color: COLORS.textSecondary,
   },
   filterDropdownMenu: {
     position: 'absolute',
@@ -329,45 +366,53 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: sw(8),
+    borderColor: '#E9ECEF',
+    borderRadius: sw(12),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(4) },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: sw(6) },
+    shadowOpacity: 0.1,
     shadowRadius: sw(12),
-    elevation: 5,
+    elevation: 6,
     zIndex: 100,
   },
   dropdownOption: {
     paddingVertical: sh(12),
     paddingHorizontal: sw(14),
     borderBottomWidth: 0.5,
-    borderBottomColor: '#F0F0F0',
-    backgroundColor: '#fff',
+    borderBottomColor: '#F1F2F6',
   },
   dropdownOptionActive: {
     backgroundColor: COLORS.primaryDim,
   },
   dropdownOptionText: {
     fontSize: sf(13),
-    color: '#555',
-    fontFamily: 'Satoshi-Regular',
+    color: '#2D3436',
+    fontFamily: 'Comfortaa-Regular',
   },
   dropdownOptionTextActive: {
     color: COLORS.beginner,
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Comfortaa-Bold',
+  },
+  chartWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -sw(15), 
+  },
+  noDataContainer: {
+    height: sh(150),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   noDataText: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginTop: sh(20),
-    marginBottom: sh(20),
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Comfortaa-Regular',
+    marginTop: sh(10),
   },
 });
 

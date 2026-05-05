@@ -1,19 +1,19 @@
-// This screen uses React hooks (useState, useEffect) to manage UI state and side effects.
-// Firebase usage is up-to-date for React Native Firebase v22 (auth().currentUser for user, all Firestore via controller-services).
+// React
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, Alert, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, Image, StyleSheet } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 
-import {
-  RootStackParamList,
-  useNavigationHelper,
-} from '../../Controller/NavigationController';
+// Styles
 import readingStyles from '../../UI_Designs/ReadingActivityStyles';
 
+// Controllers
+import { RootStackParamList, useNavigationHelper } from '../../Controller/NavigationController';
 import { useAudioRecording } from '../../Controller/AudioRecordingController';
 import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
 import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceController';
+
+// Components
 import { ReadingHeader } from '../../Components/Student/Reading/ReadingHeader';
 import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
 import { RecordingControls } from '../../Components/Student/Reading/RecordingControls';
@@ -21,15 +21,21 @@ import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback
 import { Miscue } from '../../Interfaces/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
-import { getAuth } from '@react-native-firebase/auth';
 import { makeTodayKey } from '../../Utilities/currentDateUtils';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
 import { useGlobalMusic } from '../../Components/GlobalUse/Background/GlobalMusicContext';
+import { BubbleBackgroundUpper } from '../../Components/GlobalUse/BubbleBackground';
+import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 
+// Auth Firebase
+import { getAuth } from '@react-native-firebase/auth';
+
+// Types
 type ReadingActivityScreenRouteProp = RouteProp<
   RootStackParamList,
   'ReadingActivity'
 >;
+
 
 export default function ReadingActivityScreenPage() {
   // Ref: Store a retry timeout id for feedback modal
@@ -122,7 +128,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
+  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, processAudioWithHubert, processAudioWithWav2Vec2, processAudioWithWhisper, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
 
   // Access Global Music Context
   const { playMusic, pauseMusic } = useGlobalMusic();
@@ -132,7 +138,125 @@ export default function ReadingActivityScreenPage() {
   }, []);
 
   // Navigation
-  const { handleLogout, handleBackStep } = useNavigationHelper();
+  const { handleLogout, handleBackStep, handleReplaceStep } = useNavigationHelper();
+
+  const wordPositionInfo = useMemo(() => {
+    if (type === 'word' && wordContext && isWords(readingMaterial)) {
+      const chapters = readingMaterialData.Words[0].chapters;
+      const chapter = chapters.find((c: any) => c.chapter_id === wordContext.chapterId);
+      if (chapter) {
+        const lesson = chapter.lessons.find((l: any) => l.lesson_id === wordContext.lessonId);
+        if (lesson) {
+          const index = lesson.words.findIndex((w: string) => w === wordContext.targetWord);
+          if (index !== -1) {
+            return { index, total: lesson.words.length, lessonWords: lesson.words, lesson };
+          }
+        }
+      }
+    }
+    return { index: 0, total: 1, lessonWords: [], lesson: null };
+  }, [readingMaterial, type, wordContext]);
+
+  const getNextReadingItem = useCallback(() => {
+    if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+      const alphaList = readingMaterialData.Alphabet;
+      const index = alphaList.findIndex(a => a.letter === readingMaterial.letter);
+      if (index >= 0 && index < alphaList.length - 1) {
+        return { type: 'alphabet', readingMaterial: alphaList[index + 1], wordContext: undefined };
+      }
+    } else if (type === 'passage' && isPassage(readingMaterial)) {
+      const passList = readingMaterialData.Passages;
+      const index = passList.findIndex(p => p.title === readingMaterial.title);
+      if (index >= 0 && index < passList.length - 1) {
+        return { type: 'passage', readingMaterial: passList[index + 1], wordContext: undefined };
+      }
+    } else if (type === 'word' && isWords(readingMaterial) && wordContext) {
+      const { index, total, lessonWords, lesson } = wordPositionInfo;
+      if (index >= 0 && index < total - 1 && lesson) {
+        const nextWordText = lessonWords[index + 1];
+        const nextWordData = {
+          letter: lesson.letter || '?',
+          contrasts: [{ phoneme: lesson.title, ipa: '', words: [nextWordText] }]
+        };
+        const nextContext = { ...wordContext, targetWord: nextWordText };
+        return { type: 'word', readingMaterial: nextWordData, wordContext: nextContext };
+      }
+    }
+    return null;
+  }, [readingMaterial, type, wordContext, wordPositionInfo]);
+
+  const [nextItem, setNextItem] = useState<{ type: any; readingMaterial: any; wordContext: any } | null>(null);
+  const [prevItem, setPrevItem] = useState<{ type: any; readingMaterial: any; wordContext: any } | null>(null);
+
+  const getPreviousReadingItem = useCallback(() => {
+    if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+      const alphaList = readingMaterialData.Alphabet;
+      const index = alphaList.findIndex(a => a.letter === readingMaterial.letter);
+      if (index > 0) {
+        return { type: 'alphabet', readingMaterial: alphaList[index - 1], wordContext: undefined };
+      }
+    } else if (type === 'passage' && isPassage(readingMaterial)) {
+      const passList = readingMaterialData.Passages;
+      const index = passList.findIndex(p => p.title === readingMaterial.title);
+      if (index > 0) {
+        return { type: 'passage', readingMaterial: passList[index - 1], wordContext: undefined };
+      }
+    } else if (type === 'word' && isWords(readingMaterial) && wordContext) {
+      const { index, lessonWords, lesson } = wordPositionInfo;
+      if (index > 0 && lesson) {
+        const prevWordText = lessonWords[index - 1];
+        const prevWordData = {
+          letter: lesson.letter || '?',
+          contrasts: [{ phoneme: lesson.title, ipa: '', words: [prevWordText] }]
+        };
+        const prevContext = { ...wordContext, targetWord: prevWordText };
+        return { type: 'word', readingMaterial: prevWordData, wordContext: prevContext };
+      }
+    }
+    return null;
+  }, [readingMaterial, type, wordContext, wordPositionInfo]);
+
+  useEffect(() => {
+    setNextItem(getNextReadingItem());
+    setPrevItem(getPreviousReadingItem());
+  }, [getNextReadingItem, getPreviousReadingItem]);
+  /**
+   * Handler to reset all reading states (text, miscues, accuracy, modal, etc).
+   * Used for retrying the activity cleanly.
+   */
+  const handleTryAgain = useCallback(() => {
+    setSpokenText('');
+    setMiscues([]);
+    setAccuracyString('0');
+    setFeedback('');
+    setIsReadingCompleted(false);
+    setShowFeedbackModal(false);
+    setHasShownModalForCurrentAttempt(false);
+    setHasStoredReport(false);
+    setHasStoredCorrectAttempt(false);
+    setIsCorrectAttempt(false);
+    setRecordingDuration(0);
+    setWordPerMin(0);
+
+    // Play Global Music again when returning to reading screen
+    playMusic();
+  }, [playMusic]);
+
+  const handleNextPress = useCallback(() => {
+    if (nextItem) {
+      handleTryAgain(); // cleanup current media playing
+      handleReplaceStep('ReadingActivity', nextItem);
+    } else {
+      handleBackStep();
+    }
+  }, [nextItem, handleReplaceStep, handleTryAgain, handleBackStep]);
+
+  const handlePrevPress = useCallback(() => {
+    if (prevItem) {
+      handleTryAgain();
+      handleReplaceStep('ReadingActivity', prevItem);
+    }
+  }, [prevItem, handleReplaceStep, handleTryAgain]);
 
   const ensureAlphabetDailySession = useCallback(async () => {
     if (type !== 'alphabet') return null;
@@ -205,6 +329,7 @@ export default function ReadingActivityScreenPage() {
     }
     return 0;
   }, [readingMaterial, type]);
+
 
   /**
    * Effects to mount or initialize the permission and audio recording
@@ -299,15 +424,19 @@ export default function ReadingActivityScreenPage() {
       }
       // const transcription = await processAudioWithGoogle(audioFile);
       // const transcription = await processAudioWithAssemblyAI(audioFile);
-      const transcription = await processAudioWithDeepgram(audioFile);
-      setSpokenText(transcription.fulltext);
-      console.log('THIS IS THE SPOKEN: ' + transcription.fulltext);
-      console.log('THIS IS THE UTTERANCES: ' + transcription.utterances);
+      // const transcription = await processAudioWithDeepgram(audioFile);
+      // const transcription = await processAudioWithPuter(audioFile);
+      // const transcription = await processAudioWithWav2Vec2(audioFile);
+      const transcription = await processAudioWithHubert(audioFile);
+      // const transcription = await processAudioWithWhisper(audioFile);
+      setSpokenText(transcription);
+      console.log('THIS IS THE SPOKEN: ' + transcription);
+      // console.log('THIS IS THE UTTERANCES: ' + transcription);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      await analyzeReading(transcription.fulltext, duration);
+      await analyzeReading(transcription, duration);
       setIsReadingCompleted(true);
     } catch (error) {
       // Fallback on error: 0% accuracy instead of 100% simulated response
@@ -319,7 +448,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithAssemblyAI, getSimulatedResponse, targetText]);
+  }, [processAudioWithHubert, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:
@@ -747,27 +876,6 @@ export default function ReadingActivityScreenPage() {
     }
   }, [hasStoredReport, spokenText, getTitle, totalWords]);
 
-  /**
-   * Handler to reset all reading states (text, miscues, accuracy, modal, etc).
-   * Used for retrying the activity cleanly.
-   */
-  const handleTryAgain = useCallback(() => {
-    setSpokenText('');
-    setMiscues([]);
-    setAccuracyString('0');
-    setFeedback('');
-    setIsReadingCompleted(false);
-    setShowFeedbackModal(false);
-    setHasShownModalForCurrentAttempt(false);
-    setHasStoredReport(false);
-    setHasStoredCorrectAttempt(false);
-    setIsCorrectAttempt(false);
-    setRecordingDuration(0);
-    setWordPerMin(0);
-
-    // Play Global Music again when returning to reading screen
-    playMusic();
-  }, [playMusic]);
 
   /**
    * Handler to close the feedback modal dialog.
@@ -787,9 +895,9 @@ export default function ReadingActivityScreenPage() {
   return (
     <SafeAreaView style={readingStyles.container}>
       <ImageBackground
-        source={!isReadingCompleted ? isPassage(readingMaterial) ? getPassageImage(readingMaterial.image) : isAlphabet(readingMaterial) ? require('../../../assets/images/RA-Alphabet-Result-bg.png') : isWords(readingMaterial) ? require('../../../assets/images/RA-Word-Result-bg.png') : undefined : require('../../../assets/images/RA-Passage-Result-bg.png')}
+        source={isPassage(readingMaterial) ? getPassageImage(readingMaterial.image) : undefined}
         style={readingStyles.bgImage}
-        imageStyle={!isReadingCompleted ? readingStyles.backgroundImage : readingStyles.backgroundResultImage}
+        imageStyle={readingStyles.backgroundImage}
         resizeMode='cover'
       >
         <View style={{ flex: 1 }}>
@@ -805,6 +913,9 @@ export default function ReadingActivityScreenPage() {
           >
 
             <View style={readingStyles.insideContainer}>
+
+              {/* Bubble background — visible after reading is completed */}
+              {(isAlphabet(readingMaterial) || isWords(readingMaterial)) && <BubbleBackgroundUpper />}
 
               {/* Header */}
               <ReadingHeader
@@ -849,7 +960,6 @@ export default function ReadingActivityScreenPage() {
               </SvgText>
             </Svg>): null} */}
 
-              {/* Display Component */}
               <PassageDisplay
                 material={readingMaterial}
                 type={type}
@@ -862,20 +972,13 @@ export default function ReadingActivityScreenPage() {
                 isTextCorrect={isCorrectAttempt}
                 feedback={feedback}
                 onTryAgain={handleTryAgain}
+                onNextItem={handleNextPress}
+                hasNextItem={!!nextItem}
+                currentWordIndex={wordPositionInfo.index}
+                lessonWordCount={wordPositionInfo.total}
               />
 
-              {/* Transcribing Loading Indicator Modal */}
-              <Modal transparent={true} visible={isLoading} animationType="fade">
-                <View style={readingStyles.loadingModalOverlay}>
-                  <View style={readingStyles.loadingModalContent}>
-                    <ActivityIndicator size={48} color="#3B7FC9" />
-                    <Text style={readingStyles.loadingModalTitle}>Transcribing Audio...</Text>
-                    <Text style={readingStyles.loadingModalSubtitle}>This will only take a moment.</Text>
-                  </View>
-                </View>
-              </Modal>
 
-              {/* Feedback — Only show for passage (alphabet + word show result inside PassageDisplay) */}
               {!isLoading && !isRecording && isReadingCompleted && type === 'passage' && (
                 <FeedbackResult
                   targetText={targetText}
@@ -886,6 +989,8 @@ export default function ReadingActivityScreenPage() {
                   accuracy={accuracyString}
                   feedback={feedback}
                   isTextCorrect={isCorrectAttempt}
+                  onNextItem={handleNextPress}
+                  hasNextItem={!!nextItem}
                 />
               )}
               {/* Feedback Modal */}
@@ -909,9 +1014,33 @@ export default function ReadingActivityScreenPage() {
           )}
         </View>
 
-        {/* Recording Controls - Only show when not completed */}
+        {/* ── Recording Controls + Word Navigation ─────────────────────────── */}
+        {/* Shows the Previous / Microphone / Next row while reading is active.    */}
+        {/* Nav buttons are disabled during recording to prevent accidental skips. */}
         {!isReadingCompleted && (
-          <View style={{ paddingBottom: 20 }}>
+          <View style={navRowStyles.wrapper}>
+
+            {/* ── Previous Word Button ─────────────── */}
+            <TouchableOpacity
+              onPress={handlePrevPress}
+              disabled={!prevItem || isRecording || isLoading}
+              style={[
+                navRowStyles.navBtn,
+                (!prevItem || isRecording || isLoading) && navRowStyles.navBtnDisabled,
+              ]}
+              activeOpacity={0.75}
+            >
+              <Text
+                style={[
+                  navRowStyles.navArrow,
+                  (!prevItem || isRecording || isLoading) && navRowStyles.navArrowDisabled,
+                ]}
+              >
+                {'‹'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* ── Microphone (center, primary CTA) ─── */}
             <RecordingControls
               isRecording={isRecording}
               isLoading={isLoading}
@@ -919,6 +1048,45 @@ export default function ReadingActivityScreenPage() {
               recordTime={formatTime(recordTime)}
               onRecordToggle={handleRecordToggle}
             />
+
+            {/* ── Next Word Button ──────────────────── */}
+            <TouchableOpacity
+              onPress={handleNextPress}
+              disabled={!nextItem || isRecording || isLoading}
+              style={[
+                navRowStyles.navBtn,
+                (!nextItem || isRecording || isLoading) && navRowStyles.navBtnDisabled,
+              ]}
+              activeOpacity={0.75}
+            >
+              <Text
+                style={[
+                  navRowStyles.navArrow,
+                  (!nextItem || isRecording || isLoading) && navRowStyles.navArrowDisabled,
+                ]}
+              >
+                {'›'}
+              </Text>
+            </TouchableOpacity>
+
+          </View>
+        )}
+
+        {/* ── Transcribing Loading Indicator Overlay ───────────────────────── */}
+        {isLoading && (
+          <View style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            justifyContent: 'center', alignItems: 'center',
+            zIndex: 1000,
+          }}>
+            <View style={readingStyles.loadingModalContent}>
+              <Image
+                source={require('../../../assets/images/Thinking-image.png')}
+                style={readingStyles.loadingModalImage}
+              />
+              <Text style={readingStyles.loadingModalTitle}>Please wait a moment.</Text>
+            </View>
           </View>
         )}
 
@@ -952,15 +1120,15 @@ export default function ReadingActivityScreenPage() {
 
               {/* Title */}
               <Text style={{
-                fontSize: 18, fontFamily: 'DynaPuff-Bold',
+                fontSize: 18, fontFamily: 'Nunito-ExtraBold',
                 color: '#1E1E1E', textAlign: 'center', marginBottom: 8,
               }}>
-                Transcription Failed
+                Network Error
               </Text>
 
               {/* Message */}
               <Text style={{
-                fontSize: 13, fontFamily: 'Satoshi-Regular',
+                fontSize: 14, fontFamily: 'Nunito-Medium',
                 color: '#555', textAlign: 'center', marginBottom: 24, lineHeight: 20,
               }}>
                 {sttErrorMessage}
@@ -975,23 +1143,72 @@ export default function ReadingActivityScreenPage() {
                     backgroundColor: '#F0F4FF', alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: '#3B7FC9', fontFamily: 'Satoshi-Bold', fontSize: 14 }}>Dismiss</Text>
+                  <Text style={{ color: '#008443', fontFamily: 'Nunito-Bold', fontSize: 14 }}>Dismiss</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() => { clearSttError(); handleTryAgain(); }}
                   style={{
                     flex: 1, paddingVertical: 12, borderRadius: 12,
-                    backgroundColor: '#3B7FC9', alignItems: 'center',
+                    backgroundColor: '#008443', alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontFamily: 'Satoshi-Bold', fontSize: 14 }}>Try Again</Text>
+                  <Text style={{ color: '#FFFFFF', fontFamily: 'Nunito-Bold', fontSize: 14 }}>Try Again</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         )}
       </ImageBackground>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
+
+// ─── Navigation Row Styles ────────────────────────────────────────────────────
+// Redesigned to match the illustration:
+//   [◁ Prev]  [🎤 Mic]  [Next ▷]
+// Circular buttons, disabled state when no prev/next item or while recording.
+
+const NAV_BTN_SIZE = 62;
+
+const navRowStyles = StyleSheet.create({
+  wrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 25,
+    paddingHorizontal: 16,
+    gap: 20,
+  },
+  navBtn: {
+    width: NAV_BTN_SIZE,
+    height: NAV_BTN_SIZE,
+    borderRadius: NAV_BTN_SIZE / 2,
+    backgroundColor: '#008443',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#006a35',
+    shadowColor: '#005028',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  navBtnDisabled: {
+    backgroundColor: '#c0e8f2',
+    borderColor: '#84d6f2',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  navArrow: {
+    fontSize: 38,
+    lineHeight: 44,
+    color: '#FFFFFF',
+    fontFamily: 'Nunito-Black',
+    textAlign: 'center',
+  },
+  navArrowDisabled: {
+    color: '#8BA8C4',
+  },
+});

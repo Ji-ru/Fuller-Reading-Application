@@ -23,6 +23,7 @@ import {
   limit,
   serverTimestamp,
   arrayUnion,
+  arrayRemove,
   startAfter,
   Timestamp,
   orderBy,
@@ -544,6 +545,31 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
 };
 
 /* -------------------------------------------------------------
+   LEAVE CLASS
+------------------------------------------------------------- */
+export const leaveClass = async (studentId: string, classId: string) => {
+  try {
+    // Remove student from class - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await updateDoc(classRef, {
+      studentIds: arrayRemove(studentId),
+      updatedAt: serverTimestamp(),
+    });
+
+    // Update student's classCode to empty - MODULAR API
+    const studentRef = doc(db, 'users', studentId);
+    await updateDoc(studentRef, {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to leave class: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
    CREATE MISCUE REPORT
 ------------------------------------------------------------- */
 export const createMiscueReport = async (
@@ -663,7 +689,19 @@ export const getCurrentUser = () => {
 ------------------------------------------------------------- */
 export const logoutUser = async () => {
   try {
-    await signOutFromGoogle(); // Clear native Google session
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      // Check if the user is signed in via Google
+      const isGoogleUser = currentUser.providerData.some(
+        (profile) => profile.providerId === 'google.com',
+      );
+
+      if (isGoogleUser) {
+        await signOutFromGoogle(); // Clear native Google session
+      }
+    }
+
     await signOut(auth); // MODULAR API for Firebase
     return { success: true };
   } catch (error: any) {

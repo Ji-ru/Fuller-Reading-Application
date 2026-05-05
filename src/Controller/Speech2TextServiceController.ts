@@ -9,10 +9,8 @@ import { Buffer } from 'buffer';
 const ASSEMBLYAI_API_KEY = API_KEY;
 const BASE_URL = 'https://api.assemblyai.com/v2';
 
-// DEEPGRAM API, URL AND TYPES
-const DEEPGRAM_API_KEY = DEEPGRAM_API;
-const DEEPGRAM_URL =
-  'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true&utterances=true&utt_split=0.8';
+// DEEPGRAM API, URL and KEY
+const DEEPGRAM_URL = 'https://api.deepgram.com/v1/listen';
 
 type Utterance = {
   transcript: string;
@@ -31,6 +29,33 @@ type DeepgramResponse = {
       }>;
     }>;
   };
+};
+
+const extractTranscript = (data: any): string => {
+  const candidate =
+    data?.text ??
+    data?.transcript ??
+    data?.transcription ??
+    data?.result?.text ??
+    data?.result?.transcript ??
+    data?.results?.[0]?.text ??
+    data?.results?.[0]?.transcript ??
+    data?.[0]?.text ??
+    data?.[0]?.transcript ??
+    (typeof data === 'string' ? data : '');
+
+  return typeof candidate === 'string' ? candidate.trim() : '';
+};
+// I recommend moving query params into a URLSearchParams object for readability
+const getDeepgramUrl = () => {
+  const params = new URLSearchParams({
+    model: 'nova-2', // Nova-2 is currently the fastest/most accurate
+    smart_format: 'true',
+    punctuate: 'true',
+    utterances: 'true',
+    language: 'en-US', // Or 'fil' for Filipino, etc.
+  });
+  return `${DEEPGRAM_URL}?${params.toString()}`;
 };
 
 export const useSpeechToText = () => {
@@ -162,49 +187,272 @@ export const useSpeechToText = () => {
   };
 
   // DEEPGRAM SPEECH TO TEXT IMPLEMENTATION
-  const processAudioWithDeepgram = useCallback(
-    async (
-      audioFile: string,
-    ): Promise<{
-      fulltext: string;
-      utterances: Utterance[];
-    }> => {
+  const processAudioWithDeepgram = useCallback(async (audioFile: string) => {
+    try {
+      setIsLoading(true);
+      console.log('1. Starting Deepgram processing...');
+
+      // Determine mime type
+      const fileExt = audioFile.split('.').pop() || 'wav';
+      const mimeType = fileExt === 'm4a' ? 'audio/mp4' : `audio/${fileExt}`;
+
+      // 1. Read file natively using react-native-fs (Proven to work!)
+      console.log('2. Reading file...');
+      const base64Audio = await readFile(audioFile, 'base64');
+
+      // 2. Convert Base64 to Binary Buffer
+      console.log('3. Converting to buffer...');
+      const binaryAudio = Buffer.from(base64Audio, 'base64');
+
+      // 3. Send raw binary to Deepgram
+      console.log('4. Sending to Deepgram API...');
+      const response = await fetch(getDeepgramUrl(), {
+        method: 'POST',
+        headers: {
+          Authorization: `Token ${DEEPGRAM_API.trim()}`,
+          // You can use the specific mimeType, or fallback to octet-stream
+          'Content-Type': mimeType,
+        },
+        body: binaryAudio,
+      });
+
+      console.log('5. Status received:', response.status);
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Deepgram API failed (${response.status}): ${errText}`);
+      }
+
+      const data: DeepgramResponse = await response.json();
+      const alt = data?.results?.channels?.[0]?.alternatives?.[0];
+
+      console.log('6. Success!');
+      return {
+        fulltext: alt?.transcript?.trim() || 'No speech detected',
+        utterances: alt?.utterances || [],
+      };
+    } catch (error: any) {
+      setSttErrorVisible(true);
+      setSttErrorMessage(
+        error?.message
+          ? `Transcription failed: ${error.message}`
+          : 'Failed to transcribe audio. Please check your internet connection and try again.',
+      );
+      console.log('STT Error Deepgram:', error.message);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // WAV2VEC2 SPEECH TO TEXT IMPLEMENTATION
+  const processAudioWithHubert = useCallback(
+    async (audioFile: string): Promise<string> => {
       try {
         setIsLoading(true);
 
-        const base64audio = await readFile(audioFile, 'base64');
-        const binaryAudio = Buffer.from(base64audio, 'base64');
+        const formData = new FormData();
+        const fileUri = audioFile.startsWith('file://')
+          ? audioFile
+          : `file://${audioFile}`;
 
-        const response = await fetch(DEEPGRAM_URL, {
-          method: 'POST',
-          headers: {
-            authorization: `Token ${DEEPGRAM_API_KEY}`,
-            'Content-Type': 'application/octet-stream',
+        // ✅ Field name "file" matches HuggingFace Space endpoint
+        formData.append('file', {
+          uri: fileUri,
+          name: 'audio.wav',
+          type: 'audio/wav',
+        } as any);
+
+        const response = await fetch(
+          'https://cisckids-hubertapi.hf.space/transcribe',
+          {
+            method: 'POST',
+            // ✅ No Content-Type header — fetch auto-sets multipart boundary
+            headers: {
+              Accept: 'application/json',
+            },
+            body: formData,
           },
-          body: binaryAudio,
-        });
+        );
+
+        // ✅ Read raw text first so errors are always readable
+        const responseText = await response.text();
 
         if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(`Upload failed: ${errText}`);
+          throw new Error(
+            `Upload failed ${response.status}: ${responseText.substring(
+              0,
+              200,
+            )}`,
+          );
         }
 
-        const data: DeepgramResponse = await response.json();
-        const alt = data?.results?.channels?.[0]?.alternatives?.[0];
-        const fulltext = alt?.transcript?.trim() || '';
-        const utterances = alt?.utterances || [];
+        let data: any = responseText;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          // Some endpoints can return plain text; keep raw body as fallback.
+        }
+        const transcript = extractTranscript(data);
 
-        return { fulltext: fulltext || 'No speech detected', utterances };
+        if (!transcript?.trim()) {
+          throw new Error('Walang natukoy na pagbigkas!');
+        }
+
+        return transcript;
       } catch (error: any) {
-        // Surface the error through state instead of Alert so the calling
-        // screen can show a styled, dismissible modal with retry support.
         setSttErrorVisible(true);
         setSttErrorMessage(
           error?.message
             ? `Transcription failed: ${error.message}`
             : 'Failed to transcribe audio. Please check your internet connection and try again.',
         );
-        console.log('STT Error: ' + error.message);
+        console.log('STT Error (Wav2Vec2): ' + error.message);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  // WAV2VEC2 SPEECH TO TEXT IMPLEMENTATION
+  const processAudioWithWav2Vec2 = useCallback(
+    async (audioFile: string): Promise<string> => {
+      try {
+        setIsLoading(true);
+
+        const formData = new FormData();
+        const fileUri = audioFile.startsWith('file://')
+          ? audioFile
+          : `file://${audioFile}`;
+
+        // ✅ Field name "file" matches HuggingFace Space endpoint
+        formData.append('file', {
+          uri: fileUri,
+          name: 'audio.wav',
+          type: 'audio/wav',
+        } as any);
+
+        const response = await fetch(
+          'https://cisckids-wav2vec2api.hf.space/transcribe',
+          {
+            method: 'POST',
+            // ✅ No Content-Type header — fetch auto-sets multipart boundary
+            headers: {
+              Accept: 'application/json',
+            },
+            body: formData,
+          },
+        );
+
+        // ✅ Read raw text first so errors are always readable
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error(
+            `Upload failed ${response.status}: ${responseText.substring(
+              0,
+              200,
+            )}`,
+          );
+        }
+
+        let data: any = responseText;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          // Some endpoints can return plain text; keep raw body as fallback.
+        }
+        const transcript = extractTranscript(data);
+
+        if (!transcript?.trim()) {
+          throw new Error('Walang natukoy na pagbigkas!');
+        }
+
+        return transcript;
+      } catch (error: any) {
+        setSttErrorVisible(true);
+        setSttErrorMessage(
+          error?.message
+            ? `Transcription failed: ${error.message}`
+            : 'Failed to transcribe audio. Please check your internet connection and try again.',
+        );
+        console.log('STT Error (Wav2Vec2): ' + error.message);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  // WHISPER SPEECH TO TEXT IMPLEMENTATION
+  const processAudioWithWhisper = useCallback(
+    async (audioFile: string): Promise<string> => {
+      try {
+        setIsLoading(true);
+
+        const formData = new FormData();
+        const fileExt = audioFile.split('.').pop() || 'wav';
+        const mimeType = fileExt === 'm4a' ? 'audio/mp4' : `audio/${fileExt}`;
+        const fileUri = audioFile.startsWith('file://')
+          ? audioFile
+          : `file://${audioFile}`;
+
+        // ✅ Field name "file" matches HuggingFace Space endpoint
+        formData.append('file', {
+          uri: fileUri,
+          name: `audio.${fileExt}`,
+          type: mimeType,
+        } as any);
+
+        const response = await fetch(
+          'https://cisckids-whisperapi.hf.space/transcribe',
+          {
+            method: 'POST',
+            // ✅ No Content-Type header — fetch auto-sets multipart boundary
+            headers: {
+              Accept: 'application/json',
+            },
+            body: formData,
+          },
+        );
+
+        // ✅ Read raw text first so errors are always readable
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error(
+            `Upload failed ${response.status}: ${responseText.substring(
+              0,
+              200,
+            )}`,
+          );
+        }
+
+        let data: any = responseText;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          // Some endpoints can return plain text; keep raw body as fallback.
+        }
+        const transcript = extractTranscript(data);
+
+        if (!transcript?.trim()) {
+          console.log('Whisper Unparsed API Response:', JSON.stringify(data));
+          throw new Error('No Speech Detected!');
+        }
+
+        return transcript;
+      } catch (error: any) {
+        setSttErrorVisible(true);
+        setSttErrorMessage(
+          error?.message
+            ? `Transcription failed: ${error.message}`
+            : 'Failed to transcribe audio. Please check your internet connection and try again.',
+        );
+        console.log('STT Error (Whisper): ' + error.message);
         throw error;
       } finally {
         setIsLoading(false);
@@ -217,6 +465,9 @@ export const useSpeechToText = () => {
     isLoading,
     processAudioWithAssemblyAI,
     processAudioWithDeepgram,
+    processAudioWithWav2Vec2,
+    processAudioWithWhisper,
+    processAudioWithHubert,
     getSimulatedResponse,
     // ── STT error modal ──────────────────────────────────────────────────────
     sttErrorVisible,

@@ -1,5 +1,5 @@
 import React, { JSX, useEffect, useRef } from 'react';
-import { View, Text, Image, ScrollView, Animated } from 'react-native';
+import { View, Text, Image, ScrollView, Animated, StyleSheet } from 'react-native';
 import Svg, {
   Circle,
   Ellipse,
@@ -29,22 +29,22 @@ import { FeedbackResult } from './PassageFeedback';
 const P = {
   letterFill: '#84D6F2',
   letterDark: '#4DB8DF',
-  letterStroke: '#38B6FF',
+  letterStroke: '#2ca96a',
   letterShade: '#5EC5E5',
   letterHilit: '#B8EDFB',
   eyeBase: '#57b8b3',
   eyeBaseDark: '#2C6975',
   eyeWhite: '#FFFFFF',
-  iris: '#1A3F6F',
-  pupil: '#0D1B2A',
+  iris: '#008443',
+  pupil: '#005028',
   shine: '#FFFFFF',
   arm: '#57b8b3',
   armStroke: '#2C6975',
   leg: '#57b8b3',
   legStroke: '#2C6975',
-  shoe: '#3B7FC9',
-  shoeStroke: '#2455A4',
-  shoeHilit: '#7FB3E8',
+  shoe: '#008443',
+  shoeStroke: '#006a35',
+  shoeHilit: '#2ca96a',
   blush: '#FFB3B3',
   shadow: 'rgba(0,0,0,0.10)',
 };
@@ -68,100 +68,97 @@ const DOTS: Array<{ cx: number; cy: number; r: number }> = [
   { cx: 155, cy: 240, r: 6 },
 ];
 
-// ─── AlphabetCharacter ────────────────────────────────────────────────────────
+// ─── Alphabet sizes ────────────────────────────────────────────────────────────
+const ALPHA_CARD_WIDTH = 300;
+const ALPHA_CARD_HEIGHT = 280;
+const ALPHA_FONT = 160; // same size for both glyphs — baseline stays level
+
+const alphabetCardStyle = StyleSheet.create({
+  card: {
+    width: ALPHA_CARD_WIDTH,
+    height: ALPHA_CARD_HEIGHT,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    borderWidth: 4,
+    borderColor: '#008443',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // shadow
+    elevation: 8,
+    shadowColor: '#008443',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.20,
+    shadowRadius: 10,
+    marginTop: 30,
+    marginBottom: 24,
+    alignSelf: 'center',
+  },
+  letterRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline', // keeps both glyphs on the same text baseline
+    justifyContent: 'center',
+    gap: 8,
+  },
+  upper: {
+    fontSize: ALPHA_FONT,
+    fontFamily: 'Andika-Bold',
+    color: '#008443',
+  },
+  separator: {
+    fontSize: ALPHA_FONT,
+    fontFamily: 'Andika-Bold',
+    color: '#C8E6C9',
+  },
+  lower: {
+    fontSize: ALPHA_FONT,
+    fontFamily: 'Andika-Bold',
+    color: '#2ca96a',
+  },
+});
+
 interface AlphabetCharacterProps {
   letter: string;
 }
 
 const AlphabetCharacter: React.FC<AlphabetCharacterProps> = ({ letter }) => {
-  const lower = letter.toLowerCase();
-  const upper = letter.toUpperCase();
-
-  const EYE_Y = 78;
-  const EYE_L_X = 114;
-  const EYE_R_X = 158;
-  const EYE_BUMP_R = 22;
-  const EYE_WHITE_R = 18;
-  const IRIS_R = 10;
-  const PUPIL_R = 5.5;
-
   return (
-    <View style={readingStyles.wordContainer}>
-      <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-        <Defs>
-          <LinearGradient id="letterGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={P.letterHilit} />
-            <Stop offset="0.5" stopColor={P.letterFill} />
-            <Stop offset="1" stopColor={P.letterDark} />
-          </LinearGradient>
-          <LinearGradient id="shoeGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={P.shoeHilit} />
-            <Stop offset="1" stopColor={P.shoe} />
-          </LinearGradient>
-          <LinearGradient id="eyeBumpGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#7ACECB" />
-            <Stop offset="1" stopColor={P.eyeBaseDark} />
-          </LinearGradient>
-        </Defs>
+    <View style={alphabetCardStyle.card}>
+      <View style={alphabetCardStyle.letterRow}>
+        <Text style={alphabetCardStyle.upper} allowFontScaling={false}>
+          {letter.toUpperCase()}
+        </Text>
+        <Text style={alphabetCardStyle.separator} allowFontScaling={false}>
+          {''}
+        </Text>
+        <Text style={alphabetCardStyle.lower} allowFontScaling={false}>
+          {letter.toLowerCase()}
+        </Text>
+      </View>
+    </View>
+  );
+};
 
-        <Ellipse cx={CX} cy={H - 14} rx={72} ry={14} fill={P.shadow} />
 
-        <Rect x={94} y={242} width={26} height={34} rx={11} fill={P.leg} stroke={P.legStroke} strokeWidth={2.5} />
-        <Rect x={158} y={242} width={26} height={34} rx={11} fill={P.leg} stroke={P.legStroke} strokeWidth={2.5} />
+interface WordCharacterProps {
+  word: string;
+}
 
-        <Ellipse cx={102} cy={278} rx={26} ry={12} fill="url(#shoeGrad)" stroke={P.shoeStroke} strokeWidth={2} />
-        <Ellipse cx={95} cy={274} rx={8} ry={3.5} fill="#FFFFFF" opacity={0.3} />
-
-        <Ellipse cx={172} cy={278} rx={26} ry={12} fill="url(#shoeGrad)" stroke={P.shoeStroke} strokeWidth={2} />
-        <Ellipse cx={165} cy={274} rx={8} ry={3.5} fill="#FFFFFF" opacity={0.3} />
-
-        <Ellipse cx={42} cy={168} rx={26} ry={13} fill={P.arm} stroke={P.armStroke} strokeWidth={2.5} transform="rotate(25 42 168)" />
-        <Circle cx={22} cy={181} r={13} fill={P.arm} stroke={P.armStroke} strokeWidth={2.5} />
-        <Circle cx={17} cy={178} r={2.5} fill={P.armStroke} opacity={0.35} />
-        <Circle cx={23} cy={176} r={2.5} fill={P.armStroke} opacity={0.35} />
-
-        <Ellipse cx={238} cy={168} rx={26} ry={13} fill={P.arm} stroke={P.armStroke} strokeWidth={2.5} transform="rotate(-25 238 168)" />
-        <Circle cx={258} cy={181} r={13} fill={P.arm} stroke={P.armStroke} strokeWidth={2.5} />
-        <Circle cx={253} cy={178} r={2.5} fill={P.armStroke} opacity={0.35} />
-        <Circle cx={259} cy={176} r={2.5} fill={P.armStroke} opacity={0.35} />
-
-        <SvgText x={LETTER_X} y={LETTER_Y} fontSize={LETTER_SIZE} fontFamily="DynaPuff-Bold" textAnchor="middle" fill="none" stroke="#3d71d9" strokeWidth={20} strokeLinejoin="round" strokeLinecap="round">
-          {lower}
-        </SvgText>
-
-        <SvgText x={LETTER_X} y={LETTER_Y} fontSize={LETTER_SIZE} fontFamily="DynaPuff-Bold" textAnchor="middle" fill="url(#letterGrad)" stroke={P.letterStroke} strokeWidth={5} strokeLinejoin="round">
-          {lower}
-        </SvgText>
-
-        {DOTS.map((dot, i) => (
-          <Circle key={i} cx={dot.cx} cy={dot.cy} r={dot.r} fill={P.letterDark} opacity={0.45} />
-        ))}
-
-        {/* Eye bumps */}
-        <Circle cx={EYE_L_X} cy={EYE_Y} r={EYE_BUMP_R} fill="url(#eyeBumpGrad)" />
-        <Circle cx={EYE_R_X} cy={EYE_Y} r={EYE_BUMP_R} fill="url(#eyeBumpGrad)" />
-
-        {/* Left eye */}
-        <Circle cx={EYE_L_X} cy={EYE_Y} r={EYE_WHITE_R} fill={P.eyeWhite} />
-        <Circle cx={EYE_L_X + 2} cy={EYE_Y + 2} r={IRIS_R} fill={P.iris} />
-        <Circle cx={EYE_L_X + 2} cy={EYE_Y + 2} r={PUPIL_R} fill={P.pupil} />
-        <Circle cx={EYE_L_X + 5} cy={EYE_Y - 2} r={3.5} fill={P.shine} />
-        <Circle cx={EYE_L_X - 1} cy={EYE_Y + 5} r={1.5} fill={P.shine} opacity={0.6} />
-
-        {/* Right eye */}
-        <Circle cx={EYE_R_X} cy={EYE_Y} r={EYE_WHITE_R} fill={P.eyeWhite} />
-        <Circle cx={EYE_R_X + 2} cy={EYE_Y + 2} r={IRIS_R} fill={P.iris} />
-        <Circle cx={EYE_R_X + 2} cy={EYE_Y + 2} r={PUPIL_R} fill={P.pupil} />
-        <Circle cx={EYE_R_X + 5} cy={EYE_Y - 2} r={3.5} fill={P.shine} />
-        <Circle cx={EYE_R_X - 1} cy={EYE_Y + 5} r={1.5} fill={P.shine} opacity={0.6} />
-
-        {/* Uppercase badge */}
-        <Circle cx={228} cy={52} r={26} fill={P.shoe} stroke={P.shoeStroke} strokeWidth={2.5} />
-        <Circle cx={220} cy={44} r={8} fill="#FFFFFF" opacity={0.2} />
-        <SvgText x={228} y={61} fontSize={26} fontFamily="DynaPuff-Bold" textAnchor="middle" fill="#FFFFFF">
-          {upper}
-        </SvgText>
-      </Svg>
+export const WordCharacter: React.FC<WordCharacterProps> = ({ word }) => {
+  return (
+    <View style={[readingStyles.wordContainer, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 }]}>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        style={{
+          fontSize: 160,
+          fontFamily: 'Andika-Regular',
+          color: '#008443',
+          textAlign: 'center',
+          width: '100%'
+        }}
+      >
+        {word}
+      </Text>
     </View>
   );
 };
@@ -180,13 +177,119 @@ export const getPassageGreetingContent = (
   accuracy: number,
 ): PassageGreetingContent => {
   if (accuracy >= 90) {
-    return { type: 'passageSuccess', title: 'Excellent Reading!', message: 'You read with 90%+ accuracy! Amazing work! 🎉' };
+    return { type: 'passageSuccess', title: 'Excellent Reading!', message: 'Amazing!' };
   }
   if (accuracy >= 50) {
-    return { type: 'goodJob', title: 'Good Job!', message: 'Keep it up. You can do it better!' };
+    return { type: 'goodJob', title: 'Good Job!', message: 'Keep it up!' };
   }
-  return { type: 'tryAgain', title: "Let's Try Again!", message: 'Practice makes perfect! Give it another try.' };
+  return { type: 'tryAgain', title: "Try Again!", message: 'Oops! Try again!' };
 };
+
+// ─── WordProgressDots ────────────────────────────────────────────────────────
+
+const MAX_VISIBLE_DOTS = 10;
+
+const WordProgressDots: React.FC<{ total: number; current: number }> = ({
+  total,
+  current,
+}) => {
+  if (total <= 1) return null;
+
+  if (total > MAX_VISIBLE_DOTS) {
+    return (
+      <View style={dotStyles.counterWrap}>
+        <Text style={dotStyles.counterText}>
+          {current + 1} / {total}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={dotStyles.row}>
+      {Array.from({ length: total }).map((_, i) => {
+        const isDone = i < current;
+        const isActive = i === current;
+        return (
+          <React.Fragment key={i}>
+            <View
+              style={[
+                dotStyles.dot,
+                isDone && dotStyles.dotDone,
+                isActive && dotStyles.dotActive,
+              ]}
+            />
+            {i < total - 1 && (
+              <View style={[dotStyles.line, isDone && dotStyles.lineDone]} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </View>
+  );
+};
+
+const dotStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    marginBottom: 4,
+    paddingHorizontal: 8,
+  },
+  dot: {
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: '#c0e8f2',
+    borderWidth: 2.5,
+    borderColor: '#008443',
+  },
+  dotDone: {
+    backgroundColor: '#008443',
+    borderColor: '#006a35',
+  },
+  dotActive: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#008443',
+    borderColor: '#008443',
+    shadowColor: '#008443',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  line: {
+    height: 3,
+    width: 16,
+    backgroundColor: '#c0e8f2',
+    marginHorizontal: 2,
+    borderRadius: 2,
+  },
+  lineDone: {
+    backgroundColor: '#008443',
+  },
+  counterWrap: {
+    marginTop: 14,
+    marginBottom: 4,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 132, 67, 0.12)',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 5,
+    borderWidth: 1.5,
+    borderColor: '#008443',
+  },
+  counterText: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 15,
+    color: '#008443',
+    letterSpacing: 0.5,
+  },
+});
 
 // ─── PassageDisplay ───────────────────────────────────────────────────────────
 
@@ -204,6 +307,11 @@ interface PassageDisplayProps {
   isTextCorrect?: boolean;
   feedback?: string;
   onTryAgain?: () => void;
+  onNextItem?: () => void;
+  hasNextItem?: boolean;
+  // ── Word progress indicator ──────────────────────────────────────────────
+  currentWordIndex?: number;   // 0-based index of the current word in the lesson
+  lessonWordCount?: number;    // total number of words in the current lesson
 }
 
 export const PassageDisplay: React.FC<PassageDisplayProps> = ({
@@ -219,14 +327,18 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   isTextCorrect = false,
   feedback = '',
   onTryAgain,
+  onNextItem,
+  hasNextItem,
+  currentWordIndex = 0,
+  lessonWordCount = 1,
 }) => {
 
   const formatText = (text: string) => text.split('\n').map((line, index) => (
-    <Text key={index} style={readingStyles.textLine}>{line}</Text>
+    <Text key={index} style={[readingStyles.textLine]}>{line}</Text>
   ));
 
   const extractPunctuation = (word: string): { word: string; punctuation: string } => {
-    const match = word.match(/^([a-zA-Z0-9]+)([.,!?;:'"'"]+)?$/);
+    const match = word.match(/^([a-zA-Z0-9]+)([.,!?;:'"“”'"]+)?$/);
     if (match) return { word: match[1] || word, punctuation: match[2] || '' };
     return { word, punctuation: '' };
   };
@@ -256,6 +368,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
     const renderedWords: JSX.Element[] = [];
     let keyCounter = 0;
+    const errorFont = type === 'passage' ? 'Nunito-Bold' : 'DynaPuff-Bold';
 
     originalWords.forEach((originalWord, index) => {
       const { word: cleanWord, punctuation } = extractPunctuation(originalWord);
@@ -263,19 +376,19 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
       if (posData?.insertions?.length) {
         posData.insertions.forEach(ins => {
-          renderedWords.push(<Text key={`ins-${keyCounter++}`}><Text style={{ color: '#1A81FF', fontFamily: 'Comfortaa-VariableFont_wght', fontWeight: 'bold' }}>{ins.spoken}</Text></Text>);
+          renderedWords.push(<Text key={`ins-${keyCounter++}`}><Text style={{ color: '#2ca96a', fontFamily: errorFont, fontWeight: 'bold' }}>{ins.spoken}</Text></Text>);
           renderedWords.push(<Text key={`spi-${keyCounter++}`}> </Text>);
         });
       }
 
       if (posData?.repetition) {
-        renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#BF00DD', fontFamily: 'Comfortaa-VariableFont_wght', fontWeight: 'bold' }}>{posData.repetition.spoken}</Text>{punctuation && <Text>{punctuation}</Text>}</Text>);
+        renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#BF00DD', fontFamily: errorFont, fontWeight: 'bold' }}>{posData.repetition.spoken}</Text>{punctuation && <Text style={{ fontFamily: errorFont }}>{punctuation}</Text>}</Text>);
       } else if (posData?.substitution) {
-        renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#FF2726', fontFamily: 'Comfortaa-VariableFont_wght', fontWeight: 'bold' }}>{cleanWord}</Text>{punctuation && <Text>{punctuation}</Text>}</Text>);
+        renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#FF2726', fontFamily: errorFont, fontWeight: 'bold' }}>{cleanWord}</Text>{punctuation && <Text style={{ fontFamily: errorFont }}>{punctuation}</Text>}</Text>);
       } else if (posData?.omission) {
-        renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#FF941A', fontFamily: 'Comfortaa-VariableFont_wght', fontWeight: 'bold' }}>{cleanWord}</Text>{punctuation && <Text>{punctuation}</Text>}</Text>);
+        renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#FF941A', fontFamily: errorFont, fontWeight: 'bold' }}>{cleanWord}</Text>{punctuation && <Text style={{ fontFamily: errorFont }}>{punctuation}</Text>}</Text>);
       } else {
-        renderedWords.push(<Text key={`w-${index}`}>{originalWord}</Text>);
+        renderedWords.push(<Text key={`w-${index}`} style={{ fontFamily: errorFont }}>{originalWord}</Text>);
       }
 
       if (index < originalWords.length - 1) {
@@ -283,7 +396,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       }
     });
 
-    return <Text style={readingStyles.textLine}>{renderedWords}</Text>;
+    return <Text style={[readingStyles.textLine, { fontFamily: type === 'passage' ? 'Nunito-Bold' : 'DynaPuff-Bold' }]}>{renderedWords}</Text>;
   };
 
   const renderTextContent = () => {
@@ -306,6 +419,8 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
             spokenText={spokenText}
             miscues={miscues}
             onTryAgain={onTryAgain ?? (() => { })}
+            onNextItem={onNextItem}
+            hasNextItem={hasNextItem}
             type="alphabet"
             accuracy={accuracyString}
             feedback={feedback}
@@ -317,10 +432,6 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     return (
       <View style={readingStyles.scene}>
         <AlphabetCharacter letter={material.letter} />
-        <View style={readingStyles.promptRow}>
-          <Text style={readingStyles.promptEmoji}>🔊</Text>
-          <Text style={readingStyles.promptText}>Say this letter!</Text>
-        </View>
       </View>
     );
   }
@@ -346,6 +457,8 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
             spokenText={spokenText}
             miscues={miscues}
             onTryAgain={onTryAgain ?? (() => { })}
+            onNextItem={onNextItem}
+            hasNextItem={hasNextItem}
             type="word"
             accuracy={accuracyString}
             feedback={feedback}
@@ -356,44 +469,17 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     }
 
     return (
-      <View style={readingStyles.wordSceneWrapper}>
-
+      <View style={[readingStyles.wordSceneWrapper, { justifyContent: 'center', alignItems: 'center' }]}>
         {/* Decorative floating bubbles behind the card */}
         <View style={readingStyles.bubbleTopLeft} pointerEvents="none" />
         <View style={readingStyles.bubbleTopRight} pointerEvents="none" />
         <View style={readingStyles.bubbleBottomRight} pointerEvents="none" />
 
-        {/* Main card */}
-        <View style={readingStyles.wordCard}>
-          {/* Letter tiles row */}
-          <View style={readingStyles.letterTilesRow}>
-            {letters.map((char, i) => (
-              <View key={i} style={readingStyles.letterTile}>
-                {/* Tile shine */}
-                <View style={readingStyles.letterTileShine} />
-                <Text style={readingStyles.letterTileText}>{char}</Text>
-              </View>
-            ))}
-          </View>
+        <WordCharacter word={word} />
 
-          {/* Worm / wave decoration between tiles and the footer */}
-          <View style={readingStyles.wordCardWave}>
-            <Svg height={18} width={260} viewBox="0 0 260 18">
-              <Path
-                d="M0 9 Q13 0 26 9 Q39 18 52 9 Q65 0 78 9 Q91 18 104 9 Q117 0 130 9 Q143 18 156 9 Q169 0 182 9 Q195 18 208 9 Q221 0 234 9 Q247 18 260 9"
-                fill="none"
-                stroke="#84D6F2"
-                strokeWidth={3}
-                strokeLinecap="round"
-              />
-            </Svg>
-          </View>
-
-          {/* Footer hint */}
-          <View style={readingStyles.wordCardFooter}>
-            <Text style={readingStyles.wordCardFooterText}>Tap 🎤 and say the word out loud!</Text>
-          </View>
-        </View>
+        {/* ── Word Progress Dots ─────────────────────────────────────────── */}
+        {/* Renders below the word card; fills left-to-right as navigation advances */}
+        <WordProgressDots current={currentWordIndex} total={lessonWordCount} />
       </View>
     );
   }
@@ -406,8 +492,8 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       )}
       {!isRecording && isReadingCompleted && passageGreeting && (
         <Svg height={35} width={350}>
-          <SvgText x={180} y={25} fontSize={30} fontFamily="DynaPuff-Bold" textAnchor="middle" fill="none" stroke="#FFFFFF" strokeWidth={6} strokeLinejoin="round">{passageGreeting.title}</SvgText>
-          <SvgText x={180} y={25} fontSize={30} fontFamily="DynaPuff-Bold" textAnchor="middle" fill="#7A5A2B">{passageGreeting.title}</SvgText>
+          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="none" stroke="#c0e8f2" strokeWidth={6} strokeLinejoin="round">{passageGreeting.title}</SvgText>
+          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="#008443">{passageGreeting.title}</SvgText>
         </Svg>
       )}
 

@@ -1,13 +1,28 @@
 import { StyleSheet } from 'react-native';
 import { sw, sh, sf } from '../Utils/responsive';
 
+const C = {
+  bg: '#ECFBFF',
+  primary: '#1B5E20',
+  primaryLight: '#81C784',
+  tabBg: '#c0e8f2',
+  accent: '#38B6FF',
+  card: '#FFFFFF',
+  ink: '#1B2B22',
+  inkLight: '#6B8E6B',
+  border: '#E5E7EB',
+  inputBg: '#F3F8FF',
+  green: '#2CA96A',
+  greenBg: '#D4F1E8',
+};
+
 const historyStyles = StyleSheet.create({
   // ==========================================
   // BASE CONTAINER & LAYOUT
   // ==========================================
   container: {
     flex: 1,
-    backgroundColor: '#ECFBFF',
+    backgroundColor: C.bg,
   },
   insideContainer: {
     flex: 1,
@@ -34,33 +49,35 @@ const historyStyles = StyleSheet.create({
     justifyContent: 'space-around',
     marginHorizontal: sw(16),
     marginBottom: sh(16),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: C.card,
     borderRadius: sw(16),
     paddingVertical: sh(14),
     paddingHorizontal: sw(10),
     elevation: 3,
-    shadowColor: '#3B7FC9',
+    shadowColor: C.primary,
     shadowOffset: { width: 0, height: sw(3) },
     shadowOpacity: 0.10,
     shadowRadius: sw(8),
+    borderWidth: 2,
+    borderColor: C.green,
   },
   statItem: {
     alignItems: 'center',
   },
   statValue: {
     fontSize: sf(22),
-    fontFamily: 'Comfortaa-Bold',
-    color: '#3B7FC9',
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
   },
   statLabel: {
     fontSize: sf(11),
-    fontFamily: 'Comfortaa-Medium',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
     marginTop: sh(2),
   },
   statDivider: {
     width: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: C.border,
     marginVertical: sh(4),
   },
 
@@ -73,8 +90,8 @@ const historyStyles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: sf(16),
-    fontFamily: 'Comfortaa-Bold',
-    color: '#3B7FC9',
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
     marginBottom: sh(12),
   },
 
@@ -82,7 +99,7 @@ const historyStyles = StyleSheet.create({
   // PASSAGE CARD (Accordion Header)
   // ==========================================
   passageCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: C.card,
     borderRadius: sw(16),
     marginBottom: sh(12),
     elevation: 3,
@@ -95,7 +112,7 @@ const historyStyles = StyleSheet.create({
     borderColor: 'transparent',
   },
   passageCardExpanded: {
-    borderColor: '#3B7FC9',
+    borderColor: C.green,
   },
   passageHeader: {
     flexDirection: 'row',
@@ -106,7 +123,7 @@ const historyStyles = StyleSheet.create({
     width: sw(48),
     height: sw(48),
     borderRadius: sw(24),
-    backgroundColor: '#bcdcff',
+    backgroundColor: C.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: sw(12),
@@ -119,28 +136,28 @@ const historyStyles = StyleSheet.create({
   },
   passageTitle: {
     fontSize: sf(15),
-    fontFamily: 'Comfortaa-Bold',
-    color: '#1F2937',
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
     marginBottom: sh(3),
   },
   passageAttempts: {
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Medium',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
   },
   passageArrowContainer: {
     width: sw(32),
     height: sw(32),
     borderRadius: sw(16),
-    backgroundColor: '#bcdcff',
+    backgroundColor: C.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: sw(8),
   },
   passageArrow: {
     fontSize: sf(14),
-    color: '#3B7FC9',
-    fontFamily: 'Comfortaa-Bold',
+    color: C.primary,
+    fontFamily: 'Nunito-Bold',
   },
 
   // ==========================================
@@ -151,12 +168,12 @@ const historyStyles = StyleSheet.create({
     paddingBottom: sh(12),
   },
   reportCard: {
-    backgroundColor: '#F8FBFF',
+    backgroundColor: C.inputBg,
     borderRadius: sw(14),
     padding: sw(14),
     marginBottom: sh(10),
     borderWidth: 1,
-    borderColor: '#E0ECFA',
+    borderColor: C.primaryLight,
   },
   reportDateRow: {
     flexDirection: 'row',
@@ -169,19 +186,19 @@ const historyStyles = StyleSheet.create({
   },
   reportDate: {
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Bold',
-    color: '#3B7FC9',
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
     flex: 1,
   },
   reportAttemptBadge: {
-    backgroundColor: '#3B7FC9',
+    backgroundColor: C.primary,
     borderRadius: sw(10),
     paddingHorizontal: sw(10),
     paddingVertical: sh(2),
   },
   reportAttemptText: {
     fontSize: sf(11),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#FFFFFF',
   },
 
@@ -197,7 +214,7 @@ const historyStyles = StyleSheet.create({
   metricCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: C.card,
     borderRadius: sw(12),
     padding: sw(10),
     alignItems: 'center',
@@ -207,7 +224,7 @@ const historyStyles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: sw(3),
     borderWidth: 1,
-    borderColor: '#F0F4FA',
+    borderColor: C.primaryLight,
   },
   metricIcon: {
     fontSize: sf(20),
@@ -215,13 +232,13 @@ const historyStyles = StyleSheet.create({
   },
   metricValue: {
     fontSize: sf(16),
-    fontFamily: 'Comfortaa-Bold',
-    color: '#1F2937',
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
   },
   metricLabel: {
     fontSize: sf(10),
-    fontFamily: 'Comfortaa-Medium',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
     marginTop: sh(2),
     textAlign: 'center',
   },
@@ -231,13 +248,13 @@ const historyStyles = StyleSheet.create({
   // ==========================================
   miscueSection: {
     borderTopWidth: 1,
-    borderTopColor: '#E0ECFA',
+    borderTopColor: C.primaryLight,
     paddingTop: sh(10),
     marginTop: sh(4),
   },
   miscueSectionTitle: {
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#374151',
     marginBottom: sh(8),
   },
@@ -245,11 +262,11 @@ const historyStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: sh(6),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: C.card,
     borderRadius: sw(10),
     padding: sw(10),
     borderWidth: 1,
-    borderColor: '#F0F4FA',
+    borderColor: C.primaryLight,
   },
   miscueTag: {
     borderRadius: sw(8),
@@ -259,28 +276,20 @@ const historyStyles = StyleSheet.create({
     minWidth: sw(85),
     alignItems: 'center',
   },
-  miscueTagSubstitution: {
-    backgroundColor: '#FEF3C7',
-  },
-  miscueTagOmission: {
-    backgroundColor: '#FDE2E2',
-  },
-  miscueTagInsertion: {
-    backgroundColor: '#D1FAE5',
-  },
-  miscueTagRepetition: {
-    backgroundColor: '#E0E7FF',
-  },
+  miscueTagSubstitution: { backgroundColor: '#FEF3C7' },
+  miscueTagOmission:     { backgroundColor: '#FDE2E2' },
+  miscueTagInsertion:    { backgroundColor: '#D1FAE5' },
+  miscueTagRepetition:   { backgroundColor: '#E0E7FF' },
   miscueTagText: {
     fontSize: sf(11),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#374151',
   },
   miscueDetail: {
     flex: 1,
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Regular',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Regular',
+    color: C.inkLight,
     lineHeight: sf(18),
   },
 
@@ -290,7 +299,7 @@ const historyStyles = StyleSheet.create({
   perfectBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D4F1E8',
+    backgroundColor: C.greenBg,
     borderRadius: sw(12),
     padding: sw(12),
     marginTop: sh(4),
@@ -303,8 +312,8 @@ const historyStyles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Bold',
-    color: '#2CA96A',
+    fontFamily: 'Nunito-Bold',
+    color: C.green,
   },
 
   // ==========================================
@@ -318,8 +327,8 @@ const historyStyles = StyleSheet.create({
   loadingText: {
     marginTop: sh(14),
     fontSize: sf(15),
-    fontFamily: 'Comfortaa-Medium',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
   },
 
   // ==========================================
@@ -335,7 +344,7 @@ const historyStyles = StyleSheet.create({
     width: sw(120),
     height: sw(120),
     borderRadius: sw(60),
-    backgroundColor: '#E0ECFA',
+    backgroundColor: C.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: sh(24),
@@ -345,33 +354,33 @@ const historyStyles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: sf(20),
-    fontFamily: 'Comfortaa-Bold',
-    color: '#1F2937',
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
     marginBottom: sh(10),
     textAlign: 'center',
   },
   emptyMessage: {
     fontSize: sf(14),
-    fontFamily: 'Comfortaa-Regular',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Regular',
+    color: C.inkLight,
     textAlign: 'center',
     lineHeight: sf(22),
     marginBottom: sh(28),
   },
   emptyButton: {
-    backgroundColor: '#3B7FC9',
+    backgroundColor: C.primary,
     borderRadius: sw(14),
     paddingVertical: sh(14),
     paddingHorizontal: sw(32),
     elevation: 4,
-    shadowColor: '#3B7FC9',
+    shadowColor: C.primary,
     shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.3,
     shadowRadius: sw(8),
   },
   emptyButtonText: {
     fontSize: sf(15),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#FFFFFF',
   },
 
@@ -387,8 +396,8 @@ const historyStyles = StyleSheet.create({
   viewMoreText: {
     textAlign: 'center',
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Medium',
-    color: '#3B7FC9',
+    fontFamily: 'Nunito-Medium',
+    color: C.primary,
     marginTop: sh(6),
     marginBottom: sh(4),
   },

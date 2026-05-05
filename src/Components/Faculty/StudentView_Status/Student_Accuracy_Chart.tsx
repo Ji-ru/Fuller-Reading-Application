@@ -1,898 +1,92 @@
-// import React, { useState, useMemo, useCallback } from 'react';
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   TouchableOpacity,
-//   ActivityIndicator,
-//   ScrollView,
-// } from 'react-native';
-// import Svg, { Line, Circle, Polyline, Text as SvgText } from 'react-native-svg';
-// import { useStudentAccuracyTrends } from '../../../Hooks/Faculty/use_StudentView_Progress';
-
-// type TimeRange = 'week' | 'month' | 'year';
-
-// interface AccuracyTrendsChartProps {
-//   studentId: string;
-// }
-
-// const TIME_RANGES: { label: string; value: TimeRange }[] = [
-//   { label: 'Week', value: 'week' },
-//   { label: 'Month', value: 'month' },
-//   { label: 'Year', value: 'year' },
-// ];
-
-// const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
-//   studentId,
-// }) => {
-//   const [timeRange, setTimeRange] = useState<TimeRange>('week');
-
-//   // Fetch real accuracy data - hook handles date filtering and returns all periods
-//   const {
-//     chartData: accuracyData,
-//     loading,
-//     error,
-//   } = useStudentAccuracyTrends(studentId, timeRange);
-
-//   // Transform data for chart
-//   const chartData = useMemo(
-//     () =>
-//       accuracyData.map(item => ({
-//         label: item.date,      // Already formatted label from hook
-//         accuracy: item.accuracy,
-//         wpm: item.wpm,
-//       })),
-//     [accuracyData],
-//   );
-
-//   // Get values for calculations (filter out zeros)
-//   const accuracyValues = useMemo(
-//     () => chartData.map(d => d.accuracy).filter(v => v > 0),
-//     [chartData],
-//   );
-
-//   const wpmValues = useMemo(
-//     () => chartData.map(d => d.wpm).filter(v => v > 0),
-//     [chartData],
-//   );
-
-//   const hasData = accuracyValues.length > 0;
-
-//   // Determine if scrolling is needed
-//   // Year view always scrolls because it shows 15 months (Jun to Aug next year)
-//   const needsScroll = timeRange === 'year';
-
-//   // Chart dimensions
-//   const baseChartWidth = 320;
-//   // For year: 50px per month ensures all labels fit nicely
-//   const chartWidth = needsScroll 
-//     ? Math.max(chartData.length * 50, 600) 
-//     : baseChartWidth;
-
-//   const chartHeight = 240;
-//   const paddingLeft = 60;
-//   const paddingRight = 20;
-//   const paddingTop = 30;
-//   const paddingBottom = 40;
-//   const plotWidth = chartWidth - paddingLeft - paddingRight;
-//   const plotHeight = chartHeight - paddingTop - paddingBottom;
-
-//   // Generate Y-axis labels: 0%, 10%, 20%, ..., 100%
-//   const generateYAxisLabels = useCallback(() => {
-//     const labels = [];
-//     for (let i = 100; i >= 0; i -= 10) {
-//       labels.push(i);
-//     }
-//     return labels;
-//   }, []);
-
-//   // Calculate all chart metrics
-//   const chartCalculations = useMemo(() => {
-//     if (!hasData) {
-//       return {
-//         minAccuracy: 0,
-//         maxAccuracy: 0,
-//         averageAccuracy: 0,
-//         averageWpm: 0,
-//         yAxisLabels: generateYAxisLabels(),
-//         points: [],
-//         accuracyPolylinePoints: '',
-//         wpmPolylinePoints: '',
-//         accuracyTrendDirection: '→' as const,
-//         accuracyTrendPercentage: '0.0',
-//         accuracyTrendColor: '#9CA3AF' as const,
-//         wpmTrendDirection: '→' as const,
-//         wpmTrendPercentage: '0.0',
-//         wpmTrendColor: '#9CA3AF' as const,
-//       };
-//     }
-
-//     const minAccuracy = Math.min(...accuracyValues);
-//     const maxAccuracy = Math.max(...accuracyValues);
-//     const maxWpm = Math.max(...wpmValues);
-
-//     // Y-axis always 0-100 for percentage
-//     const yAxisMin = 0;
-//     const yAxisMax = 100;
-//     const yRange = yAxisMax - yAxisMin;
-
-//     const averageAccuracy = accuracyValues.reduce((sum, val) => sum + val, 0) / accuracyValues.length;
-//     const averageWpm = wpmValues.length > 0 ? wpmValues.reduce((sum, val) => sum + val, 0) / wpmValues.length : 0;
-
-//     const yAxisLabels = generateYAxisLabels();
-
-//     // Convert data to chart points
-//     const points = chartData.map((item, index) => {
-//       // X position: spread points evenly across plot width
-//       const x =
-//         chartData.length > 1
-//           ? paddingLeft + (index / (chartData.length - 1)) * plotWidth
-//           : paddingLeft + plotWidth / 2;
-
-//       // Y position for accuracy (0-100 scale)
-//       const accuracyY =
-//         item.accuracy > 0
-//           ? paddingTop + plotHeight - ((item.accuracy - yAxisMin) / yRange) * plotHeight
-//           : paddingTop + plotHeight;
-
-//       // Y position for WPM (normalized to same scale as accuracy)
-//       const wpmY =
-//         item.wpm > 0 && maxWpm > 0
-//           ? paddingTop + plotHeight - ((item.wpm / maxWpm) * 100 / yRange) * plotHeight
-//           : paddingTop + plotHeight;
-
-//       return { 
-//         x, 
-//         accuracyY, 
-//         wpmY,
-//         accuracy: item.accuracy,
-//         wpm: item.wpm,
-//         label: item.label,
-//       };
-//     });
-
-//     // Create line paths (only for points with data)
-//     const accuracyPolylinePoints = points
-//       .filter(p => p.accuracy > 0)
-//       .map(p => `${p.x},${p.accuracyY}`)
-//       .join(' ');
-
-//     const wpmPolylinePoints = points
-//       .filter(p => p.wpm > 0)
-//       .map(p => `${p.x},${p.wpmY}`)
-//       .join(' ');
-
-//     // Calculate accuracy trend
-//     const validAccuracyPoints = chartData.filter(d => d.accuracy > 0);
-//     const firstAccuracy = validAccuracyPoints[0]?.accuracy ?? 0;
-//     const lastAccuracy = validAccuracyPoints[validAccuracyPoints.length - 1]?.accuracy ?? 0;
-//     const accuracyTrend = lastAccuracy - firstAccuracy;
-//     const accuracyTrendPercentage =
-//       firstAccuracy !== 0 ? ((accuracyTrend / firstAccuracy) * 100).toFixed(1) : '0.0';
-//     const accuracyTrendDirection = accuracyTrend > 0 ? '↑' : accuracyTrend < 0 ? '↓' : '→';
-//     const accuracyTrendColor =
-//       accuracyTrend > 0 ? '#4CAF50' : accuracyTrend < 0 ? '#EF4444' : '#9CA3AF';
-
-//     // Calculate WPM trend
-//     const validWpmPoints = chartData.filter(d => d.wpm > 0);
-//     const firstWpm = validWpmPoints[0]?.wpm ?? 0;
-//     const lastWpm = validWpmPoints[validWpmPoints.length - 1]?.wpm ?? 0;
-//     const wpmTrend = lastWpm - firstWpm;
-//     const wpmTrendPercentage =
-//       firstWpm !== 0 ? ((wpmTrend / firstWpm) * 100).toFixed(1) : '0.0';
-//     const wpmTrendDirection = wpmTrend > 0 ? '↑' : wpmTrend < 0 ? '↓' : '→';
-//     const wpmTrendColor =
-//       wpmTrend > 0 ? '#4CAF50' : wpmTrend < 0 ? '#EF4444' : '#9CA3AF';
-
-//     return {
-//       minAccuracy,
-//       maxAccuracy,
-//       averageAccuracy,
-//       averageWpm,
-//       yAxisLabels,
-//       points,
-//       accuracyPolylinePoints,
-//       wpmPolylinePoints,
-//       accuracyTrendDirection,
-//       accuracyTrendPercentage,
-//       accuracyTrendColor,
-//       wpmTrendDirection,
-//       wpmTrendPercentage,
-//       wpmTrendColor,
-//     };
-//   }, [
-//     chartData,
-//     accuracyValues,
-//     wpmValues,
-//     hasData,
-//     paddingLeft,
-//     plotWidth,
-//     paddingTop,
-//     plotHeight,
-//     generateYAxisLabels,
-//   ]);
-
-//   const {
-//     averageAccuracy,
-//     averageWpm,
-//     yAxisLabels,
-//     points,
-//     accuracyPolylinePoints,
-//     wpmPolylinePoints,
-//     accuracyTrendDirection,
-//     accuracyTrendPercentage,
-//     accuracyTrendColor,
-//     wpmTrendDirection,
-//     wpmTrendPercentage,
-//     wpmTrendColor,
-//   } = chartCalculations;
-
-//   // Insight container styling based on trend
-//   const insightContainerStyle = useMemo(() => {
-//     switch (accuracyTrendDirection) {
-//       case '↑':
-//         return [styles.insightContainer, styles.insightContainerImproving];
-//       case '↓':
-//         return [styles.insightContainer, styles.insightContainerDeclining];
-//       default:
-//         return [styles.insightContainer, styles.insightContainerStable];
-//     }
-//   }, [accuracyTrendDirection]);
-
-//   const insightTextStyle = useMemo(() => {
-//     switch (accuracyTrendDirection) {
-//       case '↑':
-//         return styles.insightTextImproving;
-//       case '↓':
-//         return styles.insightTextDeclining;
-//       default:
-//         return styles.insightTextStable;
-//     }
-//   }, [accuracyTrendDirection]);
-
-//   // Generate insight message
-//   const insightMessage = useMemo(() => {
-//     if (!hasData) return '';
-
-//     const accuracyChange = Math.abs(parseFloat(accuracyTrendPercentage));
-//     const wpmChange = Math.abs(parseFloat(wpmTrendPercentage));
-
-//     switch (accuracyTrendDirection) {
-//       case '↑':
-//         return `Reading accuracy improved by ${accuracyChange}% and reading speed ${wpmTrendDirection === '↑' ? 'increased' : wpmTrendDirection === '↓' ? 'decreased' : 'remained stable'} by ${wpmChange}%, indicating ${wpmTrendDirection === '↑' ? 'excellent' : 'positive'} progress in reading performance.`;
-
-//       case '↓':
-//         return `Reading accuracy declined by ${accuracyChange}%, suggesting possible reading difficulties that may require targeted intervention.`;
-
-//       default:
-//         return 'Reading accuracy remained stable, indicating consistent reading performance over the selected period.';
-//     }
-//   }, [accuracyTrendDirection, accuracyTrendPercentage, wpmTrendDirection, wpmTrendPercentage, hasData]);
-
-//   // Render the chart SVG
-//   const renderChart = () => (
-//     <Svg width={chartWidth} height={chartHeight}>
-//       {/* Grid lines at 10% intervals */}
-//       {yAxisLabels.map((label, index) => {
-//         const y = paddingTop + (index / (yAxisLabels.length - 1)) * plotHeight;
-//         return (
-//           <Line
-//             key={`grid-${label}`}
-//             x1={paddingLeft}
-//             y1={y}
-//             x2={paddingLeft + plotWidth}
-//             y2={y}
-//             stroke="#F3F4F6"
-//             strokeWidth="1"
-//           />
-//         );
-//       })}
-
-//       {/* Y-axis labels */}
-//       {yAxisLabels.map((label, index) => {
-//         const y = paddingTop + (index / (yAxisLabels.length - 1)) * plotHeight;
-//         return (
-//           <SvgText
-//             key={`y-label-${label}`}
-//             x={paddingLeft - 35}
-//             y={y + 4}
-//             fontSize="10"
-//             fill="#9CA3AF"
-//             textAnchor="end"
-//             fontFamily="Satoshi-Medium"
-//           >
-//             {label}%
-//           </SvgText>
-//         );
-//       })}
-
-//       {/* X-axis labels */}
-//       {points.map((point, index) => {
-//         // Show labels based on time range
-//         let showLabel = false;
-
-//         if (timeRange === 'week') {
-//           showLabel = true; // Show all days
-//         } else if (timeRange === 'month') {
-//           showLabel = index % 2 === 0 || index === points.length - 1; // Every other week
-//         } else if (timeRange === 'year') {
-//           showLabel = true; // Show all months (they're scrollable)
-//         }
-
-//         if (!showLabel) return null;
-
-//         return (
-//           <SvgText
-//             key={`x-label-${index}`}
-//             x={point.x}
-//             y={paddingTop + plotHeight + 20}
-//             fontSize="8"
-//             fill="#6B7280"
-//             textAnchor="middle"
-//             fontFamily="Satoshi-Medium"
-//           >
-//             {point.label}
-//           </SvgText>
-//         );
-//       })}
-
-//       {/* WPM line (behind accuracy) */}
-//       {wpmPolylinePoints && (
-//         <Polyline
-//           points={wpmPolylinePoints}
-//           fill="none"
-//           stroke="#FFA726"
-//           strokeWidth="2"
-//           strokeDasharray="5,5"
-//         />
-//       )}
-
-//       {/* Accuracy line */}
-//       {accuracyPolylinePoints && (
-//         <Polyline
-//           points={accuracyPolylinePoints}
-//           fill="none"
-//           stroke="#4CAF50"
-//           strokeWidth="2.5"
-//         />
-//       )}
-
-//       {/* WPM data points with value labels */}
-//       {points.map((point, index) => (
-//         point.wpm > 0 && (
-//           <React.Fragment key={`wpm-point-${index}`}>
-//             <SvgText
-//               x={point.x}
-//               y={point.wpmY - 10}
-//               fontSize="9"
-//               fill="#FFA726"
-//               textAnchor="middle"
-//               fontFamily="Satoshi-Bold"
-//             >
-//               {point.wpm.toFixed(0)}
-//             </SvgText>
-//             <Circle
-//               cx={point.x}
-//               cy={point.wpmY}
-//               r="4"
-//               fill="#FFA726"
-//               stroke="#fff"
-//               strokeWidth="2"
-//             />
-//           </React.Fragment>
-//         )
-//       ))}
-
-//       {/* Accuracy data points with value labels */}
-//       {points.map((point, index) => (
-//         point.accuracy > 0 && (
-//           <React.Fragment key={`accuracy-point-${index}`}>
-//             <SvgText
-//               x={point.x}
-//               y={point.accuracyY - 10}
-//               fontSize="9"
-//               fill="#4CAF50"
-//               textAnchor="middle"
-//               fontFamily="Satoshi-Bold"
-//             >
-//               {point.accuracy.toFixed(1)}%
-//             </SvgText>
-//             <Circle
-//               cx={point.x}
-//               cy={point.accuracyY}
-//               r="5"
-//               fill="#4CAF50"
-//               stroke="#fff"
-//               strokeWidth="2"
-//             />
-//           </React.Fragment>
-//         )
-//       ))}
-//     </Svg>
-//   );
-
-//   // Loading state
-//   if (loading) {
-//     return (
-//       <View style={styles.card}>
-//         <View style={styles.cardHeader}>
-//           <View style={styles.titleRow}>
-//             <View style={styles.iconWrapper}>
-//               <Text style={styles.titleIcon}>📊</Text>
-//             </View>
-//             <View style={styles.titleContent}>
-//               <Text style={styles.title}>
-//                 Student Reading Performance Insights
-//               </Text>
-//               <Text style={styles.subtitle}>Loading data...</Text>
-//             </View>
-//           </View>
-//         </View>
-//         <View style={styles.loadingContainer}>
-//           <ActivityIndicator size="large" color="#4CAF50" />
-//           <Text style={styles.loadingText}>Loading accuracy data...</Text>
-//         </View>
-//       </View>
-//     );
-//   }
-
-//   // Error state
-//   if (error) {
-//     return (
-//       <View style={styles.card}>
-//         <View style={styles.cardHeader}>
-//           <View style={styles.titleRow}>
-//             <View style={styles.iconWrapper}>
-//               <Text style={styles.titleIcon}>📊</Text>
-//             </View>
-//             <View style={styles.titleContent}>
-//               <Text style={styles.title}>
-//                 Student Reading Performance Insights
-//               </Text>
-//               <Text style={styles.subtitle}>Error loading data</Text>
-//             </View>
-//           </View>
-//         </View>
-//         <View style={styles.errorContainer}>
-//           <Text style={styles.errorText}>Failed to load data</Text>
-//           <Text style={styles.errorSubtext}>{error}</Text>
-//         </View>
-//       </View>
-//     );
-//   }
-
-//   return (
-//     <View>
-//       {/* Header */}
-//       <View style={styles.cardHeader}>
-//         <View style={styles.titleRow}>
-//           <View style={styles.iconWrapper}>
-//             <Text style={styles.titleIcon}>📊</Text>
-//           </View>
-//           <View style={styles.titleContent}>
-//             <Text style={styles.title}>Accuracy & Speed Trends</Text>
-//             <Text style={styles.subtitle}>
-//               {timeRange === 'week'
-//                 ? 'Last 7 days'
-//                 : timeRange === 'month'
-//                 ? 'Last 4 weeks'
-//                 : 'School Year (Jun - Aug)'}
-//             </Text>
-//           </View>
-//         </View>
-
-//         {/* Time Range Selector */}
-//         <View style={styles.rangeSelector}>
-//           {TIME_RANGES.map(range => (
-//             <TouchableOpacity
-//               key={range.value}
-//               onPress={() => setTimeRange(range.value)}
-//               style={[
-//                 styles.rangeButton,
-//                 timeRange === range.value && styles.rangeButtonActive,
-//               ]}
-//               activeOpacity={0.7}
-//             >
-//               <Text
-//                 style={[
-//                   styles.rangeButtonText,
-//                   timeRange === range.value && styles.rangeButtonTextActive,
-//                 ]}
-//               >
-//                 {range.label}
-//               </Text>
-//             </TouchableOpacity>
-//           ))}
-//         </View>
-//       </View>
-
-//       {!hasData ? (
-//         <View style={styles.noDataContainer}>
-//           <Text style={styles.noDataIcon}>📊</Text>
-//           <Text style={styles.noDataTitle}>No data of student yet</Text>
-//         </View>
-//       ) : (
-//         <>
-//           {/* Stats Summary */}
-//           <View style={styles.statsRow}>
-//             <View style={styles.statItem}>
-//               <Text style={styles.statValue}>
-//                 {averageAccuracy.toFixed(1)}
-//                 <Text style={styles.statUnit}>%</Text>
-//               </Text>
-//               <Text style={styles.statLabel}>Avg Accuracy</Text>
-//             </View>
-//             <View style={styles.statDivider} />
-//             <View style={styles.statItem}>
-//               <Text style={styles.statValue}>
-//                 {averageWpm.toFixed(0)}
-//                 <Text style={styles.statUnit}> WPM</Text>
-//               </Text>
-//               <Text style={styles.statLabel}>Avg Speed</Text>
-//             </View>
-//             <View style={styles.statDivider} />
-//             <View style={styles.statItem}>
-//               <Text style={[styles.statValue, { color: accuracyTrendColor }]}>
-//                 {accuracyTrendDirection} {Math.abs(parseFloat(accuracyTrendPercentage))}
-//                 <Text style={styles.statUnit}>%</Text>
-//               </Text>
-//               <Text style={styles.statLabel}>Accuracy Trend</Text>
-//             </View>
-//           </View>
-
-//           {/* Insights */}
-//           <View style={insightContainerStyle}>
-//             <Text style={insightTextStyle}>{insightMessage}</Text>
-//           </View>
-
-//           {/* Chart - with conditional scrolling for year view */}
-//           <View style={styles.chartContainer}>
-//             {needsScroll ? (
-//               <ScrollView
-//                 horizontal
-//                 showsHorizontalScrollIndicator={true}
-//                 style={styles.scrollView}
-//                 contentContainerStyle={styles.scrollContent}
-//               >
-//                 {renderChart()}
-//               </ScrollView>
-//             ) : (
-//               renderChart()
-//             )}
-//           </View>
-
-//           {/* Legend */}
-//           <View style={styles.legend}>
-//             <View style={styles.legendItem}>
-//               <View style={[styles.legendDot, { backgroundColor: '#4CAF50' }]} />
-//               <Text style={styles.legendText}>Accuracy Rate</Text>
-//             </View>
-//             <View style={styles.legendDivider} />
-//             <View style={styles.legendItem}>
-//               <View style={[styles.legendDot, { backgroundColor: '#FFA726' }]} />
-//               <Text style={styles.legendText}>Reading Speed (WPM)</Text>
-//             </View>
-//           </View>
-//         </>
-//       )}
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   card: {
-//     backgroundColor: '#fff',
-//     borderRadius: 16,
-//     padding: 20,
-//     shadowColor: '#000',
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.05,
-//     shadowRadius: 8,
-//     elevation: 2,
-//   },
-
-//   // HEADER
-//   cardHeader: {
-//     marginBottom: 20,
-//   },
-//   titleRow: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     marginBottom: 16,
-//   },
-//   iconWrapper: {
-//     width: 48,
-//     height: 48,
-//     borderRadius: 12,
-//     backgroundColor: '#F0FDF4',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     marginRight: 12,
-//   },
-//   titleIcon: {
-//     fontSize: 24,
-//   },
-//   titleContent: {
-//     flex: 1,
-//   },
-//   title: {
-//     fontSize: 18,
-//     fontFamily: 'Satoshi-Bold',
-//     color: '#1F2937',
-//     marginBottom: 4,
-//   },
-//   subtitle: {
-//     fontSize: 13,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#6B7280',
-//   },
-
-//   // TIME RANGE SELECTOR
-//   rangeSelector: {
-//     flexDirection: 'row',
-//     backgroundColor: '#F9FAFB',
-//     borderRadius: 10,
-//     padding: 4,
-//   },
-//   rangeButton: {
-//     flex: 1,
-//     paddingVertical: 8,
-//     paddingHorizontal: 12,
-//     borderRadius: 8,
-//     alignItems: 'center',
-//   },
-//   rangeButtonActive: {
-//     backgroundColor: '#fff',
-//     shadowColor: '#000',
-//     shadowOffset: { width: 0, height: 1 },
-//     shadowOpacity: 0.05,
-//     shadowRadius: 2,
-//     elevation: 1,
-//   },
-//   rangeButtonText: {
-//     fontSize: 13,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#6B7280',
-//   },
-//   rangeButtonTextActive: {
-//     color: '#1F2937',
-//     fontFamily: 'Satoshi-Bold',
-//   },
-
-//   // STATS
-//   statsRow: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     justifyContent: 'space-between',
-//     marginBottom: 16,
-//     paddingVertical: 12,
-//     paddingHorizontal: 16,
-//     backgroundColor: '#F9FAFB',
-//     borderRadius: 12,
-//   },
-//   statItem: {
-//     flex: 1,
-//     alignItems: 'center',
-//   },
-//   statValue: {
-//     fontSize: 20,
-//     fontFamily: 'Satoshi-Bold',
-//     color: '#1F2937',
-//     marginBottom: 4,
-//   },
-//   statUnit: {
-//     fontSize: 14,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#6B7280',
-//   },
-//   statLabel: {
-//     fontSize: 11,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#6B7280',
-//     textAlign: 'center',
-//   },
-//   statDivider: {
-//     width: 1,
-//     height: 40,
-//     backgroundColor: '#E5E7EB',
-//     marginHorizontal: 8,
-//   },
-
-//   // INSIGHTS
-//   insightContainer: {
-//     backgroundColor: '#F0FDF4',
-//     borderRadius: 10,
-//     paddingVertical: 10,
-//     paddingHorizontal: 14,
-//     marginBottom: 20,
-//     borderLeftWidth: 4,
-//     borderLeftColor: '#4CAF50',
-//   },
-//   insightTextImproving: {
-//     fontSize: 13,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#166534',
-//     lineHeight: 18,
-//   },
-//   insightTextDeclining: {
-//     fontSize: 13,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#991B1B',
-//     lineHeight: 18,
-//   },
-//   insightTextStable: {
-//     fontSize: 13,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#374151',
-//     lineHeight: 18,
-//   },
-//   insightContainerImproving: {
-//     backgroundColor: '#F0FDF4',
-//     borderLeftColor: '#4CAF50',
-//   },
-//   insightContainerDeclining: {
-//     backgroundColor: '#FEF2F2',
-//     borderLeftColor: '#EF4444',
-//   },
-//   insightContainerStable: {
-//     backgroundColor: '#F3F4F6',
-//     borderLeftColor: '#9CA3AF',
-//   },
-
-//   // CHART
-//   chartContainer: {
-//     alignItems: 'center',
-//     marginBottom: 16,
-//   },
-//   scrollView: {
-//     maxHeight: 260,
-//   },
-//   scrollContent: {
-//     paddingHorizontal: 8,
-//   },
-
-//   // LEGEND
-//   legend: {
-//     flexDirection: 'row',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     paddingTop: 12,
-//     borderTopWidth: 1,
-//     borderTopColor: '#F3F4F6',
-//     gap: 16,
-//   },
-//   legendItem: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//   },
-//   legendDot: {
-//     width: 10,
-//     height: 10,
-//     borderRadius: 5,
-//     marginRight: 6,
-//   },
-//   legendText: {
-//     fontSize: 11,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#6B7280',
-//   },
-//   legendDivider: {
-//     width: 1,
-//     height: 16,
-//     backgroundColor: '#E5E7EB',
-//   },
-
-//   // LOADING STATES
-//   loadingContainer: {
-//     flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     paddingVertical: 60,
-//   },
-//   loadingText: {
-//     marginTop: 16,
-//     fontSize: 14,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#6B7280',
-//   },
-
-//   // ERROR STATES
-//   errorContainer: {
-//     flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     paddingVertical: 60,
-//   },
-//   errorText: {
-//     fontSize: 16,
-//     fontFamily: 'Satoshi-Bold',
-//     color: '#EF4444',
-//     marginBottom: 8,
-//   },
-//   errorSubtext: {
-//     fontSize: 14,
-//     fontFamily: 'Satoshi-Medium',
-//     color: '#9CA3AF',
-//     textAlign: 'center',
-//     paddingHorizontal: 20,
-//   },
-
-//   // NO DATA STATES
-//   noDataContainer: {
-//     flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     paddingVertical: 60,
-//   },
-//   noDataIcon: {
-//     fontSize: 48,
-//     marginBottom: 16,
-//     opacity: 0.5,
-//   },
-//   noDataTitle: {
-//     fontSize: 18,
-//     fontFamily: 'Satoshi-Bold',
-//     color: '#6B7280',
-//     marginBottom: 8,
-//     textAlign: 'center',
-//   },
-// });
-
-// export default StudentAccuracyTrendsChart;
-
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
 } from 'react-native';
-import Svg, { Line, Circle, Polyline, Text as SvgText } from 'react-native-svg';
 import { useStudentAccuracyTrends } from '../../../Hooks/Faculty/use_StudentView_Progress';
+import { sw, sh, sf } from '../../../Utils/responsive';
 
-// ─── Tokens ───────────────────────────────────────────────────────────────────
-
+// ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  teal: '#57b8b3',
-  tealLight: '#EAF6F6',
-  tealDark: '#2C6975',
+  bg: '#ECFBFF',
+  primary: '#3B7FC9',
+  primaryLight: '#D7E9FF',
+  tabBg: '#c0e8f2',
+  accent: '#38B6FF',
+  card: '#FFFFFF',
+  ink: '#1F2937',
+  inkLight: '#6B7280',
+  slate: '#9CA3AF',
+  border: '#E5E7EB',
+  inputBg: '#F3F8FF',
+  green: '#2CA96A',
+  greenBg: '#D4F1E8',
   amber: '#F59E0B',
-  amberLight: '#FEF3C7',
-  text: '#1C1917',
-  textSub: '#6B7280',
-  textMuted: '#A8A29E',
-  surface: '#FFFFFF',
-  bg: '#F4F7FA',
-  border: '#E4EAF0',
-  grid: '#F1F5F9',
-  success: '#10B981',
-  successLight: '#D1FAE5',
-  successDark: '#065F46',
-  danger: '#EF4444',
-  dangerLight: '#FEE2E2',
-  dangerDark: '#991B1B',
-  stable: '#6B7280',
-  stableLight: '#F3F4F6',
+  amberBg: '#FEF3C7',
+  coral: '#EF4444',
+  coralBg: '#FEE2E2',
+  track: '#EEF2FF',
 };
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 type TimeRange = 'week' | 'month' | 'year';
 
 interface AccuracyTrendsChartProps {
   studentId: string;
+  role?: 'faculty' | 'student';
+  /** Numeric grade level (1, 2, 3). When provided, renders a grade-level benchmark card. */
+  gradeLevel?: number;
+  /** When provided externally, the component hides its own filter bar and uses this value. */
+  timeRange?: TimeRange;
+  /** Anchor date for period navigation. When provided, data is filtered relative to this date. */
+  anchor?: Date;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Grade-level benchmarks ───────────────────────────────────────────────────
+// WPM: Hasbrouck & Tindal (2017), Spring 50th percentile
+// Accuracy: Widely accepted instructional/independent reading thresholds
+type BenchmarkStatus = 'below' | 'at' | 'above';
 
-const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studentId }) => {
-  const [timeRange, setTimeRange] = useState<TimeRange>('week');
+interface GradeBenchmark {
+  grade: number;
+  label: string;
+  wpmMin: number;  // lower bound of on-grade range
+  wpmMax: number;  // upper bound of on-grade range
+  accMin: number;  // lower bound of on-grade accuracy range (%)
+  accMax: number;  // upper bound of on-grade accuracy range (%)
+}
 
-  const { chartData: rawData, loading, error } = useStudentAccuracyTrends(studentId, timeRange);
+const GRADE_BENCHMARKS: GradeBenchmark[] = [
+  { grade: 1, label: 'Grade 1', wpmMin: 53,  wpmMax: 82,  accMin: 90, accMax: 100 },
+  { grade: 2, label: 'Grade 2', wpmMin: 89,  wpmMax: 120, accMin: 92, accMax: 100 },
+  { grade: 3, label: 'Grade 3', wpmMin: 107, wpmMax: 140, accMin: 94, accMax: 100 },
+];
 
-  // ── Normalise data ──────────────────────────────────────────────────────────
+const getBenchmarkStatus = (
+  value: number,
+  min: number,
+  max: number,
+): BenchmarkStatus => {
+  if (value >= min && value <= max) return 'at';
+  if (value > max) return 'above';
+  return 'below';
+};
+
+const BENCHMARK_CONFIG: Record<BenchmarkStatus, { label: string; color: string; bg: string; icon: string }> = {
+  below: { label: 'Below Grade Level', color: '#EF4444', bg: '#FEE2E2', icon: '▼' },
+  at:    { label: 'At Grade Level',    color: '#F59E0B', bg: '#FEF3C7', icon: '●' },
+  above: { label: 'Above Grade Level', color: '#10B981', bg: '#D1FAE5', icon: '▲' },
+};
+
+const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studentId, role = 'faculty', gradeLevel, timeRange: externalTimeRange, anchor }) => {
+  const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>('week');
+  const timeRange = externalTimeRange ?? internalTimeRange;
+
+  const { chartData: rawData, loading, error } = useStudentAccuracyTrends(studentId, timeRange, anchor);
+
+  // ── Normalized data ────────────────────────────────────────────────────────
   const chartData = useMemo(
     () => rawData.map(item => ({ label: item.date, accuracy: item.accuracy, wpm: item.wpm })),
     [rawData],
@@ -902,50 +96,13 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
   const wpmValues = useMemo(() => chartData.map(d => d.wpm).filter(v => v > 0), [chartData]);
   const hasData = accuracyValues.length > 0;
 
-  // ── Chart dimensions ────────────────────────────────────────────────────────
-  const needsScroll = timeRange === 'year';
-  const chartWidth = needsScroll ? Math.max(chartData.length * 50, 600) : 320;
-  const chartHeight = 220;
-  const pLeft = 46;
-  const pRight = 16;
-  const pTop = 24;
-  const pBottom = 32;
-  const plotW = chartWidth - pLeft - pRight;
-  const plotH = chartHeight - pTop - pBottom;
-
-  // Y-axis: fixed 0-100 for percentage, 5 steps
-  const Y_STEPS = 4;
-  const yLabels = Array.from({ length: Y_STEPS + 1 }, (_, i) => 100 - i * 25);
-
-  // ── Calculations ────────────────────────────────────────────────────────────
+  // ── Calculations ─────────────────────────────────────────────────────────────
   const calc = useMemo(() => {
     if (!hasData) return null;
 
-    const maxWpm = Math.max(...wpmValues, 1);
-
     const avgAccuracy = accuracyValues.reduce((s, v) => s + v, 0) / accuracyValues.length;
-    const avgWpm = wpmValues.length > 0
-      ? wpmValues.reduce((s, v) => s + v, 0) / wpmValues.length
-      : 0;
-
-    const points = chartData.map((item, i) => {
-      const x = chartData.length > 1
-        ? pLeft + (i / (chartData.length - 1)) * plotW
-        : pLeft + plotW / 2;
-
-      const accY = item.accuracy > 0
-        ? pTop + plotH - (item.accuracy / 100) * plotH
-        : pTop + plotH;
-
-      const wpmY = item.wpm > 0
-        ? pTop + plotH - ((item.wpm / maxWpm) * 100 / 100) * plotH
-        : pTop + plotH;
-
-      return { x, accY, wpmY, accuracy: item.accuracy, wpm: item.wpm, label: item.label };
-    });
-
-    const accLine = points.filter(p => p.accuracy > 0).map(p => `${p.x},${p.accY}`).join(' ');
-    const wpmLine = points.filter(p => p.wpm > 0).map(p => `${p.x},${p.wpmY}`).join(' ');
+    const avgWpm = wpmValues.length > 0 ? wpmValues.reduce((s, v) => s + v, 0) / wpmValues.length : 0;
+    const maxWpm = Math.max(...wpmValues, 1);
 
     // Trend
     const validAcc = chartData.filter(d => d.accuracy > 0);
@@ -953,266 +110,235 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
     const accPct = validAcc[0]?.accuracy ? ((accDelta / validAcc[0].accuracy) * 100) : 0;
     const accDir: 'up' | 'down' | 'same' = accDelta > 0 ? 'up' : accDelta < 0 ? 'down' : 'same';
 
-    const validWpm = chartData.filter(d => d.wpm > 0);
-    const wpmDelta = (validWpm.at(-1)?.wpm ?? 0) - (validWpm[0]?.wpm ?? 0);
-    const wpmDir: 'up' | 'down' | 'same' = wpmDelta > 0 ? 'up' : wpmDelta < 0 ? 'down' : 'same';
+    // Peak accuracy index
+    const peakAccIdx = chartData.reduce(
+      (maxI, item, i, arr) => (item.accuracy > arr[maxI].accuracy ? i : maxI), 0,
+    );
 
-    return { avgAccuracy, avgWpm, points, accLine, wpmLine, accDir, accPct, wpmDir };
-  }, [chartData, accuracyValues, wpmValues, hasData, pLeft, pTop, plotW, plotH]);
+    return { avgAccuracy, avgWpm, maxWpm, accDir, accPct, peakAccIdx };
+  }, [chartData, accuracyValues, wpmValues, hasData]);
 
-  // ── Insight text ─────────────────────────────────────────────────────────────
+  // ── Benchmark lookup ────────────────────────────────────────────────────────
+  const benchmark = gradeLevel
+    ? GRADE_BENCHMARKS.find(b => b.grade === gradeLevel) ?? null
+    : null;
   const insight = useMemo(() => {
     if (!calc) return '';
-    const { accDir, accPct, wpmDir } = calc;
-    const pct = Math.abs(accPct).toFixed(1);
-    if (accDir === 'up') return `Accuracy improved by ${pct}%, and reading speed ${wpmDir === 'up' ? 'also increased' : wpmDir === 'down' ? 'slightly decreased' : 'stayed stable'}.`;
-    if (accDir === 'down') return `Accuracy dropped by ${pct}%. Consider reviewing reading exercises with the student.`;
+    const pct = Math.abs(calc.accPct).toFixed(1);
+    if (calc.accDir === 'up') return `Accuracy improved by ${pct}% over this period.`;
+    if (calc.accDir === 'down') return `Accuracy dropped by ${pct}%. Consider reviewing reading exercises.`;
     return 'Reading accuracy remained consistent over this period.';
   }, [calc]);
 
-  // ── SVG chart ───────────────────────────────────────────────────────────────
-  const renderChart = () => (
-    <Svg width={chartWidth} height={chartHeight}>
-      {/* Grid lines */}
-      {yLabels.map((label, i) => {
-        const y = pTop + (i / (yLabels.length - 1)) * plotH;
-        return (
-          <Line
-            key={label}
-            x1={pLeft} y1={y}
-            x2={pLeft + plotW} y2={y}
-            stroke={C.grid}
-            strokeWidth="1"
-          />
-        );
-      })}
+  const trendColor = calc?.accDir === 'up' ? C.green : calc?.accDir === 'down' ? C.coral : C.inkLight;
+  const trendIcon = calc?.accDir === 'up' ? '▲' : calc?.accDir === 'down' ? '▼' : '—';
 
-      {/* Y labels */}
-      {yLabels.map((label, i) => {
-        const y = pTop + (i / (yLabels.length - 1)) * plotH;
-        return (
-          <SvgText
-            key={`yl-${label}`}
-            x={pLeft - 6} y={y + 4}
-            fontSize="9" fill={C.textMuted}
-            textAnchor="end" fontFamily="Satoshi-Medium"
-          >
-            {label}%
-          </SvgText>
-        );
-      })}
-
-      {/* X labels */}
-      {calc?.points.map((p, i) => {
-        const show =
-          timeRange === 'week' ? true :
-            timeRange === 'month' ? i % 2 === 0 || i === (calc.points.length - 1) :
-              true;
-        if (!show) return null;
-        return (
-          <SvgText
-            key={`xl-${i}`}
-            x={p.x} y={pTop + plotH + 20}
-            fontSize="8" fill={C.textSub}
-            textAnchor="middle" fontFamily="Satoshi-Medium"
-          >
-            {p.label}
-          </SvgText>
-        );
-      })}
-
-      {/* WPM dashed line */}
-      {calc?.wpmLine ? (
-        <Polyline
-          points={calc.wpmLine}
-          fill="none"
-          stroke={C.amber}
-          strokeWidth="1.5"
-          strokeDasharray="4,4"
-        />
-      ) : null}
-
-      {/* Accuracy solid line */}
-      {calc?.accLine ? (
-        <Polyline
-          points={calc.accLine}
-          fill="none"
-          stroke={C.teal}
-          strokeWidth="2"
-        />
-      ) : null}
-
-      {/* WPM dots */}
-      {calc?.points.map((p, i) =>
-        p.wpm > 0 ? (
-          <Circle
-            key={`wd-${i}`}
-            cx={p.x} cy={p.wpmY}
-            r="3.5" fill={C.amber}
-            stroke={C.surface} strokeWidth="1.5"
-          />
-        ) : null,
-      )}
-
-      {/* Accuracy dots */}
-      {calc?.points.map((p, i) =>
-        p.accuracy > 0 ? (
-          <React.Fragment key={`ad-${i}`}>
-            <Circle
-              cx={p.x} cy={p.accY}
-              r="4" fill={C.teal}
-              stroke={C.surface} strokeWidth="1.5"
-            />
-            {/* Value label only on first and last to keep it clean */}
-            {(i === 0 || i === (calc.points.length - 1)) && (
-              <SvgText
-                x={p.x} y={p.accY - 8}
-                fontSize="8" fill={C.tealDark}
-                textAnchor="middle" fontFamily="Satoshi-Bold"
-              >
-                {p.accuracy.toFixed(1)}%
-              </SvgText>
-            )}
-          </React.Fragment>
-        ) : null,
-      )}
-    </Svg>
-  );
-
-  // ── Loading ──────────────────────────────────────────────────────────────────
+  // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <View style={s.center}>
-        <ActivityIndicator size="large" color={C.teal} />
-        <Text style={s.loadingText}>Loading accuracy data…</Text>
+      <View style={S.centered}>
+        <ActivityIndicator size="large" color={C.primary} />
+        <Text style={S.loadingText}>Loading accuracy data…</Text>
       </View>
     );
   }
 
-  // ── Error ────────────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <View style={s.errorBox}>
-        <Text style={s.errorTitle}>Couldn't load data</Text>
-        <Text style={s.errorSub}>{error}</Text>
+      <View style={S.errorCard}>
+        <Text style={S.errorText}>⚠️ {error}</Text>
+        <Text style={S.errorSub}>Failed to load accuracy data</Text>
       </View>
     );
   }
 
-  // ── Main ─────────────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <View>
-      <View style={s.titleContent}>
-        <Text style={s.title}>Accuracy Chart</Text>
-      </View>
-      {/* Time range tabs */}
-      <View style={s.tabRow}>
-        {(['week', 'month', 'year'] as const).map((r) => (
-          <TouchableOpacity
-            key={r}
-            style={[s.tab, timeRange === r && s.tabActive]}
-            onPress={() => setTimeRange(r)}
-            activeOpacity={0.7}
-          >
-            <Text style={[s.tabText, timeRange === r && s.tabTextActive]}>
-              {r.charAt(0).toUpperCase() + r.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* Title */}
+      <Text style={S.title}>Accuracy & Speed</Text>
+
+      {/* Time range tabs (only shown when no external timeRange) */}
+      {!externalTimeRange && (
+        <View style={S.rangeBar}>
+          {(['week', 'month', 'year'] as const).map(r => (
+            <TouchableOpacity
+              key={r}
+              style={[S.rangeBtn, timeRange === r && S.rangeBtnActive]}
+              onPress={() => setInternalTimeRange(r)}
+              activeOpacity={0.8}
+            >
+              <Text style={[S.rangeBtnText, timeRange === r && S.rangeBtnTextActive]}>
+                {r.charAt(0).toUpperCase() + r.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {!hasData ? (
-        <View style={s.emptyBox}>
-          <Text style={s.emptyText}>No data recorded yet.</Text>
+        <View style={S.emptyBox}>
+          <Text style={S.emptyIcon}>📊</Text>
+          <Text style={S.emptyText}>No data recorded yet.</Text>
         </View>
       ) : (
         <>
-          {/* Stats row */}
-          <View style={s.statsRow}>
-            <View style={s.statItem}>
-              <Text style={s.statLabel}>Avg Accuracy</Text>
-              <Text style={s.statValue}>
-                {calc!.avgAccuracy.toFixed(1)}
-                <Text style={s.statUnit}>%</Text>
-              </Text>
+          {/* Summary stats */}
+          <View style={S.summaryRow}>
+            <View style={S.summaryItem}>
+              <Text style={S.summaryValue}>{calc!.avgAccuracy.toFixed(1)}%</Text>
+              <Text style={S.summaryLabel}>Avg Accuracy</Text>
             </View>
-
-            <View style={s.statDivider} />
-
-            <View style={s.statItem}>
-              <Text style={s.statLabel}>Avg Speed</Text>
-              <Text style={s.statValue}>
-                {calc!.avgWpm.toFixed(0)}
-                <Text style={s.statUnit}> wpm</Text>
-              </Text>
+            <View style={S.summaryDivider} />
+            <View style={S.summaryItem}>
+              <Text style={S.summaryValue}>{calc!.avgWpm.toFixed(0)}</Text>
+              <Text style={S.summaryLabel}>Avg WPM</Text>
             </View>
-
-            <View style={s.statDivider} />
-
-            <View style={s.statItem}>
-              <Text style={s.statLabel}>Trend</Text>
-              <Text style={[
-                s.statValue,
-                {
-                  color: calc!.accDir === 'up' ? C.success
-                    : calc!.accDir === 'down' ? C.danger
-                      : C.textMuted,
-                },
-              ]}>
-                {calc!.accDir === 'up' ? '↑' : calc!.accDir === 'down' ? '↓' : '→'}{' '}
-                {Math.abs(calc!.accPct).toFixed(1)}
-                <Text style={s.statUnit}>%</Text>
+            <View style={S.summaryDivider} />
+            <View style={S.summaryItem}>
+              <Text style={[S.summaryValue, { color: trendColor }]}>
+                {trendIcon} {Math.abs(calc!.accPct).toFixed(1)}%
               </Text>
+              <Text style={S.summaryLabel}>Trend</Text>
             </View>
           </View>
 
-          {/* Chart */}
-          <View style={s.chartCard}>
-            {needsScroll ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.scrollContent}
-              >
-                {renderChart()}
-              </ScrollView>
-            ) : (
-              renderChart()
-            )}
-
-            {/* Legend */}
-            <View style={s.legend}>
-              <View style={s.legendItem}>
-                <View style={[s.legendLine, { backgroundColor: C.teal }]} />
-                <Text style={s.legendText}>Accuracy</Text>
-              </View>
-              <View style={s.legendItem}>
-                <View style={[s.legendLine, s.legendDashed, { borderColor: C.amber }]} />
-                <Text style={s.legendText}>Speed (WPM)</Text>
-              </View>
+          {/* Legend */}
+          <View style={S.legendRow}>
+            <View style={S.legendItem}>
+              <View style={[S.legendDot, { backgroundColor: C.primary }]} />
+              <Text style={S.legendText}>Accuracy (%)</Text>
             </View>
+            <View style={S.legendItem}>
+              <View style={[S.legendDot, { backgroundColor: C.amber }]} />
+              <Text style={S.legendText}>Speed (WPM)</Text>
+            </View>
+          </View>
+
+          {/* Grade-level benchmark card */}
+          {benchmark && calc && hasData && (() => {
+            const wpmStatus  = getBenchmarkStatus(calc.avgWpm,      benchmark.wpmMin, benchmark.wpmMax);
+            const accStatus  = getBenchmarkStatus(calc.avgAccuracy, benchmark.accMin, benchmark.accMax);
+            const wpmCfg  = BENCHMARK_CONFIG[wpmStatus];
+            const accCfg  = BENCHMARK_CONFIG[accStatus];
+            return (
+              <View style={S.benchmarkCard}>
+                {/* Header */}
+                <View style={S.benchmarkHeader}>
+                  <Text style={S.benchmarkTitle}>Grade-Level Benchmark</Text>
+                  <View style={S.benchmarkGradePill}>
+                    <Text style={S.benchmarkGradeText}>{benchmark.label}</Text>
+                  </View>
+                </View>
+
+                {/* Expected ranges row */}
+                <Text style={S.benchmarkRangeHint}>
+                  Expected range — Accuracy: {benchmark.accMin}–{benchmark.accMax}%  ·  WPM: {benchmark.wpmMin}–{benchmark.wpmMax}
+                </Text>
+
+                {/* Accuracy indicator */}
+                <View style={[S.benchmarkRow, { backgroundColor: accCfg.bg }]}>
+                  <View style={S.benchmarkMeta}>
+                    <Text style={S.benchmarkMetric}>Accuracy</Text>
+                    <Text style={[S.benchmarkValue, { color: C.primary }]}>
+                      {calc.avgAccuracy.toFixed(1)}%
+                    </Text>
+                  </View>
+                  <View style={[S.benchmarkBadge, { backgroundColor: accCfg.color }]}>
+                    <Text style={S.benchmarkBadgeIcon}>{accCfg.icon}</Text>
+                    <Text style={S.benchmarkBadgeText}>{accCfg.label}</Text>
+                  </View>
+                </View>
+
+                {/* WPM indicator */}
+                <View style={[S.benchmarkRow, { backgroundColor: wpmCfg.bg, marginTop: sh(6) }]}>
+                  <View style={S.benchmarkMeta}>
+                    <Text style={S.benchmarkMetric}>
+                      {role === 'student' ? 'Reading Speed' : 'WPM'}
+                    </Text>
+                    <Text style={[S.benchmarkValue, { color: C.amber }]}>
+                      {calc.avgWpm.toFixed(0)} wpm
+                    </Text>
+                  </View>
+                  <View style={[S.benchmarkBadge, { backgroundColor: wpmCfg.color }]}>
+                    <Text style={S.benchmarkBadgeIcon}>{wpmCfg.icon}</Text>
+                    <Text style={S.benchmarkBadgeText}>{wpmCfg.label}</Text>
+                  </View>
+                </View>
+              </View>
+            );
+          })()}
+
+          {/* Bar breakdown */}
+          <View style={S.breakdownCard}>
+            {chartData.map((item, index) => {
+              const isPeak = index === calc!.peakAccIdx && item.accuracy > 0;
+              const accPct = item.accuracy; // already 0-100
+              const wpmPct = calc!.maxWpm > 0 ? (item.wpm / calc!.maxWpm) * 100 : 0;
+              const isLast = index === chartData.length - 1;
+
+              return (
+                <View key={index} style={[S.row, isLast && S.rowLast]}>
+                  {/* Period label */}
+                  <Text style={[S.rowLabel, isPeak && S.rowLabelPeak]} numberOfLines={1}>
+                    {item.label}
+                  </Text>
+
+                  <View style={S.barsCol}>
+                    {/* Accuracy bar */}
+                    <View style={S.barRow}>
+                      <View style={S.barTrack}>
+                        <View
+                          style={[
+                            S.barFill,
+                            {
+                              width: `${accPct}%` as any,
+                              backgroundColor: isPeak ? C.primary : C.tabBg,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={[S.barValue, isPeak && { color: C.primary }]}>
+                        {item.accuracy > 0 ? `${item.accuracy.toFixed(1)}%` : '—'}
+                      </Text>
+                    </View>
+
+                    {/* WPM bar */}
+                    <View style={S.barRow}>
+                      <View style={S.barTrack}>
+                        <View
+                          style={[
+                            S.barFill,
+                            {
+                              width: `${wpmPct}%` as any,
+                              backgroundColor: C.amberBg,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={[S.barValue, { color: C.amber }]}>
+                        {item.wpm > 0 ? `${item.wpm.toFixed(0)}` : '—'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
           </View>
 
           {/* Insight */}
           <View style={[
-            s.insightBox,
-            calc!.accDir === 'up' ? s.insightUp :
-              calc!.accDir === 'down' ? s.insightDown : s.insightStable,
+            S.insightBar,
+            calc!.accDir === 'up' ? { backgroundColor: C.greenBg }
+              : calc!.accDir === 'down' ? { backgroundColor: C.coralBg }
+                : { backgroundColor: C.inputBg },
           ]}>
-            <View style={[
-              s.insightDot,
-              {
-                backgroundColor:
-                  calc!.accDir === 'up' ? C.success :
-                    calc!.accDir === 'down' ? C.danger : C.stable,
-              },
-            ]} />
+            <Text style={S.insightIcon}>
+              {calc!.accDir === 'up' ? '📈' : calc!.accDir === 'down' ? '📉' : '📊'}
+            </Text>
             <Text style={[
-              s.insightText,
-              {
-                color: calc!.accDir === 'up' ? C.successDark :
-                  calc!.accDir === 'down' ? C.dangerDark : C.textSub,
-              },
+              S.insightText,
+              { color: calc!.accDir === 'up' ? C.green : calc!.accDir === 'down' ? C.coral : C.inkLight },
             ]}>
               {insight}
             </Text>
@@ -1224,178 +350,301 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-
-const s = StyleSheet.create({
-  // States
-  center: {
+const S = StyleSheet.create({
+  centered: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 48,
-    gap: 10,
+    padding: sw(40),
   },
-  loadingText: { fontSize: 14, fontFamily: 'Satoshi-Regular', color: C.textSub },
+  loadingText: {
+    marginTop: sh(12),
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+  },
+  errorCard: {
+    backgroundColor: C.coralBg,
+    borderRadius: sw(14),
+    padding: sw(16),
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Bold',
+    color: C.coral,
+    marginBottom: sh(4),
+  },
+  errorSub: {
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Medium',
+    color: C.slate,
+  },
 
-  titleContent: {
-    flex: 1,
-  },
   title: {
-    fontSize: 18,
-    fontFamily: 'Satoshi-Bold',
-    color: '#1F2937',
-    marginBottom: 4,
+    fontSize: sf(16),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+    marginBottom: sh(12),
   },
 
-  errorBox: {
-    borderRadius: 14,
-    padding: 24,
+  // Time range
+  rangeBar: {
+    flexDirection: 'row',
+    backgroundColor: C.tabBg,
+    borderRadius: sw(10),
+    padding: sw(3),
+    marginBottom: sh(14),
+  },
+  rangeBtn: {
+    flex: 1,
+    paddingVertical: sh(8),
     alignItems: 'center',
-    gap: 6,
-    borderLeftWidth: 3,
-    borderLeftColor: C.danger,
-    backgroundColor: C.dangerLight,
+    borderRadius: sw(8),
   },
-  errorTitle: { fontSize: 15, fontFamily: 'Satoshi-Bold', color: C.danger },
-  errorSub: { fontSize: 13, fontFamily: 'Satoshi-Regular', color: C.textSub, textAlign: 'center' },
+  rangeBtnActive: {
+    backgroundColor: C.primary,
+    elevation: 2,
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: sw(1) },
+    shadowOpacity: 0.2,
+    shadowRadius: sw(2),
+  },
+  rangeBtnText: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
+  },
+  rangeBtnTextActive: {
+    color: '#FFFFFF',
+  },
 
+  // Empty
   emptyBox: {
-    paddingVertical: 48,
+    paddingVertical: sh(40),
     alignItems: 'center',
+    gap: sh(8),
   },
-  emptyText: { fontSize: 14, fontFamily: 'Satoshi-Regular', color: C.textMuted },
+  emptyIcon: {
+    fontSize: sf(40),
+    opacity: 0.5,
+  },
+  emptyText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Medium',
+    color: C.slate,
+  },
 
-  // Tabs
-  tabRow: {
+  // Summary row
+  summaryRow: {
     flexDirection: 'row',
-    backgroundColor: C.surface,
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 9,
+    backgroundColor: C.inputBg,
+    borderRadius: sw(14),
+    paddingVertical: sh(14),
+    paddingHorizontal: sw(12),
+    marginBottom: sh(12),
     alignItems: 'center',
   },
-  tabActive: { backgroundColor: C.teal },
-  tabText: { fontSize: 14, fontFamily: 'Satoshi-Medium', color: C.textSub },
-  tabTextActive: { fontFamily: 'Satoshi-Bold', color: C.surface },
-
-  // Stats row
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.surface,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  statItem: {
+  summaryItem: {
     flex: 1,
     alignItems: 'center',
-    gap: 3,
   },
-  statLabel: {
-    fontSize: 11,
-    fontFamily: 'Satoshi-Medium',
-    color: C.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+  summaryValue: {
+    fontSize: sf(18),
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
+    marginBottom: sh(2),
   },
-  statValue: {
-    fontSize: 20,
-    fontFamily: 'Satoshi-Bold',
-    color: C.text,
+  summaryLabel: {
+    fontSize: sf(11),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
   },
-  statUnit: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Regular',
-    color: C.textSub,
-  },
-  statDivider: {
+  summaryDivider: {
     width: 1,
-    height: 36,
+    height: sh(30),
     backgroundColor: C.border,
   },
 
-  // Chart card
-  chartCard: {
-    backgroundColor: C.surface,
-    borderRadius: 14,
-    paddingTop: 16,
-    paddingBottom: 12,
-    paddingHorizontal: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  scrollContent: {
-    paddingRight: 8,
-  },
-
   // Legend
-  legend: {
+  legendRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: C.border,
-    marginTop: 8,
+    gap: sw(20),
+    marginBottom: sh(10),
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: sw(6),
   },
-  legendLine: {
-    width: 16,
-    height: 2,
-    borderRadius: 1,
-  },
-  legendDashed: {
-    backgroundColor: 'transparent',
-    borderTopWidth: 2,
-    borderStyle: 'dashed',
-    height: 0,
-    marginTop: 1,
+  legendDot: {
+    width: sw(10),
+    height: sw(10),
+    borderRadius: sw(5),
   },
   legendText: {
-    fontSize: 12,
-    fontFamily: 'Satoshi-Medium',
-    color: C.textSub,
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+  },
+
+  // Benchmark card
+  benchmarkCard: {
+    backgroundColor: C.card,
+    borderRadius: sw(14),
+    padding: sw(14),
+    borderWidth: 1,
+    borderColor: C.primaryLight,
+    marginBottom: sh(12),
+  },
+  benchmarkHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: sh(4),
+  },
+  benchmarkTitle: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+  },
+  benchmarkGradePill: {
+    backgroundColor: C.primaryLight,
+    paddingHorizontal: sw(10),
+    paddingVertical: sh(3),
+    borderRadius: sw(20),
+  },
+  benchmarkGradeText: {
+    fontSize: sf(11),
+    fontFamily: 'Nunito-Bold',
+    color: C.primary,
+  },
+  benchmarkRangeHint: {
+    fontSize: sf(10),
+    fontFamily: 'Nunito-Regular',
+    color: C.slate,
+    marginBottom: sh(10),
+  },
+  benchmarkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: sw(10),
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(12),
+  },
+  benchmarkMeta: {
+    gap: sh(2),
+  },
+  benchmarkMetric: {
+    fontSize: sf(11),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  benchmarkValue: {
+    fontSize: sf(20),
+    fontFamily: 'Nunito-Bold',
+  },
+  benchmarkBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: sw(10),
+    paddingVertical: sh(6),
+    borderRadius: sw(8),
+    gap: sw(4),
+  },
+  benchmarkBadgeIcon: {
+    fontSize: sf(10),
+    color: '#ffffff',
+  },
+  benchmarkBadgeText: {
+    fontSize: sf(11),
+    fontFamily: 'Nunito-Bold',
+    color: '#ffffff',
+  },
+
+  // Breakdown card
+  breakdownCard: {
+    backgroundColor: C.card,
+    borderRadius: sw(14),
+    padding: sw(14),
+    borderWidth: 1,
+    borderColor: C.primaryLight,
+    marginBottom: sh(12),
+  },
+
+  // Row
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: sh(8),
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    gap: sw(10),
+  },
+  rowLast: {
+    borderBottomWidth: 0,
+  },
+  rowLabel: {
+    width: sw(50),
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+  },
+  rowLabelPeak: {
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+  },
+
+  barsCol: {
+    flex: 1,
+    gap: sh(4),
+  },
+  barRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(6),
+  },
+  barTrack: {
+    flex: 1,
+    height: sw(7),
+    backgroundColor: C.track,
+    borderRadius: sw(4),
+    overflow: 'hidden',
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: sw(4),
+  },
+  barValue: {
+    minWidth: sw(42),
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Bold',
+    color: C.slate,
+    textAlign: 'right',
   },
 
   // Insight
-  insightBox: {
+  insightBar: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderLeftWidth: 3,
+    alignItems: 'center',
+    borderRadius: sw(10),
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(12),
+    gap: sw(8),
   },
-  insightUp: { backgroundColor: C.successLight, borderLeftColor: C.success },
-  insightDown: { backgroundColor: C.dangerLight, borderLeftColor: C.danger },
-  insightStable: { backgroundColor: C.stableLight, borderLeftColor: C.stable },
-  insightDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 4,
-    flexShrink: 0,
+  insightIcon: {
+    fontSize: sf(16),
   },
   insightText: {
     flex: 1,
-    fontSize: 13,
-    fontFamily: 'Satoshi-Regular',
-    lineHeight: 20,
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Medium',
+    lineHeight: sf(19),
   },
 });
 

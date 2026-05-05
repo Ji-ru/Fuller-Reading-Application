@@ -26,13 +26,16 @@ import UsersRegisteredChart from '../../Components/Admin/UsersRegisteredChart';
 import ClassStatusChart from '../../Components/Admin/ClassStatusChart';
 import ClassesPerGradeChart from '../../Components/Admin/ClassesPerGradeChart';
 import ReadingLevelDistributionChart from '../../Components/Admin/ReadingLevelDistributionChart';
+import { FullerProgressionFunnelChart } from '../../Components/Admin/FullerProgressionFunnelChart';
+
 import { sw, sh, sf } from '../../Utils/responsive';
 
 const COLORS = {
-  textPrimary: '#1E1E1E',
-  textSecondary: '#999999',
+  textPrimary: '#2D3436',
+  textSecondary: '#636E72',
   primary: '#4ECDC4',
-  border: '#E5E5E5',
+  border: '#E9ECEF',
+  background: '#F8F9FA',
 };
 
 export default function AdminDashboard() {
@@ -64,13 +67,13 @@ export default function AdminDashboard() {
       id: 'activity-logs',
       label: 'Activity Logs',
       icon: require('../../../assets/icons/Logs-icon.png'),
-      onPress: () => {},
+      onPress: () => { },
     },
     {
       id: 'settings',
       label: 'Settings',
       icon: require('../../../assets/icons/Settings-icon.png'),
-      onPress: () => {},
+      onPress: () => { },
     },
   ];
 
@@ -93,10 +96,10 @@ export default function AdminDashboard() {
 
           {/* Header */}
           <View style={upperNav.header}>
-            <Image
+            {/* <Image
               style={upperNav.ciscLogo}
               source={require('../../../assets/images/cisckids.png')}
-            />
+            /> */}
             <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
               <Image
                 style={upperNav.menuIcon}
@@ -122,30 +125,34 @@ export default function AdminDashboard() {
           />
 
           {/* Main Dashboard Content */}
-          <View style={[adminDashboard.content, { paddingHorizontal: 16 }]}>
-            <Text style={styles.sectionTitle}>Admin Dashboard</Text>
-            <Text style={styles.sectionSubtitle}>
-              {selectedAcadYear === 'All Years'
-                ? 'Analytics for all academic years'
-                : `Analytics for ${formatAcademicYear(selectedAcadYear)}`}
-            </Text>
+          <View style={[adminDashboard.content, { paddingHorizontal: sw(20) }]}>
+            <View style={styles.headerTitleSection}>
+              <Text style={styles.sectionTitle}>Admin Dashboard</Text>
+              <Text style={styles.sectionSubtitle}>
+                {selectedAcadYear === 'All Years'
+                  ? 'Analytics for all academic years'
+                  : `Analytics for ${formatAcademicYear(selectedAcadYear)}`}
+              </Text>
+            </View>
 
             {/* Academic Year Dropdown */}
-            <View style={styles.filterItem}>
-              <Text style={styles.filterLabel}>Academic Year</Text>
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Select Academic Year</Text>
               <TouchableOpacity
                 style={styles.filterButton}
                 onPress={() => setShowYearDropdown(!showYearDropdown)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.filterButtonText}>
-                  {selectedAcadYear === 'All Years'
-                    ? 'All Years'
-                    : formatAcademicYear(selectedAcadYear)}
-                </Text>
-                <Text style={styles.dropdownArrow}>
-                  {showYearDropdown ? '▲' : '▼'}
-                </Text>
+                <View style={styles.filterButtonContent}>
+                  <Text style={styles.filterButtonText}>
+                    {selectedAcadYear === 'All Years'
+                      ? 'All Academic Years'
+                      : formatAcademicYear(selectedAcadYear)}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>
+                    {showYearDropdown ? '▲' : '▼'}
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               {showYearDropdown && (
@@ -178,22 +185,29 @@ export default function AdminDashboard() {
               )}
             </View>
 
-            {/* Charts */}
-            <ReadingLevelDistributionChart
-              acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-            />
-            <UsersByRoleChart
-              acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-            />
-            <UsersRegisteredChart
-              acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-            />
-            <ClassStatusChart
-              acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-            />
-            <ClassesPerGradeChart
-              acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-            />
+            {/* Charts Section */}
+            <View style={styles.chartsGrid}>
+              <ReadingLevelDistributionChart
+                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
+              />
+              <UsersByRoleChart
+                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
+              />
+              <UsersRegisteredChart
+                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
+              />
+              <ClassStatusChart
+                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
+              />
+              <ClassesPerGradeChart
+                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
+              />
+              <FullerProgressionFunnelChart
+                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
+              />
+            </View>
+
+            <View style={{ height: sh(40) }} />
           </View>
         </View>
       </ScrollView>
@@ -202,82 +216,99 @@ export default function AdminDashboard() {
 }
 
 const styles = StyleSheet.create({
+  headerTitleSection: {
+    marginTop: sh(10),
+    marginBottom: sh(25),
+  },
   sectionTitle: {
-    fontSize: sf(28),
-    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(30),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textPrimary,
-    marginBottom: sh(4),
+    marginBottom: sh(6),
   },
   sectionSubtitle: {
-    fontSize: sf(14),
-    fontFamily: 'Satoshi-Regular',
+    fontSize: sf(15),
+    fontFamily: 'Comfortaa-Regular',
     color: COLORS.textSecondary,
-    marginBottom: sh(20),
+    lineHeight: sf(20),
   },
-  filterItem: {
-    marginBottom: sh(20),
+  filterSection: {
+    marginBottom: sh(30),
     position: 'relative',
-    zIndex: 10,
+    zIndex: 100,
   },
   filterLabel: {
     fontSize: sf(12),
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textSecondary,
-    marginBottom: sh(6),
+    marginBottom: sh(8),
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   filterButton: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: sw(18),
+    paddingVertical: sh(14),
+    borderRadius: sw(16),
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(2) },
+    shadowOpacity: 0.05,
+    shadowRadius: sw(8),
+    elevation: 2,
+  },
+  filterButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: sw(14),
-    paddingVertical: sh(12),
-    borderRadius: sw(8),
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   filterButtonText: {
-    fontSize: sf(14),
-    fontFamily: 'Satoshi-Regular',
+    fontSize: sf(15),
+    fontFamily: 'Comfortaa-Bold',
     color: COLORS.textPrimary,
   },
   dropdownArrow: {
     fontSize: sf(12),
-    color: '#7F8C8D',
+    color: COLORS.textSecondary,
   },
   filterDropdownMenu: {
     position: 'absolute',
-    top: sh(70), // adjust based on button height
+    top: sh(85),
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    borderRadius: sw(8),
+    borderRadius: sw(16),
     borderWidth: 1,
     borderColor: COLORS.border,
-    maxHeight: sw(200),
+    maxHeight: sh(250),
     zIndex: 1000,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.1,
-    shadowRadius: sw(4),
-    elevation: 3,
+    shadowOffset: { width: 0, height: sw(10) },
+    shadowOpacity: 0.12,
+    shadowRadius: sw(15),
+    elevation: 10,
+    overflow: 'hidden',
   },
   filterDropdownItem: {
-    paddingVertical: sh(12),
-    paddingHorizontal: sw(14),
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#F0F0F0',
+    paddingVertical: sh(15),
+    paddingHorizontal: sw(20),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F9FA',
   },
   filterDropdownItemSelected: {
     backgroundColor: '#E8F8F7',
   },
   filterDropdownItemText: {
-    fontSize: sf(14),
-    fontFamily: 'Satoshi-Regular',
-    color: '#555',
+    fontSize: sf(15),
+    fontFamily: 'Comfortaa-Regular',
+    color: COLORS.textPrimary,
   },
   filterDropdownItemTextSelected: {
     color: COLORS.primary,
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Comfortaa-Bold',
+  },
+  chartsGrid: {
+    gap: sh(10), // This adds spacing between chart components
   },
 });

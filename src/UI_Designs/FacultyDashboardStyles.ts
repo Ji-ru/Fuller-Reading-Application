@@ -169,6 +169,44 @@ const facultyDashboard = StyleSheet.create({
       color: '#4ECDC4',
       fontFamily: 'Satoshi-Medium',
     },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: sw(20),
+      paddingTop: sh(12),
+      paddingBottom: sh(8),
+      zIndex: 100,
+    },
+    headerLogo: {
+      fontSize: sf(18),
+      fontFamily: 'Nunito-Black',
+      color: '#2ca96a',
+      letterSpacing: 0.5,
+    },
+    menuBtn: {
+      width: sw(48), height: sw(48),
+      borderRadius: sw(14),
+      backgroundColor: '#ffffff',
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: sw(2) },
+      shadowOpacity: 0.08, shadowRadius: sw(6), elevation: 3,
+    },
+    dropdown: {
+      position: 'absolute', top: sh(72), right: sw(20),
+      backgroundColor: '#ffffff', borderRadius: sw(14),
+      shadowColor: '#000', shadowOffset: { width: 0, height: sw(4) },
+      shadowOpacity: 0.14, shadowRadius: sw(12), elevation: 10,
+      minWidth: sw(160), zIndex: 1000, paddingVertical: sh(4),
+    },
+    dropdownItem: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingHorizontal: sw(16), paddingVertical: sh(14),
+    },
+    dropdownIcon: { width: sw(20), height: sw(20), marginRight: sw(12), tintColor: '#FF7043' },
+    dropdownText: { fontSize: sf(15), fontFamily: 'Nunito-Bold', color: '#FF7043' },
   });
 
   export default facultyDashboard;

@@ -5,7 +5,7 @@ const readingStyles = StyleSheet.create({
   container: {
     flex: 1,
     flexShrink: 1,
-    backgroundColor: '#ECFBFF',
+    backgroundColor: '#F1FBF4', // updated background
     position: 'relative',
   },
   screenScrollContent: {
@@ -56,8 +56,8 @@ const readingStyles = StyleSheet.create({
 
   // FEEDBACK
   passageContainer: {
-    backgroundColor: '#E8F4FF',
-    borderColor: '#38B6FF',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#2ca96a',
     borderWidth: 4,
     paddingTop: sh(10),
     paddingBottom: sh(10),
@@ -72,8 +72,8 @@ const readingStyles = StyleSheet.create({
     flexShrink: 1,
   },
   passageContainerFeedback: {
-    backgroundColor: '#E8F4FF',
-    borderColor: '#38B6FF',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#2ca96a',
     borderWidth: 4,
     paddingTop: sh(10),
     paddingBottom: sh(10),
@@ -101,10 +101,10 @@ const readingStyles = StyleSheet.create({
   },
 
   textLine: {
-    fontSize: sf(23),
+    fontSize: sf(25),
     lineHeight: sf(30),
     textAlign: 'center',
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Andika-Bold',
   },
   readingImage: {
     width: sw(230),
@@ -143,14 +143,77 @@ const readingStyles = StyleSheet.create({
   // MICROPHONE
   microphoneContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  microphone: {
-    backgroundColor: '#84D6F2',
-    borderRadius: sw(75),
+  recordingStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(7),
+    marginBottom: sh(14),
+    gap: sw(6),
+  },
+  recordingStatusDot: {
+    width: sw(8),
+    height: sw(8),
+    borderRadius: sw(4),
+    backgroundColor: '#C5D0DA',
+  },
+  recordingStatusDotActive: {
+    backgroundColor: '#FF4D4D',
+  },
+  recordingStatusText: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: sf(13),
+    color: '#8899A6',
+    letterSpacing: 0.3,
+  },
+  recordingStatusTextActive: {
+    color: '#FF4D4D',
+  },
+  micRippleWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rippleRing: {
+    position: 'absolute',
+    width: sw(100),
+    height: sw(100),
+    borderRadius: sw(50),
+    backgroundColor: '#FF9E9C',
+    opacity: 0,
+  },
+  navArrowItem: {
+    width: sw(56),
+    height: sw(56),
+    borderRadius: sw(18),
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    width: sw(150),
-    height: sw(150),
+    elevation: 6,
+    shadowColor: '#008443',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    borderWidth: 3,
+    borderColor: '#008443',
+  },
+  navArrowText: {
+    fontSize: sf(28),
+    fontFamily: 'Nunito-Black',
+    color: '#008443',
+    marginTop: sh(-2),
+  },
+  navArrowEmpty: {
+    width: sw(56),
+  },
+  microphone: {
+    backgroundColor: '#008443',
+    borderRadius: sw(50),
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: sw(100),
+    height: sw(100),
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: sw(2) },
@@ -159,28 +222,18 @@ const readingStyles = StyleSheet.create({
   },
   microphoneRecording: {
     backgroundColor: '#FF9E9C',
-    borderRadius: sw(75),
+    borderRadius: sw(50),
     justifyContent: 'center',
     alignItems: 'center',
-    width: sw(150),
-    height: sw(150),
+    width: sw(100),
+    height: sw(100),
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.25,
     shadowRadius: sw(3.84),
   },
-  microphoneIcon: {
-    width: sw(150),
-    height: sw(150),
-    maxWidth: sw(150),
-    maxHeight: sw(150),
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.25,
-    shadowRadius: sw(3.84),
-  },
+  // Icon removed, now handled by SVG inside component
 
   // TESTING
   controlsContainer: {
@@ -284,7 +337,7 @@ const readingStyles = StyleSheet.create({
     color: '#ffff',
   },
   correctContainer: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#2ca96a',
   },
   incorrectContainer: {
     backgroundColor: '#FF5252',
@@ -293,7 +346,7 @@ const readingStyles = StyleSheet.create({
   // FEEDBACK REPORT
   feedbackContainer: {
     backgroundColor: '#ffff',
-    borderColor: '#38B6FF',
+    borderColor: '#2ca96a',
     borderWidth: 4,
     borderRadius: sw(30),
     elevation: 5,
@@ -307,7 +360,7 @@ const readingStyles = StyleSheet.create({
   feedbackTitleWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3B7FC9',
+    backgroundColor: '#008443',
     borderTopLeftRadius: sw(25),
     borderTopRightRadius: sw(25),
     marginBottom: sh(5),
@@ -316,7 +369,7 @@ const readingStyles = StyleSheet.create({
     fontSize: sf(15),
     padding: sw(5),
     fontFamily: 'DynaPuff-Bold',
-    color: '#3B7FC9',
+    color: '#008443',
   },
   feedbackBookicon: {
     position: 'absolute',
@@ -345,7 +398,7 @@ const readingStyles = StyleSheet.create({
     fontFamily: 'Satoshi-Bold',
   },
   successText: {
-    color: '#4CAF50',
+    color: '#2ca96a',
     fontWeight: 'bold',
     fontFamily: 'Satoshi-Bold',
   },
@@ -524,7 +577,7 @@ const readingStyles = StyleSheet.create({
     borderRadius: sw(32),
     // Layered border: a thick white inner ring sits on a sky-blue outer stroke
     borderWidth: 4,
-    borderColor: '#38B6FF',
+    borderColor: '#2ca96a',
     paddingTop: sh(20),
     paddingBottom: sh(20),
     paddingHorizontal: sw(16),
@@ -533,7 +586,7 @@ const readingStyles = StyleSheet.create({
     marginBottom: sh(125),
     elevation: 8,
     // Soft inner glow via shadow
-    shadowColor: '#38B6FF',
+    shadowColor: '#2ca96a',
     shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.25,
     shadowRadius: sw(12),
@@ -556,7 +609,7 @@ const readingStyles = StyleSheet.create({
     marginBottom: sh(10),
   },
   wordLabelPill: {
-    backgroundColor: '#3B7FC9',
+    backgroundColor: '#008443',
     borderRadius: sw(20),
     paddingVertical: sh(6),
     paddingHorizontal: sw(18),
@@ -637,12 +690,12 @@ const readingStyles = StyleSheet.create({
     paddingVertical: sh(8),
     paddingHorizontal: sw(16),
     borderWidth: 2,
-    borderColor: 'rgba(56,182,255,0.35)',
+    borderColor: 'rgba(44, 169, 106, 0.35)',
   },
   wordCardFooterText: {
     fontSize: sf(13),
     fontFamily: 'Comfortaa-Bold',
-    color: '#3B7FC9',
+    color: '#008443',
     textAlign: 'center',
   },
 
@@ -749,7 +802,7 @@ const readingStyles = StyleSheet.create({
   backgroundResultImage: {
     width: '100%',
     height: '100%',
-    opacity: 0.8,
+    opacity: 0.2,
     transform: [{ scale: 1.0001 }],
   },
   bgImage: {
@@ -761,11 +814,11 @@ const readingStyles = StyleSheet.create({
     zIndex: 1,
   },
   starWrapper: {
-    marginHorizontal: sw(-14),
+    marginHorizontal: sw(-10),
   },
   starIcon: {
-    width: sw(155),
-    height: sw(155),
+    width: sw(130),
+    height: sw(130),
   },
   starSection: {
     position: 'relative',
@@ -813,7 +866,7 @@ const readingStyles = StyleSheet.create({
     position: 'absolute',
     bottom: sh(18),
     alignSelf: 'center',
-    backgroundColor: 'rgba(59, 127, 201, 0.9)',
+    backgroundColor: 'rgba(0, 132, 67, 0.9)',
     paddingVertical: sh(8),
     paddingHorizontal: sw(14),
     borderRadius: sw(20),
@@ -836,8 +889,8 @@ const readingStyles = StyleSheet.create({
 
   /** Outer card — matches the passage container palette */
   alphaDisplayCard: {
-    backgroundColor: '#E8F4FF',
-    borderColor: '#38B6FF',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#2ca96a',
     borderWidth: 4,
     borderRadius: sw(30),
     paddingVertical: sh(28),
@@ -868,7 +921,7 @@ const readingStyles = StyleSheet.create({
     width: sw(118),
     height: sw(118),
     borderRadius: sw(59),
-    backgroundColor: '#84D6F2',
+    backgroundColor: '#57b8b3',
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
@@ -885,7 +938,7 @@ const readingStyles = StyleSheet.create({
     width: sw(84),
     height: sw(84),
     borderRadius: sw(42),
-    backgroundColor: '#B8E8F8',
+    backgroundColor: '#c0e8f2',
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 4,
@@ -908,7 +961,7 @@ const readingStyles = StyleSheet.create({
   alphaLowerLetter: {
     fontSize: sf(42),
     fontFamily: 'DynaPuff-Bold',
-    color: '#3B7FC9',
+    color: '#008443',
   },
 
   /** Row of "Uppercase" / "Lowercase" hint labels */
@@ -920,7 +973,7 @@ const readingStyles = StyleSheet.create({
   alphaCaseLabel: {
     fontSize: sf(11),
     fontFamily: 'Satoshi-Medium',
-    color: '#84D6F2',
+    color: '#57b8b3',
     textTransform: 'uppercase',
     letterSpacing: 1,
     textAlign: 'center',
@@ -930,7 +983,7 @@ const readingStyles = StyleSheet.create({
   /** Thin separator before the instruction */
   alphaDivider: {
     height: 1.5,
-    backgroundColor: '#B8E8F8',
+    backgroundColor: '#c0e8f2',
     width: '75%',
     marginBottom: sh(12),
   },
@@ -939,7 +992,7 @@ const readingStyles = StyleSheet.create({
   alphaInstruction: {
     fontSize: sf(16),
     fontFamily: 'Comfortaa-Bold',
-    color: '#3B7FC9',
+    color: '#008443',
     textAlign: 'center',
   },
 
@@ -960,7 +1013,7 @@ const readingStyles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: sw(3.84),
     borderWidth: 3,
-    borderColor: '#38B6FF',
+    borderColor: '#2ca96a',
   },
 
   /** Coloured header band */
@@ -973,7 +1026,7 @@ const readingStyles = StyleSheet.create({
     gap: sw(10),
   },
   alphaResultHeaderCorrect: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#2ca96a',
   },
   alphaResultHeaderIncorrect: {
     backgroundColor: '#FF7043',
@@ -1006,13 +1059,13 @@ const readingStyles = StyleSheet.create({
   alphaResultLabel: {
     fontSize: sf(14),
     fontFamily: 'Satoshi-Medium',
-    color: '#84D6F2',
+    color: '#57b8b3',
     width: sw(108),
   },
   alphaResultValue: {
     fontSize: sf(22),
     fontFamily: 'Comfortaa-Bold',
-    color: '#3B7FC9',
+    color: '#008443',
     flex: 1,
   },
   alphaResultValueMuted: {
@@ -1028,8 +1081,8 @@ const readingStyles = StyleSheet.create({
 
   /** Outer card for word display */
   wordDisplayCard: {
-    backgroundColor: '#E8F4FF',
-    borderColor: '#38B6FF',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#2ca96a',
     borderWidth: 4,
     borderRadius: sw(30),
     paddingTop: sh(22),
@@ -1051,7 +1104,7 @@ const readingStyles = StyleSheet.create({
   wordDisplayLabel: {
     fontSize: sf(12),
     fontFamily: 'Satoshi-Medium',
-    color: '#84D6F2',
+    color: '#57b8b3',
     textTransform: 'uppercase',
     letterSpacing: 2,
     marginBottom: sh(18),
@@ -1061,14 +1114,14 @@ const readingStyles = StyleSheet.create({
   wordDisplayText: {
     fontSize: sf(54),
     fontFamily: 'Comfortaa-Bold',
-    color: '#3B7FC9',
+    color: '#008443',
     textAlign: 'center',
   },
 
   /** Decorative underline accent below the word */
   wordAccentLine: {
     height: sw(5),
-    backgroundColor: '#84D6F2',
+    backgroundColor: '#57b8b3',
     borderRadius: sw(3),
     width: '55%',
     marginTop: sh(14),
@@ -1098,7 +1151,7 @@ const readingStyles = StyleSheet.create({
     gap: sw(10),
   },
   wordResultCorrect: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#2ca96a',
   },
   wordResultIncorrect: {
     backgroundColor: '#FF7043',
@@ -1116,7 +1169,7 @@ const readingStyles = StyleSheet.create({
   // ALPHABET DESIGN
   scene: {
     alignItems: 'center',
-    marginTop: sh(8),
+    marginTop: sh(50),
     marginBottom: sh(4),
   },
   promptRow: {
@@ -1124,8 +1177,8 @@ const readingStyles = StyleSheet.create({
     alignItems: 'center',
     gap: sw(8),
     marginTop: sh(2),
-    backgroundColor: '#E8F4FF',
-    borderColor: '#38B6FF',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#2ca96a',
     borderWidth: 2.5,
     borderRadius: sw(20),
     paddingHorizontal: sw(20),
@@ -1135,7 +1188,7 @@ const readingStyles = StyleSheet.create({
   promptEmoji: { fontSize: sf(20) },
   promptText: {
     fontSize: sf(17),
-    color: '#3B7FC9',
+    color: '#008443',
   },
 
   // ── Transcribing Loading Modal ──────────────────────────────────────────────
@@ -1160,7 +1213,7 @@ const readingStyles = StyleSheet.create({
     maxWidth: sw(320),
   },
   loadingModalTitle: {
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Nunito-Bold',
     fontSize: sf(18),
     color: '#1E1E1E',
     marginTop: sh(20),
@@ -1190,7 +1243,7 @@ const readingStyles = StyleSheet.create({
     borderWidth: 3,
   },
   newAlphaCardCorrect: {
-    borderColor: '#4CAF50',
+    borderColor: '#2ca96a',
   },
   newAlphaCardIncorrect: {
     borderColor: '#FF7043',
@@ -1210,7 +1263,7 @@ const readingStyles = StyleSheet.create({
     fontFamily: 'DynaPuff-Bold',
   },
   newAlphaTextCorrect: {
-    color: '#2E7D32',
+    color: '#008443',
   },
   newAlphaTextIncorrect: {
     color: '#D84315',
@@ -1289,7 +1342,7 @@ const readingStyles = StyleSheet.create({
     lineHeight: sf(64),
   },
   newAlphaSpokenLetterCorrect: {
-    color: '#16A34A',
+    color: '#008443',
   },
   newAlphaSpokenLetterIncorrect: {
     color: '#DC2626',
@@ -1308,6 +1361,87 @@ const readingStyles = StyleSheet.create({
     color: '#92400E',
     textAlign: 'center',
     lineHeight: sf(22),
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // PLAIN-TEXT ALPHABET / WORD FEEDBACK — REDESIGNED
+  // ─────────────────────────────────────────────────────────
+
+  /** Outer wrapper */
+  plainFeedbackWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: sh(24),
+    paddingHorizontal: sw(16),
+  },
+
+  /** "Good Job!" greeting text */
+  plainGreetText: {
+    fontSize: sf(28),
+    fontFamily: 'sassoon-primary-std',
+    color: '#2C2C2C',
+    textAlign: 'center',
+    marginBottom: sh(12),
+  },
+
+  /** Target letter / word displayed in large green (correct) */
+  plainLetterCorrect: {
+    fontSize: sf(72),
+    fontFamily: 'sassoon-primary-std',
+    color: '#008443',
+    textAlign: 'center',
+    marginBottom: sh(8),
+  },
+
+  /** Target letter / word displayed in large text (incorrect — neutral dark) */
+  plainLetterIncorrect: {
+    fontSize: sf(72),
+    fontFamily: 'sassoon-primary-std',
+    color: '#2C2C2C',
+    textAlign: 'center',
+    marginBottom: sh(8),
+  },
+
+  /** Word-specific size override (smaller than letter) */
+  plainWordSize: {
+    fontSize: sf(48),
+    lineHeight: sf(56),
+  },
+
+  /** "Keep it up. You can do it." encouragement text */
+  plainEncourageText: {
+    fontSize: sf(22),
+    fontFamily: 'sassoon-primary-std',
+    color: '#555555',
+    textAlign: 'center',
+    marginBottom: sh(12),
+  },
+
+  /** "Correct" / "Incorrect Reading" result label (base) */
+  plainResultLabel: {
+    fontSize: sf(24),
+    fontFamily: 'sassoon-primary-std',
+    textAlign: 'center',
+    marginTop: sh(4),
+    marginBottom: sh(16),
+  },
+
+  /** Green colour for "Correct" label */
+  plainResultCorrect: {
+    color: '#008443',
+  },
+
+  /** Red colour for "Incorrect Reading" label */
+  plainResultIncorrect: {
+    color: '#D32F2F',
+  },
+
+  // ── Loading Modal Image ─────────────────────────────────────────────────────
+  loadingModalImage: {
+    width: sw(120),
+    height: sw(120),
+    resizeMode: 'contain',
+    marginBottom: sh(12),
   },
 });
 

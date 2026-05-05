@@ -1,5 +1,10 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import { sw, sh, sf } from '../Utils/responsive';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Tile is 23% of screen width with 10px gaps — compute exact usable size
+const TILE_SIZE = (SCREEN_WIDTH - sw(20) - sw(10) * 3) * 0.23;
 
 const selection = StyleSheet.create({
   // ==========================================
@@ -28,7 +33,7 @@ const selection = StyleSheet.create({
   // ==========================================
   label: {
     fontSize: sf(35),
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Nunito-ExtraBold',
     color: '#3B7FC9',
     elevation: 5,
     shadowColor: '#000',
@@ -38,9 +43,9 @@ const selection = StyleSheet.create({
     textAlign: 'center',
   },
   sublabel: {
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     fontSize: sf(20),
-    color: '#3B7FC9',
+    color: '#388E3C',
     alignSelf: 'flex-start',
   },
 
@@ -52,12 +57,12 @@ const selection = StyleSheet.create({
     height: sw(120),
   },
   text: {
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Nunito-Regular',
     fontSize: sf(20),
     marginLeft: sw(10),
   },
   beginText: {
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Nunito-ExtraBold',
     fontSize: sf(20),
     color: '#3B7FC9',
     marginLeft: sw(10),
@@ -88,7 +93,7 @@ const selection = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: sw(20),
     marginTop: sh(10),
-    backgroundColor: '#c0e8f2',
+    backgroundColor: '#E8F5E9',
     borderRadius: sw(12),
     padding: sw(4),
   },
@@ -99,8 +104,8 @@ const selection = StyleSheet.create({
     borderRadius: sw(8),
   },
   activeTab: {
-    backgroundColor: '#3B7FC9',
-    shadowColor: '#4F46E5',
+    backgroundColor: '#388E3C',
+    shadowColor: '#1B5E20',
     elevation: 3,
     shadowOffset: { width: 0, height: sw(1) },
     shadowOpacity: 0.22,
@@ -108,82 +113,114 @@ const selection = StyleSheet.create({
   },
   tabText: {
     fontSize: sf(18),
-    color: '#3B7FC9',
+    color: '#388E3C',
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.25,
     shadowRadius: sw(3.84),
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Nunito-ExtraBold',
   },
   activeTabText: {
     color: '#FFFFFF',
     fontSize: sf(18),
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Nunito-ExtraBold',
   },
 
   // ==========================================
-  // ALPHABET TAB STYLES
+  // ALPHABET TAB STYLES  ← FIXED
   // ==========================================
   alphabetListContainer: {
     paddingHorizontal: sw(10),
-    paddingVertical: sh(10),
+    paddingTop: sh(8),
+    paddingBottom: sh(20),
   },
   alphabetRow: {
-    justifyContent: 'space-between',
-    marginBottom: sh(12),
+    justifyContent: 'flex-start',
+    gap: sw(10),
+    marginBottom: sw(10),
   },
+
+  // Tile: fixed square based on computed TILE_SIZE so nothing overflows
   alphabetItem: {
-    width: '23%',
-    aspectRatio: 1,
-    backgroundColor: 'white',
+    width: TILE_SIZE,
+    height: TILE_SIZE,
     borderRadius: sw(16),
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.2,
-    shadowRadius: sw(1.41),
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  alphabetContainer: {
-    alignItems: 'center',
-    padding: sw(8),
+    shadowOffset: { width: 0, height: sw(3) },
+    shadowOpacity: 0.22,
+    shadowRadius: sw(4),
     position: 'relative',
+    overflow: 'hidden',
   },
+
+  // Small gloss dot — top-left
+  alphabetHighlightDot: {
+    position: 'absolute',
+    top: sw(7),
+    left: sw(7),
+    width: sw(9),
+    height: sw(9),
+    borderRadius: sw(5),
+    backgroundColor: 'rgba(255,255,255,0.50)',
+  },
+
+  // Row so Aa sit side by side, baseline-aligned
+  alphabetContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    paddingHorizontal: sw(4),
+  },
+
+  // Uppercase — fits within ~half the tile
   alphabetLetter: {
-    fontSize: sf(40),
-    fontFamily: 'Comfortaa-Bold',
-    color: '#3B7FC9',
+    fontSize: TILE_SIZE * 0.38,
+    fontFamily: 'Andika-Bold',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.18)',
+    textShadowOffset: { width: 0, height: sw(1) },
+    textShadowRadius: sw(2),
   },
-  // Completed badge for alphabet
+
+  // Lowercase — visibly smaller, slight left margin for spacing
+  alphabetLetterSmall: {
+    fontSize: TILE_SIZE * 0.28,
+    fontFamily: 'Andika-Bold',
+    color: 'rgba(255,255,255,0.85)',
+    textShadowColor: 'rgba(0,0,0,0.12)',
+    textShadowOffset: { width: 0, height: sw(1) },
+    textShadowRadius: sw(2),
+    marginLeft: sw(2),
+  },
+
+  // Completed badge
   completedBadge: {
     position: 'absolute',
-    top: sw(2),
-    right: sw(2),
-    width: sw(20),
-    height: sw(20),
-    borderRadius: sw(10),
-    backgroundColor: '#2CA96A',
+    top: sw(4),
+    right: sw(4),
+    width: sw(18),
+    height: sw(18),
+    borderRadius: sw(9),
+    backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   completedCheckmark: {
-    fontSize: sf(12),
-    color: '#FFFFFF',
-    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(11),
+    color: '#2CA96A',
+    fontFamily: 'Nunito-Bold',
   },
 
   // ==========================================
-  // WORD TAB - NEW REDESIGNED STYLES
+  // WORD TAB STYLES
   // ==========================================
   wordSelectionContainer: {
     flex: 1,
   },
-
-  // LETTER CARDS (Step 1 - Letter Selection)
   letterListContainer: {
     paddingHorizontal: sw(10),
     paddingBottom: sh(20),
@@ -208,14 +245,14 @@ const selection = StyleSheet.create({
     width: sw(56),
     height: sw(56),
     borderRadius: sw(28),
-    backgroundColor: '#bcdcff',
+    backgroundColor: '#81C784',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: sw(16),
   },
   letterIconText: {
     fontSize: sf(28),
-    fontFamily: 'Satoshi-Black',
+    fontFamily: 'Nunito-Black',
     color: '#2CA96A',
   },
   letterInfo: {
@@ -223,43 +260,36 @@ const selection = StyleSheet.create({
   },
   letterTitle: {
     fontSize: sf(18),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#1F2937',
     marginBottom: sh(4),
   },
   letterSubtitle: {
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Medium',
+    fontFamily: 'Nunito-Medium',
     color: '#6B7280',
     marginBottom: sh(4),
   },
   letterProgress: {
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#2CA96A',
   },
   letterArrowContainer: {
-    width: sw(32),
-    height: sw(32),
-    borderRadius: sw(16),
-    backgroundColor: '#bcdcff',
+    width: sw(36),
+    height: sw(36),
+    borderRadius: sw(18),
+    backgroundColor: '#2CA96A',
     justifyContent: 'center',
     alignItems: 'center',
-    alignContent: 'center',
-
     marginLeft: sw(12),
   },
   letterArrow: {
-    fontSize: sf(20),
-    paddingBottom: sh(10),
-    color: '#3B7FC9',
-    fontFamily: 'Satoshi-Bold',
+    fontSize: sf(22),
+    color: '#ffffff',
+    fontFamily: 'Nunito-Bold',
+    lineHeight: sf(26),
   },
-
-  // BACK TO LETTERS BUTTON
-  // ==========================================
-  // CHAPTER HEADER (COMBINED ROW)
-  // ==========================================
   combinedHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -292,7 +322,7 @@ const selection = StyleSheet.create({
   combinedBackArrow: {
     fontSize: sf(22),
     color: '#3B7FC9',
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     lineHeight: sf(24),
   },
   combinedTitleCol: {
@@ -300,18 +330,16 @@ const selection = StyleSheet.create({
   },
   combinedTitle: {
     fontSize: sf(16),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#1F2937',
     marginBottom: sh(4),
     lineHeight: sf(22),
   },
   combinedSubtitle: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Nunito-Medium',
     color: '#6B7280',
   },
-
-  // PHONEME CATEGORIES (Step 2 - Word Selection)
   phonemeListContainer: {
     paddingHorizontal: sw(10),
     paddingBottom: sh(20),
@@ -352,17 +380,15 @@ const selection = StyleSheet.create({
   },
   phonemeTitle: {
     fontSize: sf(15),
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#374151',
     marginBottom: sh(2),
   },
   phonemeIPA: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Nunito-Medium',
     color: '#6B7280',
   },
-
-  // WORD BUBBLES
   wordsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -384,7 +410,7 @@ const selection = StyleSheet.create({
   },
   wordBubbleText: {
     fontSize: sf(20),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#374151',
   },
   wordBubbleTextCompleted: {
@@ -404,23 +430,23 @@ const selection = StyleSheet.create({
   wordCompletedCheck: {
     fontSize: sf(12),
     color: '#FFFFFF',
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Nunito-Bold',
   },
 
   // ==========================================
-  // LEGACY WORD STYLES (for backward compatibility)
+  // LEGACY WORD STYLES
   // ==========================================
   word: {
     fontSize: sf(30),
     fontWeight: '600',
-    fontFamily: 'Satoshi-MediumItalic',
+    fontFamily: 'Nunito-MediumItalic',
   },
   wordSectionContainer: {
     marginVertical: sh(5),
   },
   wordSection: {
     fontSize: sf(25),
-    fontFamily: 'Satoshi-BlackItalic',
+    fontFamily: 'Nunito-Black',
     left: sw(10),
   },
 
@@ -433,18 +459,28 @@ const selection = StyleSheet.create({
   },
   item: {
     padding: sw(5),
+    paddingLeft: sw(14),
     width: 'auto',
     height: 'auto',
     backgroundColor: '#ffff',
     borderRadius: sw(20),
-    borderColor: '#38B6FF',
+    borderColor: '#2CA96A',
     borderWidth: 4,
-    borderBottomColor: '#38B6FF',
+    borderBottomColor: '#2CA96A',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.23,
     shadowRadius: sw(2.62),
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  passageAccentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: sw(8),
   },
   itemWrapper: {
     margin: sw(5),
@@ -466,12 +502,12 @@ const selection = StyleSheet.create({
   },
   title: {
     fontSize: sf(20),
-    color: '#163F6C',
-    fontFamily: 'DynaPuff-Medium',
+    color: '#008443',
+    fontFamily: 'Nunito-Black',
   },
   author: {
-    color: '#537EAE',
-    fontFamily: 'DynaPuff-Regular',
+    color: '#2CA96A',
+    fontFamily: 'Nunito-Regular',
     fontSize: sf(15),
   },
   arrowContainer: {
@@ -485,7 +521,7 @@ const selection = StyleSheet.create({
   arrowButton: {
     fontSize: sf(15),
     color: '#69C1AE',
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Nunito-Medium',
   },
 });
 

@@ -26,3 +26,19 @@ export default function BubbleBackground() {
         </View>
     );
 }
+
+export function BubbleBackgroundUpper() {
+    return (
+        <View style={bubbles.bubblesContainer} pointerEvents="none">
+            {/* Top Bubbles */}
+            <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
+            <View style={[bubbles.bubble, bubbles.bubbleTopLeft1]} />
+            <View style={[bubbles.bubble, bubbles.bubbleTopLeft2]} />
+            <View style={[bubbles.bubble, bubbles.bubbleTopLeft3]} />
+            <View style={[bubbles.bubble, bubbles.bubbleTopLeft4]} />
+            <View style={[bubbles.bubble, bubbles.bubbleMiddleRight1]} />
+            <View style={[bubbles.bubble, bubbles.bubbleMiddleRight2]} />
+            <View style={[bubbles.bubble, bubbles.bubbleTopLeft5]} />
+        </View>
+    );
+}
