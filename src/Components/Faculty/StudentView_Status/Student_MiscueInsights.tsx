@@ -42,6 +42,11 @@ type TimeRange = 'week' | 'month' | 'year';
 
 interface MiscueInsightsProps {
   studentId: string;
+  role?: 'faculty' | 'student';
+  /** When provided externally, the component hides its own filter bar and uses this value. */
+  timeRange?: TimeRange;
+  /** Anchor date for period navigation. When provided, data is filtered relative to this date. */
+  anchor?: Date;
 }
 
 const MISCUE_COLORS: Record<string, { bar: string; bg: string }> = {
@@ -51,22 +56,38 @@ const MISCUE_COLORS: Record<string, { bar: string; bg: string }> = {
   Repetition: { bar: C.repetition, bg: C.repetitionBg },
 };
 
-const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId }) => {
-  const [timeRange, setTimeRange] = useState<TimeRange>('week');
+// ─── Label mapping ────────────────────────────────────────────────────────────
+const FRIENDLY_LABELS: Record<string, string> = {
+  Substitution: 'Wrong word',
+  Omission: 'Skipped word',
+  Insertion: 'Added word',
+  Repetition: 'Repeated word',
+};
+
+const getMiscueLabel = (type: string, role: string): string => {
+  if (role === 'student') {
+    return FRIENDLY_LABELS[type] || type;
+  }
+  return type; // faculty or any other role → technical term
+};
+
+const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId, role = 'faculty', timeRange: externalTimeRange, anchor }) => {
+  const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>('week');
+  const timeRange = externalTimeRange ?? internalTimeRange;
 
   const {
     miscueData,
     total,
     loading: miscueLoading,
     error: miscueError,
-  } = useStudentMiscueStats(studentId, timeRange);
+  } = useStudentMiscueStats(studentId, timeRange, anchor);
 
   const {
     topPassage,
     topWords,
     loading: topLoading,
     error: topError,
-  } = useStudentTopMiscuePassageAndWords(studentId, timeRange);
+  } = useStudentTopMiscuePassageAndWords(studentId, timeRange, anchor);
 
   const loading = miscueLoading || topLoading;
   const error = miscueError || topError;
@@ -100,21 +121,23 @@ const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId }) => 
       {/* Title */}
       <Text style={S.title}>Miscue Insights</Text>
 
-      {/* Time range tabs */}
-      <View style={S.rangeBar}>
-        {(['week', 'month', 'year'] as const).map(r => (
-          <TouchableOpacity
-            key={r}
-            style={[S.rangeBtn, timeRange === r && S.rangeBtnActive]}
-            onPress={() => setTimeRange(r)}
-            activeOpacity={0.8}
-          >
-            <Text style={[S.rangeBtnText, timeRange === r && S.rangeBtnTextActive]}>
-              {r.charAt(0).toUpperCase() + r.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* Time range tabs (only shown when no external timeRange) */}
+      {!externalTimeRange && (
+        <View style={S.rangeBar}>
+          {(['week', 'month', 'year'] as const).map(r => (
+            <TouchableOpacity
+              key={r}
+              style={[S.rangeBtn, timeRange === r && S.rangeBtnActive]}
+              onPress={() => setInternalTimeRange(r)}
+              activeOpacity={0.8}
+            >
+              <Text style={[S.rangeBtnText, timeRange === r && S.rangeBtnTextActive]}>
+                {r.charAt(0).toUpperCase() + r.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* ── Section 1: Miscue Type Breakdown ────────────────────── */}
       <View style={S.sectionCard}>
@@ -134,7 +157,7 @@ const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId }) => 
                 <View key={index} style={S.miscueRow}>
                   <View style={S.miscueHeader}>
                     <View style={[S.miscueDot, { backgroundColor: colors.bar }]} />
-                    <Text style={S.miscueType}>{item.type}</Text>
+                    <Text style={S.miscueType}>{getMiscueLabel(item.type, role)}</Text>
                     <Text style={S.miscuePct}>{item.percentage.toFixed(0)}%</Text>
                   </View>
                   <View style={S.barRow}>
@@ -209,7 +232,7 @@ const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId }) => 
                     <Text style={S.wordText}>"{item.word}"</Text>
                     <View style={[S.wordBadge, { backgroundColor: colors.bg }]}>
                       <Text style={[S.wordBadgeText, { color: colors.bar }]}>
-                        {item.dominantMiscueType || 'N/A'}
+                        {getMiscueLabel(item.dominantMiscueType || 'N/A', role)}
                       </Text>
                     </View>
                   </View>

@@ -62,6 +62,7 @@ export type RootStackParamList = {
     studentId: string;
     studentName: string;
     readingLevel: string;
+    gradeLevel?: number;
   };
 
   // ADMIN NAVIGATION

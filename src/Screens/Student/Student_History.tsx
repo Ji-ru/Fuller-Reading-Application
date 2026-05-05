@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import historyStyles from '../../UI_Designs/StudentHistoryStyles';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import Svg, { Text as SvgText } from 'react-native-svg';
 import { getAuth } from '@react-native-firebase/auth';
+import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
 
 // ── Performance / Activity components (moved from Student_Profile) ────────────
 import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
@@ -27,6 +28,7 @@ import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Sta
 import StudentMiscueInsights from '../../Components/Faculty/StudentView_Status/Student_MiscueInsights';
 import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
 import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
+import StudentCompletionProgress from '../../Components/Faculty/StudentView_Status/StudentCompletionProgress';
 import { sw, sh, sf } from '../../Utils/responsive';
 
 const auth = getAuth();
@@ -125,7 +127,79 @@ interface ReportData {
   miscues?: any[];
 }
 
-type ActiveTab = 'history' | 'performance' | 'activity';
+type ActiveTab = 'completion' | 'sessions' | 'performance' | 'history';
+type HistoryFilter = 'week' | 'month' | 'year';
+
+// ─── Date Utilities ───────────────────────────────────────────────────────────
+
+/** Get Monday 00:00 of the week containing `d` */
+const getWeekStart = (d: Date): Date => {
+  const copy = new Date(d);
+  const day = copy.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // Monday = 1
+  copy.setDate(copy.getDate() + diff);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+};
+
+/** Get Sunday 23:59 of the week containing `d` */
+const getWeekEnd = (d: Date): Date => {
+  const start = getWeekStart(d);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+};
+
+/** Get the start of the academic year (June 1) that contains `d`.
+ *  Philippine school year: June 1 → March 31 of the following calendar year. */
+const getAcadYearStart = (d: Date): Date => {
+  const year = d.getMonth() >= 5 ? d.getFullYear() : d.getFullYear() - 1; // June = 5
+  return new Date(year, 5, 1, 0, 0, 0, 0); // June 1
+};
+
+const getAcadYearEnd = (d: Date): Date => {
+  const start = getAcadYearStart(d);
+  return new Date(start.getFullYear() + 1, 2, 31, 23, 59, 59, 999); // March 31 next year
+};
+
+/** Format helpers */
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const formatPeriodLabel = (filter: HistoryFilter, anchor: Date): string => {
+  if (filter === 'week') {
+    const s = getWeekStart(anchor);
+    const e = getWeekEnd(anchor);
+    const sameMonth = s.getMonth() === e.getMonth();
+    return sameMonth
+      ? `${MONTHS_SHORT[s.getMonth()]} ${s.getDate()} – ${e.getDate()}, ${s.getFullYear()}`
+      : `${MONTHS_SHORT[s.getMonth()]} ${s.getDate()} – ${MONTHS_SHORT[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()}`;
+  }
+  if (filter === 'month') {
+    return `${MONTHS_SHORT[anchor.getMonth()]} ${anchor.getFullYear()}`;
+  }
+  // year = academic year
+  const start = getAcadYearStart(anchor);
+  return `SY ${start.getFullYear()} – ${start.getFullYear() + 1}`;
+};
+
+const shiftAnchor = (filter: HistoryFilter, anchor: Date, direction: -1 | 1): Date => {
+  const d = new Date(anchor);
+  if (filter === 'week') d.setDate(d.getDate() + direction * 7);
+  else if (filter === 'month') d.setMonth(d.getMonth() + direction);
+  else d.setFullYear(d.getFullYear() + direction);
+  return d;
+};
+
+const getFilterRange = (filter: HistoryFilter, anchor: Date): [Date, Date] => {
+  if (filter === 'week') return [getWeekStart(anchor), getWeekEnd(anchor)];
+  if (filter === 'month') {
+    const s = new Date(anchor.getFullYear(), anchor.getMonth(), 1, 0, 0, 0, 0);
+    const e = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0, 23, 59, 59, 999);
+    return [s, e];
+  }
+  return [getAcadYearStart(anchor), getAcadYearEnd(anchor)];
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ReadingHistoryScreen() {
@@ -136,7 +210,38 @@ export default function ReadingHistoryScreen() {
   const [logoutVisible, setLogoutVisible] = useState(false);
 
   // ── NEW: tab state ──────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<ActiveTab>('history');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('completion');
+  const [gradeLevel, setGradeLevel] = useState<number | undefined>(undefined);
+
+  // ── History filter state ────────────────────────────────────────────────────
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('week');
+  const [filterAnchor, setFilterAnchor] = useState<Date>(new Date());
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);       // 0=Mon..6=Sun (Week)
+  const [selectedWeekOfMonth, setSelectedWeekOfMonth] = useState<number | null>(null); // 1..4/5 (Month)
+
+  // ── Performance tab filter state ────────────────────────────────────────────
+  const [perfTimeRange, setPerfTimeRange] = useState<'week' | 'month' | 'year'>('week');
+  const [perfAnchor, setPerfAnchor] = useState<Date>(new Date());
+  const [perfSelectedDay, setPerfSelectedDay] = useState<number | null>(null);
+  const [perfSelectedWeekOfMonth, setPerfSelectedWeekOfMonth] = useState<number | null>(null);
+
+  // Fetch the student's grade level once for the benchmark card
+  useEffect(() => {
+    const fetchGradeLevel = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      try {
+        const snap = await getDoc(doc(getFirestore(), 'users', user.uid));
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          setGradeLevel(data?.studentData?.gradeLevel ?? undefined);
+        }
+      } catch {
+        // Non-critical — benchmark card is simply hidden if unavailable
+      }
+    };
+    fetchGradeLevel();
+  }, []);
 
   const { handleLogout, handleBackStep, handleNextStep } = useNavigationHelper();
 
@@ -237,14 +342,120 @@ export default function ReadingHistoryScreen() {
       (report.insertionCount || 0) + (report.repetitionCount || 0);
   };
 
-  const getTotalAttempts = () => groupedReports.reduce((s, g) => s + g.reports.length, 0);
+  // ── Week day data (for day chips) ───────────────────────────────────────────
+  const weekDays = useMemo(() => {
+    if (historyFilter !== 'week') return [];
+    const monday = getWeekStart(filterAnchor);
+    const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Build a set of day-of-month numbers that have activity (for dot indicators)
+    const activeDateKeys = new Set<string>();
+    for (const group of groupedReports) {
+      for (const r of group.reports) {
+        try {
+          const d: Date = r.timestamp?.toDate?.() ?? new Date(r.timestamp);
+          activeDateKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+        } catch { /* skip */ }
+      }
+    }
+
+    return DAY_LABELS.map((label, i) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      const isToday = date.getTime() === today.getTime();
+      return { label, dateNum: date.getDate(), index: i, hasActivity: activeDateKeys.has(dateKey), isToday };
+    });
+  }, [historyFilter, filterAnchor, groupedReports]);
+
+  // ── Month week data (for week-of-month chips) ─────────────────────────────
+  const monthWeeks = useMemo(() => {
+    if (historyFilter !== 'month') return [];
+    const year = filterAnchor.getFullYear();
+    const month = filterAnchor.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const totalDays = lastDay.getDate();
+    const weekCount = Math.ceil(totalDays / 7);
+
+    return Array.from({ length: weekCount }, (_, i) => {
+      const weekStart = new Date(year, month, i * 7 + 1);
+      const weekEndDate = Math.min((i + 1) * 7, totalDays);
+      const weekEnd = new Date(year, month, weekEndDate, 23, 59, 59, 999);
+      return { weekNum: i + 1, start: weekStart, end: weekEnd };
+    });
+  }, [historyFilter, filterAnchor]);
+
+  // ── Filtered reports (client-side, no extra Firestore calls) ─────────────
+  const filteredReports: GroupedReport[] = useMemo(() => {
+    const [rangeStart, rangeEnd] = getFilterRange(historyFilter, filterAnchor);
+
+    // Filter each group's reports to only those within the date range
+    const filtered: GroupedReport[] = [];
+    for (const group of groupedReports) {
+      const matchingReports = group.reports.filter(r => {
+        try {
+          const d: Date = r.timestamp?.toDate?.() ?? new Date(r.timestamp);
+          if (d < rangeStart || d > rangeEnd) return false;
+
+          // Day-level filter (Week mode)
+          if (historyFilter === 'week' && selectedDay !== null) {
+            const monday = getWeekStart(filterAnchor);
+            const targetDate = new Date(monday);
+            targetDate.setDate(monday.getDate() + selectedDay);
+            return d.getFullYear() === targetDate.getFullYear()
+              && d.getMonth() === targetDate.getMonth()
+              && d.getDate() === targetDate.getDate();
+          }
+
+          // Week-of-month filter (Month mode)
+          if (historyFilter === 'month' && selectedWeekOfMonth !== null) {
+            const weekInfo = monthWeeks.find(w => w.weekNum === selectedWeekOfMonth);
+            if (weekInfo) {
+              return d >= weekInfo.start && d <= weekInfo.end;
+            }
+          }
+
+          return true;
+        } catch {
+          return false;
+        }
+      });
+      if (matchingReports.length > 0) {
+        filtered.push({ passageTitle: group.passageTitle, reports: matchingReports });
+      }
+    }
+    return filtered;
+  }, [groupedReports, historyFilter, filterAnchor, selectedDay, selectedWeekOfMonth, monthWeeks]);
+
+  const periodLabel = useMemo(
+    () => formatPeriodLabel(historyFilter, filterAnchor),
+    [historyFilter, filterAnchor],
+  );
+
+  const navigatePeriod = (direction: -1 | 1) => {
+    setSelectedDay(null);
+    setSelectedWeekOfMonth(null);
+    setFilterAnchor(prev => shiftAnchor(historyFilter, prev, direction));
+  };
+
+  const goToToday = () => {
+    setSelectedDay(null);
+    setSelectedWeekOfMonth(null);
+    setFilterAnchor(new Date());
+  };
+
+  // Summary stats — derived from filtered data
+  const getTotalAttempts = () => filteredReports.reduce((s, g) => s + g.reports.length, 0);
   const getAverageAccuracy = () => {
-    const all = groupedReports.flatMap(g => g.reports);
+    const all = filteredReports.flatMap(g => g.reports);
     if (!all.length) return '0';
     return (all.reduce((s, r) => s + r.accuracyRate, 0) / all.length).toFixed(1);
   };
   const getBestWPM = () => {
-    const all = groupedReports.flatMap(g => g.reports);
+    const all = filteredReports.flatMap(g => g.reports);
     return all.length ? Math.max(...all.map(r => r.wordPerMin || 0)) : 0;
   };
 
@@ -324,13 +535,14 @@ export default function ReadingHistoryScreen() {
 
           {/* ── TAB BAR ────────────────────────────────────────────────────── */}
           <FadeSlideIn delay={60}>
-            <View style={tabStyles.tabBar}>
+            <View style={tabStyles.tabGrid}>
               {(
                 [
-                  { key: 'history', label: 'History' },
-                  { key: 'performance', label: 'Performance' },
-                  { key: 'activity', label: 'Activity' },
-                ] as { key: ActiveTab; label: string }[]
+                  { key: 'completion', icon: '📋', label: 'Progress' },
+                  { key: 'sessions',   icon: '📚', label: 'Sessions' },
+                  { key: 'performance', icon: '📊', label: 'Analytics' },
+                  { key: 'history',    icon: '🕓', label: 'History' },
+                ] as { key: ActiveTab; icon: string; label: string }[]
               ).map(tab => (
                 <TouchableOpacity
                   key={tab.key}
@@ -338,6 +550,7 @@ export default function ReadingHistoryScreen() {
                   onPress={() => setActiveTab(tab.key)}
                   activeOpacity={0.8}
                 >
+                  <Text style={tabStyles.tabIcon}>{tab.icon}</Text>
                   <Text style={[tabStyles.tabText, activeTab === tab.key && tabStyles.tabTextActive]}>
                     {tab.label}
                   </Text>
@@ -351,24 +564,122 @@ export default function ReadingHistoryScreen() {
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'history' && (
             <>
-              {groupedReports.length === 0 ? (
+              {/* ── Filter Bar ──────────────────────────────────────────── */}
+              <FadeSlideIn delay={100}>
+                <View style={filterStyles.container}>
+                  {/* Range selector pills */}
+                  <View style={filterStyles.rangeBar}>
+                    {(['week', 'month', 'year'] as const).map(range => (
+                      <TouchableOpacity
+                        key={range}
+                        style={[filterStyles.rangeBtn, historyFilter === range && filterStyles.rangeBtnActive]}
+                        onPress={() => { setHistoryFilter(range); setFilterAnchor(new Date()); setSelectedDay(null); setSelectedWeekOfMonth(null); }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[filterStyles.rangeBtnText, historyFilter === range && filterStyles.rangeBtnTextActive]}>
+                          {range.charAt(0).toUpperCase() + range.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* Period navigator */}
+                  <View style={filterStyles.periodNav}>
+                    <TouchableOpacity onPress={() => navigatePeriod(-1)} style={filterStyles.arrowBtn} activeOpacity={0.6}>
+                      <Text style={filterStyles.arrowText}>‹</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={goToToday} activeOpacity={0.7} style={filterStyles.periodLabelBtn}>
+                      <Text style={filterStyles.periodLabel}>{periodLabel}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigatePeriod(1)} style={filterStyles.arrowBtn} activeOpacity={0.6}>
+                      <Text style={filterStyles.arrowText}>›</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Day-of-week chips (Week mode only) */}
+                  {historyFilter === 'week' && weekDays.length > 0 && (
+                    <View style={filterStyles.dayRow}>
+                      {weekDays.map(day => {
+                        const isSelected = selectedDay === day.index;
+                        return (
+                          <TouchableOpacity
+                            key={day.index}
+                            style={[
+                              filterStyles.dayChip,
+                              isSelected && filterStyles.dayChipActive,
+                              day.isToday && !isSelected && filterStyles.dayChipToday,
+                            ]}
+                            onPress={() => setSelectedDay(prev => prev === day.index ? null : day.index)}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[
+                              filterStyles.dayChipLabel,
+                              isSelected && filterStyles.dayChipLabelActive,
+                            ]}>
+                              {day.label}
+                            </Text>
+                            <Text style={[
+                              filterStyles.dayChipDate,
+                              isSelected && filterStyles.dayChipDateActive,
+                            ]}>
+                              {day.dateNum}
+                            </Text>
+                            {day.hasActivity && !isSelected && (
+                              <View style={filterStyles.activityDot} />
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* Week-of-month chips (Month mode only) */}
+                  {historyFilter === 'month' && monthWeeks.length > 0 && (
+                    <View style={filterStyles.weekOfMonthRow}>
+                      {monthWeeks.map(w => {
+                        const isSelected = selectedWeekOfMonth === w.weekNum;
+                        return (
+                          <TouchableOpacity
+                            key={w.weekNum}
+                            style={[
+                              filterStyles.weekChip,
+                              isSelected && filterStyles.weekChipActive,
+                            ]}
+                            onPress={() => setSelectedWeekOfMonth(prev => prev === w.weekNum ? null : w.weekNum)}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[
+                              filterStyles.weekChipText,
+                              isSelected && filterStyles.weekChipTextActive,
+                            ]}>
+                              Week {w.weekNum}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              </FadeSlideIn>
+
+              {filteredReports.length === 0 ? (
                 /* Empty state */
                 <FadeSlideIn delay={120}>
                   <View style={historyStyles.emptyContainer}>
                     <View style={historyStyles.emptyIconContainer}>
                       <Text style={historyStyles.emptyIcon}>📚</Text>
                     </View>
-                    <Text style={historyStyles.emptyTitle}>No Reading History Yet</Text>
+                    <Text style={historyStyles.emptyTitle}>No Reading History</Text>
                     <Text style={historyStyles.emptyMessage}>
-                      You haven't completed any reading activities yet. Start reading
-                      passages to track your progress and see your improvement over time!
+                      No reading sessions found for this period. Try selecting a different
+                      time range or tap the period label to jump back to today.
                     </Text>
                     <TouchableOpacity
                       style={historyStyles.emptyButton}
-                      onPress={() => handleNextStep('PassageSelection')}
+                      onPress={goToToday}
                       activeOpacity={0.8}
                     >
-                      <Text style={historyStyles.emptyButtonText}>Start Reading</Text>
+                      <Text style={historyStyles.emptyButtonText}>Go to Today</Text>
                     </TouchableOpacity>
                   </View>
                 </FadeSlideIn>
@@ -378,7 +689,7 @@ export default function ReadingHistoryScreen() {
                   <FadeSlideIn delay={120}>
                     <View style={historyStyles.statsBar}>
                       <View style={historyStyles.statItem}>
-                        <Text style={historyStyles.statValue}>{groupedReports.length}</Text>
+                        <Text style={historyStyles.statValue}>{filteredReports.length}</Text>
                         <Text style={historyStyles.statLabel}>Passages</Text>
                       </View>
                       <View style={historyStyles.statDivider} />
@@ -405,7 +716,7 @@ export default function ReadingHistoryScreen() {
                       <Text style={historyStyles.sectionLabel}>Your Reading Sessions</Text>
                     </FadeSlideIn>
 
-                    {groupedReports.map((group, passageIndex) => {
+                    {filteredReports.map((group, passageIndex) => {
                       const isExpanded = expandedPassages.has(passageIndex);
                       return (
                         <FadeSlideIn key={passageIndex} delay={220 + passageIndex * 60}>
@@ -548,9 +859,23 @@ export default function ReadingHistoryScreen() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════════
-              PERFORMANCE TAB
+              COMPLETION TAB
           ══════════════════════════════════════════════════════════════════ */}
-          {activeTab === 'performance' && (
+          {activeTab === 'completion' && (
+            <View style={tabStyles.tabContent}>
+              <FadeSlideIn delay={80}>
+                <View style={tabStyles.section}>
+                  <Text style={tabStyles.sectionTitle}>Completion Progress</Text>
+                  <StudentCompletionProgress studentId={uid} />
+                </View>
+              </FadeSlideIn>
+            </View>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SESSIONS TAB
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'sessions' && (
             <View style={tabStyles.tabContent}>
               <FadeSlideIn delay={80}>
                 <View style={tabStyles.section}>
@@ -562,28 +887,136 @@ export default function ReadingHistoryScreen() {
                   <StudentWordMastery studentId={uid} />
                 </View>
               </FadeSlideIn>
-              <FadeSlideIn delay={240}>
-                <View style={tabStyles.section}>
-                  <StudentAccuracyTrendsChart studentId={uid} />
-                </View>
-              </FadeSlideIn>
-              <FadeSlideIn delay={320}>
-                <View style={tabStyles.section}>
-                  <StudentMiscueInsights studentId={uid} />
-                </View>
-              </FadeSlideIn>
             </View>
           )}
 
           {/* ══════════════════════════════════════════════════════════════════
-              ACTIVITY TAB
+              PASSAGE PERFORMANCE TAB
           ══════════════════════════════════════════════════════════════════ */}
-          {activeTab === 'activity' && (
+          {activeTab === 'performance' && (
             <View style={tabStyles.tabContent}>
+              {/* Shared performance filter bar */}
+              <FadeSlideIn delay={60}>
+                <View style={tabStyles.section}>
+                  <Text style={tabStyles.sectionTitle}>Performance Analytics</Text>
+                  <View style={filterStyles.rangeBar}>
+                    {(['week', 'month', 'year'] as const).map(range => (
+                      <TouchableOpacity
+                        key={range}
+                        style={[filterStyles.rangeBtn, perfTimeRange === range && filterStyles.rangeBtnActive]}
+                        onPress={() => { setPerfTimeRange(range); setPerfAnchor(new Date()); setPerfSelectedDay(null); setPerfSelectedWeekOfMonth(null); }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[filterStyles.rangeBtnText, perfTimeRange === range && filterStyles.rangeBtnTextActive]}>
+                          {range.charAt(0).toUpperCase() + range.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* Period navigator */}
+                  <View style={filterStyles.periodNav}>
+                    <TouchableOpacity
+                      onPress={() => { setPerfSelectedDay(null); setPerfSelectedWeekOfMonth(null); setPerfAnchor(prev => shiftAnchor(perfTimeRange as any, prev, -1)); }}
+                      style={filterStyles.arrowBtn}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={filterStyles.arrowText}>‹</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => { setPerfSelectedDay(null); setPerfSelectedWeekOfMonth(null); setPerfAnchor(new Date()); }}
+                      activeOpacity={0.7}
+                      style={filterStyles.periodLabelBtn}
+                    >
+                      <Text style={filterStyles.periodLabel}>
+                        {formatPeriodLabel(perfTimeRange as any, perfAnchor)}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => { setPerfSelectedDay(null); setPerfSelectedWeekOfMonth(null); setPerfAnchor(prev => shiftAnchor(perfTimeRange as any, prev, 1)); }}
+                      style={filterStyles.arrowBtn}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={filterStyles.arrowText}>›</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Day-of-week chips (Week mode only) */}
+                  {perfTimeRange === 'week' && (() => {
+                    const monday = getWeekStart(perfAnchor);
+                    const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    const today = new Date(); today.setHours(0, 0, 0, 0);
+                    const days = DAY_LABELS.map((label, i) => {
+                      const date = new Date(monday); date.setDate(monday.getDate() + i);
+                      const isToday = date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+                      return { label, dateNum: date.getDate(), index: i, isToday };
+                    });
+                    return (
+                      <View style={filterStyles.dayRow}>
+                        {days.map(day => {
+                          const isSelected = perfSelectedDay === day.index;
+                          return (
+                            <TouchableOpacity
+                              key={day.index}
+                              style={[
+                                filterStyles.dayChip,
+                                isSelected && filterStyles.dayChipActive,
+                                day.isToday && !isSelected && filterStyles.dayChipToday,
+                              ]}
+                              onPress={() => setPerfSelectedDay(prev => prev === day.index ? null : day.index)}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={[filterStyles.dayChipLabel, isSelected && filterStyles.dayChipLabelActive]}>
+                                {day.label}
+                              </Text>
+                              <Text style={[filterStyles.dayChipDate, isSelected && filterStyles.dayChipDateActive]}>
+                                {day.dateNum}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    );
+                  })()}
+
+                  {/* Week-of-month chips (Month mode only) */}
+                  {perfTimeRange === 'month' && (() => {
+                    const year = perfAnchor.getFullYear();
+                    const month = perfAnchor.getMonth();
+                    const totalDays = new Date(year, month + 1, 0).getDate();
+                    const weekCount = Math.ceil(totalDays / 7);
+                    const weeks = Array.from({ length: weekCount }, (_, i) => ({ weekNum: i + 1 }));
+                    return (
+                      <View style={filterStyles.weekOfMonthRow}>
+                        {weeks.map(w => {
+                          const isSelected = perfSelectedWeekOfMonth === w.weekNum;
+                          return (
+                            <TouchableOpacity
+                              key={w.weekNum}
+                              style={[filterStyles.weekChip, isSelected && filterStyles.weekChipActive]}
+                              onPress={() => setPerfSelectedWeekOfMonth(prev => prev === w.weekNum ? null : w.weekNum)}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={[filterStyles.weekChipText, isSelected && filterStyles.weekChipTextActive]}>
+                                Week {w.weekNum}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    );
+                  })()}
+                </View>
+              </FadeSlideIn>
+
               <FadeSlideIn delay={80}>
                 <View style={tabStyles.section}>
-                  <Text style={tabStyles.sectionTitle}>Activity Tracking</Text>
-                  <StudentActivityTrackingCard studentId={uid} />
+                  <StudentAccuracyTrendsChart studentId={uid} role="student" gradeLevel={gradeLevel} timeRange={perfTimeRange} anchor={perfAnchor} />
+                </View>
+              </FadeSlideIn>
+              <FadeSlideIn delay={160}>
+                <View style={tabStyles.section}>
+                  <StudentMiscueInsights studentId={uid} role="student" timeRange={perfTimeRange} anchor={perfAnchor} />
                 </View>
               </FadeSlideIn>
             </View>
@@ -603,14 +1036,16 @@ export default function ReadingHistoryScreen() {
 
 // ─── Tab styles ─────────────────────────────────────────────────────────────
 const tabStyles = StyleSheet.create({
-  tabBar: {
+  tabGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginHorizontal: sw(16),
     marginTop: sh(12),
     marginBottom: sh(4),
     backgroundColor: '#E8F5E9',
-    borderRadius: sw(12),
+    borderRadius: sw(14),
     padding: sw(4),
+    gap: sw(4),
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: sh(1) },
@@ -618,10 +1053,14 @@ const tabStyles = StyleSheet.create({
     shadowRadius: sw(3),
   },
   tab: {
-    flex: 1,
-    paddingVertical: sh(10),
+    width: '48%',
+    flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: sw(8),
+    justifyContent: 'center',
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(6),
+    borderRadius: sw(10),
+    gap: sw(5),
   },
   tabActive: {
     backgroundColor: '#388E3C',
@@ -630,6 +1069,10 @@ const tabStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: sw(1) },
     shadowOpacity: 0.22,
     shadowRadius: sw(2.22),
+  },
+  tabIcon: {
+    fontSize: sf(16),
+    lineHeight: sf(20),
   },
   tabText: {
     fontSize: sf(13),
@@ -659,5 +1102,170 @@ const tabStyles = StyleSheet.create({
     fontFamily: 'Nunito-Bold',
     color: '#1F2937',
     marginBottom: sh(10),
+  },
+});
+
+// ─── Filter styles ──────────────────────────────────────────────────────────
+const filterStyles = StyleSheet.create({
+  container: {
+    marginHorizontal: sw(16),
+    marginTop: sh(8),
+    marginBottom: sh(4),
+  },
+  rangeBar: {
+    flexDirection: 'row',
+    backgroundColor: '#E8F5E9',
+    borderRadius: sw(10),
+    padding: sw(3),
+    marginBottom: sh(10),
+  },
+  rangeBtn: {
+    flex: 1,
+    paddingVertical: sh(8),
+    alignItems: 'center',
+    borderRadius: sw(8),
+  },
+  rangeBtnActive: {
+    backgroundColor: '#388E3C',
+    elevation: 2,
+    shadowColor: '#1B5E20',
+    shadowOffset: { width: 0, height: sw(1) },
+    shadowOpacity: 0.2,
+    shadowRadius: sw(2),
+  },
+  rangeBtnText: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: '#388E3C',
+  },
+  rangeBtnTextActive: {
+    color: '#ffffff',
+  },
+  periodNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: sw(12),
+    paddingVertical: sh(6),
+    paddingHorizontal: sw(6),
+    borderWidth: 1,
+    borderColor: '#E8F5E9',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sh(1) },
+    shadowOpacity: 0.05,
+    shadowRadius: sw(2),
+  },
+  arrowBtn: {
+    width: sw(36),
+    height: sw(36),
+    borderRadius: sw(10),
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  arrowText: {
+    fontSize: sf(22),
+    fontFamily: 'Nunito-Bold',
+    color: '#388E3C',
+    lineHeight: sf(24),
+  },
+  periodLabelBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: sh(4),
+  },
+  periodLabel: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Bold',
+    color: '#1F2937',
+  },
+
+  // Day chips (Week mode)
+  dayRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: sh(10),
+    gap: sw(4),
+  },
+  dayChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: sh(8),
+    borderRadius: sw(10),
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#E8F5E9',
+  },
+  dayChipActive: {
+    backgroundColor: '#388E3C',
+    borderColor: '#388E3C',
+    elevation: 2,
+    shadowColor: '#1B5E20',
+    shadowOffset: { width: 0, height: sw(1) },
+    shadowOpacity: 0.2,
+    shadowRadius: sw(2),
+  },
+  dayChipToday: {
+    borderColor: '#388E3C',
+    borderWidth: 1.5,
+  },
+  dayChipLabel: {
+    fontSize: sf(10),
+    fontFamily: 'Nunito-Medium',
+    color: '#6B7280',
+    marginBottom: sh(2),
+  },
+  dayChipLabelActive: {
+    color: '#ffffff',
+  },
+  dayChipDate: {
+    fontSize: sf(15),
+    fontFamily: 'Nunito-Bold',
+    color: '#1F2937',
+  },
+  dayChipDateActive: {
+    color: '#ffffff',
+  },
+  activityDot: {
+    width: sw(5),
+    height: sw(5),
+    borderRadius: sw(3),
+    backgroundColor: '#388E3C',
+    marginTop: sh(3),
+  },
+
+  // Week-of-month chips (Month mode)
+  weekOfMonthRow: {
+    flexDirection: 'row',
+    marginTop: sh(10),
+    gap: sw(6),
+  },
+  weekChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: sh(8),
+    borderRadius: sw(8),
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#E8F5E9',
+  },
+  weekChipActive: {
+    backgroundColor: '#388E3C',
+    borderColor: '#388E3C',
+    elevation: 2,
+    shadowColor: '#1B5E20',
+    shadowOffset: { width: 0, height: sw(1) },
+    shadowOpacity: 0.2,
+    shadowRadius: sw(2),
+  },
+  weekChipText: {
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Bold',
+    color: '#388E3C',
+  },
+  weekChipTextActive: {
+    color: '#ffffff',
   },
 });

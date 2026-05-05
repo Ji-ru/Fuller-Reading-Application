@@ -16,6 +16,7 @@ import { getLabelForDate, getPeriodLabels, getPeriods } from "../../Utilities/ac
 export const useStudentAccuracyTrends = (
   studentId: string,
   timeRange: 'week' | 'month' | 'year',
+  anchor?: Date,
 ) => {
   const [chartData, setChartData] = useState<ProgressData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +45,7 @@ export const useStudentAccuracyTrends = (
   // Process reports with date range filtering
   const processedChartData = useMemo(() => {
     // Get the date range based on timeRange filter
-    const { start, end } = getDateRangeForTimeFilter(timeRange);
+    const { start, end } = getDateRangeForTimeFilter(timeRange, anchor);
 
     // Group accuracy data by period label
     const buckets: Record<string, { totalAccuracy: number; totalWpm: number; count: number }> = {};
@@ -72,7 +73,7 @@ export const useStudentAccuracyTrends = (
     });
 
     // Fill all periods with data (0 for periods with no data)
-    const allLabels = getPeriodLabels(timeRange);
+    const allLabels = getPeriodLabels(timeRange, anchor);
 
     return allLabels.map(label => ({
       date: label,
@@ -83,7 +84,7 @@ export const useStudentAccuracyTrends = (
         ? buckets[label].totalWpm / buckets[label].count
         : 0,
     }));
-  }, [reports, timeRange]);
+  }, [reports, timeRange, anchor]);
 
   // Update chartData when processedChartData changes
   useEffect(() => {
@@ -111,7 +112,7 @@ interface MiscueData {
  * @param studentId - used to get the percentage of each miscue type from the miscue report using the studentId
  * @returns - the percentages of the students each misuce type
  */
-export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'month' | 'year') => {
+export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'month' | 'year', anchor?: Date) => {
   const [reports, setReports] = useState<MiscueReportDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,13 +140,13 @@ export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'm
 
   const filteredReports = useMemo(() => {
     if (!timeRange) return reports;
-    const { start, end } = getDateRangeForTimeFilter(timeRange);
+    const { start, end } = getDateRangeForTimeFilter(timeRange, anchor);
     return reports.filter(r => {
       if (!r.createdAt) return false;
       const date = r.createdAt.toDate();
       return date >= start && date <= end;
     });
-  }, [reports, timeRange]);
+  }, [reports, timeRange, anchor]);
 
   // ==================== AGGREGATION ====================
 
@@ -220,7 +221,7 @@ export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'm
  * @param studentId - used to get the students miscue report 
  * @returns - top miscued passage and top 5 miscued words
  */
-export const useStudentTopMiscuePassageAndWords = (studentId: string, timeRange?: 'week' | 'month' | 'year') => {
+export const useStudentTopMiscuePassageAndWords = (studentId: string, timeRange?: 'week' | 'month' | 'year', anchor?: Date) => {
   const [reports, setReports] = useState<MiscueReportDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -248,13 +249,13 @@ export const useStudentTopMiscuePassageAndWords = (studentId: string, timeRange?
 
   const filteredReports = useMemo(() => {
     if (!timeRange) return reports;
-    const { start, end } = getDateRangeForTimeFilter(timeRange);
+    const { start, end } = getDateRangeForTimeFilter(timeRange, anchor);
     return reports.filter(r => {
       if (!r.createdAt) return false;
       const date = r.createdAt.toDate();
       return date >= start && date <= end;
     });
-  }, [reports, timeRange]);
+  }, [reports, timeRange, anchor]);
 
   // ==================== TOP MISCUED PASSAGE ====================
 

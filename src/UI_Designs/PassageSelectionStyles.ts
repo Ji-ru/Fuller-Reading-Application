@@ -184,7 +184,6 @@ const selection = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.18)',
     textShadowOffset: { width: 0, height: sw(1) },
     textShadowRadius: sw(2),
-    lineHeight: TILE_SIZE * 0.44,
   },
 
   // Lowercase — visibly smaller, slight left margin for spacing
@@ -195,7 +194,6 @@ const selection = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.12)',
     textShadowOffset: { width: 0, height: sw(1) },
     textShadowRadius: sw(2),
-    lineHeight: TILE_SIZE * 0.32,
     marginLeft: sw(2),
   },
 

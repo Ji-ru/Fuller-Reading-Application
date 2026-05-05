@@ -1,6 +1,6 @@
 // FacultyDashboard.tsx (Updated with TypeScript)
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import upperNav from '../../UI_Designs/UpperNavigation';
@@ -14,9 +14,9 @@ import AccuracyTrendsChart from '../../Components/Faculty/Dashboard/AccuracyTren
 import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/NumberOFClassesAndStudents';
 import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
 import ClassWordMastery from '../../Components/Faculty/Dashboard/ClassWordMastery';
-import { HeaderMenu } from '../../Components/GlobalUse/HeaderMenu';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { useFetchClassReadingHealth } from '../../Hooks/use_ReadingStudentStats';
+import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 
 export type ClassViewFilter = 'overall' | string;
 
@@ -41,6 +41,8 @@ export default function FacultyDashboard() {
     });
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [logoutVisible, setLogoutVisible] = useState(false);
 
   // ========================================================================
   // HOOKS
@@ -130,13 +132,40 @@ export default function FacultyDashboard() {
           <BubbleBackground />
 
           {/* HEADER */}
-          <View style={upperNav.header}>
-            <Image
-              style={upperNav.ciscLogo}
-              source={require('../../../assets/images/cisckids.png')}
-            />
-            <HeaderMenu onLogout={handleLogout} />
+          <View style={facultyDashboard.header}>
+            <Text style={facultyDashboard.headerLogo}>CISC KIDS</Text>
+            <TouchableOpacity
+              style={facultyDashboard.menuBtn}
+              onPress={() => setMenuVisible(v => !v)}
+              activeOpacity={0.7}
+            >
+              <MenuBars />
+            </TouchableOpacity>
           </View>
+
+          {/* Dropdown */}
+          {menuVisible && (
+            <>
+              <TouchableOpacity
+                style={StyleSheet.absoluteFillObject as any}
+                onPress={() => setMenuVisible(false)}
+                activeOpacity={1}
+              />
+              <View style={facultyDashboard.dropdown}>
+                <TouchableOpacity
+                  onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
+                  style={facultyDashboard.dropdownItem}
+                  activeOpacity={0.75}
+                >
+                  <Image
+                    source={require('../../../assets/icons/Logout-icon.png')}
+                    style={facultyDashboard.dropdownIcon}
+                  />
+                  <Text style={facultyDashboard.dropdownText}>Logout</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
           {/* MAIN CONTENT */}
           <View style={facultyDashboard.content}>
@@ -336,10 +365,10 @@ export default function FacultyDashboard() {
               onFilterChange={handleReadingFilterChange}
               academicYears={academicYears}
             />
-            <ActiveHoursChart
+            {/* <ActiveHoursChart
               facultyId={auth.currentUser?.uid}
               filter={readingStatusFilter}
-            />
+            /> */}
             <MiscueAnalytics
               facultyId={auth.currentUser?.uid}
               filter={readingStatusFilter}
@@ -347,6 +376,22 @@ export default function FacultyDashboard() {
           </View>
         </View>
       </ScrollView>
+      <LogoutModal
+        visible={logoutVisible}
+        onCancel={() => setLogoutVisible(false)}
+        onConfirm={async () => { setLogoutVisible(false); await handleLogout(); }}
+      />
     </SafeAreaView>
+  );
+}
+
+// ─── Hamburger icon ───────────────────────────────────────────────────────────
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+    </View>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Alert, ActivityIndicator, FlatList, StyleSheet } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import upperNav from '../../UI_Designs/UpperNavigation';
@@ -9,6 +9,7 @@ import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Studen
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { unarchiveClass } from '../../Controller/AuthenticationController';
 import myClass from '../../UI_Designs/MyClassStyles';
+import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 
 export default function MyArchive() {
@@ -242,41 +243,39 @@ export default function MyArchive() {
 
 
         {/* HEADER */}
-        <View style={upperNav.header}>
-          <Image
-            style={upperNav.ciscLogo}
-            source={require('../../../assets/images/cisckids.png')}
-          />
-          <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-            <Image
-              style={upperNav.menuIcon}
-              source={require('../../../assets/icons/Menu-icon.png')}
-            />
+        <View style={facultyDashboard.header}>
+          <Text style={facultyDashboard.headerLogo}>CISC KIDS</Text>
+          <TouchableOpacity
+            style={facultyDashboard.menuBtn}
+            onPress={() => setMenuVisible(v => !v)}
+            activeOpacity={0.7}
+          >
+            <MenuBars />
           </TouchableOpacity>
         </View>
 
         {/* DROPDOWN MENU */}
         {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
+          <>
             <TouchableOpacity
-              onPress={handleLogoutPress}
-              style={upperNav.logoutButton}
-            >
-              <Image
-                source={require('../../../assets/icons/Logout-icon.png')}
-                style={upperNav.logoutIcon}
-              />
-              <Text style={upperNav.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {menuVisible && (
-          <TouchableOpacity
-            style={upperNav.closeMenu}
-            onPress={() => setMenuVisible(false)}
-            activeOpacity={1}
-          />
+              style={StyleSheet.absoluteFillObject as any}
+              onPress={() => setMenuVisible(false)}
+              activeOpacity={1}
+            />
+            <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Image
+                  source={require('../../../assets/icons/Logout-icon.png')}
+                  style={facultyDashboard.dropdownIcon}
+                />
+                <Text style={facultyDashboard.dropdownText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </>
         )}
 
         <LogoutModal
@@ -387,5 +386,16 @@ export default function MyArchive() {
         </View>
       </View>
     </SafeAreaView>
+  );
+}
+
+// ─── Hamburger icon ───────────────────────────────────────────────────────────
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+    </View>
   );
 }

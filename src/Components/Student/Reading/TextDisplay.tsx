@@ -68,22 +68,76 @@ const DOTS: Array<{ cx: number; cy: number; r: number }> = [
   { cx: 155, cy: 240, r: 6 },
 ];
 
+// ─── Alphabet sizes ────────────────────────────────────────────────────────────
+const ALPHA_CARD_WIDTH = 300;
+const ALPHA_CARD_HEIGHT = 280;
+const ALPHA_FONT = 160; // same size for both glyphs — baseline stays level
+
+const alphabetCardStyle = StyleSheet.create({
+  card: {
+    width: ALPHA_CARD_WIDTH,
+    height: ALPHA_CARD_HEIGHT,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    borderWidth: 4,
+    borderColor: '#008443',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // shadow
+    elevation: 8,
+    shadowColor: '#008443',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.20,
+    shadowRadius: 10,
+    marginTop: 30,
+    marginBottom: 24,
+    alignSelf: 'center',
+  },
+  letterRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline', // keeps both glyphs on the same text baseline
+    justifyContent: 'center',
+    gap: 8,
+  },
+  upper: {
+    fontSize: ALPHA_FONT,
+    fontFamily: 'Andika-Bold',
+    color: '#008443',
+  },
+  separator: {
+    fontSize: ALPHA_FONT,
+    fontFamily: 'Andika-Bold',
+    color: '#C8E6C9',
+  },
+  lower: {
+    fontSize: ALPHA_FONT,
+    fontFamily: 'Andika-Bold',
+    color: '#2ca96a',
+  },
+});
+
 interface AlphabetCharacterProps {
   letter: string;
 }
 
 const AlphabetCharacter: React.FC<AlphabetCharacterProps> = ({ letter }) => {
   return (
-    <View style={[readingStyles.wordContainer, { height: 260, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 20 }]}>
-      <Text style={{ fontSize: 180, fontFamily: 'Andika-Bold', color: '#008443' }}>
-        {letter.toUpperCase()}
-      </Text>
-      <Text style={{ fontSize: 150, fontFamily: 'Andika-Bold', color: '#2ca96a' }}>
-        {letter.toLowerCase()}
-      </Text>
+    <View style={alphabetCardStyle.card}>
+      <View style={alphabetCardStyle.letterRow}>
+        <Text style={alphabetCardStyle.upper} allowFontScaling={false}>
+          {letter.toUpperCase()}
+        </Text>
+        <Text style={alphabetCardStyle.separator} allowFontScaling={false}>
+          {''}
+        </Text>
+        <Text style={alphabetCardStyle.lower} allowFontScaling={false}>
+          {letter.toLowerCase()}
+        </Text>
+      </View>
     </View>
   );
 };
+
 
 interface WordCharacterProps {
   word: string;

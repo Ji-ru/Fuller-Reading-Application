@@ -28,9 +28,9 @@ export function getPeriods(range: 'week' | 'month' | 'year'): number {
 }
 
 /** Returns all period labels for the given time range (for filling charts with empty data) */
-export function getPeriodLabels(timeRange: 'week' | 'month' | 'year'): string[] {
+export function getPeriodLabels(timeRange: 'week' | 'month' | 'year', anchor?: Date): string[] {
   if (timeRange === 'week') {
-    const { start, end } = getDateRangeForTimeFilter('week');
+    const { start, end } = getDateRangeForTimeFilter('week', anchor);
     const labels: string[] = [];
     const curr = new Date(start);
     while (curr <= end) {
@@ -44,8 +44,8 @@ export function getPeriodLabels(timeRange: 'week' | 'month' | 'year'): string[] 
     return ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
   }
 
-  // year: iterate from start to end by month (last 12 months)
-  const { start, end } = getDateRangeForTimeFilter('year');
+  // year: iterate from start to end by month
+  const { start, end } = getDateRangeForTimeFilter('year', anchor);
   const labels: string[] = [];
   const curr = new Date(start.getFullYear(), start.getMonth(), 1);
   const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);

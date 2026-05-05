@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   TextInput,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -18,6 +19,62 @@ import { RootStackParamList } from '../../Controller/NavigationController';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import Svg, { Text as SvgText } from 'react-native-svg';
+
+const C = {
+  ink: '#1b2e23',
+  white: '#ffffff',
+  coral: '#e74c3c',
+  green: '#2ca96a',
+  darkBlue: '#163F6C',
+  slate: '#9CA3AF',
+  inkLight: '#6B7280',
+};
+
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
+    </View>
+  );
+}
+
+const headerStyles = StyleSheet.create({
+  menuBtn: {
+    width: 48, height: 48,
+    borderRadius: 14,
+    backgroundColor: C.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
+  },
+  backBtn: {
+    width: 45, height: 45, borderRadius: 10,
+    backgroundColor: '#008443',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  backArrowText: {
+    fontSize: 40, fontFamily: 'Nunito-Bold',
+    color: C.white, lineHeight: 28, marginLeft: -2, paddingBottom: 2
+  },
+  dropdown: {
+    position: 'absolute', top: 72, right: 20,
+    backgroundColor: C.white, borderRadius: 14,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14, shadowRadius: 12, elevation: 10,
+    minWidth: 160, zIndex: 1000, paddingVertical: 4,
+  },
+  dropdownItem: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14,
+  },
+  dropdownIcon: { width: 20, height: 20, marginRight: 12, tintColor: C.coral },
+  dropdownText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.coral },
+});
 
 type MyStudentsRouteProp = RouteProp<RootStackParamList, 'MyStudents'>;
 
@@ -93,6 +150,7 @@ export default function MyStudents() {
             item.lastName
           }`.trim(),
           readingLevel: item.studentData?.reading_Level || 'N/A',
+          gradeLevel: item.studentData?.gradeLevel ?? undefined,
         })
       }
       activeOpacity={0.7}
@@ -184,45 +242,55 @@ export default function MyStudents() {
         <BubbleBackground />
 
         {/* HEADER */}
-        <View style={upperNav.header}>
-          <TouchableOpacity
-            style={upperNav.touchable}
-            onPress={handleBackStep}
-          >
-            <Image
-              source={require('../../../assets/icons/BackButton-icon.png')}
-              style={upperNav.backButtonIcon}
-            />
-          </TouchableOpacity>
-          <Image
-            style={upperNav.ciscLogo}
-            source={require('../../../assets/images/cisckids.png')}
-          />
-          <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-            <Image
-              style={upperNav.menuIcon}
-              source={require('../../../assets/icons/Menu-icon.png')}
-            />
-          </TouchableOpacity>
+        <View style={{ zIndex: 100 }}>
+          <View style={upperNav.header}>
+            <TouchableOpacity style={headerStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
+              <Text style={headerStyles.backArrowText}>‹</Text>
+            </TouchableOpacity>
+            <Svg height={60} width={220}>
+              <SvgText
+                x={110}                 // center X
+                y={35}                  // baseline Y
+                fontSize={23}
+                fontFamily="Nunito-Black"
+                textAnchor="middle"     // center align
+                fill="none"          // inside color
+                stroke="#E8F5E9"        // outline color
+                strokeWidth={8}         // outline thickness
+                strokeLinejoin='round'
+              >
+                {className || 'My Students'}
+              </SvgText>
+              <SvgText
+                x={110}
+                y={35}
+                fontSize={23}
+                fontFamily="Nunito-Black"
+                textAnchor="middle"
+                fill="#1B5E20"
+              >
+                {className || 'My Students'}
+              </SvgText>
+            </Svg>
+            <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
+              <MenuBars />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* DROPDOWN MENU */}
         {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
-            <TouchableOpacity
-              onPress={handleLogoutPress}
-              style={upperNav.logoutButton}
-            >
+          <View style={headerStyles.dropdown}>
+            <TouchableOpacity onPress={handleLogoutPress} style={headerStyles.dropdownItem} activeOpacity={0.75}>
               <Image
                 source={require('../../../assets/icons/Logout-icon.png')}
-                style={upperNav.logoutIcon}
+                style={headerStyles.dropdownIcon}
               />
-              <Text style={upperNav.logoutText}>Logout</Text>
+              <Text style={headerStyles.dropdownText}>Logout</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* OVERLAY TO CLOSE MENU */}
         {menuVisible && (
           <TouchableOpacity
             style={upperNav.closeMenu}
@@ -230,6 +298,7 @@ export default function MyStudents() {
             activeOpacity={1}
           />
         )}
+
 
         {/* LOGOUT MODAL */}
         <LogoutModal

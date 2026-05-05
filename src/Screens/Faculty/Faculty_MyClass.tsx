@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -19,6 +20,7 @@ import { getAuth } from '@react-native-firebase/auth';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import myClass from '../../UI_Designs/MyClassStyles';
+import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
 import { archiveClass, createCustomClass } from '../../Controller/AuthenticationController';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
 import { getAcademicYearOptions } from '../../Utilities/acadYearUtils';
@@ -48,7 +50,7 @@ export default function MyClass() {
   const [isArchiving, setIsArchiving] = useState(false);
 
   const ignoreNextTouchRef = useRef(false);
-  
+
   const currentUser = getAuth().currentUser;
   // ========================================================================
   // HOOKS
@@ -60,7 +62,7 @@ export default function MyClass() {
   // ========================================================================
   useEffect(() => {
     if (!currentUser) return;
-  
+
     const unsubscribe =
       getFacultyClasses_Student.getToFacultyClassesRealTime(
         currentUser.uid,
@@ -69,10 +71,10 @@ export default function MyClass() {
           setLoading(false);
         },
       );
-  
+
     return unsubscribe;
   }, [currentUser]);
-  
+
 
   // ========================================================================
   // EVENT HANDLERS
@@ -343,41 +345,39 @@ export default function MyClass() {
 
 
         {/* HEADER */}
-        <View style={upperNav.header}>
-          <Image
-            style={upperNav.ciscLogo}
-            source={require('../../../assets/images/cisckids.png')}
-          />
-          <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-            <Image
-              style={upperNav.menuIcon}
-              source={require('../../../assets/icons/Menu-icon.png')}
-            />
+        <View style={facultyDashboard.header}>
+          <Text style={facultyDashboard.headerLogo}>CISC KIDS</Text>
+          <TouchableOpacity
+            style={facultyDashboard.menuBtn}
+            onPress={() => setMenuVisible(v => !v)}
+            activeOpacity={0.7}
+          >
+            <MenuBars />
           </TouchableOpacity>
         </View>
 
         {/* DROPDOWN MENU */}
         {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
+          <>
             <TouchableOpacity
-              onPress={handleLogoutPress}
-              style={upperNav.logoutButton}
-            >
-              <Image
-                source={require('../../../assets/icons/Logout-icon.png')}
-                style={upperNav.logoutIcon}
-              />
-              <Text style={upperNav.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {menuVisible && (
-          <TouchableOpacity
-            style={upperNav.closeMenu}
-            onPress={() => setMenuVisible(false)}
-            activeOpacity={1}
-          />
+              style={StyleSheet.absoluteFillObject as any}
+              onPress={() => setMenuVisible(false)}
+              activeOpacity={1}
+            />
+            <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Image
+                  source={require('../../../assets/icons/Logout-icon.png')}
+                  style={facultyDashboard.dropdownIcon}
+                />
+                <Text style={facultyDashboard.dropdownText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </>
         )}
 
         <LogoutModal
@@ -641,5 +641,16 @@ export default function MyClass() {
         </View>
       </View>
     </SafeAreaView>
+  );
+}
+
+// ─── Hamburger icon ───────────────────────────────────────────────────────────
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+    </View>
   );
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useStudentTotalActivityToday } from '../../../Hooks/Student/useStudentTotalActivityToday';
 import { sw, sh, sf } from '../../../Utils/responsive';
+import Svg, { Path, Rect, Circle as SvgCircle } from 'react-native-svg';
 
 // ============================================================================
 // DESIGN TOKENS  (matches the light theme used across the StudentView cards)
@@ -92,6 +93,42 @@ const AnimatedProgressBar = ({
   );
 };
 
+// ============================================================================
+// SVG ICON COMPONENTS
+// ============================================================================
+
+/** Alphabet icon — stylized letter "A" with a small underline accent */
+const AlphabetIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 3L4 21h3.5l1.5-4h6l1.5 4H20L12 3zm0 5.5L14.5 15h-5L12 8.5z"
+      fill={color}
+    />
+  </Svg>
+);
+
+/** Word icon — horizontal text lines representing words */
+const WordIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Rect x={3} y={5} width={18} height={2.5} rx={1.25} fill={color} />
+    <Rect x={3} y={10.75} width={14} height={2.5} rx={1.25} fill={color} opacity={0.7} />
+    <Rect x={3} y={16.5} width={10} height={2.5} rx={1.25} fill={color} opacity={0.45} />
+  </Svg>
+);
+
+/** Passage icon — open book with center spine */
+const PassageIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 21c-1.5-1.2-3.8-2-6.5-2H3V5h2.5C7.8 5 10 5.8 12 7c2-1.2 4.2-2 6.5-2H21v14h-2.5c-2.7 0-5 .8-6.5 2z"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinejoin="round"
+    />
+    <Path d="M12 7v14" stroke={color} strokeWidth={1.5} />
+  </Svg>
+);
+
 /**
  * CategoryStat
  *
@@ -103,14 +140,14 @@ const CategoryStat = ({
   percent,
   color,
   dimColor,
-  icon,
+  iconElement,
   delay = 0,
 }: {
   label: string;
   percent: number | null;
   color: string;
   dimColor: string;
-  icon: string;
+  iconElement: React.ReactNode;
   delay?: number;
 }) => {
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
@@ -143,7 +180,7 @@ const CategoryStat = ({
     >
       {/* Icon ring */}
       <View style={[styles.categoryIconRing, { borderColor: color, backgroundColor: dimColor }]}>
-        <Text style={styles.categoryIcon}>{icon}</Text>
+        {iconElement}
       </View>
 
       {/* Percentage */}
@@ -249,7 +286,7 @@ export default function StudentTotalActivityToday({ studentId }: Props) {
           percent={alphabetAccuracy}
           color={T.alphabet}
           dimColor={T.alphabetDim}
-          icon="🔤"
+          iconElement={<AlphabetIcon color={T.alphabet} />}
           delay={100}
         />
         <CategoryStat
@@ -257,7 +294,7 @@ export default function StudentTotalActivityToday({ studentId }: Props) {
           percent={wordAccuracy}
           color={T.word}
           dimColor={T.wordDim}
-          icon="📝"
+          iconElement={<WordIcon color={T.word} />}
           delay={200}
         />
         <CategoryStat
@@ -265,7 +302,7 @@ export default function StudentTotalActivityToday({ studentId }: Props) {
           percent={passageAccuracy}
           color={T.passage}
           dimColor={T.passageDim}
-          icon="📖"
+          iconElement={<PassageIcon color={T.passage} />}
           delay={300}
         />
       </View>
@@ -390,9 +427,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: sh(8),
-  },
-  categoryIcon: {
-    fontSize: sf(18),
   },
   categoryPercent: {
     ...F.black,
