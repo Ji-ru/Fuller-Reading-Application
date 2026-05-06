@@ -4,6 +4,8 @@ import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import { StudentColors as C, Radii, Shadows, ACCENT_COLORS } from '../../Utilities/Theme';
 import { DUMMY_REPORTS } from '../../Utilities/DummyPerformanceData'; // DUMMY DATA
+import DateFilter, { TimeFilterType, SubPeriodFilter } from './DateFilter';
+import { getDateRange } from '../../Utilities/analyticsDateHelpers';
 import { BounceIn } from '../GlobalUse/Animations';
 import { 
   BookOpenIcon, 
@@ -29,10 +31,16 @@ interface PassageGroup {
 
 export default function PassageHistoryTab({ reports: realReports, onStartReading }: PassageHistoryTabProps) {
   const reports = [...(realReports || []), ...DUMMY_REPORTS]; // MERGED DUMMY DATA
+  const [timeFilter, setTimeFilter] = useState<TimeFilterType>('week');
+  const [periodOffset, setPeriodOffset] = useState<number>(0);
+  const [selectedSubFilter, setSelectedSubFilter] = useState<SubPeriodFilter | null>(null);
   const [expandedPassages, setExpandedPassages] = useState<Set<number>>(new Set());
 
   // Filter only passages (Talata) and group by passageTitle
   const groupedReports = useMemo(() => {
+    // Apply Date Range filter
+    const activeRange = selectedSubFilter ?? getDateRange(timeFilter, periodOffset);
+
     // Collect all valid passage titles (case-insensitive mapping for safety)
     const validPassages = new Map(
       readingMaterialData.Passages.map(p => [p.title.toLowerCase(), p.title])
@@ -41,6 +49,13 @@ export default function PassageHistoryTab({ reports: realReports, onStartReading
     const groupsMap = new Map<string, MiscueReportDocument[]>();
 
     reports.forEach(r => {
+      const d = r.timestamp?.toDate?.() || new Date(r.timestamp || 0);
+
+      // Skip if outside active date boundary
+      if (d.getTime() < activeRange.start.getTime() || d.getTime() > activeRange.end.getTime()) {
+        return;
+      }
+
       const titleLower = (r.passageTitle || '').toLowerCase();
       if (validPassages.has(titleLower)) {
         const correctTitle = validPassages.get(titleLower)!;
@@ -76,7 +91,7 @@ export default function PassageHistoryTab({ reports: realReports, onStartReading
     });
 
     return groups;
-  }, [reports]);
+  }, [reports, timeFilter, periodOffset, selectedSubFilter]);
 
   const togglePassageExpansion = (index: number) => {
     setExpandedPassages(prev => {
@@ -139,6 +154,17 @@ export default function PassageHistoryTab({ reports: realReports, onStartReading
 
   return (
     <View style={S.container}>
+      <BounceIn delay={80}>
+        <DateFilter 
+          timeFilter={timeFilter} 
+          setTimeFilter={(f) => { setTimeFilter(f); setPeriodOffset(0); setSelectedSubFilter(null); }}
+          periodOffset={periodOffset}
+          onOffsetChange={(o) => { setPeriodOffset(o); setSelectedSubFilter(null); }}
+          selectedSubFilter={selectedSubFilter}
+          onSubFilterChange={setSelectedSubFilter}
+        />
+      </BounceIn>
+
       {groupedReports.length === 0 ? (
         <BounceIn delay={120}>
           <View style={S.emptyContainer}>

@@ -8,6 +8,7 @@ import {
 import { use_StudentMiscueInsights } from '../../../Hooks/use_StudentMiscueInsights';
 import { StudentColors as C, Radii } from '../../../Utilities/Theme';
 import { MiscueReportDocument } from '../../../Interfaces/dataInterfaces';
+import { SubPeriodFilter } from '../DateFilter';
 
 // ── Design Tokens ────────────────────────────────────────────────────────────
 const PRIMARY = C.green;            // #3d71d9
@@ -36,10 +37,12 @@ const MISCUE_LABELS: Record<string, string> = {
 interface MiscueInsightsChartProps {
   studentId: string;
   timeFilter: 'week' | 'month' | 'year';
+  periodOffset?: number;
+  selectedSubFilter?: SubPeriodFilter | null;
   reports?: MiscueReportDocument[];
 }
 
-export default function MiscueInsightsChart({ studentId, timeFilter, reports }: MiscueInsightsChartProps) {
+export default function MiscueInsightsChart({ studentId, timeFilter, periodOffset = 0, selectedSubFilter, reports }: MiscueInsightsChartProps) {
   const {
     miscueData,
     total,
@@ -47,7 +50,7 @@ export default function MiscueInsightsChart({ studentId, timeFilter, reports }: 
     topWords,
     loading,
     error,
-  } = use_StudentMiscueInsights(studentId, timeFilter, reports);
+  } = use_StudentMiscueInsights(studentId, timeFilter, periodOffset, selectedSubFilter, reports);
 
   const rangeLabel = timeFilter === 'week' ? 'Linggong Ito'
     : timeFilter === 'month' ? 'Buwang Ito' : 'Taong Ito';

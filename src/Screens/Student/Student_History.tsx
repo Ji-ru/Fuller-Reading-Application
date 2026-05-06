@@ -20,7 +20,8 @@ import { getUserProfile } from '../../Controller/AuthenticationController';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import PassageHistoryTab from '../../Components/Student/PassageHistoryTab';
-import PerformanceTab from '../../Components/Student/PerformanceTab';
+import AnalyticsTab from '../../Components/Student/AnalyticsTab';
+import SessionsTab from '../../Components/Student/SessionsTab';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { ACCENT_COLORS, StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
@@ -42,7 +43,7 @@ function DotsLoading() {
         Animated.sequence([
           Animated.delay(delay),
           Animated.timing(anim, { toValue: -10, duration: 400, useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 0,   duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0, duration: 400, useNativeDriver: true }),
           Animated.delay(800 - delay),
         ])
       );
@@ -269,7 +270,7 @@ export default function ReadingHistoryScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [logoutVisible, setLogoutVisible] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'history' | 'passage' | 'performance'>('history');
+  const [activeTab, setActiveTab] = useState<'progress' | 'sessions' | 'analytics' | 'history'>('progress');
   const slideAnimation = useRef(new Animated.Value(0)).current;
 
   const [aralinDone, setAralinDone] = useState(0);
@@ -281,7 +282,7 @@ export default function ReadingHistoryScreen() {
   // Tab Slide Animation
   useEffect(() => {
     Animated.timing(slideAnimation, {
-      toValue: activeTab === 'performance' ? 2 : activeTab === 'passage' ? 1 : 0,
+      toValue: activeTab === 'history' ? 3 : activeTab === 'analytics' ? 2 : activeTab === 'sessions' ? 1 : 0,
       duration: 300,
       useNativeDriver: true,
     }).start();
@@ -523,40 +524,52 @@ export default function ReadingHistoryScreen() {
                 {
                   transform: [{
                     translateX: slideAnimation.interpolate({
-                      inputRange: [0, 1, 2],
-                      outputRange: [0, (SW - 32 - 8) / 3, (2 * (SW - 32 - 8)) / 3]
+                      inputRange: [0, 1, 2, 3],
+                      outputRange: [0, (SW - 32 - 8) / 4, (2 * (SW - 32 - 8)) / 4, (3 * (SW - 32 - 8)) / 4]
                     })
                   }]
                 }
               ]}
             />
-            <TouchableOpacity 
-              style={S.tabButton} 
+            <TouchableOpacity
+              style={[S.tabButton, { flexDirection: 'row', justifyContent: 'center', gap: 4 }]}
+              onPress={() => setActiveTab('progress')}
+              activeOpacity={0.8}
+            >
+              <TrophyIcon size={12} color={activeTab === 'progress' ? C.greenDeep : C.slate} />
+              <Text style={[S.tabText, activeTab === 'progress' && S.tabTextActive, { fontSize: 11 }]}>Pag-unlad</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[S.tabButton, { flexDirection: 'row', justifyContent: 'center', gap: 4 }]}
+              onPress={() => setActiveTab('sessions')}
+              activeOpacity={0.8}
+            >
+              <TimerIcon size={12} color={activeTab === 'sessions' ? C.greenDeep : C.slate} />
+              <Text style={[S.tabText, activeTab === 'sessions' && S.tabTextActive, { fontSize: 11 }]}>Serye</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[S.tabButton, { flexDirection: 'row', justifyContent: 'center', gap: 4 }]}
+              onPress={() => setActiveTab('analytics')}
+              activeOpacity={0.8}
+            >
+              <ZapIcon size={12} color={activeTab === 'analytics' ? C.greenDeep : C.slate} />
+              <Text style={[S.tabText, activeTab === 'analytics' && S.tabTextActive, { fontSize: 11 }]}>Pagsusuri</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[S.tabButton, { flexDirection: 'row', justifyContent: 'center', gap: 4 }]}
               onPress={() => setActiveTab('history')}
               activeOpacity={0.8}
             >
-              <Text style={[S.tabText, activeTab === 'history' && S.tabTextActive]}>Kasaysayan</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={S.tabButton} 
-              onPress={() => setActiveTab('passage')}
-              activeOpacity={0.8}
-            >
-              <Text style={[S.tabText, activeTab === 'passage' && S.tabTextActive]}>Mga Talata</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={S.tabButton} 
-              onPress={() => setActiveTab('performance')}
-              activeOpacity={0.8}
-            >
-              <Text style={[S.tabText, activeTab === 'performance' && S.tabTextActive]}>Pagganap</Text>
+              <HistoryIcon size={12} color={activeTab === 'history' ? C.greenDeep : C.slate} />
+              <Text style={[S.tabText, activeTab === 'history' && S.tabTextActive, { fontSize: 11 }]}>Kasaysayan</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {activeTab === 'history' ? (
+        {activeTab === 'progress' ? (
           <View>
             {/* ── Hero ─────────────────────────────────────────────────────────── */}
             <BounceIn delay={24}>
@@ -595,13 +608,15 @@ export default function ReadingHistoryScreen() {
               )}
             </View>
           </View>
-        ) : activeTab === 'passage' ? (
-          <PassageHistoryTab 
-            reports={allReports} 
-            onStartReading={() => handleNextStep('PassageSelection')} 
-          />
+        ) : activeTab === 'sessions' ? (
+          <SessionsTab studentId={auth().currentUser?.uid || ''} />
+        ) : activeTab === 'analytics' ? (
+          <AnalyticsTab studentId={auth().currentUser?.uid || ''} reports={allReports} />
         ) : (
-          <PerformanceTab studentId={auth().currentUser?.uid || ''} reports={allReports} />
+          <PassageHistoryTab
+            reports={allReports}
+            onStartReading={() => handleNextStep('PassageSelection')}
+          />
         )}
 
         <LogoutModal
@@ -640,7 +655,7 @@ const S = StyleSheet.create({
   menuIcon: { width: 22, height: 22, tintColor: C.ink },
 
   // Tab Switcher
-  tabContainer: { paddingHorizontal: 16, marginTop: 10, marginBottom: 5 },
+  tabContainer: { paddingHorizontal: 16, marginTop: 5, marginBottom: 5 },
   tabBackground: {
     flexDirection: 'row',
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
@@ -650,7 +665,7 @@ const S = StyleSheet.create({
   },
   activeTabIndicator: {
     position: 'absolute',
-    width: '33.33%',
+    width: '25%',
     height: '100%',
     backgroundColor: C.white,
     borderRadius: 16,

@@ -35,6 +35,9 @@ interface MiscueInsightsResult {
   error: string | null;
 }
 
+import { getDateRange } from '../Utilities/analyticsDateHelpers';
+import { SubPeriodFilter } from '../Components/Student/DateFilter';
+
 /**
  * Hook that computes miscue insights from miscueReports:
  * - Miscue type breakdown (Substitution, Omission, Insertion, Repetition)
@@ -44,6 +47,8 @@ interface MiscueInsightsResult {
 export function use_StudentMiscueInsights(
   studentId: string,
   timeFilter: 'week' | 'month' | 'year',
+  periodOffset: number = 0,
+  selectedSubFilter: SubPeriodFilter | null = null,
   injectedReports?: MiscueReportDocument[]
 ): MiscueInsightsResult {
   const [loading, setLoading] = useState(true);
@@ -56,46 +61,50 @@ export function use_StudentMiscueInsights(
       setLoading(true);
       setError(null);
       try {
-        const now = new Date();
-        let startDate = new Date();
-
-        if (timeFilter === 'week') {
-          startDate.setDate(now.getDate() - 6);
-        } else if (timeFilter === 'month') {
-          startDate.setMonth(now.getMonth() - 1);
-        } else {
-          let yr = now.getFullYear();
-          if (now.getMonth() < 5) yr--;
-          startDate = new Date(yr, 5, 1); // June 1 (academic year)
+        if (!injectedReports || injectedReports.length === 0) {
+          const { start } = getDateRange(timeFilter, periodOffset);
+          const snap = await firestore()
+            .collection('miscueReports')
+            .where('studentId', '==', studentId)
+            .where('timestamp', '>=', start)
+            .get();
+          
+          const docs = snap.docs.map(d => d.data() as MiscueReportDocument);
+          setRawReports(docs);
         }
-
-        const snap = await firestore()
-          .collection('miscueReports')
-          .where('studentId', '==', studentId)
-          .where('timestamp', '>=', startDate)
-          .get();
-
-        const docs = snap.docs.map(d => d.data() as MiscueReportDocument);
-        setRawReports(docs);
-      } catch (e: any) {
-        console.error('MiscueInsights fetch error:', e);
-        setError(e.message || 'Failed to load miscue data');
+      } catch (err: any) {
+        console.error('use_StudentMiscueInsights error:', err);
+        setError(err.message || 'Failed to fetch miscue data');
       } finally {
         setLoading(false);
       }
     };
-
     if (studentId) fetchData();
-  }, [studentId, timeFilter]);
+  }, [studentId, timeFilter, periodOffset, injectedReports]);
 
   // ── Merge injected (dummy) reports ──
   const allReports = useMemo(() => {
-    const injected = (injectedReports || []).filter(r => r.reportId?.startsWith('dummy'));
-    return [...rawReports, ...injected];
+    if (injectedReports && injectedReports.length > 0) {
+      return injectedReports;
+    }
+    return rawReports;
   }, [rawReports, injectedReports]);
 
   // ── Compute all insights ──
   const result = useMemo(() => {
+    // 1) Filter reports based on offset/subfilter
+    const getDate = (r: MiscueReportDocument): Date => {
+      return r.timestamp?.toDate?.() || new Date(r.timestamp);
+    };
+
+    const targetStart = selectedSubFilter ? selectedSubFilter.start : getDateRange(timeFilter, periodOffset).start;
+    const targetEnd = selectedSubFilter ? selectedSubFilter.end : getDateRange(timeFilter, periodOffset).end;
+
+    const filteredReports = allReports.filter(r => {
+      const d = getDate(r);
+      return d >= targetStart && d <= targetEnd;
+    });
+
     // ─── LAYER 2: Miscue Type Breakdown ──────────────────────────────────
     const typeCounts: Record<string, number> = {
       Substitution: 0,
@@ -105,7 +114,7 @@ export function use_StudentMiscueInsights(
     };
 
     // Count from individual miscues[] array AND from summary counts
-    allReports.forEach(r => {
+    filteredReports.forEach(r => {
       if (r.miscues && r.miscues.length > 0) {
         // Use detailed miscues array
         r.miscues.forEach(m => {
@@ -136,7 +145,7 @@ export function use_StudentMiscueInsights(
     // ─── LAYER 3: Top Miscued Passage ────────────────────────────────────
     const passageMap = new Map<string, { accSum: number; attempts: number; miscues: number }>();
 
-    allReports.forEach(r => {
+    filteredReports.forEach(r => {
       if (!r.passageTitle) return;
       const existing = passageMap.get(r.passageTitle) || { accSum: 0, attempts: 0, miscues: 0 };
       existing.accSum += r.accuracyRate || 0;
@@ -161,19 +170,19 @@ export function use_StudentMiscueInsights(
     });
 
     // ─── LAYER 4: Most Miscued Words ─────────────────────────────────────
-    const wordMap = new Map<string, { count: number; types: Record<string, number> }>();
+    const wordMap = new Map<string, { count: number; typeCounts: Record<string, number> }>();
 
-    allReports.forEach(r => {
+    filteredReports.forEach(r => {
       if (!r.miscues) return;
       r.miscues.forEach(m => {
         const word = m.expectedWord?.toLowerCase();
         if (!word) return;
 
-        const existing = wordMap.get(word) || { count: 0, types: {} };
+        const existing = wordMap.get(word) || { count: 0, typeCounts: {} };
         existing.count += 1;
 
         const type = m.type?.charAt(0).toUpperCase() + m.type?.slice(1).toLowerCase();
-        existing.types[type] = (existing.types[type] || 0) + 1;
+        existing.typeCounts[type] = (existing.typeCounts[type] || 0) + 1;
 
         wordMap.set(word, existing);
       });
@@ -184,7 +193,7 @@ export function use_StudentMiscueInsights(
         // Find dominant miscue type for this word
         let dominantType = 'Substitution';
         let maxCount = 0;
-        Object.entries(data.types).forEach(([type, count]) => {
+        Object.entries(data.typeCounts).forEach(([type, count]) => {
           if (count > maxCount) {
             maxCount = count;
             dominantType = type;
@@ -201,7 +210,7 @@ export function use_StudentMiscueInsights(
       .slice(0, 5); // Top 5
 
     return { miscueData, total, topPassage, topWords };
-  }, [allReports]);
+  }, [allReports, timeFilter, periodOffset, selectedSubFilter]);
 
   return { ...result, loading, error };
 }

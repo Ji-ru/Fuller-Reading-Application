@@ -1,6 +1,6 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -537,7 +537,7 @@ export default function ReadingActivityScreenPage() {
   );
 }
 
-const S = {
+const S = StyleSheet.create({
   statusReserved: { height: 80, justifyContent: 'flex-start', alignItems: 'center', width: '100%' },
   feedbackBox: { alignItems: 'center' },
   feedbackIconBox: { width: 54, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
@@ -549,4 +549,4 @@ const S = {
   accuracySub: { fontSize: 14, fontWeight: '700', color: '#859dab', marginTop: 4 },
   miniStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 },
   miniStatusText: { fontSize: 14, fontWeight: '700', color: '#859dab' },
-};
+});

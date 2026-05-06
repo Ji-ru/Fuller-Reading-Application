@@ -1,20 +1,20 @@
 # Student_History.tsx - Enhanced Architecture Plan
-## 3-Tab Structure: History, Performance & Passage History
+## 4-Tab Structure: Progress, Sessions, Analytics & History
 
 ---
 
 ## Overview
 
-Transform `Student_History.tsx` into a comprehensive 3-tab screen:
-- **Tab 1: History** — Existing aralin-grouped reading history (passages, words, alphabets by lesson)
-- **Tab 2: Passage History (Mga Talata)** — New tab showing passage attempts, reading sessions, and miscue breakdown per attempt.
-- **Tab 3: Performance** — New analytics dashboard with word mastery insights + passage performance
+Transform `Student_History.tsx` into a comprehensive 4-tab screen, aligning with the new analytics documentation:
+- **Tab 1: Progress (formerly Kasaysayan)** — Overall curriculum completion (aralin-grouped history, alphabet/word mastery summaries).
+- **Tab 2: Sessions (NEW)** — Deep-dive into Alphabet and Word mastery sessions.
+- **Tab 3: Analytics (formerly Pagganap)** — Performance analytics dashboard (Accuracy, Speed, Miscues).
+- **Tab 4: History (formerly Mga Talata)** — Passage attempts and miscue breakdown per reading session.
 
 The tabs will:
 - Share a single data-fetching layer (caching to minimize reads)
 - Use slide animation when switching
-- Apply **WordMasteryPlan principles** (progressive disclosure, one layer = one question)
-- Separate word analytics from passage analytics for clear visual insights
+- Separate word/alphabet analytics into the "Sessions" tab from passage analytics in "Analytics"
 
 ---
 
@@ -25,27 +25,27 @@ The tabs will:
 │  Student_History.tsx (Main Container)                       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  ┌─ Tab Switcher (Kasaysayan | Mga Talata | Pagganap)       │
+│  ┌─ Tab Switcher (Progress | Sessions | Analytics | History)│
 │  │                                                           │
 │  ├─ Content Layer (Slides between tabs)                     │
 │  │                                                           │
-│  ├─ TAB 1: HISTORY                                          │
+│  ├─ TAB 1: PROGRESS (Old Kasaysayan)                        │
 │  │  ├─ Hero Cards (aralinDone, etc.)                        │
-│  │  └─ Grouped Aralin Cards (existing logic)                │
+│  │  └─ Grouped Aralin Cards / Curriculum Completion         │
 │  │                                                           │
-│  ├─ TAB 2: PASSAGE HISTORY (NEW)                            │
-│  │  ├─ Empty State (if no reports)                          │
-│  │  ├─ Summary Stats Bar (Passages, Attempts, WPM, Acc)     │
-│  │  └─ Expandable Passage Cards (List of attempts & miscues)│
+│  ├─ TAB 2: SESSIONS (NEW)                                   │
+│  │  ├─ Alphabet Mastery Tracking                            │
+│  │  └─ Word Mastery Analytics (Moved from old Performance)  │
 │  │                                                           │
-│  └─ TAB 3: PERFORMANCE (NEW)                                │
-│     ├─ Filter Pill Selector (Linggo | Buwan | Taon)         │
-│     ├─ Section 1: WORD MASTERY ANALYTICS                    │
-│     │  └─ Progressive Disclosure (WordMasteryPlan style)     │
-│     └─ Section 2: PASSAGE ANALYTICS                         │
-│        ├─ Subsection 2A: Reading Time Activity (Bar Chart)  │
-│        ├─ Subsection 2B: Speed & Accuracy (Gauges + Line)   │
-│        └─ Subsection 2C: Miscue Insights (Donut + Lists)    │
+│  ├─ TAB 3: ANALYTICS (Old Pagganap)                         │
+│  │  ├─ Filter Pill Selector (Linggo | Buwan | Taon)         │
+│  │  ├─ Reading Time Activity (Bar Chart)                    │
+│  │  ├─ Speed & Accuracy (Gauges + Line)                     │
+│  │  └─ Miscue Insights (Donut + Lists)                      │
+│  │                                                           │
+│  └─ TAB 4: HISTORY (Old Mga Talata)                         │
+│     ├─ Summary Stats Bar (Passages, Attempts, WPM, Acc)     │
+│     └─ Expandable Passage Cards (List of attempts & miscues)│
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```

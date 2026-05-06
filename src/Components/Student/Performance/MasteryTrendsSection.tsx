@@ -1,26 +1,24 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity } from 'react-native';
-import { StudentColors as C, Radii, Shadows } from '../../../Utilities/Theme';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { StudentColors as C, Radii } from '../../../Utilities/Theme';
 import { MiscueReportController } from '../../../Controller/MiscueReportController';
 
 interface MasteryTrendsSectionProps {
   studentId: string;
   timeFilter: 'week' | 'month' | 'year';
-  reports?: any[];
 }
 
 interface TrendSlot {
   label: string;
   count: number;
-  items: string[]; // List of letters/words mastered in this slot
+  items: string[];
 }
 
-export default function MasteryTrendsSection({ studentId, timeFilter, reports }: MasteryTrendsSectionProps) {
+export default function MasteryTrendsSection({ studentId, timeFilter }: MasteryTrendsSectionProps) {
   const [loading, setLoading] = useState(true);
-  const [masteryData, setMasteryData] = useState<{
-    masteredLetters: Array<{ letter: string; timestamp: Date }>;
-    masteredWords: Array<{ word: string; letter: string; timestamp: Date }>;
-  }>({ masteredLetters: [], masteredWords: [] });
+  const [masteredWords, setMasteredWords] = useState<
+    Array<{ word: string; letter: string; timestamp: Date }>
+  >([]);
 
   const [selectedSlotIdx, setSelectedSlotIdx] = useState<number | null>(null);
 
@@ -28,28 +26,16 @@ export default function MasteryTrendsSection({ studentId, timeFilter, reports }:
     const fetch = async () => {
       setLoading(true);
       const data = await MiscueReportController.getWordMasteryData(studentId);
-
-      if (reports && reports.length > 0) {
-        const dummyLetters = reports.filter(r => r.reportId?.startsWith('dummy')).map(r => ({
-          letter: r.passageTitle?.split(' ')[1] || 'M',
-          timestamp: r.timestamp?.toDate?.() || new Date(r.timestamp)
-        }));
-        data.masteredLetters = [...data.masteredLetters, ...dummyLetters];
-      }
-
-      setMasteryData(data);
+      setMasteredWords(data.masteredWords);
       setLoading(false);
     };
     if (studentId) fetch();
-  }, [studentId, reports]);
+  }, [studentId]);
 
   const slots = useMemo(() => {
     const now = new Date();
     const result: TrendSlot[] = [];
-    const allItems = [
-      ...masteryData.masteredLetters.map(l => ({ id: l.letter, date: l.timestamp })),
-      ...masteryData.masteredWords.map(w => ({ id: w.word, date: w.timestamp }))
-    ];
+    const allItems = masteredWords.map(w => ({ id: w.word, date: w.timestamp }));
 
     if (timeFilter === 'week') {
       for (let i = 6; i >= 0; i--) {
@@ -99,7 +85,7 @@ export default function MasteryTrendsSection({ studentId, timeFilter, reports }:
     }
 
     return result;
-  }, [masteryData, timeFilter]);
+  }, [masteredWords, timeFilter]);
 
   // Max count for scaling bars
   const maxCount = Math.max(...slots.map(s => s.count), 5);

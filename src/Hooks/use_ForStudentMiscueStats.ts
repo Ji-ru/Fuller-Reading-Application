@@ -27,8 +27,9 @@ import { FilterOptions } from '../Interfaces/miscue';
 const db = getFirestore();
 
 export const getForStudentsMiscueStats = () => {
-  const { getStudentReports, formatMiscueType, getRecordingDuration } =
-    MiscueReportController;
+  const { getStudentReports } = MiscueReportController;
+  const formatMiscueType = (type: string): string =>
+    type.charAt(0).toUpperCase() + type.slice(1);
   const { getFacultyClasses } = getFacultyClasses_Student;
 
   const getActiveHours = async (
@@ -70,7 +71,7 @@ export const getForStudentsMiscueStats = () => {
         const studentIds = classItem.studentIds || [];
 
         for (const studentId of studentIds) {
-          const reports = await getRecordingDuration(studentId);
+          const reports = await getStudentReports(studentId);
 
           for (const report of reports) {
             const reportDate = report.timestamp.toDate();
@@ -246,7 +247,10 @@ export const getForStudentsMiscueStats = () => {
   ): Promise<MiscuePercentage[]> => {
     try {
       // Get all the classes handled by the faculty
-      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      const { studentIds } = await getFilteredStudentIds(
+        facultyId,
+        filter || { type: 'overall' },
+      );
 
       // Initialize miscue type counters
       const miscueCounts = {
@@ -363,7 +367,10 @@ export const getForStudentsMiscueStats = () => {
   ): Promise<OverAllStudentTopMiscue[]> => {
     try {
       // Get filtered student IDs
-      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      const { studentIds } = await getFilteredStudentIds(
+        facultyId,
+        filter || { type: 'overall' },
+      );
 
       // Initialize data structure for aggregation
       const allMiscues: Array<{
@@ -590,7 +597,9 @@ export const getForStudentsMiscueStats = () => {
 
         // Get all reports but filter for REAL ones (exclude synthesized legacy placeholders)
         const allReports = await getStudentReports(studentId);
-        const realReports = allReports.filter(r => !r.reportId?.startsWith('syn-'));
+        const realReports = allReports.filter(
+          r => !r.reportId?.startsWith('syn-'),
+        );
         const studentReportsCount = realReports.length;
 
         if (studentReportsCount > 0) {
@@ -604,7 +613,8 @@ export const getForStudentsMiscueStats = () => {
             0,
           );
 
-          const studentAverageAccuracy = studentTotalAccuracy / studentReportsCount;
+          const studentAverageAccuracy =
+            studentTotalAccuracy / studentReportsCount;
           const studentAverageWPM = studentTotalWPM / studentReportsCount;
 
           // Add this student's averages to the overall totals
