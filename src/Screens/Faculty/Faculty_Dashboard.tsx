@@ -1,19 +1,18 @@
-// FacultyDashboard.tsx (Updated with TypeScript)
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import upperNav from '../../UI_Designs/UpperNavigation';
 import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
 import { getAuth } from '@react-native-firebase/auth';
+import { getUserProfile } from '../../Controller/AuthenticationController';
 import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
-import ActiveHoursChart from '../../Components/Faculty/Dashboard/ActiveHoursChart';
 import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
 import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
 import AccuracyTrendsChart from '../../Components/Faculty/Dashboard/AccuracyTrends';
 import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/NumberOFClassesAndStudents';
-import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
-import ClassWordMastery from '../../Components/Faculty/Dashboard/ClassWordMastery';
+import ClassParticipationRate from '../../Components/Faculty/Dashboard/ClassParticipationRate';
+import ReadingCalendarHeatmap from '../../Components/Faculty/Dashboard/ReadingCalendarHeatmap';
+import PassageDifficultyRanking from '../../Components/Faculty/Dashboard/PassageDifficultyRanking';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { useFetchClassReadingHealth } from '../../Hooks/use_ReadingStudentStats';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
@@ -26,62 +25,43 @@ export interface ReadingStatusFilter {
 }
 
 export default function FacultyDashboard() {
-  // ========================================================================
-  // STATE MANAGEMENT
-  // ========================================================================
+  // ── State ──────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState<boolean>(true);
-  const [stats, setStats] = useState<{
-    classCount: number;
-    studentCount: number;
-  }>({ classCount: 0, studentCount: 0 });
-  const [readingStatusFilter, setReadingStatusFilter] =
-    useState<ReadingStatusFilter>({
-      academicYear: '',
-      selectedView: 'overall',
-    });
+  const [stats, setStats] = useState<{ classCount: number; studentCount: number }>({
+    classCount: 0,
+    studentCount: 0,
+  });
+  const [readingStatusFilter, setReadingStatusFilter] = useState<ReadingStatusFilter>({
+    academicYear: '',
+    selectedView: 'overall',
+  });
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
+  const [firstName, setFirstName] = useState<string>('Faculty');
 
-  // ========================================================================
-  // HOOKS
-  // ========================================================================
+  // ── Hooks ──────────────────────────────────────────────────────────────────
   const { handleLogout } = useNavigationHelper();
   const auth = getAuth();
-  const { getNumberOfClasses, getNumbersOfAllStudents } =
-    getForStudentsMiscueStats();
-  const handleReadingFilterChange = React.useCallback(
-    (filter: ReadingStatusFilter) => {
-      setReadingStatusFilter(filter);
-    },
-    [],
-  );
-  const { classHealthData } = useFetchClassReadingHealth(
-    auth.currentUser?.uid || '',
-  );
-  // ========================================================================
-  // DATA FETCHING
-  // ========================================================================
+  const { getNumberOfClasses, getNumbersOfAllStudents } = getForStudentsMiscueStats();
 
+  const handleReadingFilterChange = React.useCallback((filter: ReadingStatusFilter) => {
+    setReadingStatusFilter(filter);
+  }, []);
+
+  const { classHealthData } = useFetchClassReadingHealth(auth.currentUser?.uid || '');
+
+  // ── Data Fetching ──────────────────────────────────────────────────────────
   const fetchStats = async () => {
     try {
       const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        throw new Error('No authenticated user found');
-      }
-
-      // Fetch both counts in parallel for better performance
+      if (!currentUser) throw new Error('No authenticated user found');
       const [classCount, studentCount] = await Promise.all([
         getNumberOfClasses(currentUser.uid),
         getNumbersOfAllStudents(currentUser.uid),
       ]);
-
-      setStats({
-        classCount: classCount,
-        studentCount: studentCount,
-      });
+      setStats({ classCount, studentCount });
     } catch (error: any) {
       throw new Error('Failed to fetch stats: ' + error.message);
     } finally {
@@ -89,112 +69,176 @@ export default function FacultyDashboard() {
     }
   };
 
-  // Initial fetch on component mount
   useEffect(() => {
     fetchStats();
   }, []);
 
-  // ========================================================================
-  // EVENT HANDLER
-  // ========================================================================
+  useEffect(() => {
+    const loadName = async () => {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+      try {
+        const profile = await getUserProfile(uid);
+        if (profile?.firstName) setFirstName(profile.firstName);
+      } catch (err) {
+        console.warn('Failed to load faculty profile name', err);
+      }
+    };
+    loadName();
+  }, [auth.currentUser?.uid]);
 
-  const academicYears = React.useMemo(() => {
-    return Array.from(
-      new Set(classHealthData.map(item => item.acadYear).filter(Boolean)),
-    );
-  }, [classHealthData]);
+  // ── Derived / Memos ────────────────────────────────────────────────────────
+  const academicYears = React.useMemo(
+    () => Array.from(new Set(classHealthData.map(item => item.acadYear).filter(Boolean))),
+    [classHealthData],
+  );
 
-  // Filter classes based on selected academic year
   const filteredClassData = React.useMemo(() => {
-    if (!readingStatusFilter.academicYear) {
-      return classHealthData;
-    }
-    return classHealthData.filter(
-      c => c.acadYear === readingStatusFilter.academicYear,
-    );
+    if (!readingStatusFilter.academicYear) return classHealthData;
+    return classHealthData.filter(c => c.acadYear === readingStatusFilter.academicYear);
   }, [classHealthData, readingStatusFilter.academicYear]);
 
-  const classOptions = React.useMemo(() => {
-    return [
-      { label: 'All Class', value: 'overall' },
-      ...filteredClassData.map(c => ({
-        label: c.className,
-        value: c.classId,
-      })),
-    ];
-  }, [filteredClassData]);
+  const classOptions = React.useMemo(
+    () => filteredClassData.map(c => ({ label: c.className, value: c.classId })),
+    [filteredClassData],
+  );
 
+  const getFirstClassIdInYear = React.useCallback(
+    (year: string): string => {
+      const first = classHealthData.find(c => c.acadYear === year);
+      return first?.classId || '';
+    },
+    [classHealthData],
+  );
+
+  useEffect(() => {
+    if (classHealthData.length === 0) return;
+    if (readingStatusFilter.academicYear !== '' && readingStatusFilter.selectedView !== 'overall') return;
+    const firstYear = academicYears[0] || '';
+    if (!firstYear) return;
+    const firstClassId = getFirstClassIdInYear(firstYear);
+    if (firstClassId) {
+      setReadingStatusFilter({ academicYear: firstYear, selectedView: firstClassId });
+    }
+  }, [classHealthData, academicYears, readingStatusFilter, getFirstClassIdInYear]);
+
+  const selectedClassLabel = React.useMemo(
+    () => classOptions.find(o => o.value === readingStatusFilter.selectedView)?.label,
+    [classOptions, readingStatusFilter.selectedView],
+  );
+
+  const selectedGradeLevel = React.useMemo<number | undefined>(() => {
+    const cls = classHealthData.find(c => c.classId === readingStatusFilter.selectedView);
+    if (!cls) return undefined;
+    const allStudents = [
+      ...(cls.readingHealth?.fluent?.students ?? []),
+      ...(cls.readingHealth?.developing?.students ?? []),
+      ...(cls.readingHealth?.emerging?.students ?? []),
+      ...(cls.readingHealth?.atRisk?.students ?? []),
+      ...(cls.readingHealth?.insufficientData?.students ?? []),
+    ];
+    if (allStudents.length === 0) return undefined;
+    const counts: Record<number, number> = {};
+    for (const s of allStudents) {
+      if (typeof s.gradeLevel === 'number') counts[s.gradeLevel] = (counts[s.gradeLevel] || 0) + 1;
+    }
+    const entries = Object.entries(counts);
+    if (entries.length === 0) return undefined;
+    entries.sort((a, b) => b[1] - a[1]);
+    return Number(entries[0][0]);
+  }, [classHealthData, readingStatusFilter.selectedView]);
+
+  const selectedClassStudentCount = React.useMemo(() => {
+    const cls = classHealthData.find(c => c.classId === readingStatusFilter.selectedView);
+    if (cls?.totalStudents) return cls.totalStudents;
+    return stats.studentCount;
+  }, [classHealthData, readingStatusFilter.selectedView, stats.studentCount]);
+
+  const displayName = firstName;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={facultyDashboard.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={facultyDashboard.container}>
-          {/* BUBBLE DECORATIONS */}
           <BubbleBackground />
 
-          {/* HEADER */}
-          <View style={facultyDashboard.header}>
-            <Text style={facultyDashboard.headerLogo}>CISC KIDS</Text>
+        {/* ── Top bar: menu button ── */}
+        <View style={facultyDashboard.topBar}>
+          <TouchableOpacity
+            style={facultyDashboard.menuBtn}
+            onPress={() => setMenuVisible(v => !v)}
+            activeOpacity={0.7}
+          >
+            <MenuBars />
+          </TouchableOpacity>
+        </View>
+
+        {/* Dropdown menu */}
+        {menuVisible && (
+          <>
             <TouchableOpacity
-              style={facultyDashboard.menuBtn}
-              onPress={() => setMenuVisible(v => !v)}
-              activeOpacity={0.7}
-            >
-              <MenuBars />
-            </TouchableOpacity>
-          </View>
-
-          {/* Dropdown */}
-          {menuVisible && (
-            <>
-              <TouchableOpacity
-                style={StyleSheet.absoluteFillObject as any}
-                onPress={() => setMenuVisible(false)}
-                activeOpacity={1}
-              />
-              <View style={facultyDashboard.dropdown}>
-                <TouchableOpacity
-                  onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
-                  style={facultyDashboard.dropdownItem}
-                  activeOpacity={0.75}
-                >
-                  <Image
-                    source={require('../../../assets/icons/Logout-icon.png')}
-                    style={facultyDashboard.dropdownIcon}
-                  />
-                  <Text style={facultyDashboard.dropdownText}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-
-          {/* MAIN CONTENT */}
-          <View style={facultyDashboard.content}>
-            <Text style={facultyDashboard.dashboardTitle}>
-              Faculty Dashboard
-            </Text>
-            <Text style={facultyDashboard.dashboardSubtitle}>
-              Reading Analytics Overview
-            </Text>
-            <NumberOfClassesAndStudents
-              loading={loading}
-              classCount={stats.classCount}
-              studentCount={stats.studentCount}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+              onPress={() => setMenuVisible(false)}
+              activeOpacity={1}
             />
-            {/* READING STATUS FILTERS */}
+            <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Image
+                  source={require('../../../assets/icons/Logout-icon.png')}
+                  style={facultyDashboard.dropdownIcon}
+                />
+                <Text style={facultyDashboard.dropdownText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
+        {/* ── Hero Header Card ── */}
+        <View style={facultyDashboard.heroCard}>
+          <View style={facultyDashboard.heroCardLeft}>
+            <Text style={facultyDashboard.heroGreeting}>Good Day, {displayName}!</Text>
+            <Text style={facultyDashboard.heroTitle}>Faculty Dashboard</Text>
+          </View>
+          <View style={facultyDashboard.heroIconWrap}>
+            <Text style={facultyDashboard.heroIcon}>🏆</Text>
+          </View>
+        </View>
+
+        {/* ── Main Content ── */}
+        <View style={facultyDashboard.content}>
+
+          {/* 1. OVERVIEW — classes & students count */}
+          <SectionLabel label="Dashboard Overview" />
+          <NumberOfClassesAndStudents
+            loading={loading}
+            classCount={stats.classCount}
+            studentCount={stats.studentCount}
+          />
+
+          {/* 2. ACADEMIC FILTERS */}
+          <SectionLabel label="Academic Filters" />
+          <View style={facultyDashboard.filtersCard}>
             <View style={facultyDashboard.filtersRow}>
 
               {/* Academic Year */}
               <View style={facultyDashboard.filterItem}>
                 <Text style={facultyDashboard.filterLabel}>Academic Year</Text>
                 <TouchableOpacity
-                  style={facultyDashboard.filterButton}
-                  onPress={() => setShowYearDropdown(v => !v)}
+                  style={[
+                    facultyDashboard.filterButton,
+                    showYearDropdown && facultyDashboard.filterButtonActive,
+                  ]}
+                  onPress={() => { setShowYearDropdown(v => !v); setShowClassDropdown(false); }}
                   activeOpacity={0.7}
                 >
                   <Text style={facultyDashboard.filterButtonText}>
-                    {readingStatusFilter.academicYear || 'All Years'}
+                    {readingStatusFilter.academicYear || 'Select Year'}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#7F8C8D' }}>
+                  <Text style={facultyDashboard.filterButtonIcon}>
                     {showYearDropdown ? '▲' : '▼'}
                   </Text>
                 </TouchableOpacity>
@@ -202,72 +246,27 @@ export default function FacultyDashboard() {
                 {showYearDropdown && (
                   <View style={facultyDashboard.filterDropdownMenu}>
                     <ScrollView>
-                      <TouchableOpacity
-                        style={{
-                          paddingVertical: 12,
-                          paddingHorizontal: 14,
-                          borderBottomWidth: 0.5,
-                          borderBottomColor: '#F0F0F0',
-                          backgroundColor: !readingStatusFilter.academicYear
-                            ? '#E8F8F7'
-                            : 'white',
-                        }}
-                        onPress={() => {
-                          setReadingStatusFilter({
-                            academicYear: '',
-                            selectedView: 'overall',
-                          });
-                          setShowYearDropdown(false);
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            color: !readingStatusFilter.academicYear
-                              ? '#4ECDC4'
-                              : '#555',
-                            fontFamily: !readingStatusFilter.academicYear
-                              ? 'Satoshi-Medium'
-                              : 'Satoshi-Regular',
-                          }}
-                        >
-                          All Years
-                        </Text>
-                      </TouchableOpacity>
-
-                      {academicYears.map(year => (
+                      {academicYears.map((year, idx) => (
                         <TouchableOpacity
                           key={year}
-                          style={{
-                            paddingVertical: 12,
-                            paddingHorizontal: 14,
-                            borderBottomWidth: 0.5,
-                            borderBottomColor: '#F0F0F0',
-                            backgroundColor:
-                              readingStatusFilter.academicYear === year
-                                ? '#E8F8F7'
-                                : 'white',
-                          }}
+                          style={[
+                            facultyDashboard.filterDropdownOption,
+                            idx === academicYears.length - 1 && facultyDashboard.filterDropdownOptionLast,
+                            readingStatusFilter.academicYear === year && facultyDashboard.filterDropdownOptionActive,
+                          ]}
                           onPress={() => {
                             setReadingStatusFilter({
                               academicYear: year,
-                              selectedView: 'overall',
+                              selectedView: getFirstClassIdInYear(year),
                             });
                             setShowYearDropdown(false);
                           }}
                         >
                           <Text
-                            style={{
-                              fontSize: 14,
-                              color:
-                                readingStatusFilter.academicYear === year
-                                  ? '#4ECDC4'
-                                  : '#555',
-                              fontFamily:
-                                readingStatusFilter.academicYear === year
-                                  ? 'Satoshi-Medium'
-                                  : 'Satoshi-Regular',
-                            }}
+                            style={[
+                              facultyDashboard.filterDropdownOptionText,
+                              readingStatusFilter.academicYear === year && facultyDashboard.filterDropdownOptionTextActive,
+                            ]}
                           >
                             {year}
                           </Text>
@@ -278,23 +277,21 @@ export default function FacultyDashboard() {
                 )}
               </View>
 
-              {/* Class Selector */}
+              {/* Section / Class */}
               <View style={facultyDashboard.filterItem}>
-                <Text style={facultyDashboard.filterLabel}>Classes</Text>
+                <Text style={facultyDashboard.filterLabel}>Section</Text>
                 <TouchableOpacity
-                  style={facultyDashboard.filterButton}
-                  onPress={() => {
-                    setShowClassDropdown(v => !v);
-                    setShowYearDropdown(false);
-                  }}
+                  style={[
+                    facultyDashboard.filterButton,
+                    showClassDropdown && facultyDashboard.filterButtonActive,
+                  ]}
+                  onPress={() => { setShowClassDropdown(v => !v); setShowYearDropdown(false); }}
                   activeOpacity={0.7}
                 >
                   <Text style={facultyDashboard.filterButtonText}>
-                    {classOptions.find(
-                      o => o.value === readingStatusFilter.selectedView,
-                    )?.label || 'Select Class'}
+                    {classOptions.find(o => o.value === readingStatusFilter.selectedView)?.label || 'Select Class'}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#7F8C8D' }}>
+                  <Text style={facultyDashboard.filterButtonIcon}>
                     {showClassDropdown ? '▲' : '▼'}
                   </Text>
                 </TouchableOpacity>
@@ -302,39 +299,24 @@ export default function FacultyDashboard() {
                 {showClassDropdown && (
                   <View style={facultyDashboard.filterDropdownMenu}>
                     <ScrollView>
-                      {classOptions.map(opt => (
+                      {classOptions.map((opt, idx) => (
                         <TouchableOpacity
                           key={opt.value}
-                          style={{
-                            paddingVertical: 12,
-                            paddingHorizontal: 14,
-                            borderBottomWidth: 0.5,
-                            borderBottomColor: '#F0F0F0',
-                            backgroundColor:
-                              readingStatusFilter.selectedView === opt.value
-                                ? '#E8F8F7'
-                                : 'white',
-                          }}
+                          style={[
+                            facultyDashboard.filterDropdownOption,
+                            idx === classOptions.length - 1 && facultyDashboard.filterDropdownOptionLast,
+                            readingStatusFilter.selectedView === opt.value && facultyDashboard.filterDropdownOptionActive,
+                          ]}
                           onPress={() => {
-                            setReadingStatusFilter(prev => ({
-                              ...prev,
-                              selectedView: opt.value,
-                            }));
+                            setReadingStatusFilter(prev => ({ ...prev, selectedView: opt.value }));
                             setShowClassDropdown(false);
                           }}
                         >
                           <Text
-                            style={{
-                              fontSize: 14,
-                              color:
-                                readingStatusFilter.selectedView === opt.value
-                                  ? '#4ECDC4'
-                                  : '#555',
-                              fontFamily:
-                                readingStatusFilter.selectedView === opt.value
-                                  ? 'Satoshi-Medium'
-                                  : 'Satoshi-Regular',
-                            }}
+                            style={[
+                              facultyDashboard.filterDropdownOptionText,
+                              readingStatusFilter.selectedView === opt.value && facultyDashboard.filterDropdownOptionTextActive,
+                            ]}
                           >
                             {opt.label}
                           </Text>
@@ -344,38 +326,63 @@ export default function FacultyDashboard() {
                   </View>
                 )}
               </View>
+
             </View>
-            {/* STATS SUMMARY */}
-            <ClassReadingStatus
-              facultyId={auth.currentUser?.uid || ''}
-              filter={readingStatusFilter}
-              onFilterChange={handleReadingFilterChange}
-            />
-            <ClassAlphabetMastery
-              facultyId={auth.currentUser?.uid || ''}
-              filter={readingStatusFilter}
-            />
-            <ClassWordMastery
-              facultyId={auth.currentUser?.uid || ''}
-              filter={readingStatusFilter}
-            />
-            <AccuracyTrendsChart
-              facultyId={auth.currentUser?.uid}
-              filter={readingStatusFilter}
-              onFilterChange={handleReadingFilterChange}
-              academicYears={academicYears}
-            />
-            {/* <ActiveHoursChart
-              facultyId={auth.currentUser?.uid}
-              filter={readingStatusFilter}
-            /> */}
-            <MiscueAnalytics
-              facultyId={auth.currentUser?.uid}
-              filter={readingStatusFilter}
-            />
           </View>
+
+          {/* 3. READING HEALTH — broad snapshot of who is fluent / at-risk */}
+          <SectionLabel label="Reading Health" />
+          <ClassReadingStatus
+            facultyId={auth.currentUser?.uid || ''}
+            filter={readingStatusFilter}
+            onFilterChange={handleReadingFilterChange}
+          />
+
+          {/* 4. CLASS PARTICIPATION — are students actually reading this week? */}
+          <SectionLabel label="Class Participation" />
+          <ClassParticipationRate
+            facultyId={auth.currentUser?.uid}
+            filter={readingStatusFilter}
+            className={selectedClassLabel}
+          />
+
+          {/* 5. ACCURACY & SPEED TRENDS — how performance is moving over time */}
+          <SectionLabel label="Accuracy Trends" />
+          <AccuracyTrendsChart
+            facultyId={auth.currentUser?.uid}
+            filter={readingStatusFilter}
+            className={selectedClassLabel}
+            gradeLevel={selectedGradeLevel}
+          />
+
+          {/* 6. ACTIVITY CALENDAR — when students read (pattern / consistency) */}
+          <SectionLabel label="Reading Activity Calendar" />
+          <ReadingCalendarHeatmap
+            facultyId={auth.currentUser?.uid}
+            filter={readingStatusFilter}
+            className={selectedClassLabel}
+          />
+
+          {/* 7. PASSAGE DIFFICULTY — which passages are causing the most trouble */}
+          <SectionLabel label="Passage Difficulty Ranking" />
+          <PassageDifficultyRanking
+            facultyId={auth.currentUser?.uid}
+            filter={readingStatusFilter}
+            className={selectedClassLabel}
+          />
+
+          {/* 8. MISCUE ANALYSIS — deepest diagnostic: error types and problem words */}
+          <SectionLabel label="Miscue Analysis" />
+          <MiscueAnalytics
+            facultyId={auth.currentUser?.uid}
+            filter={readingStatusFilter}
+            className={selectedClassLabel}
+            totalStudentsInClass={selectedClassStudentCount}
+          />
+
         </View>
       </ScrollView>
+
       <LogoutModal
         visible={logoutVisible}
         onCancel={() => setLogoutVisible(false)}
@@ -385,7 +392,17 @@ export default function FacultyDashboard() {
   );
 }
 
-// ─── Hamburger icon ───────────────────────────────────────────────────────────
+// ─── Section label with decorative dot ────────────────────────────────────────
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <View style={facultyDashboard.sectionRow}>
+      <Text style={facultyDashboard.sectionLabel}>{label}</Text>
+      <View style={facultyDashboard.sectionDot} />
+    </View>
+  );
+}
+
+// ─── Hamburger icon ────────────────────────────────────────────────────────────
 function MenuBars() {
   return (
     <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>

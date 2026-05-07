@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Image } from 'react-native';
 import facultyDashboard from '../../../UI_Designs/FacultyDashboardStyles';
+import { FacultyColors } from '../../../Utilities/Theme';
 
 interface NumberOfClassesAndStudentsProp {
     loading: boolean;
@@ -22,7 +23,7 @@ const NumberOfClassesAndStudents: React.FC<NumberOfClassesAndStudentsProp> = ({
     if (loading) {
         return (
             <View style={facultyDashboard.loadingContainer}>
-                <ActivityIndicator size="large" color="#4ECDC4" />
+                <ActivityIndicator size="large" color={FacultyColors.primary} />
                 <Text style={facultyDashboard.loadingText}>Loading dashboard data...</Text>
             </View>
         );

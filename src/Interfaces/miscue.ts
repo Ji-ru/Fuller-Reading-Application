@@ -75,6 +75,7 @@ export interface OverAllStudentTopMiscue {
     word: string;
     errorExample: string;
     errorCount: number;
+    studentCount: number;
     dominantMiscueType?: string; // Add this
     miscueTypes?: Record<string, number>; // Add this if needed
   }>;

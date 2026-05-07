@@ -4,7 +4,7 @@ import { sw, sh, sf } from '../Utils/responsive';
 const loading = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f6ff',
+    backgroundColor: '#ecfbff',
     alignItems: 'center',
     justifyContent: 'center',
     padding: sw(20),
@@ -41,14 +41,14 @@ const loading = StyleSheet.create({
   // Progress Bar Fill
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3d71d9',
+    backgroundColor: '#008443',
     borderRadius: sw(6),
   },
 
   // Progress Percentage Text
   progressText: {
     fontSize: sf(18),
-    color: '#3d71d9',
+    color: '#008443',
     fontFamily: 'Satoshi-Bold',
     marginBottom: sh(8),
   },

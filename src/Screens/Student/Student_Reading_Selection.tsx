@@ -301,7 +301,7 @@ export default function PageSelectionScreen() {
       chapterTitle: String(chapter.title),
       lessonId: Number(lesson.lesson_id),
       lessonTitle: String(lesson.title),
-      targetWord: String(lesson.targetWord),
+      targetWord: wordText,
     };
 
     handleReadingNext(wordData, 'word', wordContext);
@@ -500,7 +500,6 @@ export default function PageSelectionScreen() {
             <TouchableOpacity style={headerStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
               <Text style={headerStyles.backArrowText}>‹</Text>
             </TouchableOpacity>
-            {/* <Text style={selection.label}>Reading Materials</Text> */}
             <Svg height={60} width={220}>
               <SvgText
                 x={110}                 // center X

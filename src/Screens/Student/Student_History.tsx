@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,12 @@ import {
   Alert,
   Image,
   StyleSheet,
-  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import FadeSlideIn from '../../Components/GlobalUse/FadeSlideIn';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import historyStyles from '../../UI_Designs/StudentHistoryStyles';
@@ -71,37 +71,6 @@ const headerStyles = StyleSheet.create({
   },
 });
 
-// ─── FadeSlideIn ──────────────────────────────────────────────────────────────
-function FadeSlideIn({
-  children,
-  delay = 0,
-  direction = 'up',
-}: {
-  children: React.ReactNode;
-  delay?: number;
-  direction?: 'up' | 'down' | 'left' | 'right';
-}) {
-  const offset = direction === 'up' ? 30 : direction === 'down' ? -30 : direction === 'left' ? 30 : -30;
-  const translateVal = useRef(new Animated.Value(offset)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(delay),
-      Animated.parallel([
-        Animated.spring(translateVal, { toValue: 0, useNativeDriver: true, tension: 50, friction: 8 }),
-        Animated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-      ]),
-    ]).start();
-  }, []);
-
-  const isH = direction === 'left' || direction === 'right';
-  return (
-    <Animated.View style={{ transform: [isH ? { translateX: translateVal } : { translateY: translateVal }], opacity }}>
-      {children}
-    </Animated.View>
-  );
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface GroupedReport {
@@ -446,6 +415,30 @@ export default function ReadingHistoryScreen() {
     setSelectedWeekOfMonth(null);
     setFilterAnchor(new Date());
   };
+
+  // Compute explicit date bounds for the Analytics sub-filter (day chip / week-of-month chip).
+  // When neither chip is selected, returns undefined so the child components fall back to timeRange + anchor.
+  const perfDateBounds = useMemo<{ start?: Date; end?: Date }>(() => {
+    if (perfTimeRange === 'week' && perfSelectedDay !== null) {
+      const monday = getWeekStart(perfAnchor);
+      const dayStart = new Date(monday);
+      dayStart.setDate(monday.getDate() + perfSelectedDay);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setHours(23, 59, 59, 999);
+      return { start: dayStart, end: dayEnd };
+    }
+    if (perfTimeRange === 'month' && perfSelectedWeekOfMonth !== null) {
+      const year = perfAnchor.getFullYear();
+      const month = perfAnchor.getMonth();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      const i = perfSelectedWeekOfMonth - 1;
+      const wkStart = new Date(year, month, i * 7 + 1, 0, 0, 0, 0);
+      const wkEnd = new Date(year, month, Math.min((i + 1) * 7, totalDays), 23, 59, 59, 999);
+      return { start: wkStart, end: wkEnd };
+    }
+    return {};
+  }, [perfTimeRange, perfAnchor, perfSelectedDay, perfSelectedWeekOfMonth]);
 
   // Summary stats — derived from filtered data
   const getTotalAttempts = () => filteredReports.reduce((s, g) => s + g.reports.length, 0);
@@ -1011,12 +1004,12 @@ export default function ReadingHistoryScreen() {
 
               <FadeSlideIn delay={80}>
                 <View style={tabStyles.section}>
-                  <StudentAccuracyTrendsChart studentId={uid} role="student" gradeLevel={gradeLevel} timeRange={perfTimeRange} anchor={perfAnchor} />
+                  <StudentAccuracyTrendsChart studentId={uid} role="student" gradeLevel={gradeLevel} timeRange={perfTimeRange} anchor={perfAnchor} startDate={perfDateBounds.start} endDate={perfDateBounds.end} />
                 </View>
               </FadeSlideIn>
               <FadeSlideIn delay={160}>
                 <View style={tabStyles.section}>
-                  <StudentMiscueInsights studentId={uid} role="student" timeRange={perfTimeRange} anchor={perfAnchor} />
+                  <StudentMiscueInsights studentId={uid} role="student" timeRange={perfTimeRange} anchor={perfAnchor} startDate={perfDateBounds.start} endDate={perfDateBounds.end} />
                 </View>
               </FadeSlideIn>
             </View>

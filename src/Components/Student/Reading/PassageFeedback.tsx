@@ -149,7 +149,7 @@ const S = StyleSheet.create({
   // Alphabet / Word specifics
   largeText: {
     fontSize: sf(60),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Black',
     color: C.primary,
     marginBottom: sh(8),
   },
@@ -170,16 +170,29 @@ const S = StyleSheet.create({
     gap: sh(12),
   },
   btnPrimary: {
-    backgroundColor: C.primary,
+    backgroundColor: "#ffd45a",
     borderRadius: sw(16),
     paddingVertical: sh(15),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
-    shadowColor: C.primary,
+    shadowColor: '#ffd45a',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
+  btnError: {
+    backgroundColor: '#E53935',
+    borderRadius: sw(16),
+    paddingVertical: sh(15),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    shadowColor: '#E53935',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
     shadowRadius: 5,
   },
   btnSecondary: {
@@ -215,7 +228,7 @@ const S = StyleSheet.create({
     tintColor: C.white,
   },
   btnText: {
-    fontSize: sf(18),
+    fontSize: sf(20),
     fontFamily: 'Nunito-Bold',
     color: C.white,
   },
@@ -234,10 +247,12 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
   hasNextItem,
 }) => {
 
+  const hasNoTranscription = !spokenText || spokenText.trim() === '';
+
   const renderButtons = () => (
     <View style={S.buttonContainer}>
       <TouchableOpacity
-        style={S.btnPrimary}
+        style={hasNoTranscription ? S.btnError : S.btnPrimary}
         onPress={onTryAgain}
         activeOpacity={0.8}
       >
@@ -409,7 +424,13 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
             </View>
           )}
 
-          {miscues.length === 0 && (
+          {hasNoTranscription ? (
+            <View style={[S.miscueRow, { backgroundColor: '#FDE8E8', borderColor: '#E53935' }]}>
+              <Text style={[S.miscueValue, { textAlign: 'center', color: '#E53935', fontFamily: 'Nunito-Bold' }]}>
+                Network Problem. Please try again.
+              </Text>
+            </View>
+          ) : miscues.length === 0 && (
             <View style={[S.miscueRow, { backgroundColor: C.successBg, borderColor: C.success }]}>
               <Text style={[S.miscueValue, { textAlign: 'center', color: C.success, fontFamily: 'Nunito-Bold' }]}>
                 🌟 Perfect Reading! No miscues detected.

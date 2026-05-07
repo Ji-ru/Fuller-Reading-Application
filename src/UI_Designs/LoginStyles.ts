@@ -3,20 +3,20 @@ import { sw, sh, sf } from '../Utils/responsive';
 
 // ─── Palette (mirrors Student_Home) ──────────────────────────────────────────
 const C = {
-  green:      '#2ca96a',
-  greenDark:  '#008443',
-  greenDeep:  '#005028',
+  green: '#2ca96a',
+  greenDark: '#008443',
+  greenDeep: '#005028',
   greenLight: '#c0e8f2',
-  greenPale:  '#E8F5E9',
-  bg:         '#F1FBF4',
-  white:      '#ffffff',
-  ink:        '#1B2B22',
-  inkLight:   '#6B8E6B',
-  slate:      '#A5B8A7',
-  border:     '#C8E6C9',
-  inputBg:    '#F6FBF7',
-  coral:      '#FF7043',
-  disabled:   '#A5D6B0',
+  greenPale: '#E8F5E9',
+  bg: '#ecfbff',
+  white: '#ffffff',
+  ink: '#1B2B22',
+  inkLight: '#6B8E6B',
+  slate: '#A5B8A7',
+  border: '#C8E6C9',
+  inputBg: '#F6FBF7',
+  coral: '#FF7043',
+  disabled: '#A5D6B0',
 };
 
 const login = StyleSheet.create({
