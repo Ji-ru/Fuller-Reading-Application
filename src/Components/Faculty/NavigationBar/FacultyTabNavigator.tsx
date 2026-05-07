@@ -82,65 +82,64 @@
 //     );
 // }
 
-import { useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Image, ImageSourcePropType, TouchableOpacity } from 'react-native';
 import FacultyDashboard from '../../../Screens/Faculty/Faculty_Dashboard';
 import FacultyProfile from '../../../Screens/Faculty/Faculty_Profile';
 import MyClass from '../../../Screens/Faculty/Faculty_MyClass';
 import MyArchive from '../../../Screens/Faculty/Faculty_MyArchive';
-import { useNavigationHelper } from '../../../Controller/NavigationController';
-import { HeaderMenu } from '../../GlobalUse/HeaderMenu';
+import { Icon, IconName } from '../../GlobalUse/Icon';
 
 const Tab = createBottomTabNavigator();
-const icons: Record<string, ImageSourcePropType> = {
-    FacultyDashboard: require('../../../../assets/icons/Dashboard-icon.png'),
-    MyClass: require('../../../../assets/icons/Class-icon.png'),
-    MyArchive: require('../../../../assets/icons/Archive-icon.png'),
-    FacultyProfile: require('../../../../assets/images/defaultProfile.png'),
+
+const TAB_ICON: Record<string, IconName> = {
+    FacultyDashboard: 'dashboard',
+    MyClass:          'myclass',
+    MyArchive:        'archive',
+    FacultyProfile:   'profile',
 };
 
-export default function FacultyTabNavigator() {
-    const { handleLogout } = useNavigationHelper();
+const ACTIVE_COLOR   = '#008443';
+const INACTIVE_COLOR = '#9CA3AF';
 
+export default function FacultyTabNavigator() {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
-                headerRight: () => (
-                    <HeaderMenu onLogout={async () => await handleLogout()} />
-                ),
                 tabBarStyle: {
-                    height: 70,
+                    height: 68,
                     paddingBottom: 10,
-                    paddingTop: 5,
+                    paddingTop: 6,
                     backgroundColor: '#FFFFFF',
-                    borderTopColor: '#EDF1F7',
+                    borderTopWidth: 1,
+                    borderTopColor: '#E5E7EB',
+                    elevation: 12,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -3 },
+                    shadowOpacity: 0.06,
+                    shadowRadius: 8,
                 },
-                tabBarActiveTintColor: '#3366FF',
-                tabBarInactiveTintColor: '#8F9BB3',
+                tabBarActiveTintColor:   ACTIVE_COLOR,
+                tabBarInactiveTintColor: INACTIVE_COLOR,
                 tabBarLabelStyle: {
-                    fontFamily: 'Satoshi-Bold',
-                    fontSize: 14,
+                    fontFamily: 'Nunito-Bold',
+                    fontSize: 11,
+                    marginTop: 2,
                 },
                 tabBarIcon: ({ focused }) => (
-                    <Image
-                        source={icons[route.name]}
-                        style={{
-                            width: 30,
-                            height: 30,
-                            borderRadius: route.name === 'FacultyProfile' ? 11 : 0,
-                            opacity: focused ? 1 : 0.6,
-                        }}
-                        resizeMode="contain"
+                    <Icon
+                        name={TAB_ICON[route.name]}
+                        size={24}
+                        color={focused ? ACTIVE_COLOR : INACTIVE_COLOR}
+                        filled={focused}
                     />
                 ),
             })}
         >
             <Tab.Screen name="FacultyDashboard" component={FacultyDashboard} options={{ title: 'Dashboard' }} />
-            <Tab.Screen name="MyClass" component={MyClass} options={{ title: 'My Class' }} />
-            <Tab.Screen name="MyArchive" component={MyArchive} options={{ title: 'Archive' }} />
-            <Tab.Screen name="FacultyProfile" component={FacultyProfile} options={{ title: 'Profile' }} />
+            <Tab.Screen name="MyClass"          component={MyClass}          options={{ title: 'My Class' }} />
+            <Tab.Screen name="MyArchive"        component={MyArchive}        options={{ title: 'Archive' }} />
+            <Tab.Screen name="FacultyProfile"   component={FacultyProfile}   options={{ title: 'Profile' }} />
         </Tab.Navigator>
     );
 }

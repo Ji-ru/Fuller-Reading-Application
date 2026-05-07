@@ -6,16 +6,13 @@ import {
   TouchableOpacity,
   Animated,
   StyleSheet,
-  Dimensions,
-  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getCurrentUser, getUserProfile } from '../../Controller/AuthenticationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-
-const { width: SW } = Dimensions.get('window');
+import { sw, sh, sf } from '../../Utils/responsive';
 
 // ─── Palette ─────────────────
 const C = {
@@ -224,11 +221,8 @@ export default function UserHomeScreen() {
         </>
       )}
 
-      {/* ── Scrollable Content ─────────────────────────────────────────── */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      >
+      {/* ── Responsive Scaled Content ──────────────────────────────────── */}
+      <View style={S.mainContent}>
         {/* ── Greeting Card ──────────────────────────────────────────────── */}
         <BounceIn delay={40}>
           <View style={S.greetCard}>
@@ -291,7 +285,7 @@ export default function UserHomeScreen() {
             delay={320}
           />
         </View>
-      </ScrollView>
+      </View>
 
       <LogoutModal
         visible={logoutVisible}
@@ -311,102 +305,107 @@ const S = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: sw(20),
+    paddingTop: sh(12),
+    paddingBottom: sh(8),
     zIndex: 100,
   },
   headerLogo: {
-    fontSize: 18,
+    fontSize: sf(18),
     fontFamily: 'Nunito-Black',
     color: C.green, // the user requested #2ca96a for this, which is now C.green
     letterSpacing: 0.5,
   },
   menuBtn: {
-    width: 48, height: 48,
-    borderRadius: 14,
+    width: sw(48), height: sw(48),
+    borderRadius: sw(14),
     backgroundColor: C.white,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: sh(2) },
     shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
 
   // Dropdown
   dropdown: {
-    position: 'absolute', top: 72, right: 20,
-    backgroundColor: C.white, borderRadius: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    position: 'absolute', top: sh(72), right: sw(20),
+    backgroundColor: C.white, borderRadius: sw(14),
+    shadowColor: '#000', shadowOffset: { width: 0, height: sh(4) },
     shadowOpacity: 0.14, shadowRadius: 12, elevation: 10,
-    minWidth: 160, zIndex: 1000, paddingVertical: 4,
+    minWidth: sw(160), zIndex: 1000, paddingVertical: sh(4),
   },
   dropdownItem: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 14,
+    paddingHorizontal: sw(16), paddingVertical: sh(14),
   },
-  dropdownIcon: { width: 20, height: 20, marginRight: 12, tintColor: C.coral },
-  dropdownText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.coral },
+  dropdownIcon: { width: sw(20), height: sw(20), marginRight: sw(12), tintColor: C.coral },
+  dropdownText: { fontSize: sf(15), fontFamily: 'Nunito-Bold', color: C.coral },
+
+  mainContent: {
+    flex: 1,
+    paddingBottom: sh(20),
+  },
 
   // Greeting card — white rounded card matching screenshot
   greetCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: C.white,
-    borderRadius: 24,
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 24,
-    paddingLeft: 24,
-    paddingVertical: 20,
+    borderRadius: sw(24),
+    marginHorizontal: sw(16),
+    marginTop: sh(8),
+    marginBottom: sh(24),
+    paddingLeft: sw(24),
+    paddingVertical: sh(20),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: sh(4) },
     shadowOpacity: 0.08, shadowRadius: 12, elevation: 5,
     overflow: 'hidden',
   },
   greetLeft: { flex: 1 },
   greetTime: {
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Nunito-ExtraBold',
     color: C.green,
     letterSpacing: 1.2,
-    marginBottom: 4,
+    marginBottom: sh(4),
   },
   greetName: {
-    fontSize: 38,
+    fontSize: sf(38),
     fontFamily: 'Nunito-Black',
     color: C.ink,
-    lineHeight: 46,
-    marginBottom: 8,
+    lineHeight: sh(46),
+    marginBottom: sh(8),
   },
   greetSub: {
-    fontSize: 13,
+    fontSize: sf(13),
     fontFamily: 'Nunito-Medium',
     color: C.slate,
-    lineHeight: 19,
-    maxWidth: SW * 0.45,
+    lineHeight: sh(19),
+    maxWidth: sw(160),
   },
   greetImage: {
-    width: SW * 0.42,
-    height: SW * 0.42,
-    marginRight: -8,
+    width: sw(160),
+    height: sw(160),
+    marginRight: sw(-8),
   },
 
   // Section label
   sectionLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    gap: 8,
+    paddingHorizontal: sw(20),
+    marginBottom: sh(12),
+    gap: sw(8),
   },
   sectionDot: {
-    width: 8, height: 8,
-    borderRadius: 4,
+    width: sw(8), height: sw(8),
+    borderRadius: sw(4),
     backgroundColor: C.green,
   },
   sectionLabelText: {
-    fontSize: 12,
+    fontSize: sf(12),
     fontFamily: 'Nunito-ExtraBold',
     color: C.inkLight,
     letterSpacing: 1.5,
@@ -414,20 +413,20 @@ const S = StyleSheet.create({
 
   // Activity buttons container
   btnsContainer: {
-    paddingHorizontal: 16,
-    gap: 14,
+    paddingHorizontal: sw(16),
+    gap: sh(14),
   },
 
   // Activity button base
   actBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-    gap: 14,
+    borderRadius: sw(20),
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(18),
+    gap: sw(14),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: sh(3) },
     shadowOpacity: 0.08, shadowRadius: 8, elevation: 4,
   },
   actBtnPrimary: {
@@ -439,8 +438,8 @@ const S = StyleSheet.create({
 
   // Icon box
   actBtnIconBox: {
-    width: 52, height: 52,
-    borderRadius: 16,
+    width: sw(52), height: sw(52),
+    borderRadius: sw(16),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -450,20 +449,20 @@ const S = StyleSheet.create({
   actBtnIconBoxSecondary: {
     backgroundColor: C.greenLight,
   },
-  actBtnEmoji: { fontSize: 26 },
+  actBtnEmoji: { fontSize: sf(26) },
 
   // Button text
   actBtnLabel: {
-    fontSize: 17, fontFamily: 'Nunito-ExtraBold', color: C.white, marginBottom: 3,
+    fontSize: sf(17), fontFamily: 'Nunito-ExtraBold', color: C.white, marginBottom: sh(3),
   },
   actBtnSublabel: {
-    fontSize: 12, color: 'rgba(255,255,255,0.75)', fontFamily: 'Nunito-Medium',
+    fontSize: sf(12), color: 'rgba(255,255,255,0.75)', fontFamily: 'Nunito-Medium',
   },
 
   // Arrow circle
   actBtnArrow: {
-    width: 36, height: 36, borderRadius: 18,
+    width: sw(36), height: sw(36), borderRadius: sw(18),
     justifyContent: 'center', alignItems: 'center',
   },
-  actBtnArrowText: { fontSize: 22, fontFamily: 'Nunito-Bold', color: C.white, lineHeight: 26 },
+  actBtnArrowText: { fontSize: sf(22), fontFamily: 'Nunito-Bold', color: C.white, lineHeight: sh(26) },
 });

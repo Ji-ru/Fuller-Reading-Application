@@ -413,7 +413,7 @@ const readingStyles = StyleSheet.create({
     backgroundColor: '#FFDB58',
     paddingVertical: sh(10),
     paddingHorizontal: sw(24),
-    borderRadius: sw(30),
+    borderRadius: sw(10),
     marginTop: sh(10),
     justifyContent: 'center',
     alignItems: 'center',

@@ -48,7 +48,7 @@ export const FacultyColors = {
   ink:        '#1B2B22',  
   inkLight:   '#4E6B5D',  
   slate:      '#91A89B', 
-  bg:         '#F1FBF4',  
+  bg:         '#FFFFFF',  
 } as const;
 
 // Common design tokens shared across both palettes

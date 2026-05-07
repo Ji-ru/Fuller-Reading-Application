@@ -34,9 +34,11 @@ const calculateWeightedMetric = (reports: MiscueReportDocument[], key: 'accuracy
     // Linear decay: Weight = 1.0 for newest, 0.8, 0.6, 0.4, 0.2, then 0.1 for the rest
     const weight = Math.max(0.1, 1 - (index * 0.2));
 
-    let val = 0;
+    let val: number;
     if (key === 'miscueDensity') {
-      val = calculateMiscueDensity(report);
+      const density = calculateMiscueDensity(report);
+      if (density === null) return; // skip reports missing totalWords; don't fake a perfect 0
+      val = density;
     } else {
       val = report[key] as number;
     }
@@ -45,7 +47,7 @@ const calculateWeightedMetric = (reports: MiscueReportDocument[], key: 'accuracy
     totalWeight += weight;
   });
 
-  return weightedSum / totalWeight;
+  return totalWeight === 0 ? 0 : weightedSum / totalWeight;
 };
 
 // --- HELPER: ANALYZE TREND ---
@@ -69,12 +71,12 @@ const analyzeTrend = (reports: MiscueReportDocument[]): 'improving' | 'stable' |
 };
 
 // --- HELPER: MISCUE DENSITY ---
-const calculateMiscueDensity = (report: MiscueReportDocument): number => {
+// Returns null when totalWords is missing/zero so the caller can skip the report
+// instead of treating it as a perfect 0% density (which would inflate the score).
+const calculateMiscueDensity = (report: MiscueReportDocument): number | null => {
+  if (!report.totalWords || report.totalWords <= 0) return null;
   const totalMiscues = report.miscues?.length || 0;
-  if (report.totalWords && report.totalWords > 0) {
-    return (totalMiscues / report.totalWords) * 100;
-  }
-  return 0;
+  return (totalMiscues / report.totalWords) * 100;
 };
 
 const getAdjustedMiscueThresholds = (avgWords: number) => {
@@ -113,9 +115,8 @@ const classifyStudent = (reports: MiscueReportDocument[], gradeLevel: number): S
   const avgWPM = calculateWeightedMetric(reports, 'wordPerMin');
   const avgMiscueDensity = calculateWeightedMetric(reports, 'miscueDensity');
 
-  // Trend and Consistency
+  // Trend
   const trend = analyzeTrend(reports);
-  const consistency = calculateConsistency(reports);
 
   // Stats for passage length
   const passageLengths = reports.map(r => r.totalWords || 0);
@@ -148,8 +149,8 @@ const classifyStudent = (reports: MiscueReportDocument[], gradeLevel: number): S
     hasSufficientData: sufficientData,
     passageLengthInfo: {
       averageWords: Math.round(avgLength),
-      minWords: Math.min(...passageLengths, 0),
-      maxWords: Math.max(...passageLengths, 0),
+      minWords: passageLengths.length > 0 ? Math.min(...passageLengths) : 0,
+      maxWords: passageLengths.length > 0 ? Math.max(...passageLengths) : 0,
       adjustedThresholds: getAdjustedMiscueThresholds(avgLength)
     },
     lastReportDate: reports.length > 0
@@ -179,10 +180,12 @@ export const useClassReadingHealth = () => {
         const status = classifyStudent(reports, sData.studentData?.gradeLevel || 1);
         status.name = `${sData.firstName} ${sData.lastName}`;
         status.studentId = id;
-        return status;
+        // hasParticipated = took at least one assessment (not just "user doc exists")
+        return { status, hasParticipated: reports.length > 0 };
       });
 
-      const allStatuses = (await Promise.all(studentDataPromises)).filter(s => s !== null) as StudentReadingStatus[];
+      const allResults = (await Promise.all(studentDataPromises)).filter(r => r !== null) as { status: StudentReadingStatus; hasParticipated: boolean }[];
+      const allStatuses = allResults.map(r => r.status);
 
       // Grouping
       const categories = {
@@ -194,7 +197,8 @@ export const useClassReadingHealth = () => {
       };
 
       const total = studentIds.length;
-      const participationRate = total > 0 ? (allStatuses.length / total) * 100 : 0;
+      const participatedCount = allResults.filter(r => r.hasParticipated).length;
+      const participationRate = total > 0 ? (participatedCount / total) * 100 : 0;
 
       // Generate Required Actions based on class state
       let action = "Continue regular assessments.";

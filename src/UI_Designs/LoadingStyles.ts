@@ -15,7 +15,7 @@ const C = {
 const loading = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: '#ecfbff',
     alignItems: 'center',
     justifyContent: 'center',
     padding: sw(20),
@@ -52,15 +52,15 @@ const loading = StyleSheet.create({
   // Progress bar fill
   progressBarFill: {
     height: '100%',
-    backgroundColor: C.green,
+    backgroundColor: '#008443',
     borderRadius: sw(6),
   },
 
   // Percentage label
   progressText: {
     fontSize: sf(18),
-    color: C.greenDark,
-    fontFamily: 'Nunito-ExtraBold',
+    color: '#008443',
+    fontFamily: 'Satoshi-Bold',
     marginBottom: sh(8),
   },
 

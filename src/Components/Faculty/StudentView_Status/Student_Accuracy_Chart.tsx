@@ -42,6 +42,10 @@ interface AccuracyTrendsChartProps {
   timeRange?: TimeRange;
   /** Anchor date for period navigation. When provided, data is filtered relative to this date. */
   anchor?: Date;
+  /** Optional explicit start of the date range. When both startDate and endDate are provided, they override timeRange + anchor. */
+  startDate?: Date;
+  /** Optional explicit end of the date range. */
+  endDate?: Date;
 }
 
 // ─── Grade-level benchmarks ───────────────────────────────────────────────────
@@ -80,11 +84,11 @@ const BENCHMARK_CONFIG: Record<BenchmarkStatus, { label: string; color: string; 
   above: { label: 'Above Grade Level', color: '#10B981', bg: '#D1FAE5', icon: '▲' },
 };
 
-const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studentId, role = 'faculty', gradeLevel, timeRange: externalTimeRange, anchor }) => {
+const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studentId, role = 'faculty', gradeLevel, timeRange: externalTimeRange, anchor, startDate, endDate }) => {
   const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>('week');
   const timeRange = externalTimeRange ?? internalTimeRange;
 
-  const { chartData: rawData, loading, error } = useStudentAccuracyTrends(studentId, timeRange, anchor);
+  const { chartData: rawData, loading, error } = useStudentAccuracyTrends(studentId, timeRange, anchor, startDate, endDate);
 
   // ── Normalized data ────────────────────────────────────────────────────────
   const chartData = useMemo(

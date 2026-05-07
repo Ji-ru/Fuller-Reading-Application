@@ -1,10 +1,11 @@
 import { StyleSheet } from 'react-native';
 import { sw, sh, sf } from '../Utils/responsive';
+import { FacultyColors } from '../Utilities/Theme';
 
 const myClass = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFB',
+    backgroundColor: '#f2f8f4',          // matches facultyDashboard.safeArea
   },
   insideContainer: {
     flex: 1,
@@ -15,32 +16,32 @@ const myClass = StyleSheet.create({
     paddingHorizontal: sw(16),
   },
 
-  // HEADER SECTION
+  // ─── Header Section ───────────────────────────────────────────────────────
   headerSection: {
     marginTop: sh(16),
     marginBottom: sh(20),
   },
   pageTitle: {
     fontSize: sf(32),
-    fontFamily: 'Satoshi-Black',
-    color: '#1A1A1A',
+    fontFamily: 'Nunito-Black',
+    color: FacultyColors.ink,
     marginBottom: sh(4),
   },
   pageSubtitle: {
     fontSize: sf(15),
-    fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Medium',
+    color: FacultyColors.inkLight,
   },
 
-  // CREATE BUTTON
+  // ─── Create Button ────────────────────────────────────────────────────────
   createButton: {
-    backgroundColor: '#3D71D9',
-    borderRadius: sw(12),
+    backgroundColor: FacultyColors.primary,
+    borderRadius: sw(14),
     marginBottom: sh(20),
-    elevation: 3,
-    shadowColor: '#4CAF50',
+    elevation: 4,
+    shadowColor: FacultyColors.primaryDeep,
     shadowOffset: { width: 0, height: sw(4) },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: sw(8),
   },
   createButtonContent: {
@@ -54,7 +55,7 @@ const myClass = StyleSheet.create({
     width: sw(24),
     height: sw(24),
     borderRadius: sw(12),
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: sw(10),
@@ -66,19 +67,19 @@ const myClass = StyleSheet.create({
   },
   createButtonText: {
     color: '#fff',
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Nunito-ExtraBold',
     fontSize: sf(16),
   },
 
-  // CLASS COUNT
+  // ─── Class Count ──────────────────────────────────────────────────────────
   classCount: {
     fontSize: sf(15),
-    fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    fontFamily: 'Nunito-Bold',
+    color: FacultyColors.ink,
     marginBottom: sh(12),
   },
 
-  // CLASS CARDS
+  // ─── Class Cards ──────────────────────────────────────────────────────────
   listWrapper: {
     flex: 1,
   },
@@ -90,11 +91,11 @@ const myClass = StyleSheet.create({
   },
   classCard: {
     backgroundColor: '#fff',
-    borderRadius: sw(14),
+    borderRadius: sw(16),
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: FacultyColors.primaryDeep,
     shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.07,
     shadowRadius: sw(8),
     overflow: 'hidden',
   },
@@ -121,8 +122,8 @@ const myClass = StyleSheet.create({
   },
   className: {
     fontSize: sf(18),
-    fontFamily: 'Satoshi-Bold',
-    color: '#1F2937',
+    fontFamily: 'Nunito-Bold',
+    color: FacultyColors.ink,
     lineHeight: sf(22),
   },
   classMetaRow: {
@@ -131,7 +132,7 @@ const myClass = StyleSheet.create({
     flexWrap: 'wrap',
   },
   classMetaChip: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#E8F5E9',
     paddingHorizontal: sw(10),
     paddingVertical: sh(4),
     borderRadius: sw(8),
@@ -141,13 +142,13 @@ const myClass = StyleSheet.create({
   },
   classMetaLabel: {
     fontSize: sf(11),
-    fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Medium',
+    color: FacultyColors.inkLight,
   },
   classMetaValue: {
     fontSize: sf(12),
-    fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    fontFamily: 'Nunito-Bold',
+    color: FacultyColors.primaryDeep,
   },
   ellipsisButton: {
     width: sw(32),
@@ -163,9 +164,7 @@ const myClass = StyleSheet.create({
     height: sw(16),
   },
 
-  // ==========================================
-  // ARCHIVED CLASSES SPECIFIC STYLES
-  // ==========================================
+  // ─── Archived Class Variants ──────────────────────────────────────────────
   archivedClassCard: {
     backgroundColor: '#F9FAFB',
     borderWidth: 1.5,
@@ -183,7 +182,7 @@ const myClass = StyleSheet.create({
     opacity: 0.6,
   },
   archivedClassName: {
-    color: '#6B7280',
+    color: FacultyColors.slate,
   },
   archivedClassEmail: {
     color: '#9CA3AF',
@@ -202,45 +201,37 @@ const myClass = StyleSheet.create({
   },
   archivedOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.3)',
     borderRadius: sw(14),
     pointerEvents: 'none',
   },
-  // ==========================================
 
-  // CONTEXT MENU
+  // ─── Context Menu ─────────────────────────────────────────────────────────
   fullScreenOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'transparent',
     zIndex: 998,
   },
   overlay: {
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'transparent',
   },
   contextMenu: {
     position: 'absolute',
-    backgroundColor: 'white',
-    borderRadius: sw(12),
+    backgroundColor: '#fff',
+    borderRadius: sw(14),
     paddingVertical: sh(8),
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: FacultyColors.primaryDeep,
     shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.15,
     shadowRadius: sw(12),
     minWidth: sw(180),
     zIndex: 1000,
+    borderWidth: 1,
+    borderColor: '#E8F5E9',
   },
   contextMenuItem: {
     flexDirection: 'row',
@@ -252,93 +243,100 @@ const myClass = StyleSheet.create({
     width: sw(20),
     height: sw(20),
     marginRight: sw(12),
-    tintColor: '#374151',
+    tintColor: FacultyColors.ink,
   },
   contextMenuText: {
     fontSize: sf(15),
-    color: '#374151',
-    fontFamily: 'Satoshi-Bold',
+    color: FacultyColors.ink,
+    fontFamily: 'Nunito-Bold',
   },
   deleteMenuItem: {
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: '#E8F5E9',
   },
   deleteMenuText: {
     color: '#EF4444',
   },
   archiveMenuItem: {
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: '#E8F5E9',
   },
   archiveMenuText: {
     color: '#F59E0B',
   },
 
-  // MODAL STYLES
+  // ─── Modals ───────────────────────────────────────────────────────────────
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: sw(20),
   },
   modalContainer: {
-    backgroundColor: 'white',
-    borderRadius: sw(16),
+    backgroundColor: '#fff',
+    borderRadius: sw(20),
     padding: sw(24),
     width: '100%',
     maxWidth: sw(420),
     maxHeight: '85%',
+    shadowColor: FacultyColors.primaryDeep,
+    shadowOffset: { width: 0, height: sw(8) },
+    shadowOpacity: 0.15,
+    shadowRadius: sw(16),
+    elevation: 10,
   },
   modalTitle: {
     fontSize: sf(22),
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Nunito-ExtraBold',
     marginBottom: sh(24),
-    color: '#1F2937',
+    color: FacultyColors.ink,
     textAlign: 'center',
   },
   modalInput: {
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    borderRadius: sw(10),
+    borderColor: '#C8E6C9',
+    borderRadius: sw(12),
     padding: sw(14),
     fontSize: sf(16),
-    fontFamily: 'Satoshi-Medium',
-    color: '#1F2937',
-    backgroundColor: '#F9FAFB',
+    fontFamily: 'Nunito-Medium',
+    color: FacultyColors.ink,
+    backgroundColor: '#F6FBF7',
   },
   formGroup: {
     marginBottom: sh(20),
   },
   formLabel: {
     fontSize: sf(14),
-    fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    fontFamily: 'Nunito-Bold',
+    color: FacultyColors.ink,
     marginBottom: sh(8),
   },
   formHelperText: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Medium',
+    color: FacultyColors.inkLight,
     marginTop: sh(6),
   },
   modalInfoBox: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#E8F5E9',
     borderRadius: sw(12),
     padding: sw(16),
     marginTop: sh(8),
     marginBottom: sh(20),
+    borderLeftWidth: 3,
+    borderLeftColor: FacultyColors.primary,
   },
   modalInfoTitle: {
     fontSize: sf(14),
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Nunito-Bold',
     marginBottom: sh(8),
-    color: '#1E40AF',
+    color: FacultyColors.primaryDeep,
   },
   modalInfoText: {
     fontSize: sf(13),
-    fontFamily: 'Satoshi-Medium',
-    color: '#374151',
+    fontFamily: 'Nunito-Medium',
+    color: FacultyColors.ink,
     marginBottom: sh(4),
     lineHeight: sf(18),
   },
@@ -350,41 +348,53 @@ const myClass = StyleSheet.create({
   modalButton: {
     flex: 1,
     paddingVertical: sh(14),
-    borderRadius: sw(10),
+    borderRadius: sw(12),
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: sh(48),
   },
   cancelButton: {
     backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   cancelButtonText: {
     fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Bold',
+    color: FacultyColors.inkLight,
   },
   saveButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: FacultyColors.primary,
+    elevation: 3,
+    shadowColor: FacultyColors.primaryDeep,
+    shadowOffset: { width: 0, height: sw(3) },
+    shadowOpacity: 0.22,
+    shadowRadius: sw(6),
   },
   saveButtonText: {
     fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#fff',
   },
   createClassButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: FacultyColors.primary,
+    elevation: 3,
+    shadowColor: FacultyColors.primaryDeep,
+    shadowOffset: { width: 0, height: sw(3) },
+    shadowOpacity: 0.22,
+    shadowRadius: sw(6),
   },
   createClassButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: '#A5D6A7',
     opacity: 0.6,
   },
   createClassButtonText: {
     fontSize: sf(16),
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Nunito-Bold',
     color: '#fff',
   },
 
-  // EMPTY & LOADING STATES
+  // ─── Empty & Loading States ───────────────────────────────────────────────
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -394,8 +404,8 @@ const myClass = StyleSheet.create({
   loadingText: {
     marginTop: sh(16),
     fontSize: sf(16),
-    fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    fontFamily: 'Nunito-Medium',
+    color: FacultyColors.inkLight,
   },
   emptyContainer: {
     flex: 1,
@@ -410,25 +420,25 @@ const myClass = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: sf(20),
-    fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    fontFamily: 'Nunito-ExtraBold',
+    color: FacultyColors.ink,
     marginBottom: sh(8),
     textAlign: 'center',
   },
   emptyText: {
     fontSize: sf(15),
-    fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
+    fontFamily: 'Nunito-Medium',
+    color: FacultyColors.slate,
     textAlign: 'center',
     lineHeight: sf(22),
   },
 
-  // LEGACY STYLES (for backwards compatibility)
+  // ─── Legacy styles (backward compat) ─────────────────────────────────────
   item: {
     padding: sw(5),
     width: 'auto',
     height: 'auto',
-    backgroundColor: '#ffff',
+    backgroundColor: '#fff',
     borderRadius: sw(10),
     elevation: 4,
     shadowColor: '#000',
@@ -460,19 +470,19 @@ const myClass = StyleSheet.create({
     height: sw(25),
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#D4F1E8',
+    backgroundColor: '#E8F5E9',
     borderRadius: sw(10),
     marginBottom: sh(35),
   },
   classGrade: {
-    fontFamily: 'Satoshi-Medium',
-    color: '#666',
+    fontFamily: 'Nunito-Medium',
+    color: FacultyColors.inkLight,
     fontSize: sf(12),
   },
   classCode: {
-    color: '#666',
+    color: FacultyColors.inkLight,
     fontSize: sf(12),
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Nunito-Bold',
   },
   contentContainer: {
     flex: 1,

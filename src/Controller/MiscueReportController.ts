@@ -450,6 +450,41 @@ export const MiscueReportController = {
       return [];
     }
   },
+  
+  /**
+   * Finalizes the current word session and triggers a reading level recalculation.
+   * Used when The student navigates away from the word exercise screen.
+   */
+  async finalizeWordSession(sessionId: string): Promise<WordSessionReport> {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No authenticated user.');
+
+    const sessionRef = doc(db, 'wordSessions', sessionId);
+
+    // Mark as completed and set the end time
+    await updateDoc(sessionRef, {
+      sessionCompletedAt: serverTimestamp(),
+      isCompleted: true,
+    });
+
+    // Read back the final session
+    const snap = await getDoc(sessionRef);
+    if (!snap.exists()) {
+      throw new Error('Session not found after finalization.');
+    }
+
+    const sessionData = snap.data() as WordSessionReport;
+
+    // Trigger reading level recalculation (fire-and-forget)
+    recalculateStudentReadingLevel(user.uid).catch(err =>
+      console.warn(
+        '[ReadingLevelService] Background recalculation failed after word session:',
+        err,
+      ),
+    );
+
+    return sessionData;
+  },
 
   // ==========================================================================
   // ALPHABET LETTERS DOCUMENT STORING AND RETRIEVING
@@ -637,40 +672,7 @@ export const MiscueReportController = {
 
     return sessionData;
   },
-  /**
-   * Finalizes the current word session and triggers a reading level recalculation.
-   * Used when The student navigates away from the word exercise screen.
-   */
-  async finalizeWordSession(sessionId: string): Promise<WordSessionReport> {
-    const user = auth.currentUser;
-    if (!user) throw new Error('No authenticated user.');
 
-    const sessionRef = doc(db, 'wordSessions', sessionId);
-
-    // Mark as completed and set the end time
-    await updateDoc(sessionRef, {
-      sessionCompletedAt: serverTimestamp(),
-      isCompleted: true,
-    });
-
-    // Read back the final session
-    const snap = await getDoc(sessionRef);
-    if (!snap.exists()) {
-      throw new Error('Session not found after finalization.');
-    }
-
-    const sessionData = snap.data() as WordSessionReport;
-
-    // Trigger reading level recalculation (fire-and-forget)
-    recalculateStudentReadingLevel(user.uid).catch(err =>
-      console.warn(
-        '[ReadingLevelService] Background recalculation failed after word session:',
-        err,
-      ),
-    );
-
-    return sessionData;
-  },
 
   // ==========================================================================
   // STUDENT PASSAGE DOCUMENT RETRIEVING

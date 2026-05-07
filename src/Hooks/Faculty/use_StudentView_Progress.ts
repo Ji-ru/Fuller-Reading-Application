@@ -17,6 +17,8 @@ export const useStudentAccuracyTrends = (
   studentId: string,
   timeRange: 'week' | 'month' | 'year',
   anchor?: Date,
+  startDate?: Date,
+  endDate?: Date,
 ) => {
   const [chartData, setChartData] = useState<ProgressData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,8 +46,10 @@ export const useStudentAccuracyTrends = (
 
   // Process reports with date range filtering
   const processedChartData = useMemo(() => {
-    // Get the date range based on timeRange filter
-    const { start, end } = getDateRangeForTimeFilter(timeRange, anchor);
+    // Use explicit overrides if provided, else compute from timeRange + anchor
+    const { start, end } = startDate && endDate
+      ? { start: startDate, end: endDate }
+      : getDateRangeForTimeFilter(timeRange, anchor);
 
     // Group accuracy data by period label
     const buckets: Record<string, { totalAccuracy: number; totalWpm: number; count: number }> = {};
@@ -84,7 +88,7 @@ export const useStudentAccuracyTrends = (
         ? buckets[label].totalWpm / buckets[label].count
         : 0,
     }));
-  }, [reports, timeRange, anchor]);
+  }, [reports, timeRange, anchor, startDate, endDate]);
 
   // Update chartData when processedChartData changes
   useEffect(() => {
@@ -112,7 +116,7 @@ interface MiscueData {
  * @param studentId - used to get the percentage of each miscue type from the miscue report using the studentId
  * @returns - the percentages of the students each misuce type
  */
-export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'month' | 'year', anchor?: Date) => {
+export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'month' | 'year', anchor?: Date, startDate?: Date, endDate?: Date) => {
   const [reports, setReports] = useState<MiscueReportDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,14 +143,16 @@ export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'm
   // ==================== FILTER BY TIME RANGE ====================
 
   const filteredReports = useMemo(() => {
-    if (!timeRange) return reports;
-    const { start, end } = getDateRangeForTimeFilter(timeRange, anchor);
+    if (!timeRange && !(startDate && endDate)) return reports;
+    const { start, end } = startDate && endDate
+      ? { start: startDate, end: endDate }
+      : getDateRangeForTimeFilter(timeRange!, anchor);
     return reports.filter(r => {
       if (!r.createdAt) return false;
       const date = r.createdAt.toDate();
       return date >= start && date <= end;
     });
-  }, [reports, timeRange, anchor]);
+  }, [reports, timeRange, anchor, startDate, endDate]);
 
   // ==================== AGGREGATION ====================
 
@@ -221,7 +227,7 @@ export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'm
  * @param studentId - used to get the students miscue report 
  * @returns - top miscued passage and top 5 miscued words
  */
-export const useStudentTopMiscuePassageAndWords = (studentId: string, timeRange?: 'week' | 'month' | 'year', anchor?: Date) => {
+export const useStudentTopMiscuePassageAndWords = (studentId: string, timeRange?: 'week' | 'month' | 'year', anchor?: Date, startDate?: Date, endDate?: Date) => {
   const [reports, setReports] = useState<MiscueReportDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -248,14 +254,16 @@ export const useStudentTopMiscuePassageAndWords = (studentId: string, timeRange?
   // ==================== FILTER BY TIME RANGE ====================
 
   const filteredReports = useMemo(() => {
-    if (!timeRange) return reports;
-    const { start, end } = getDateRangeForTimeFilter(timeRange, anchor);
+    if (!timeRange && !(startDate && endDate)) return reports;
+    const { start, end } = startDate && endDate
+      ? { start: startDate, end: endDate }
+      : getDateRangeForTimeFilter(timeRange!, anchor);
     return reports.filter(r => {
       if (!r.createdAt) return false;
       const date = r.createdAt.toDate();
       return date >= start && date <= end;
     });
-  }, [reports, timeRange, anchor]);
+  }, [reports, timeRange, anchor, startDate, endDate]);
 
   // ==================== TOP MISCUED PASSAGE ====================
 
