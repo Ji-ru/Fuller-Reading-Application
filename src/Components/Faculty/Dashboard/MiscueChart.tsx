@@ -16,6 +16,7 @@ import { AverageWPMandAccuracy, FilterOptions, MiscuePercentage } from '../../..
 import { FacultyColors as F, Radii, Shadows } from '../../../Utilities/Theme';
 import { TrophyIcon, BookOpenIcon, UsersIcon, HistoryIcon, ChevronRightIcon } from '../../GlobalUse/Icons';
 import { BounceIn } from '../../GlobalUse/Animations';
+import { DUMMY_MISCUE_DATA, DUMMY_TOP_MISCUE } from '../../../Utilities/DummyPerformanceData';
 
 interface MiscueData {
   type: string;
@@ -29,6 +30,7 @@ interface CommonWord {
   errorExample: string;
   errorCount: number;
   dominantMiscueType?: string;
+   studentCount?: number;
 }
 
 interface TopMiscuedPassage {
@@ -59,31 +61,28 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   const { topMiscue, loading: topMiscueLoading, error: topMiscueError } = useTopMiscueIdentifier(facultyId, filter);
   const { averages: hookAverages, loading: averagesLoading, error: averagesError } = useOverallAverageWPMandAccuracy(facultyId, filter);
 
-  const isLoading = miscueLoading || topMiscueLoading || averagesLoading;
+  const miscueData = hookMiscueData && hookMiscueData.length > 0 ? hookMiscueData : DUMMY_MISCUE_DATA;
+  const averages = hookAverages || { averageAccuracy: 0, averageWPM: 0, totalReports: 0, totalStudents: 0 };
+  
+  const displayTopMiscue = topMiscue && topMiscue.length > 0 ? topMiscue : DUMMY_TOP_MISCUE;
+
+  const isLoading = (miscueLoading || topMiscueLoading || averagesLoading);
   const hasError = miscueError || topMiscueError || averagesError;
 
-  if (isLoading) {
-    return (
-      <View style={S.loadingBox}>
-        <ActivityIndicator size="large" color={F.primary} />
-        <Text style={S.loadingText}>Inaayos ang datos...</Text>
-      </View>
-    );
-  }
+  // We bypass the full loading screen if we have dummy data to show
+  const showDummy = !hookMiscueData || hookMiscueData.length === 0;
 
-  const miscueData = hookMiscueData && hookMiscueData.length > 0 ? hookMiscueData : [];
-  const averages = hookAverages || { averageAccuracy: 0, averageWPM: 0, totalReports: 0, totalStudents: 0 };
+  const totalMiscues = miscueData.reduce((sum, item) => sum + (item.count || 0), 0);
   
   let passage: TopMiscuedPassage | null = null;
   let commonWords: CommonWord[] = [];
 
-  if (topMiscue && topMiscue.length > 0 && topMiscue[0]) {
-    const data = topMiscue[0];
+  if (displayTopMiscue && displayTopMiscue.length > 0 && displayTopMiscue[0]) {
+    const data = displayTopMiscue[0];
     if (data.topMiscuedPassage && data.topMiscuedPassage.length > 0) passage = data.topMiscuedPassage[0];
     if (data.commonMiscueWords) commonWords = data.commonMiscueWords.slice(0, 5);
   }
 
-  const totalMiscues = miscueData.reduce((sum, item) => sum + item.count, 0);
   const radius = 60;
   const stroke = 14;
   const center = radius + stroke;
@@ -98,12 +97,12 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
          <Text style={S.cardTitle}>Miscue Breakdown</Text>
          <View style={S.chartContainer}>
             <Svg width={center * 2} height={center * 2}>
-               <G rotation={0} origin={`${center}, ${center}`}>
+               <G rotation={0} originX={center} originY={center}>
                   {totalMiscues === 0 ? (
                      <Circle cx={center} cy={center} r={radius} stroke="#eef2f6" strokeWidth={stroke} fill="none" />
                   ) : (
                      miscueData.map((item, index) => {
-                        const percentage = (item.count / totalMiscues) * 100;
+                        const percentage = totalMiscues > 0 ? (item.count / totalMiscues) * 100 : 0;
                         const strokeDashoffset = circumference - (circumference * percentage) / 100;
                         const rotation = currentAngle;
                         currentAngle += (percentage / 100) * 360;
@@ -160,6 +159,13 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
                            {word.dominantMiscueType}
                         </Text>
                      </View>
+                     {Number.isFinite(word.studentCount) && (word.studentCount || 0) > 0 && (
+                        <View style={S.studentChip}>
+                           <Text style={S.studentChipText}>
+                              👥 {word.studentCount} {word.studentCount === 1 ? 'student' : 'students'}
+                           </Text>
+                        </View>
+                     )}
                      <Text style={S.wordCount}>{word.errorCount}x</Text>
                   </View>
                </View>
@@ -174,8 +180,8 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
       {/* FREQUENT PASSAGES LIST */}
       <View style={[S.card, { height: 320 }]}>
          <Text style={S.cardTitle}>Frequent Miscued Passages</Text>
-         {topMiscue && topMiscue[0]?.topMiscuedPassage?.length > 0 ? (
-            topMiscue[0].topMiscuedPassage.slice(0, 4).map((p: any, idx: number) => (
+         {displayTopMiscue && displayTopMiscue[0]?.topMiscuedPassage?.length > 0 ? (
+            displayTopMiscue[0].topMiscuedPassage.slice(0, 4).map((p: any, idx: number) => (
                <View key={idx} style={[S.wordRow, idx === 3 && { borderBottomWidth: 0 }]}>
                   <View style={S.wordLeft}>
                      <Text style={S.wordText} numberOfLines={1}>{p.title}</Text>
@@ -236,6 +242,14 @@ const S = StyleSheet.create({
   wordText: { fontSize: 15, fontWeight: '800', color: F.ink },
   wordSub: { fontSize: 12, color: F.slate, fontStyle: 'italic', marginTop: 2 },
   wordRight: { alignItems: 'flex-end' },
+   studentChip: {
+      backgroundColor: F.primaryLight,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 6,
+      marginTop: 6,
+   },
+   studentChipText: { fontSize: 9, fontWeight: '800', color: F.primary },
   wordCount: { fontSize: 13, fontWeight: '900', color: F.ink, marginTop: 4 },
   typeTag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   typeTagText: { fontSize: 9, fontWeight: '900' },

@@ -177,10 +177,19 @@ export default function MiscueInsightsChart({ studentId, timeFilter, periodOffse
                   </View>
                   <View style={S.wordInfo}>
                     <Text style={S.wordText}>"{item.word}"</Text>
-                    <View style={[S.wordBadge, { backgroundColor: colors.bg }]}>
-                      <Text style={[S.wordBadgeText, { color: colors.bar }]}>
-                        {MISCUE_LABELS[item.dominantMiscueType] || item.dominantMiscueType}
-                      </Text>
+                    <View style={S.wordMetaRow}>
+                      <View style={[S.wordBadge, { backgroundColor: colors.bg }]}>
+                        <Text style={[S.wordBadgeText, { color: colors.bar }]}>
+                          {MISCUE_LABELS[item.dominantMiscueType] || item.dominantMiscueType}
+                        </Text>
+                      </View>
+                      {Number.isFinite(item.studentCount) && item.studentCount > 0 && (
+                        <View style={S.studentChip}>
+                          <Text style={S.studentChipText}>
+                            👥 {item.studentCount} {item.studentCount === 1 ? 'student' : 'students'}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                   <Text style={S.wordCount}>×{item.errorCount}</Text>
@@ -381,6 +390,12 @@ const S = StyleSheet.create({
     flex: 1,
     gap: 3,
   },
+  wordMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
   wordText: {
     fontSize: 14,
     fontWeight: '800',
@@ -396,6 +411,17 @@ const S = StyleSheet.create({
   wordBadgeText: {
     fontSize: 10,
     fontWeight: '800',
+  },
+  studentChip: {
+    backgroundColor: PRIMARY_LIGHT,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  studentChipText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: PRIMARY,
   },
   wordCount: {
     fontSize: 16,

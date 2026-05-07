@@ -21,6 +21,7 @@ interface TopWord {
   word: string;
   errorCount: number;
   dominantMiscueType: string;
+  studentCount: number;
 }
 
 interface MiscueInsightsResult {
@@ -170,7 +171,10 @@ export function use_StudentMiscueInsights(
     });
 
     // ─── LAYER 4: Most Miscued Words ─────────────────────────────────────
-    const wordMap = new Map<string, { count: number; typeCounts: Record<string, number> }>();
+    const wordMap = new Map<
+      string,
+      { count: number; typeCounts: Record<string, number>; studentIds: Set<string> }
+    >();
 
     filteredReports.forEach(r => {
       if (!r.miscues) return;
@@ -178,8 +182,15 @@ export function use_StudentMiscueInsights(
         const word = m.expectedWord?.toLowerCase();
         if (!word) return;
 
-        const existing = wordMap.get(word) || { count: 0, typeCounts: {} };
+        const existing = wordMap.get(word) || {
+          count: 0,
+          typeCounts: {},
+          studentIds: new Set<string>(),
+        };
         existing.count += 1;
+        if (r.studentId) {
+          existing.studentIds.add(r.studentId);
+        }
 
         const type = m.type?.charAt(0).toUpperCase() + m.type?.slice(1).toLowerCase();
         existing.typeCounts[type] = (existing.typeCounts[type] || 0) + 1;
@@ -204,6 +215,7 @@ export function use_StudentMiscueInsights(
           word,
           errorCount: data.count,
           dominantMiscueType: dominantType,
+          studentCount: data.studentIds.size,
         };
       })
       .sort((a, b) => b.errorCount - a.errorCount)

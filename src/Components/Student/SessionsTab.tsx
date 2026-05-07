@@ -24,7 +24,7 @@ export default function SessionsTab({ studentId }: SessionsTabProps) {
 
   return (
     <ScrollView style={S.root} contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
-      
+
       {/* ── HEADER ── */}
       <BounceIn delay={80}>
         <View style={S.header}>
@@ -43,6 +43,25 @@ export default function SessionsTab({ studentId }: SessionsTabProps) {
           selectedSubFilter={selectedSubFilter}
           onSubFilterChange={setSelectedSubFilter}
         />
+      </BounceIn>
+
+      {/* ── ALPHABET MASTERY ── */}
+      <BounceIn delay={280}>
+        <View style={S.sectionCard}>
+          <View style={S.sectionHeaderRow}>
+            <View style={[S.iconDot, { backgroundColor: '#1abc9c18' }]}>
+              <StarIcon size={16} color="#1abc9c" />
+            </View>
+            <Text style={S.sectionTitle}>Mastery ng mga Titik</Text>
+          </View>
+
+          <AlphabetMasterySection
+            studentId={studentId}
+            timeFilter={timeFilter}
+            periodOffset={periodOffset}
+            selectedSubFilter={selectedSubFilter}
+          />
+        </View>
       </BounceIn>
 
       {/* ── WORD MASTERY ── */}
@@ -64,24 +83,6 @@ export default function SessionsTab({ studentId }: SessionsTabProps) {
         </View>
       </BounceIn>
 
-      {/* ── ALPHABET MASTERY ── */}
-      <BounceIn delay={280}>
-        <View style={S.sectionCard}>
-          <View style={S.sectionHeaderRow}>
-            <View style={[S.iconDot, { backgroundColor: '#1abc9c18' }]}>
-              <StarIcon size={16} color="#1abc9c" />
-            </View>
-            <Text style={S.sectionTitle}>Mastery ng mga Titik</Text>
-          </View>
-
-          <AlphabetMasterySection
-            studentId={studentId}
-            timeFilter={timeFilter}
-            periodOffset={periodOffset}
-            selectedSubFilter={selectedSubFilter}
-          />
-        </View>
-      </BounceIn>
 
       <View style={{ height: 60 }} />
     </ScrollView>

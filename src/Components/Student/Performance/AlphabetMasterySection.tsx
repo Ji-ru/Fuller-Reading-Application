@@ -144,7 +144,7 @@ export default function AlphabetMasterySection({
     periodCount,
     allTimeCount,
     totalLetters,
-  } = use_StudentAlphabetMasteryTrends(studentId, timeFilter, periodOffset);
+  } = use_StudentAlphabetMasteryTrends(studentId, timeFilter, periodOffset, selectedSubFilter);
 
   // ── Default to today's slot (or last slot with data for past periods) ──
   const defaultIdx = useMemo(() => {

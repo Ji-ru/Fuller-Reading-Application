@@ -1,7 +1,7 @@
 // FacultyDashboard.tsx (Updated with TypeScript)
 import { getAuth } from '@react-native-firebase/auth';
 import { useRoute } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
+import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
+import MonthlyActivityHeatmap from '../../Components/Faculty/Dashboard/MonthlyActivityHeatmap';
+import PassageDifficultyRanking from '../../Components/Student/Performance/PassageDifficultyRanking';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import { 
@@ -29,9 +32,11 @@ import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { AssessmentController } from '../../Controller/AssessmentController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getUserProfile } from '../../Controller/AuthenticationController';
+import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
-import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
-import { ClassDocument } from '../../Interfaces/dataInterfaces';
+import { useStudentMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
+import { ClassDocument, MiscueReportDocument } from '../../Interfaces/dataInterfaces';
+import { FilterOptions } from '../../Interfaces/miscue';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
@@ -50,15 +55,28 @@ export default function FacultyDashboard() {
     reportCount: number;
     avgAccuracy: number;
   }>({ classCount: 0, studentCount: 0, reportCount: 0, avgAccuracy: 0 });
+  const [participation, setParticipation] = useState<{
+    currentRate: number;
+    lastRate: number;
+    delta: number;
+    activeThisWeek: number;
+    totalStudents: number;
+  } | null>(null);
   const [classes, setClasses] = useState<ClassDocument[]>([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>('');
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [showYearDropdown, setShowYearDropdown] = useState<boolean>(false);
+  const [showClassDropdown, setShowClassDropdown] = useState<boolean>(false);
+  const [passageReports, setPassageReports] = useState<MiscueReportDocument[]>([]);
+  const [passageLoading, setPassageLoading] = useState<boolean>(false);
   // ========================================================================
   // HOOKS
   // ========================================================================
   const { handleLogout, handleTabNavigation } = useNavigationHelper();
   const auth = getAuth();
   const route = useRoute();
-  const { getNumberOfClasses, getNumbersOfAllStudents, getOverallAverageWPMandAccuracy } =
-    getForStudentsMiscueStats();
+  const { getNumberOfClasses, getNumbersOfAllStudents, getOverallAverageWPMandAccuracy, getClassParticipationRate } =
+    useStudentMiscueStats();
 
 
   // ========================================================================
@@ -84,7 +102,7 @@ export default function FacultyDashboard() {
         getNumberOfClasses(currentUser.uid),
         getNumbersOfAllStudents(currentUser.uid),
         getOverallAverageWPMandAccuracy(currentUser.uid, { type: 'overall' }),
-        AssessmentController.getFacultyActivities()
+        AssessmentController.getFacultyActivities(),
       ]);
 
       setStats({
@@ -107,6 +125,76 @@ export default function FacultyDashboard() {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (classes.length === 0) return;
+    if (!selectedAcademicYear) {
+      const firstYear = classes[0]?.acadYear || '';
+      if (firstYear) {
+        setSelectedAcademicYear(firstYear);
+        const firstClass = classes.find(c => c.acadYear === firstYear) || classes[0];
+        setSelectedClassId(firstClass?.classId || '');
+      }
+      return;
+    }
+    const stillValid = classes.some(
+      c => c.classId === selectedClassId && c.acadYear === selectedAcademicYear,
+    );
+    if (!stillValid) {
+      const firstClass = classes.find(c => c.acadYear === selectedAcademicYear);
+      setSelectedClassId(firstClass?.classId || '');
+    }
+  }, [classes, selectedAcademicYear]);
+
+  useEffect(() => {
+    const fetchParticipation = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      try {
+        const filter: FilterOptions = selectedClassId
+          ? { type: 'class', classId: selectedClassId }
+          : { type: 'overall' };
+        const participationStats = await getClassParticipationRate(
+          currentUser.uid,
+          filter,
+        );
+        setParticipation(participationStats);
+      } catch (error: any) {
+        console.log('Participation error:', error);
+      }
+    };
+
+    fetchParticipation();
+  }, [auth.currentUser?.uid, selectedClassId, getClassParticipationRate]);
+
+  useEffect(() => {
+    const fetchPassageReports = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      setPassageLoading(true);
+      try {
+        const scopedClasses = selectedAcademicYear
+          ? classes.filter(c => c.acadYear === selectedAcademicYear)
+          : classes;
+        const selectedClass = scopedClasses.find(c => c.classId === selectedClassId);
+        const studentIds = selectedClass
+          ? selectedClass.studentIds || []
+          : scopedClasses.flatMap(c => c.studentIds || []);
+        const uniqueStudentIds = Array.from(new Set(studentIds));
+        const reportsByStudent = await Promise.all(
+          uniqueStudentIds.map(id => MiscueReportController.getStudentReports(id)),
+        );
+        setPassageReports(reportsByStudent.flat());
+      } catch (error: any) {
+        console.log('Passage reports error:', error);
+        setPassageReports([]);
+      } finally {
+        setPassageLoading(false);
+      }
+    };
+
+    fetchPassageReports();
+  }, [auth.currentUser?.uid, classes, selectedAcademicYear, selectedClassId]);
 
   // ========================================================================
   // EVENT HANDLERS
@@ -168,6 +256,22 @@ export default function FacultyDashboard() {
     );
   };
 
+  const academicYears = useMemo(() => {
+    return Array.from(new Set(classes.map(c => c.acadYear).filter(Boolean))).sort((a, b) => b.localeCompare(a));
+  }, [classes]);
+
+  const filteredClasses = useMemo(() => {
+    if (!selectedAcademicYear) return classes;
+    return classes.filter(c => c.acadYear === selectedAcademicYear);
+  }, [classes, selectedAcademicYear]);
+
+  const classOptions = useMemo(() => {
+    return filteredClasses.map(c => ({
+      value: c.classId,
+      label: c.className || `Grade ${c.gradeLevel}`,
+    }));
+  }, [filteredClasses]);
+
   return (
     <SafeAreaView style={facultyDashboard.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -228,6 +332,149 @@ export default function FacultyDashboard() {
               {renderStatsSection()}
             </View>
 
+            <View style={{ marginBottom: 20 }}>
+              <Text style={S.sectionLabel}>Academic Filters</Text>
+              <View style={S.filterCard}>
+                <View style={S.filterRow}>
+                  <View style={S.filterItem}>
+                    <Text style={S.filterLabel}>Academic Year</Text>
+                    <TouchableOpacity
+                      style={[S.filterButton, showYearDropdown && S.filterButtonActive]}
+                      onPress={() => {
+                        setShowYearDropdown(v => !v);
+                        setShowClassDropdown(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={S.filterButtonText}>
+                        {selectedAcademicYear || 'Select Year'}
+                      </Text>
+                      <Text style={S.filterButtonIcon}>
+                        {showYearDropdown ? '▲' : '▼'}
+                      </Text>
+                    </TouchableOpacity>
+                    {showYearDropdown && (
+                      <View style={S.filterDropdownMenu}>
+                        {academicYears.length === 0 ? (
+                          <Text style={S.filterDropdownEmpty}>No academic years</Text>
+                        ) : (
+                          academicYears.map((year, idx) => (
+                            <TouchableOpacity
+                              key={year}
+                              style={[
+                                S.filterDropdownOption,
+                                idx === academicYears.length - 1 && S.filterDropdownOptionLast,
+                                selectedAcademicYear === year && S.filterDropdownOptionActive,
+                              ]}
+                              onPress={() => {
+                                setSelectedAcademicYear(year);
+                                const firstClass = classes.find(c => c.acadYear === year);
+                                setSelectedClassId(firstClass?.classId || '');
+                                setShowYearDropdown(false);
+                              }}
+                              activeOpacity={0.75}
+                            >
+                              <Text
+                                style={[
+                                  S.filterDropdownOptionText,
+                                  selectedAcademicYear === year && S.filterDropdownOptionTextActive,
+                                ]}
+                              >
+                                {year}
+                              </Text>
+                            </TouchableOpacity>
+                          ))
+                        )}
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={S.filterItem}>
+                    <Text style={S.filterLabel}>Section</Text>
+                    <TouchableOpacity
+                      style={[S.filterButton, showClassDropdown && S.filterButtonActive]}
+                      onPress={() => {
+                        setShowClassDropdown(v => !v);
+                        setShowYearDropdown(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={S.filterButtonText}>
+                        {classOptions.find(o => o.value === selectedClassId)?.label || 'Select Class'}
+                      </Text>
+                      <Text style={S.filterButtonIcon}>
+                        {showClassDropdown ? '▲' : '▼'}
+                      </Text>
+                    </TouchableOpacity>
+                    {showClassDropdown && (
+                      <View style={S.filterDropdownMenu}>
+                        {classOptions.length === 0 ? (
+                          <Text style={S.filterDropdownEmpty}>No classes</Text>
+                        ) : (
+                          classOptions.map((opt, idx) => (
+                            <TouchableOpacity
+                              key={opt.value}
+                              style={[
+                                S.filterDropdownOption,
+                                idx === classOptions.length - 1 && S.filterDropdownOptionLast,
+                                selectedClassId === opt.value && S.filterDropdownOptionActive,
+                              ]}
+                              onPress={() => {
+                                setSelectedClassId(opt.value);
+                                setShowClassDropdown(false);
+                              }}
+                              activeOpacity={0.75}
+                            >
+                              <Text
+                                style={[
+                                  S.filterDropdownOptionText,
+                                  selectedClassId === opt.value && S.filterDropdownOptionTextActive,
+                                ]}
+                              >
+                                {opt.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))
+                        )}
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <Text style={S.sectionLabel}>Class Participation</Text>
+              <View style={S.participationCard}>
+                <View style={S.participationHeader}>
+                  <View style={S.participationIconBox}>
+                    <UsersIcon size={18} color={F.primary} />
+                  </View>
+                  <Text style={S.participationTitle}>This Week</Text>
+                </View>
+                <Text style={S.participationValue}>
+                  {participation ? `${participation.currentRate.toFixed(0)}%` : '0%'}
+                </Text>
+                <Text style={S.participationSub}>
+                  {participation
+                    ? `${participation.activeThisWeek}/${participation.totalStudents} active students`
+                    : 'No activity yet'}
+                </Text>
+                {participation && (
+                  <View style={S.participationTrendRow}>
+                    <Text
+                      style={[
+                        S.participationTrend,
+                        participation.delta >= 0 ? S.participationTrendUp : S.participationTrendDown,
+                      ]}
+                    >
+                      {participation.delta >= 0 ? '↑' : '↓'} {Math.abs(participation.delta).toFixed(0)}% from last week
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
             <View style={{ marginBottom: 30 }}>
               <Text style={S.sectionLabel}>Mabilisang Aksyon</Text>
               <View style={S.quickActions}>
@@ -254,6 +501,36 @@ export default function FacultyDashboard() {
                  </TouchableOpacity>
 
               </View>
+            </View>
+
+            <View style={{ marginBottom: 30 }}>
+              <Text style={S.sectionLabel}>Monthly Activity</Text>
+              <MonthlyActivityHeatmap
+                facultyId={auth.currentUser?.uid || null}
+                classId={selectedClassId || undefined}
+              />
+            </View>
+
+            <View style={{ marginBottom: 30 }}>
+              <Text style={S.sectionLabel}>Passage Difficulty</Text>
+              <View style={S.analyticsCard}>
+                {passageLoading ? (
+                  <View style={S.analyticsLoading}>
+                    <ActivityIndicator size="small" color={F.primary} />
+                    <Text style={S.analyticsLoadingText}>Loading passages...</Text>
+                  </View>
+                ) : (
+                  <PassageDifficultyRanking reports={passageReports} />
+                )}
+              </View>
+            </View>
+
+            <View style={{ marginBottom: 30 }}>
+              <Text style={S.sectionLabel}>Miscue Insights</Text>
+              <MiscueAnalytics
+                facultyId={auth.currentUser?.uid || null}
+                classId={selectedClassId || undefined}
+              />
             </View>
           </View>
         </View>
@@ -329,4 +606,88 @@ const S = StyleSheet.create({
   },
   actionLabel: { fontSize: 15, fontWeight: '900', color: F.ink, marginBottom: 4 },
   actionSub: { fontSize: 10, color: F.slate, fontWeight: '600', textAlign: 'center', lineHeight: 14 },
+
+  participationCard: {
+    backgroundColor: F.white,
+    borderRadius: Radii.lg,
+    padding: 18,
+    ...Shadows.card,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
+  },
+  participationHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 10 },
+  participationIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: F.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  participationTitle: { fontSize: 12, fontWeight: '800', color: F.slate, textTransform: 'uppercase', letterSpacing: 0.8 },
+  participationValue: { fontSize: 28, fontWeight: '900', color: F.ink, marginBottom: 4 },
+  participationSub: { fontSize: 12, fontWeight: '700', color: F.slate, marginBottom: 10 },
+  participationTrendRow: { flexDirection: 'row', alignItems: 'center' },
+  participationTrend: { fontSize: 12, fontWeight: '800' },
+  participationTrendUp: { color: F.teal },
+  participationTrendDown: { color: F.red },
+
+  filterCard: {
+    backgroundColor: F.white,
+    borderRadius: Radii.lg,
+    padding: 16,
+    ...Shadows.card,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
+  },
+  filterRow: { flexDirection: 'row', gap: 12 },
+  filterItem: { flex: 1 },
+  filterLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: F.slate,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+    marginBottom: 8,
+  },
+  filterButton: {
+    backgroundColor: F.white,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#eef2f6',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  filterButtonActive: { borderColor: F.primary },
+  filterButtonText: { fontSize: 13, fontWeight: '700', color: F.ink },
+  filterButtonIcon: { fontSize: 11, fontWeight: '900', color: F.slate },
+  filterDropdownMenu: {
+    marginTop: 8,
+    backgroundColor: F.white,
+    borderRadius: 12,
+    paddingVertical: 6,
+    ...Shadows.card,
+    borderWidth: 1,
+    borderColor: '#f1f1f1',
+  },
+  filterDropdownOption: { paddingVertical: 10, paddingHorizontal: 12 },
+  filterDropdownOptionLast: { borderBottomWidth: 0 },
+  filterDropdownOptionActive: { backgroundColor: F.primary + '12' },
+  filterDropdownOptionText: { fontSize: 13, fontWeight: '700', color: F.slate },
+  filterDropdownOptionTextActive: { color: F.primary, fontWeight: '800' },
+  filterDropdownEmpty: { fontSize: 12, fontWeight: '700', color: F.slate, padding: 12 },
+
+  analyticsCard: {
+    backgroundColor: F.white,
+    borderRadius: Radii.lg,
+    padding: 16,
+    ...Shadows.card,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
+  },
+  analyticsLoading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  analyticsLoadingText: { fontSize: 12, fontWeight: '700', color: F.slate },
 });

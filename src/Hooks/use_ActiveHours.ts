@@ -1,6 +1,6 @@
 // hooks/useFacultyActiveHours.ts
 import { useState, useEffect } from 'react';
-import { getForStudentsMiscueStats } from './use_ForStudentMiscueStats';
+import { useStudentMiscueStats } from './use_ForStudentMiscueStats';
 
 interface ActiveHoursData {
   day: string;
@@ -18,6 +18,7 @@ export const useActiveHours = (
   const [chartData, setChartData] = useState<ActiveHoursData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { getActiveHours } = useStudentMiscueStats();
 
   useEffect(() => {
     if (!facultyId) {
@@ -31,7 +32,6 @@ export const useActiveHours = (
         setLoading(true);
         setError(null);
 
-        const { getActiveHours } = getForStudentsMiscueStats();
         const data = await getActiveHours(
           facultyId,
           options.timeRange,

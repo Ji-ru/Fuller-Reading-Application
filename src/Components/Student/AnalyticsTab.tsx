@@ -82,7 +82,7 @@ export default function PerformanceTab({ studentId, reports: realReports, gradeL
       </BounceIn> */}
 
       {/* Subsection 2B: Speed & Accuracy */}
-      <BounceIn delay={400}>
+      <BounceIn delay={320}>
         <View style={S.sectionCard}>
           <View style={S.sectionHeaderRow}>
             <View style={[S.iconDot, { backgroundColor: C.orange + '18' }]}>
@@ -103,7 +103,7 @@ export default function PerformanceTab({ studentId, reports: realReports, gradeL
       </BounceIn>
 
       {/* Subsection 2C: Miscue Insights */}
-      <BounceIn delay={500}>
+      <BounceIn delay={440}>
         <View style={S.sectionCard}>
           <View style={S.sectionHeaderRow}>
             <View style={[S.iconDot, { backgroundColor: '#eb5c6c18' }]}>

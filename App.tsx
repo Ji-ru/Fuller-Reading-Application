@@ -33,6 +33,7 @@ import MyClass from './src/Screens/Faculty/Faculty_MyClass';
 import MyArchive from './src/Screens/Faculty/Faculty_MyArchive';
 import MyStudents from './src/Screens/Faculty/Faculty_MyStudents';
 import StudentViewProfile from './src/Screens/Faculty/Student_View_Profile';
+import FacultyStudentMonitor from './src/Screens/Faculty/Faculty_Student_Monitor';
 
 // ADMIN PAGE
 import AdminDashboard from './src/Screens/Admin/AdminDashboard';
@@ -50,8 +51,8 @@ const Stack = createNativeStackNavigator();
 
 function App() {
   return (
-  <ApplicationProvider {...eva} theme={eva.light}>
-    <SafeAreaProvider>
+    <ApplicationProvider {...eva} theme={eva.light}>
+      <SafeAreaProvider>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Loading" screenOptions={{ headerShown: false, animation: 'none' }}>
 
@@ -76,22 +77,23 @@ function App() {
             <Stack.Screen name="StudentAssessmentReview" component={StudentAssessmentReview} /> */}
 
             {/* FACULTY PAGES */}
-              <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
-              <Stack.Screen name="FacultyProfile" component={FacultyProfile} />
-              <Stack.Screen name="MyClass" component={MyClass} />
-              <Stack.Screen name="Archive" component={MyArchive} />
-              <Stack.Screen name="MyStudents" component={MyStudents} />
-              <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
-              <Stack.Screen name="FacultyAssessments" component={FacultyAssessments} />
-              <Stack.Screen name="FacultyCreateAssessment" component={FacultyCreateAssessment} />
-              <Stack.Screen name="FacultyReports" component={FacultyReports} />
-              {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}
+            <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
+            <Stack.Screen name="FacultyProfile" component={FacultyProfile} />
+            <Stack.Screen name="MyClass" component={MyClass} />
+            <Stack.Screen name="Archive" component={MyArchive} />
+            <Stack.Screen name="MyStudents" component={MyStudents} />
+            <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
+            <Stack.Screen name="FacultyAssessments" component={FacultyAssessments} />
+            <Stack.Screen name="FacultyCreateAssessment" component={FacultyCreateAssessment} />
+            <Stack.Screen name="FacultyReports" component={FacultyReports} />
+            <Stack.Screen name="FacultyStudentMonitor" component={FacultyStudentMonitor} />
+            {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}
 
             {/* ADMIN PAGES */}
             <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
             <Stack.Screen name="UserManagement" component={UserManagement} />
 
-            
+
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

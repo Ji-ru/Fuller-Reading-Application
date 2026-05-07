@@ -72,6 +72,7 @@ export interface OverAllStudentTopMiscue {
     word: string;
     errorExample: string;
     errorCount: number;
+    studentCount?: number;
     dominantMiscueType?: string; // Add this
     miscueTypes?: Record<string, number>; // Add this if needed
   }>;
@@ -89,12 +90,6 @@ export interface AverageWPMandAccuracy {
   totalStudents: number;
 }
 
-export interface FilterOptions {
-  acadYear?: string;
-  classId?: string;
-  startDate?: Date;
-  endDate?: Date;
-}
 
 export interface ClassMiscueStats {
   classId: string;
@@ -182,9 +177,13 @@ export interface StudentReadingStatus {
 
 // FOR COMMON MISCUE TYPE / WORDS / PASSAGE
 export interface FilterOptions {
-  type: 'overall' | 'class';
+  type?: 'overall' | 'class';
+  acadYear?: string;
   classId?: string;
   className?: string;
+  gradeLevel?: number;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export interface ClassFilterData {

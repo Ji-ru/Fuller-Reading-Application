@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { MiscueReportController } from '../Controller/MiscueReportController';
 import { getDateRange } from '../Utilities/analyticsDateHelpers';
 import readingMaterialData from '../../assets/ReadingMaterial/ReadingMaterial.json';
+import { SubPeriodFilter } from '../Components/Student/DateFilter';
 
 export interface AlphabetPeriodSlot {
   label: string;
@@ -66,6 +67,7 @@ export function use_StudentAlphabetMasteryTrends(
   studentId: string,
   timeFilter: 'week' | 'month' | 'year',
   periodOffset: number = 0,
+  selectedSubFilter: SubPeriodFilter | null = null,
 ) {
   const [loading, setLoading] = useState(true);
   const [allTimeLetters, setAllTimeLetters] = useState<Set<string>>(new Set());
@@ -143,11 +145,17 @@ export function use_StudentAlphabetMasteryTrends(
     });
   }, [periodRaw, timeFilter, dateRange]);
 
-  // All letters mastered in the full period (for the "Sa Panahon" chip)
-  const periodLetters = useMemo(
-    () => new Set(periodRaw.map(d => d.letter)),
-    [periodRaw],
-  );
+  // Letters mastered in the narrowed period (or full period if no sub-filter)
+  const periodLetters = useMemo(() => {
+    if (!selectedSubFilter) {
+      return new Set(periodRaw.map(d => d.letter));
+    }
+    return new Set(
+      periodRaw
+        .filter(d => d.timestamp >= selectedSubFilter.start && d.timestamp <= selectedSubFilter.end)
+        .map(d => d.letter),
+    );
+  }, [periodRaw, selectedSubFilter]);
 
   const refresh = () => {
     allTimeFetched.current = false;

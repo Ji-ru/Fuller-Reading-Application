@@ -8,7 +8,7 @@ import {
   AverageWPMandAccuracy,
   ClassReadingHealth,
 } from '../Interfaces/miscue';
-import { getForStudentsMiscueStats } from './use_ForStudentMiscueStats';
+import { useStudentMiscueStats } from './use_ForStudentMiscueStats';
 import { useClassReadingHealth } from './use_ClassReadingHealth';
 import { getFacultyClasses_Student } from './use_FacultyClasses_Students';
 import { FilterOptions } from '../Interfaces/miscue';
@@ -117,7 +117,7 @@ export const useMiscueAnalystics = (
   const [miscueData, setMiscueData] = useState<MiscuePercentage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { getOverallCommonMiscueType } = getForStudentsMiscueStats();
+  const { getOverallCommonMiscueType } = useStudentMiscueStats();
 
   useEffect(() => {
     const fetchMiscueData = async () => {
@@ -161,7 +161,7 @@ export const useTopMiscueIdentifier = (
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { getOverallTopMiscueType } = getForStudentsMiscueStats();
+  const { getOverallTopMiscueType } = useStudentMiscueStats();
 
   useEffect(() => {
     const fetchTopMiscue = async () => {
@@ -204,7 +204,7 @@ export const useOverallAverageWPMandAccuracy = (
   const [averages, setAverages] = useState<AverageWPMandAccuracy | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { getOverallAverageWPMandAccuracy } = getForStudentsMiscueStats();
+  const { getOverallAverageWPMandAccuracy } = useStudentMiscueStats();
 
   useEffect(() => {
     const fetchAverages = async () => {

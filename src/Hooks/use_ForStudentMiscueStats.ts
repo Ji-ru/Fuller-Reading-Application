@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   getFirestore,
   collection,
@@ -26,13 +26,72 @@ import { FilterOptions } from '../Interfaces/miscue';
 // Initialize instances
 const db = getFirestore();
 
-export const getForStudentsMiscueStats = () => {
+export const useStudentMiscueStats = () => {
   const { getStudentReports } = MiscueReportController;
-  const formatMiscueType = (type: string): string =>
-    type.charAt(0).toUpperCase() + type.slice(1);
   const { getFacultyClasses } = getFacultyClasses_Student;
 
-  const getActiveHours = async (
+  const formatMiscueType = useCallback((type: string): string =>
+    type.charAt(0).toUpperCase() + type.slice(1), []);
+
+  /**
+   * Convert duration string to hours (decimal)
+   */
+  const convertDurationToHours = useCallback((duration: string): number => {
+    if (!duration) return 0;
+
+    try {
+      const parts = duration.split(':').map(part => parseInt(part) || 0);
+
+      if (parts.length === 2) {
+        const minutes = parts[0];
+        const seconds = parts[1];
+        const totalSeconds = minutes * 60 + seconds;
+        return totalSeconds / 3600;
+      } else if (parts.length === 3) {
+        const hours = parts[0];
+        const minutes = parts[1];
+        const seconds = parts[2];
+        return hours + minutes / 60 + seconds / 3600;
+      } else {
+        return 0;
+      }
+    } catch (error) {
+      return 0;
+    }
+  }, []);
+
+  /**
+   * Get student IDs based on filter
+   */
+  const getFilteredStudentIds = useCallback(async (
+    facultyId: string,
+    filter?: FilterOptions,
+  ): Promise<{ studentIds: string[]; className?: string }> => {
+    try {
+      const classes = await getFacultyClasses(facultyId);
+
+      if (filter?.type === 'class' && filter.classId) {
+        const selectedClass = classes.find(
+          cls => cls.classId === filter.classId,
+        );
+        if (!selectedClass) {
+          throw new Error('Class not found');
+        }
+        return {
+          studentIds: selectedClass.studentIds || [],
+          className: selectedClass.className,
+        };
+      } else {
+        const allStudentIds = classes.flatMap(cls => cls.studentIds || []);
+        const uniqueStudentIds = Array.from(new Set(allStudentIds));
+        return { studentIds: uniqueStudentIds };
+      }
+    } catch (error: any) {
+      throw new Error('Failed to get filtered students: ' + error.message);
+    }
+  }, [getFacultyClasses]);
+
+  const getActiveHours = useCallback(async (
     facultyId: string,
     timeRange: 'week' | 'month' | 'year',
   ): Promise<{ day: string; hours: number }[]> => {
@@ -48,45 +107,24 @@ export const getForStudentsMiscueStats = () => {
       } else if (timeRange === 'month') {
         buckets = ['W1', 'W2', 'W3', 'W4', 'W5'];
       } else {
-        // Based on starting academic year of DepEd
-        buckets = [
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dec',
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-        ];
+        buckets = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'];
       }
 
       buckets.forEach(b => (totals[b] = 0));
 
       for (const classItem of classes) {
         const studentIds = classItem.studentIds || [];
-
         for (const studentId of studentIds) {
           const reports = await getStudentReports(studentId);
-
           for (const report of reports) {
             const reportDate = report.timestamp.toDate();
             if (reportDate < start || reportDate > end) continue;
 
-            const hours = convertDurationToHours(
-              report.recordingDuration || '0:00',
-            );
-
+            const hours = convertDurationToHours(report.recordingDuration || '0:00');
             let bucket: string | null = null;
 
             if (timeRange === 'week') {
-              bucket = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'][
-                reportDate.getDay()
-              ];
+              bucket = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S'][reportDate.getDay()];
             } else if (timeRange === 'month') {
               const weekOfMonth = Math.ceil(reportDate.getDate() / 7);
               bucket = `W${weekOfMonth}`;
@@ -101,7 +139,6 @@ export const getForStudentsMiscueStats = () => {
         }
       }
 
-      console.log('This is the output of the active hours: ' + totals);
       return buckets.map(b => ({
         day: b,
         hours: totals[b],
@@ -109,421 +146,177 @@ export const getForStudentsMiscueStats = () => {
     } catch (error: any) {
       throw new Error('Failed to get active hours: ' + error.message);
     }
-  };
+  }, [getFacultyClasses, getStudentReports, convertDurationToHours]);
 
-  /**
-   * Convert duration string to hours (decimal)
-   * Supports both formats:
-   * - M:SS (0:15 = 15 seconds)
-   * - HH:MM:SS (0:15:30 = 15 minutes 30 seconds)
-   */
-  const convertDurationToHours = (duration: string): number => {
-    if (!duration) return 0;
-
-    try {
-      const parts = duration.split(':').map(part => parseInt(part) || 0);
-
-      if (parts.length === 2) {
-        // Format: M:SS (minutes:seconds)
-        const minutes = parts[0];
-        const seconds = parts[1];
-
-        // Convert to hours: (minutes * 60 + seconds) / 3600
-        const totalSeconds = minutes * 60 + seconds;
-        return totalSeconds / 3600;
-      } else if (parts.length === 3) {
-        // Format: HH:MM:SS (hours:minutes:seconds)
-        const hours = parts[0];
-        const minutes = parts[1];
-        const seconds = parts[2];
-
-        return hours + minutes / 60 + seconds / 3600;
-      } else {
-        console.warn('Invalid duration format:', duration);
-        return 0;
-      }
-    } catch (error) {
-      console.error('Error converting duration:', duration, error);
-      return 0;
-    }
-  };
-
-  /**
-   * Get student IDs based on filter
-   */
-  const getFilteredStudentIds = async (
-    facultyId: string,
-    filter?: FilterOptions,
-  ): Promise<{ studentIds: string[]; className?: string }> => {
-    try {
-      const classes = await getFacultyClasses(facultyId);
-
-      if (filter?.type === 'class' && filter.classId) {
-        // Get specific class
-        const selectedClass = classes.find(
-          cls => cls.classId === filter.classId,
-        );
-        if (!selectedClass) {
-          throw new Error('Class not found');
-        }
-        return {
-          studentIds: selectedClass.studentIds || [],
-          className: selectedClass.className,
-        };
-      } else {
-        // Get all students from all classes
-        const allStudentIds = classes.flatMap(cls => cls.studentIds || []);
-        // Remove duplicates (students might be in multiple classes?)
-        const uniqueStudentIds = Array.from(new Set(allStudentIds));
-        return { studentIds: uniqueStudentIds };
-      }
-    } catch (error: any) {
-      throw new Error('Failed to get filtered students: ' + error.message);
-    }
-  };
-
-  /**
-   * Get class count
-   *
-   * @param facultyId - faculty's id used to fetch the number of classes he/she assigned to
-   * @returns total number of classes
-   */
-  const getNumberOfClasses = async (facultyId: string): Promise<number> => {
+  const getNumberOfClasses = useCallback(async (facultyId: string): Promise<number> => {
     try {
       const getClass = await getFacultyClasses(facultyId);
       return getClass.length;
     } catch (error: any) {
-      throw new Error(
-        'Failed to get the Total Number of Classes: ' + error.message,
-      );
+      throw new Error('Failed to get the Total Number of Classes: ' + error.message);
     }
-  };
+  }, [getFacultyClasses]);
 
-  /**
-   * Get student counts directly from studentIds array
-   *
-   * @param facultyId - faculty's id to be used to fetch all the students registred in a class he/she assigned to.
-   * @returns - total number of students
-   */
-  const getNumbersOfAllStudents = async (
-    facultyId: string,
-  ): Promise<number> => {
+  const getNumbersOfAllStudents = useCallback(async (facultyId: string): Promise<number> => {
     try {
       const classes = await getFacultyClasses(facultyId);
-
-      //  Calculate student counts from studentIds arrays
-      const classStudentCounts = classes.map(classItem => {
-        // studentIds is guaranteed to be an array (string[]) from your interface
-        const studentCount = classItem.studentIds?.length || 0;
-        return {
-          studentCount: studentCount,
-        };
-      });
-
-      // Calculate total students
-      const totalStudents = classStudentCounts.reduce(
-        (sum, classInfo) => sum + classInfo.studentCount,
-        0,
-      );
+      const totalStudents = classes.reduce((sum, cls) => sum + (cls.studentIds?.length || 0), 0);
       return totalStudents;
     } catch (error: any) {
       throw new Error('Failed to to get the Total Number of Students');
     }
-  };
+  }, [getFacultyClasses]);
 
-  /**
-   * Process:
-   * - Get class from the class of the faculty using facultyId
-   * - Get the students from that class
-   * - Get report data from msicueReports using studentId registered in the class
-   *    - Get the number of miscues for each type
-   * - Pass the data to the
-   * Return:
-   * - Precentage of each miscue types to be used to display in a donut chart.
-   */
-  const getOverallCommonMiscueType = async (
+  const getOverallCommonMiscueType = useCallback(async (
     facultyId: string,
     filter?: FilterOptions,
   ): Promise<MiscuePercentage[]> => {
     try {
-      // Get all the classes handled by the faculty
-      const { studentIds } = await getFilteredStudentIds(
-        facultyId,
-        filter || { type: 'overall' },
-      );
-
-      // Initialize miscue type counters
-      const miscueCounts = {
-        substitution: 0,
-        omission: 0,
-        insertion: 0,
-        repetition: 0,
-      };
-
-      let totalStudents = 0;
-      let totalReports = 0;
+      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      const miscueCounts = { substitution: 0, omission: 0, insertion: 0, repetition: 0 };
       let totalMiscues = 0;
 
-      // For each students, get all their reports using getStudentReports function
       for (const studentId of studentIds) {
         const reports = await getStudentReports(studentId);
-        totalReports += reports.length;
-
-        // Aggregate miscue counts from each report
         for (const report of reports) {
           if (report.miscues && Array.isArray(report.miscues)) {
             totalMiscues += report.miscues.length;
-
-            // Count each miscue type
             for (const miscue of report.miscues) {
               switch (miscue.type) {
-                case 'substitution':
-                  miscueCounts.substitution++;
-                  break;
-                case 'omission':
-                  miscueCounts.omission++;
-                  break;
-                case 'insertion':
-                  miscueCounts.insertion++;
-                  break;
-                case 'repetition':
-                  miscueCounts.repetition++;
-                  break;
-                default:
-                  console.log('Unknown miscue type:', miscue.type);
+                case 'substitution': miscueCounts.substitution++; break;
+                case 'omission': miscueCounts.omission++; break;
+                case 'insertion': miscueCounts.insertion++; break;
+                case 'repetition': miscueCounts.repetition++; break;
               }
             }
           }
         }
       }
 
-      // Calculate Percentage
-      const total = Object.values(miscueCounts).reduce(
-        (sum, count) => sum + count,
-        0,
-      );
+      const total = Object.values(miscueCounts).reduce((sum, count) => sum + count, 0);
+      if (total === 0) return getDefaultMiscueData();
 
-      if (total === 0) {
-        return getDefaultMiscueData();
-      }
-
-      // Format data for chart
-      const result: MiscuePercentage[] = [
-        {
-          type: 'Substitution',
-          count: miscueCounts.substitution,
-          percentage:
-            Math.round((miscueCounts.substitution / total) * 1000) / 10, // 1 decimal place
-          color: '#FF2726',
-        },
-        {
-          type: 'Omission',
-          count: miscueCounts.omission,
-          percentage: Math.round((miscueCounts.omission / total) * 1000) / 10,
-          color: '#FF941A',
-        },
-        {
-          type: 'Insertion',
-          count: miscueCounts.insertion,
-          percentage: Math.round((miscueCounts.insertion / total) * 1000) / 10,
-          color: '#1A81FF',
-        },
-        {
-          type: 'Repetition',
-          count: miscueCounts.repetition,
-          percentage: Math.round((miscueCounts.repetition / total) * 1000) / 10,
-          color: '#BF00DD',
-        },
+      return [
+        { type: 'Substitution', count: miscueCounts.substitution, percentage: Math.round((miscueCounts.substitution / total) * 1000) / 10, color: '#FF2726' },
+        { type: 'Omission', count: miscueCounts.omission, percentage: Math.round((miscueCounts.omission / total) * 1000) / 10, color: '#FF941A' },
+        { type: 'Insertion', count: miscueCounts.insertion, percentage: Math.round((miscueCounts.insertion / total) * 1000) / 10, color: '#1A81FF' },
+        { type: 'Repetition', count: miscueCounts.repetition, percentage: Math.round((miscueCounts.repetition / total) * 1000) / 10, color: '#BF00DD' },
       ];
-
-      return result;
     } catch (error: any) {
       throw new Error('Failed to get common miscue type: ' + error.message);
     }
-  };
-  /**
-   * Helper function to return default miscue data when no data is found
-   */
-  const getDefaultMiscueData = (): MiscuePercentage[] => {
-    return [
-      { type: 'Substitution', count: 0, percentage: 0, color: '#FF2726' },
-      { type: 'Omission', count: 0, percentage: 0, color: '#FF941A' },
-      { type: 'Insertion', count: 0, percentage: 0, color: '#1A81FF' },
-      { type: 'Repetition', count: 0, percentage: 0, color: '#BF00DD' },
-    ];
-  };
+  }, [getFilteredStudentIds, getStudentReports]);
 
-  /**
-   * Process:
-   * - Find all the class of the faculty using facultyId
-   * - Find all the students of each of the class
-   * - Get students reading stats (Top Miscue Type, Most Common Miscued Words with Example error and its total attempts (or error count))
-   * Return:
-   * - Top Miscue Type, Most Common Miscued Words with Example error and its total attempts (or error count)
-   */
-  const getOverallTopMiscueType = async (
+  const getDefaultMiscueData = useCallback((): MiscuePercentage[] => [
+    { type: 'Substitution', count: 0, percentage: 0, color: '#FF2726' },
+    { type: 'Omission', count: 0, percentage: 0, color: '#FF941A' },
+    { type: 'Insertion', count: 0, percentage: 0, color: '#1A81FF' },
+    { type: 'Repetition', count: 0, percentage: 0, color: '#BF00DD' },
+  ], []);
+
+  const getOverallTopMiscueType = useCallback(async (
     facultyId: string,
     filter?: FilterOptions,
   ): Promise<OverAllStudentTopMiscue[]> => {
     try {
-      // Get filtered student IDs
-      const { studentIds } = await getFilteredStudentIds(
-        facultyId,
-        filter || { type: 'overall' },
-      );
-
-      // Initialize data structure for aggregation
-      const allMiscues: Array<{
+      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      
+      interface MiscueItem {
         type: string;
         expectedWord: string;
-        spokenWord: string;
+        spokenWord?: string;
         passageTitle: string;
+        studentId: string;
         accuracyRate: number;
-      }> = [];
+      }
 
-      // Track passage data for top miscued passage
-      const passageMap: Record<
-        string,
-        {
-          miscueCount: number;
-          accuracySum: number;
-          attemptCount: number;
-        }
-      > = {};
+      interface PassageMapEntry {
+        miscueCount: number;
+        accuracySum: number;
+        attemptCount: number;
+      }
 
-      // For each student, get their miscue reports
+      const allMiscues: MiscueItem[] = [];
+      const passageMap: Record<string, PassageMapEntry> = {};
+
       for (const studentId of studentIds) {
         const reports = await getStudentReports(studentId);
-
-        // Collect all miscues from all reports
         for (const report of reports) {
-          // Track passage data
           if (report.passageTitle) {
-            const passageTitle = report.passageTitle;
-            if (!passageMap[passageTitle]) {
-              passageMap[passageTitle] = {
-                miscueCount: 0,
-                accuracySum: 0,
-                attemptCount: 0,
-              };
-            }
-            passageMap[passageTitle].attemptCount++;
-            passageMap[passageTitle].accuracySum += report.accuracyRate || 0;
+            const title = report.passageTitle;
+            if (!passageMap[title]) passageMap[title] = { miscueCount: 0, accuracySum: 0, attemptCount: 0 };
+            passageMap[title].attemptCount++;
+            passageMap[title].accuracySum += report.accuracyRate || 0;
           }
 
           if (report.miscues && Array.isArray(report.miscues)) {
-            report.miscues.forEach(miscue => {
-              if (report.passageTitle) {
-                passageMap[report.passageTitle].miscueCount++;
-              }
-
-              allMiscues.push({
-                type: miscue.type,
-                expectedWord: miscue.expectedWord,
-                spokenWord: miscue.spokenWord || '',
-                passageTitle: report.passageTitle || 'Unknown Passage',
-                accuracyRate: report.accuracyRate || 0,
+            report.miscues.forEach(m => {
+              if (report.passageTitle) passageMap[report.passageTitle].miscueCount++;
+              allMiscues.push({ 
+                type: m.type,
+                expectedWord: m.expectedWord || '',
+                spokenWord: m.spokenWord || '',
+                passageTitle: report.passageTitle || 'Unknown Passage', 
+                studentId: report.studentId, 
+                accuracyRate: report.accuracyRate || 0 
               });
             });
           }
         }
       }
 
-      if (allMiscues.length === 0) {
-        console.log('No miscues found');
-        return [
-          {
-            topMiscueType: 'No data',
-            commonMiscueWords: [],
-            topMiscuedPassage: [],
-          },
-        ];
-      }
+      if (allMiscues.length === 0) return [{ topMiscueType: 'No data', commonMiscueWords: [], topMiscuedPassage: [] }];
 
-      // Calculate top miscue type
-      const miscueTypeCount = {
-        substitution: 0,
-        omission: 0,
-        insertion: 0,
-        repetition: 0,
-      };
-
-      allMiscues.forEach(miscue => {
-        if (miscue.type === 'substitution') miscueTypeCount.substitution++;
-        else if (miscue.type === 'omission') miscueTypeCount.omission++;
-        else if (miscue.type === 'insertion') miscueTypeCount.insertion++;
-        else if (miscue.type === 'repetition') miscueTypeCount.repetition++;
+      const miscueTypeCount = { substitution: 0, omission: 0, insertion: 0, repetition: 0 };
+      allMiscues.forEach(m => {
+        if (m.type === 'substitution') miscueTypeCount.substitution++;
+        else if (m.type === 'omission') miscueTypeCount.omission++;
+        else if (m.type === 'insertion') miscueTypeCount.insertion++;
+        else if (m.type === 'repetition') miscueTypeCount.repetition++;
       });
 
-      const topMiscueEntry = Object.entries(miscueTypeCount).sort(
-        ([, a], [, b]) => b - a,
-      )[0];
-
+      const topMiscueEntry = Object.entries(miscueTypeCount).sort(([, a], [, b]) => b - a)[0];
       const topMiscueType = formatMiscueType(topMiscueEntry[0]);
 
       // Calculate common words
-      const wordMap: Record<
-        string,
-        {
-          errorExamples: Set<string>;
-          count: number;
-          miscueTypes: Record<string, number>; // Track miscue types for each word
-        }
-      > = {};
+      interface WordMapEntry {
+        errorExamples: Set<string>;
+        count: number;
+        miscueTypes: Record<string, number>;
+        studentIds: Set<string>;
+      }
 
-      allMiscues.forEach(miscue => {
-        const expectedWord = miscue.expectedWord.toLowerCase().trim();
-        // Initialize wordMap entry if it doesn't exist
-        if (!wordMap[expectedWord]) {
-          wordMap[expectedWord] = {
+      const wordMap: Record<string, WordMapEntry> = {};
+      allMiscues.forEach(m => {
+        const word = m.expectedWord.toLowerCase().trim();
+        if (!wordMap[word]) {
+          wordMap[word] = {
             errorExamples: new Set<string>(),
             count: 0,
-            miscueTypes: {
-              substitution: 0,
-              omission: 0,
-              insertion: 0,
-              repetition: 0,
-            },
+            miscueTypes: { substitution: 0, omission: 0, insertion: 0, repetition: 0 },
+            studentIds: new Set<string>(),
           };
         }
-
-        wordMap[expectedWord].count++;
-
-        // Track miscue type for this word
-        wordMap[expectedWord].miscueTypes[miscue.type] =
-          (wordMap[expectedWord].miscueTypes[miscue.type] || 0) + 1;
-
-        if (miscue.spokenWord) {
-          wordMap[expectedWord].errorExamples.add(
-            miscue.spokenWord.toLowerCase().trim(),
-          );
-        }
+        wordMap[word].count++;
+        if (m.studentId) wordMap[word].studentIds.add(m.studentId);
+        wordMap[word].miscueTypes[m.type]++;
+        if (m.spokenWord) wordMap[word].errorExamples.add(m.spokenWord.toLowerCase().trim());
       });
 
-      // Find dominant miscue type for each word
-      const commonMiscueWords = Object.entries(wordMap)
-        .map(([word, data]) => {
-          // Find the most common miscue type for this word
-          const dominantMiscueTypeEntry = Object.entries(data.miscueTypes).sort(
-            ([, a], [, b]) => b - a,
-          )[0];
+      const commonMiscueWords = Object.entries(wordMap).map(([word, data]) => {
+        const dominant = Object.entries(data.miscueTypes).sort(([, a], [, b]) => b - a)[0];
+        const errorExampleValue = Array.from(data.errorExamples)[0];
+        
+        return {
+          word: word.charAt(0).toUpperCase() + word.slice(1),
+          errorExample: typeof errorExampleValue === 'string' ? errorExampleValue : 'N/A',
+          errorCount: data.count,
+          studentCount: data.studentIds.size,
+          dominantMiscueType: dominant ? formatMiscueType(dominant[0]) : 'N/A',
+          miscueTypes: data.miscueTypes,
+        };
+      }).sort((a, b) => b.errorCount - a.errorCount).slice(0, 5);
 
-          const dominantMiscueType = dominantMiscueTypeEntry
-            ? formatMiscueType(dominantMiscueTypeEntry[0])
-            : 'N/A';
-
-          return {
-            word: word.charAt(0).toUpperCase() + word.slice(1),
-            errorExample: Array.from(data.errorExamples)[0] || 'N/A',
-            errorCount: data.count,
-            dominantMiscueType: dominantMiscueType,
-            miscueTypes: data.miscueTypes, // Include full breakdown if needed
-          };
-        })
-        .sort((a, b) => b.errorCount - a.errorCount)
-        .slice(0, 5);
-
-      // Find top miscued passage
       let topMiscuedPassage: Array<{
         title: string;
         averageAccuracy: number;
@@ -532,132 +325,142 @@ export const getForStudentsMiscueStats = () => {
       }> = [];
 
       if (Object.keys(passageMap).length > 0) {
-        const passageEntries = Object.entries(passageMap);
-
-        // Sort by miscue count (most miscues first)
-        const sortedPassages = passageEntries.sort(
-          ([, a], [, b]) => b.miscueCount - a.miscueCount,
-        );
-
-        const [topPassageTitle, topPassageData] = sortedPassages[0];
-
-        // Wrap in array to match interface
-        topMiscuedPassage = [
-          {
-            title: topPassageTitle,
-            averageAccuracy:
-              topPassageData.attemptCount > 0
-                ? parseFloat(
-                    (
-                      topPassageData.accuracySum / topPassageData.attemptCount
-                    ).toFixed(2),
-                  )
-                : 0,
-            attempts: topPassageData.attemptCount,
-            totalMiscues: topPassageData.miscueCount,
-          },
-        ];
+        const sorted = Object.entries(passageMap).sort(([, a], [, b]) => b.miscueCount - a.miscueCount);
+        const [title, data] = sorted[0];
+        topMiscuedPassage = [{ 
+          title, 
+          averageAccuracy: data.attemptCount > 0 ? parseFloat((data.accuracySum / data.attemptCount).toFixed(2)) : 0, 
+          attempts: data.attemptCount, 
+          totalMiscues: data.miscueCount 
+        }];
       }
 
-      return [
-        {
-          topMiscueType,
-          commonMiscueWords,
-          topMiscuedPassage,
-        },
-      ];
+      const result: OverAllStudentTopMiscue[] = [{ topMiscueType, commonMiscueWords, topMiscuedPassage }];
+      return result;
     } catch (error: any) {
       throw new Error('Failed to get top miscue type: ' + error.message);
     }
-  };
+  }, [getFilteredStudentIds, getStudentReports, formatMiscueType]);
 
-  const getOverallAverageWPMandAccuracy = async (
+  const getOverallAverageWPMandAccuracy = useCallback(async (
     facultyId: string,
     filter?: FilterOptions,
   ): Promise<AverageWPMandAccuracy> => {
     try {
-      // Get filtered student IDs
-      const { studentIds } = await getFilteredStudentIds(
-        facultyId,
-        filter || { type: 'overall' },
-      );
-      let totalStudentAverageAccuracy = 0;
-      let totalStudentAverageWPM = 0;
-      let totalStudentsWithReports = 0;
-      let totalStudents = 0;
-      let totalReports = 0;
-
-      const processedStudents = new Set<string>();
+      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      let totalAcc = 0, totalWPM = 0, studentsWithReports = 0, totalReports = 0;
+      const processed = new Set<string>();
 
       for (const studentId of studentIds) {
-        if (processedStudents.has(studentId)) continue;
-
-        processedStudents.add(studentId);
-        totalStudents++;
-
-        // Get all reports but filter for REAL ones (exclude synthesized legacy placeholders)
+        if (processed.has(studentId)) continue;
+        processed.add(studentId);
         const allReports = await getStudentReports(studentId);
-        const realReports = allReports.filter(
-          r => !r.reportId?.startsWith('syn-'),
-        );
-        const studentReportsCount = realReports.length;
-
-        if (studentReportsCount > 0) {
-          // Calculate THIS STUDENT'S average from real reports only
-          const studentTotalAccuracy = realReports.reduce(
-            (sum, report) => sum + (report.accuracyRate || 0),
-            0,
-          );
-          const studentTotalWPM = realReports.reduce(
-            (sum, report) => sum + (report.wordPerMin || 0),
-            0,
-          );
-
-          const studentAverageAccuracy =
-            studentTotalAccuracy / studentReportsCount;
-          const studentAverageWPM = studentTotalWPM / studentReportsCount;
-
-          // Add this student's averages to the overall totals
-          totalStudentAverageAccuracy += studentAverageAccuracy;
-          totalStudentAverageWPM += studentAverageWPM;
-          totalStudentsWithReports++;
+        const realReports = allReports.filter(r => !r.reportId?.startsWith('syn-'));
+        if (realReports.length > 0) {
+          totalAcc += realReports.reduce((s, r) => s + (r.accuracyRate || 0), 0) / realReports.length;
+          totalWPM += realReports.reduce((s, r) => s + (r.wordPerMin || 0), 0) / realReports.length;
+          studentsWithReports++;
         }
-
-        totalReports += studentReportsCount;
+        totalReports += realReports.length;
       }
 
-      // Calculate overall averages (average of student averages)
-      const averageAccuracy =
-        totalStudentsWithReports > 0
-          ? Math.round(totalStudentAverageAccuracy / totalStudentsWithReports)
-          : 0;
-
-      const averageWPM =
-        totalStudentsWithReports > 0
-          ? parseFloat(
-              (totalStudentAverageWPM / totalStudentsWithReports).toFixed(2),
-            )
-          : 0;
-
       return {
-        averageAccuracy,
-        averageWPM,
+        averageAccuracy: studentsWithReports > 0 ? Math.round(totalAcc / studentsWithReports) : 0,
+        averageWPM: studentsWithReports > 0 ? parseFloat((totalWPM / studentsWithReports).toFixed(2)) : 0,
         totalReports,
-        totalStudents: processedStudents.size,
+        totalStudents: processed.size,
       };
     } catch (error: any) {
-      throw new Error(
-        'Failed to compute the average WPM and Accurate rate: ' + error.message,
-      );
+      throw new Error('Failed to compute averages: ' + error.message);
     }
-  };
+  }, [getFilteredStudentIds, getStudentReports]);
 
-  return {
+  const getClassParticipationRate = useCallback(async (
+    facultyId: string,
+    filter?: FilterOptions,
+  ): Promise<{ currentRate: number; lastRate: number; delta: number; activeThisWeek: number; totalStudents: number }> => {
+    try {
+      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      const totalStudents = studentIds.length;
+      if (totalStudents === 0) return { currentRate: 0, lastRate: 0, delta: 0, activeThisWeek: 0, totalStudents: 0 };
+
+      const { start: curS, end: curE } = getDateRangeForTimeFilter('week');
+      const lastE = new Date(curS); lastE.setMilliseconds(-1);
+      const lastS = new Date(curS); lastS.setDate(curS.getDate() - 7); lastS.setHours(0, 0, 0, 0);
+
+      const countActive = async (s: Date, e: Date) => {
+        let activeCount = 0;
+        for (const id of studentIds) {
+          const reports = await getStudentReports(id);
+          if (reports.some(r => {
+            const d = r.timestamp?.toDate?.() || new Date(r.timestamp);
+            return d >= s && d <= e;
+          })) activeCount++;
+        }
+        return activeCount;
+      };
+
+      const [activeCur, activeLast] = await Promise.all([countActive(curS, curE), countActive(lastS, lastE)]);
+      const currentRate = (activeCur / totalStudents) * 100;
+      const lastRate = (activeLast / totalStudents) * 100;
+
+      return { currentRate, lastRate, delta: currentRate - lastRate, activeThisWeek: activeCur, totalStudents };
+    } catch (error: any) {
+      throw new Error('Failed to get participation rate: ' + error.message);
+    }
+  }, [getFilteredStudentIds, getStudentReports]);
+
+  const getMonthlyActivityHeatmap = useCallback(async (
+    facultyId: string,
+    filter?: FilterOptions,
+    monthOffset: number = 0,
+  ): Promise<{ daysInMonth: number; firstWeekday: number; counts: number[]; maxCount: number; monthLabel: string }> => {
+    try {
+      const { studentIds } = await getFilteredStudentIds(facultyId, filter || { type: 'overall' });
+      const now = new Date();
+      const ref = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
+      const start = new Date(ref.getFullYear(), ref.getMonth(), 1, 0, 0, 0, 0);
+      const end = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 23, 59, 59, 999);
+      const daysInMonth = end.getDate();
+      const counts = Array.from({ length: daysInMonth }, () => 0);
+
+      for (const id of studentIds) {
+        const reports = await getStudentReports(id);
+        reports.forEach(r => {
+          const d = r.timestamp?.toDate?.() || new Date(r.timestamp);
+          if (d >= start && d <= end) counts[d.getDate() - 1]++;
+        });
+      }
+
+      return {
+        daysInMonth,
+        firstWeekday: start.getDay(),
+        counts,
+        maxCount: counts.length > 0 ? Math.max(...counts) : 0,
+        monthLabel: ref.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      };
+    } catch (error: any) {
+      throw new Error('Failed to get monthly heatmap: ' + error.message);
+    }
+  }, [getFilteredStudentIds, getStudentReports]);
+
+  return useMemo(() => ({
     getNumberOfClasses,
     getNumbersOfAllStudents,
     getActiveHours,
     getOverallCommonMiscueType,
     getOverallTopMiscueType,
     getOverallAverageWPMandAccuracy,
-  };
+    getClassParticipationRate,
+    getMonthlyActivityHeatmap,
+  }), [
+    getNumberOfClasses,
+    getNumbersOfAllStudents,
+    getActiveHours,
+    getOverallCommonMiscueType,
+    getOverallTopMiscueType,
+    getOverallAverageWPMandAccuracy,
+    getClassParticipationRate,
+    getMonthlyActivityHeatmap,
+  ]);
 };

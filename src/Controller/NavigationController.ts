@@ -12,7 +12,11 @@ import { Alert } from 'react-native';
 import { ReadingMaterial } from '../Interfaces/passage';
 
 // Interfaces of Students
-import { UserDocument, UserRole, ActivityResultDocument } from '../Interfaces/dataInterfaces';
+import {
+  UserDocument,
+  UserRole,
+  ActivityResultDocument,
+} from '../Interfaces/dataInterfaces';
 
 import { ScreenReplaceTypes } from 'react-native-screens';
 import { logoutUser } from './AuthenticationController';
@@ -50,12 +54,11 @@ export type RootStackParamList = {
     classCode: string;
     acadYear: string;
   };
-  StudentViewProfile: {
+  FacultyStudentMonitor: {
     studentId: string;
     studentName: string;
     readingLevel: string;
   };
-
 
   // ADMIN NAVIGATION
   AdminDashboard: undefined;
@@ -69,7 +72,6 @@ export type RootStackParamList = {
   // StudentAssessmentActivity: { activityId: string },
   // StudentAssessmentReview: { result: ActivityResultDocument },
 };
-
 
 // A list of all the screens within RootStackParamList
 type ScreenNames = keyof RootStackParamList;
@@ -163,7 +165,8 @@ export const useNavigationHelper = () => {
     }
 
     // Build StudentInformation object
-    const userInfo: any = { // Use any briefly to allow dynamic fields passed to step 2
+    const userInfo: any = {
+      // Use any briefly to allow dynamic fields passed to step 2
       profileImageUrl: profileImageUrl || '',
       firstName,
       middleName,
@@ -224,7 +227,12 @@ export const useNavigationHelper = () => {
     items?: ReadingMaterial[],
     initialIndex?: number,
   ) => {
-    navigation.navigate('ReadingActivity', { readingMaterial, type, items, initialIndex });
+    navigation.navigate('ReadingActivity', {
+      readingMaterial,
+      type,
+      items,
+      initialIndex,
+    });
   };
 
   const handleHistoryNext = () => {
@@ -235,7 +243,7 @@ export const useNavigationHelper = () => {
     classId: string;
     className?: string;
     classCode: string;
-    acadYear: string
+    acadYear: string;
   }) => {
     navigation.navigate('MyStudents', classData);
   };
@@ -245,7 +253,7 @@ export const useNavigationHelper = () => {
     studentName: string;
     readingLevel: string;
   }) => {
-    navigation.navigate('StudentViewProfile', studentData);
+    navigation.navigate('FacultyStudentMonitor', studentData);
   };
 
   // const handleAssessmentNext = (activityId: string) => {
