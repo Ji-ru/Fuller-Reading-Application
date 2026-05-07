@@ -18,7 +18,7 @@ const C = {
   primary: FacultyColors.primary,
   primaryLight: FacultyColors.primaryLight,
   primaryPale: FacultyColors.primaryPale,
-  tabBg: FacultyColors.primaryPale,
+  tabBg: '#E8F5E9',
   accent: FacultyColors.sky,
   card: FacultyColors.white,
   ink: FacultyColors.ink,
