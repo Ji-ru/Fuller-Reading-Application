@@ -47,6 +47,10 @@ interface MiscueInsightsProps {
   timeRange?: TimeRange;
   /** Anchor date for period navigation. When provided, data is filtered relative to this date. */
   anchor?: Date;
+  /** Optional explicit start of the date range. When both startDate and endDate are provided, they override timeRange + anchor. */
+  startDate?: Date;
+  /** Optional explicit end of the date range. */
+  endDate?: Date;
 }
 
 const MISCUE_COLORS: Record<string, { bar: string; bg: string }> = {
@@ -71,7 +75,7 @@ const getMiscueLabel = (type: string, role: string): string => {
   return type; // faculty or any other role → technical term
 };
 
-const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId, role = 'faculty', timeRange: externalTimeRange, anchor }) => {
+const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId, role = 'faculty', timeRange: externalTimeRange, anchor, startDate, endDate }) => {
   const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>('week');
   const timeRange = externalTimeRange ?? internalTimeRange;
 
@@ -80,19 +84,22 @@ const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId, role 
     total,
     loading: miscueLoading,
     error: miscueError,
-  } = useStudentMiscueStats(studentId, timeRange, anchor);
+  } = useStudentMiscueStats(studentId, timeRange, anchor, startDate, endDate);
 
   const {
     topPassage,
     topWords,
     loading: topLoading,
     error: topError,
-  } = useStudentTopMiscuePassageAndWords(studentId, timeRange, anchor);
+  } = useStudentTopMiscuePassageAndWords(studentId, timeRange, anchor, startDate, endDate);
 
   const loading = miscueLoading || topLoading;
   const error = miscueError || topError;
 
-  const rangeLabel = timeRange === 'week' ? 'This Week' : timeRange === 'month' ? 'This Month' : 'This Year';
+  const isCustomRange = !!(startDate && endDate);
+  const rangeLabel = isCustomRange
+    ? 'Selected Period'
+    : timeRange === 'week' ? 'This Week' : timeRange === 'month' ? 'This Month' : 'This Year';
 
   if (loading) {
     return (

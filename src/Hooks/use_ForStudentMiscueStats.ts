@@ -294,6 +294,7 @@ const getOverallTopMiscueType = async (
       {
         errorExamples: Set<string>;
         count: number;
+        studentIds: Set<string>;
         miscueTypes: Record<string, number>;
       }
     > = {};
@@ -351,6 +352,7 @@ const getOverallTopMiscueType = async (
               wordMap[expectedWord] = {
                 errorExamples: new Set<string>(),
                 count: 0,
+                studentIds: new Set<string>(),
                 miscueTypes: {
                   substitution: 0,
                   omission: 0,
@@ -362,6 +364,7 @@ const getOverallTopMiscueType = async (
 
             // Increment word count (each miscue instance counts as 1)
             wordMap[expectedWord].count++;
+            wordMap[expectedWord].studentIds.add(studentId);
 
             // Track miscue type for this word
             if (isValidMiscueType(miscue.type)) {
@@ -409,6 +412,7 @@ const getOverallTopMiscueType = async (
           word: capitalizeFirstLetter(word),
           errorExample: Array.from(data.errorExamples)[0] || '—',
           errorCount: data.count,
+          studentCount: data.studentIds.size,
           dominantMiscueType,
           miscueTypes: data.miscueTypes,
         };

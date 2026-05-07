@@ -147,7 +147,7 @@ export default function ReadingActivityScreenPage() {
       if (chapter) {
         const lesson = chapter.lessons.find((l: any) => l.lesson_id === wordContext.lessonId);
         if (lesson) {
-          const index = lesson.words.findIndex((w: string) => w === wordContext.targetWord);
+          const index = lesson.words.findIndex((w: string) => w.toLowerCase() === wordContext.targetWord.toLowerCase());
           if (index !== -1) {
             return { index, total: lesson.words.length, lessonWords: lesson.words, lesson };
           }
@@ -386,14 +386,11 @@ export default function ReadingActivityScreenPage() {
       | 'tryAgain'
       | 'passageSuccess'
       | 'goodJob';
-    let message = '';
-
     if (isAlphabetAndWordMode) {
       if (isCorrect) {
         modalType = 'congratulations';
       } else {
         modalType = 'tryAgain';
-        message = `Try saying it again! Keep practicing.`;
       }
     } else {
       if (accuracyNum >= 90) {
@@ -424,19 +421,19 @@ export default function ReadingActivityScreenPage() {
       }
       // const transcription = await processAudioWithGoogle(audioFile);
       // const transcription = await processAudioWithAssemblyAI(audioFile);
-      // const transcription = await processAudioWithDeepgram(audioFile);
+      const transcription = await processAudioWithDeepgram(audioFile);
       // const transcription = await processAudioWithPuter(audioFile);
       // const transcription = await processAudioWithWav2Vec2(audioFile);
-      const transcription = await processAudioWithHubert(audioFile);
+      // const transcription = await processAudioWithHubert(audioFile);
       // const transcription = await processAudioWithWhisper(audioFile);
-      setSpokenText(transcription);
-      console.log('THIS IS THE SPOKEN: ' + transcription);
+      setSpokenText(transcription.fulltext);
+      console.log('THIS IS THE SPOKEN: ' + transcription.fulltext);
       // console.log('THIS IS THE UTTERANCES: ' + transcription);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      await analyzeReading(transcription, duration);
+      await analyzeReading(transcription.fulltext, duration);
       setIsReadingCompleted(true);
     } catch (error) {
       // Fallback on error: 0% accuracy instead of 100% simulated response
@@ -448,7 +445,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithHubert, getSimulatedResponse, targetText]);
+  }, [processAudioWithDeepgram, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:
@@ -624,7 +621,7 @@ export default function ReadingActivityScreenPage() {
       setMiscues([]);
 
       // Store correct alphabet attempt ONLY if correct AND not already stored
-      if (result.isCorrect && !hasStoredCorrectAttempt) {
+      if (result.isCorrect && !hasStoredCorrectAttempt && duration > 0) {
         try {
           await MiscueReportController.storeAlphabetCorrectAttempt(
             readingMaterial.letter,
@@ -638,7 +635,7 @@ export default function ReadingActivityScreenPage() {
       }
 
       // Checks the session, then record the reading attempt
-      if (sessionId) {
+      if (sessionId && duration > 0) {
         const letter = readingMaterial.letter.toUpperCase();
         const attempted = attemptedSetRef.current;
         const correct = correctSetRef.current;
@@ -711,7 +708,7 @@ export default function ReadingActivityScreenPage() {
 
       console.log('This is WPM: ' + wpm);
       // To avoid duplication it needs to check if it was already stored 
-      if (!hasStoredReport) {
+      if (!hasStoredReport && duration > 0) {
         await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
       }
     }
@@ -733,87 +730,90 @@ export default function ReadingActivityScreenPage() {
           : 'Try again. Practice makes perfect.',
       );
 
-      const sessionId =
-        wordSessionIdRef.current ?? (await MiscueReportController.startWordSession());
-      wordSessionIdRef.current = sessionId;
+      // Only record session stats and mastery if duration > 0
+      if (duration > 0) {
+        const sessionId =
+          wordSessionIdRef.current ?? (await MiscueReportController.startWordSession());
+        wordSessionIdRef.current = sessionId;
 
-      const attemptKey = `${wordContext?.chapterId ?? 'ch?'}::${wordContext?.lessonId ?? 'ls?'}::${targetText.toLowerCase()}`;
+        const attemptKey = `${wordContext?.chapterId ?? 'ch?'}::${wordContext?.lessonId ?? 'ls?'}::${targetText.toLowerCase()}`;
 
-      const firstAttempt = !wordAttemptedSetRef.current.has(attemptKey);
-      if (firstAttempt) wordAttemptedSetRef.current.add(attemptKey);
+        const firstAttempt = !wordAttemptedSetRef.current.has(attemptKey);
+        if (firstAttempt) wordAttemptedSetRef.current.add(attemptKey);
 
-      const firstCorrect = correct && !correctWordSetRef.current.has(attemptKey);
-      if (firstCorrect) correctWordSetRef.current.add(attemptKey);
+        const firstCorrect = correct && !correctWordSetRef.current.has(attemptKey);
+        if (firstCorrect) correctWordSetRef.current.add(attemptKey);
 
-      const firstIncorrect =
-        !correct &&
-        !incorrectWordSetRef.current.has(attemptKey) &&
-        !correctWordSetRef.current.has(attemptKey); // don’t mark incorrect if already correct
-      if (firstIncorrect) incorrectWordSetRef.current.add(attemptKey);
+        const firstIncorrect =
+          !correct &&
+          !incorrectWordSetRef.current.has(attemptKey) &&
+          !correctWordSetRef.current.has(attemptKey); // don’t mark incorrect if already correct
+        if (firstIncorrect) incorrectWordSetRef.current.add(attemptKey);
 
-      // --- Attempted (once) + record that this word belongs to the lesson
-      if (firstAttempt) {
-        await MiscueReportController.recordWordAttempt(
-          sessionId,
-          {
-            chapterId: wordContext?.chapterId || 0,
-            chapterTitle: wordContext?.chapterTitle || '',
-            lessonId: wordContext?.lessonId || 0,
-            lessonTitle: wordContext?.lessonTitle || '',
-            targetWord: targetText,
-          },
-          {
-            incAttempted: true,
-            addTargetWord: true,
-            // if first attempt is incorrect, add incorrect
-            addIncorrectWord: firstIncorrect,
-          },
-        );
-      } else if (firstIncorrect) {
-        // if you want incorrectWords even when it wasn't the first attempt:
-        await MiscueReportController.recordWordAttempt(
-          sessionId,
-          {
-            chapterId: wordContext?.chapterId || 0,
-            chapterTitle: wordContext?.chapterTitle || '',
-            lessonId: wordContext?.lessonId || 0,
-            lessonTitle: wordContext?.lessonTitle || '',
-            targetWord: targetText,
-          },
-          { addIncorrectWord: true },
-        );
-      }
+        // --- Attempted (once) + record that this word belongs to the lesson
+        if (firstAttempt) {
+          await MiscueReportController.recordWordAttempt(
+            sessionId,
+            {
+              chapterId: wordContext?.chapterId || 0,
+              chapterTitle: wordContext?.chapterTitle || '',
+              lessonId: wordContext?.lessonId || 0,
+              lessonTitle: wordContext?.lessonTitle || '',
+              targetWord: targetText,
+            },
+            {
+              incAttempted: true,
+              addTargetWord: true,
+              // if first attempt is incorrect, add incorrect
+              addIncorrectWord: firstIncorrect,
+            },
+          );
+        } else if (firstIncorrect) {
+          // if you want incorrectWords even when it wasn't the first attempt:
+          await MiscueReportController.recordWordAttempt(
+            sessionId,
+            {
+              chapterId: wordContext?.chapterId || 0,
+              chapterTitle: wordContext?.chapterTitle || '',
+              lessonId: wordContext?.lessonId || 0,
+              lessonTitle: wordContext?.lessonTitle || '',
+              targetWord: targetText,
+            },
+            { addIncorrectWord: true },
+          );
+        }
 
-      // --- Correct (once) + move incorrect -> correct
-      if (firstCorrect) {
-        await MiscueReportController.recordWordAttempt(
-          sessionId,
-          {
-            chapterId: wordContext?.chapterId || 0,
-            chapterTitle: wordContext?.chapterTitle || '',
-            lessonId: wordContext?.lessonId || 0,
-            lessonTitle: wordContext?.lessonTitle || '',
-            targetWord: targetText,
-          },
-          {
-            incCorrect: true,
-            addCorrectWord: true,
-            removeIncorrectWord: true, // important: “updates everytime it becomes correct”
-          },
-        );
-      }
+        // --- Correct (once) + move incorrect -> correct
+        if (firstCorrect) {
+          await MiscueReportController.recordWordAttempt(
+            sessionId,
+            {
+              chapterId: wordContext?.chapterId || 0,
+              chapterTitle: wordContext?.chapterTitle || '',
+              lessonId: wordContext?.lessonId || 0,
+              lessonTitle: wordContext?.lessonTitle || '',
+              targetWord: targetText,
+            },
+            {
+              incCorrect: true,
+              addCorrectWord: true,
+              removeIncorrectWord: true, // important: “updates everytime it becomes correct”
+            },
+          );
+        }
 
-      // --- Global mastery (wordCompleted)
-      if (correct && !hasStoredCorrectAttempt && !alreadyCompleted) {
-        await MiscueReportController.storeWordCorrectAttempt(
-          wordContext?.chapterId || 0,
-          wordContext?.chapterTitle || '',
-          wordContext?.lessonId || 0,
-          wordContext?.lessonTitle || '',
-          targetText,
-        );
-        setHasStoredCorrectAttempt(true);
-        setAlreadyCompleted(true);
+        // --- Global mastery (wordCompleted)
+        if (correct && !hasStoredCorrectAttempt && !alreadyCompleted) {
+          await MiscueReportController.storeWordCorrectAttempt(
+            wordContext?.chapterId || 0,
+            wordContext?.chapterTitle || '',
+            wordContext?.lessonId || 0,
+            wordContext?.lessonTitle || '',
+            targetText,
+          );
+          setHasStoredCorrectAttempt(true);
+          setAlreadyCompleted(true);
+        }
       }
     }
 
@@ -844,6 +844,12 @@ export default function ReadingActivityScreenPage() {
     wpm: number,
   ) => {
     try {
+      // Restriction: if duration is < 1s (0:00), don't store
+      if (duration < 1) {
+        console.log('Skipping report storage: duration is too short (0:00)');
+        return;
+      }
+
       // if this attempt is already stored, stop
 
       const mins = Math.floor(duration / 60);
