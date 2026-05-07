@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
 import { getAuth } from '@react-native-firebase/auth';
+import { getUserProfile } from '../../Controller/AuthenticationController';
 import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
 import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
 import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
@@ -38,6 +39,7 @@ export default function FacultyDashboard() {
   const [showClassDropdown, setShowClassDropdown] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
+  const [firstName, setFirstName] = useState<string>('Faculty');
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   const { handleLogout } = useNavigationHelper();
@@ -70,6 +72,20 @@ export default function FacultyDashboard() {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    const loadName = async () => {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+      try {
+        const profile = await getUserProfile(uid);
+        if (profile?.firstName) setFirstName(profile.firstName);
+      } catch (err) {
+        console.warn('Failed to load faculty profile name', err);
+      }
+    };
+    loadName();
+  }, [auth.currentUser?.uid]);
 
   // ── Derived / Memos ────────────────────────────────────────────────────────
   const academicYears = React.useMemo(
@@ -138,12 +154,13 @@ export default function FacultyDashboard() {
     return stats.studentCount;
   }, [classHealthData, readingStatusFilter.selectedView, stats.studentCount]);
 
-  const displayName = auth.currentUser?.displayName?.split(' ')[0] || 'Faculty';
+  const displayName = firstName;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={facultyDashboard.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
+          <BubbleBackground />
 
         {/* ── Top bar: menu button ── */}
         <View style={facultyDashboard.topBar}>
@@ -182,9 +199,8 @@ export default function FacultyDashboard() {
 
         {/* ── Hero Header Card ── */}
         <View style={facultyDashboard.heroCard}>
-          <BubbleBackground />
           <View style={facultyDashboard.heroCardLeft}>
-            <Text style={facultyDashboard.heroGreeting}>Magandang araw, {displayName}!</Text>
+            <Text style={facultyDashboard.heroGreeting}>Good Day, {displayName}!</Text>
             <Text style={facultyDashboard.heroTitle}>Faculty Dashboard</Text>
           </View>
           <View style={facultyDashboard.heroIconWrap}>

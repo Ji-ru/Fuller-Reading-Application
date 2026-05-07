@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
 import { FilterOptions } from '../../../Interfaces/miscue';
 import { sw, sh, sf } from '../../../Utils/responsive';
 import { FacultyColors } from '../../../Utilities/Theme';
+import { DateRangeFilter, DateBounds } from '../../GlobalUse/DateRangeFilter';
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
 const C = {
@@ -88,14 +89,20 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   const { selectedView, academicYear } = filter;
   const isOverall = selectedView === 'overall';
 
+  const [dateBounds, setDateBounds] = useState<DateBounds | null>(null);
+
   const filterOptions = useMemo<FilterOptions>(() => {
     const options: FilterOptions = {
       type: isOverall ? 'overall' : 'class',
     };
     if (!isOverall && selectedView) options.classId = selectedView;
     if (academicYear) options.acadYear = academicYear;
+    if (dateBounds) {
+      options.startDate = dateBounds.start;
+      options.endDate = dateBounds.end;
+    }
     return options;
-  }, [isOverall, selectedView, academicYear]);
+  }, [isOverall, selectedView, academicYear, dateBounds]);
 
   const {
     miscueData: hookMiscueData,
@@ -152,6 +159,11 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
 
   return (
     <ScrollView style={S.container} showsVerticalScrollIndicator={false}>
+      {/* ── Date Filter ─────────────────────────────────────────────── */}
+      <View style={S.filterCard}>
+        <DateRangeFilter simple onRangeChange={setDateBounds} />
+      </View>
+
       {isLoading ? (
         <View style={S.centered}>
           <ActivityIndicator size="large" color={C.primary} />
@@ -318,6 +330,20 @@ const S = StyleSheet.create({
   container: {
     flex: 1,
     paddingVertical: sh(10),
+  },
+  filterCard: {
+    backgroundColor: C.card,
+    borderRadius: sw(16),
+    padding: sw(14),
+    borderWidth: 1,
+    borderColor: C.primaryLight,
+    marginBottom: sh(12),
+  },
+  filterTitle: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: '#1B5E20',
+    marginBottom: sh(8),
   },
   centered: {
     justifyContent: 'center',

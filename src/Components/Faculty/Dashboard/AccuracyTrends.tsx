@@ -32,6 +32,7 @@ const C = {
   coral: FacultyColors.coral,
   coralBg: '#FEE2E2',
   track: '#E5E7EB',
+  white: FacultyColors.white
 };
 
 type TimeRange = 'week' | 'month' | 'year';
@@ -574,7 +575,7 @@ const S = StyleSheet.create({
   benchmarkGradeText: {
     fontSize: sf(11),
     fontFamily: 'Nunito-Bold',
-    color: C.primary,
+    color: C.white,
   },
   benchmarkRangeHint: {
     fontSize: sf(10),
