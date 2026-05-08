@@ -1,83 +1,129 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Video from 'react-native-video';
 import { View, Text, ActivityIndicator } from 'react-native';
-import { useNavigationHelper } from '../../Controller/NavigationController';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { useNavigationHelper, RootStackParamList } from '../../Controller/NavigationController';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+} from '@react-native-firebase/auth';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+} from '@react-native-firebase/firestore';
 import loading from '../../UI_Designs/LoadingStyles';
+
+// ─── v22: Module-level singletons ────────────────────────────────────────────
+const auth = getAuth();
+const db = getFirestore();
 
 export default function LoadingScreen() {
   const { handleReplaceStep } = useNavigationHelper();
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Loading...');
 
+  // Track whether auth has already resolved so the safety timeout
+  // does not fire a second navigation on top of a completed one.
+  const authResolvedRef = useRef(false);
+
   useEffect(() => {
     console.log('LoadingScreen: Starting verification...');
     let isMounted = true;
 
-    // Firebase Auth restores the persisted session asynchronously.
-    // onAuthStateChanged fires once it's ready (user or null).
-    const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
+    // ── Progress bar animation ──────────────────────────────────────────────
+    // FIX: was 10 ms / +5% → completed in ~200 ms (way too fast).
+    // Now 60 ms / +1% → reaches ~90% in ~5.4 s, matching the auth timeout window.
+    // Progress is capped at 90 here; it jumps to 100 only when auth resolves.
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 1;
+      });
+    }, 60);
+
+    // ── Helper: navigate and tear down immediately ─────────────────────────
+    const navigate = (screen: keyof RootStackParamList, unsubscribeFn: () => void) => {
+      if (!isMounted) return;
+      authResolvedRef.current = true;
+      unsubscribeFn();
+      clearInterval(progressInterval);
+      clearTimeout(timeoutId);
+      // Jump progress to 100% before navigating for a clean finish
+      setProgress(100);
+      // Small delay so the 100% render is visible before the screen changes
+      setTimeout(() => {
+        if (isMounted) handleReplaceStep(screen);
+      }, 150);
+    };
+
+    // ── Firebase Auth state ────────────────────────────────────────────────
+    // FIX: was auth().onAuthStateChanged(...) — legacy namespaced API
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!isMounted) return;
 
       try {
         if (!currentUser) {
-          console.log('LoadingScreen: No user found, going to Login');
-          handleReplaceStep('Login');
+          console.log('LoadingScreen: No user, going to Login');
+          navigate('Login', unsubscribe);
           return;
         }
 
         console.log('LoadingScreen: User found, checking profile...');
-        setStatusMessage('Checking profile...');
+        if (isMounted) setStatusMessage('Checking profile...');
 
-        const userDoc = await firestore()
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
+        // FIX: was firestore().collection('users').doc(uid).get() — legacy API
+        const userSnap = await getDoc(doc(db, 'users', currentUser.uid));
 
         if (!isMounted) return;
 
-        if (!userDoc.exists) {
-          console.log('LoadingScreen: Profile not found, going to Login');
-          auth().signOut();
-          handleReplaceStep('Login');
+        if (!userSnap.exists()) {
+          console.log('LoadingScreen: Profile not found, signing out');
+          // FIX: was auth().signOut() — legacy API, and was NOT awaited
+          await signOut(auth).catch(e =>
+            console.warn('LoadingScreen: signOut error', e),
+          );
+          navigate('Login', unsubscribe);
           return;
         }
 
-        const userData = userDoc.data();
-        const role = userData?.role;
-
+        const role = userSnap.data()?.role;
         console.log(`LoadingScreen: User verified as ${role}`);
-        
+
         if (role === 'student') {
-          handleReplaceStep('UserHome');
+          navigate('UserHome', unsubscribe);
         } else if (role === 'faculty') {
-          handleReplaceStep('FacultyDashboard');
+          navigate('FacultyDashboard', unsubscribe);
         } else if (role === 'admin') {
-          handleReplaceStep('AdminDashboard');
+          navigate('AdminDashboard', unsubscribe);
+        } else {
+          // FIX: was silently doing nothing for unknown/missing roles —
+          // screen would hang until the 5 s timeout with no user feedback.
+          console.warn(`LoadingScreen: Unknown role "${role}", going to Login`);
+          await signOut(auth).catch(e =>
+            console.warn('LoadingScreen: signOut error', e),
+          );
+          navigate('Login', unsubscribe);
         }
       } catch (error) {
-        console.error('LoadingScreen: Error during verification:', error);
-        handleReplaceStep('Login');
+        console.error('LoadingScreen: Verification error:', error);
+        navigate('Login', unsubscribe);
       }
     });
 
-    // Safety timeout — if onAuthStateChanged never fires within 5s, go to Login
+    // ── Safety timeout ─────────────────────────────────────────────────────
+    // FIX: was not guarded against auth having already navigated —
+    // could call handleReplaceStep('Login') on top of an in-progress navigation.
+    // Now checks authResolvedRef before acting.
     const timeoutId = setTimeout(() => {
-      console.log('LoadingScreen: Timeout reached, going to Login');
-      if (isMounted) handleReplaceStep('Login');
+      if (!authResolvedRef.current && isMounted) {
+        console.warn('LoadingScreen: Timeout reached, going to Login');
+        navigate('Login', unsubscribe);
+      }
     }, 5000);
-
-    // Progress bar animation
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return prev + 5; 
-      });
-    }, 10);
 
     return () => {
       console.log('LoadingScreen: Cleanup');
@@ -94,16 +140,23 @@ export default function LoadingScreen() {
         style={loading.video}
         source={require('../../../assets/videos/cisc_logo_animated (4).mp4')}
         repeat={true}
-        resizeMode='cover'
+        resizeMode="cover"
+        muted={true}
       />
-      
+
       <View style={loading.progressContainer}>
         <View style={loading.progressBarBackground}>
-          <View style={[loading.progressBarFill, { width: `${Math.min(progress, 100)}%` }]} />
+          <View
+            style={[loading.progressBarFill, { width: `${Math.min(progress, 100)}%` }]}
+          />
         </View>
         <Text style={loading.progressText}>{Math.round(Math.min(progress, 100))}%</Text>
         <Text style={loading.statusText}>{statusMessage}</Text>
-        <ActivityIndicator size="small" color="#3498db" style={loading.loadingSpinner} />
+        <ActivityIndicator
+          size="small"
+          color="#3498db"
+          style={loading.loadingSpinner}
+        />
       </View>
     </View>
   );

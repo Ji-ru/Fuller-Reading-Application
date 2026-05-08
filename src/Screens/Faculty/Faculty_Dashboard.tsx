@@ -15,14 +15,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
 import MonthlyActivityHeatmap from '../../Components/Faculty/Dashboard/MonthlyActivityHeatmap';
+import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
 import PassageDifficultyRanking from '../../Components/Student/Performance/PassageDifficultyRanking';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
-import { 
-  BookOpenIcon, 
-  HistoryIcon, 
-  TrophyIcon, 
-  UsersIcon, 
+import {
+  BookOpenIcon,
+  HistoryIcon,
+  TrophyIcon,
+  UsersIcon,
   BriefcaseIcon,
   ClipboardListIcon,
   BurgerIcon,
@@ -333,6 +334,15 @@ export default function FacultyDashboard() {
             </View>
 
             <View style={{ marginBottom: 20 }}>
+              <Text style={S.sectionLabel}>Reading Health Status</Text>
+              <ClassReadingStatus
+                facultyId={auth.currentUser?.uid || ''}
+                selectedAcademicYear={selectedAcademicYear}
+                selectedClassId={selectedClassId}
+              />
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
               <Text style={S.sectionLabel}>Academic Filters</Text>
               <View style={S.filterCard}>
                 <View style={S.filterRow}>
@@ -475,7 +485,7 @@ export default function FacultyDashboard() {
               </View>
             </View>
 
-            <View style={{ marginBottom: 30 }}>
+            {/* <View style={{ marginBottom: 30 }}>
               <Text style={S.sectionLabel}>Mabilisang Aksyon</Text>
               <View style={S.quickActions}>
                  <TouchableOpacity 
@@ -501,7 +511,7 @@ export default function FacultyDashboard() {
                  </TouchableOpacity>
 
               </View>
-            </View>
+            </View> */}
 
             <View style={{ marginBottom: 30 }}>
               <Text style={S.sectionLabel}>Monthly Activity</Text>

@@ -32,7 +32,7 @@ import FacultyProfile from './src/Screens/Faculty/Faculty_Profile';
 import MyClass from './src/Screens/Faculty/Faculty_MyClass';
 import MyArchive from './src/Screens/Faculty/Faculty_MyArchive';
 import MyStudents from './src/Screens/Faculty/Faculty_MyStudents';
-import StudentViewProfile from './src/Screens/Faculty/Student_View_Profile';
+// import StudentViewProfile from './src/Screens/Faculty/Student_View_Profile';
 import FacultyStudentMonitor from './src/Screens/Faculty/Faculty_Student_Monitor';
 
 // ADMIN PAGE
@@ -82,7 +82,7 @@ function App() {
             <Stack.Screen name="MyClass" component={MyClass} />
             <Stack.Screen name="Archive" component={MyArchive} />
             <Stack.Screen name="MyStudents" component={MyStudents} />
-            <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} />
+            {/* <Stack.Screen name="StudentViewProfile" component={StudentViewProfile} /> */}
             <Stack.Screen name="FacultyAssessments" component={FacultyAssessments} />
             <Stack.Screen name="FacultyCreateAssessment" component={FacultyCreateAssessment} />
             <Stack.Screen name="FacultyReports" component={FacultyReports} />

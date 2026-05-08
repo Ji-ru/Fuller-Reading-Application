@@ -143,7 +143,10 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
              readingStyles.wordCardText,
              isCompleted && { color: isCorrect ? '#1a7a45' : '#e74c3c' }
           ]}>
-            {material.letter}
+            {['ang', 'mga', '-ng', 'ng-'].includes(material.letter.toLowerCase())
+              ? material.letter
+              : `${material.letter.charAt(0).toUpperCase() + material.letter.slice(1).toLowerCase()} ${material.letter.toLowerCase()}`
+            }
           </Text>
         </View>
       </View>

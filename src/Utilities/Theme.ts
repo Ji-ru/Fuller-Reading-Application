@@ -4,51 +4,51 @@
 //   • FacultyColors  – professional but visually coherent with the student palette
 
 export const StudentColors = {
-  green:      '#3d71d9',     // Brand Royal Blue
-  greenDark:  '#2a50a1',
-  greenDeep:  '#154360',
+  green: '#3d71d9', // Brand Royal Blue
+  greenDark: '#2a50a1',
+  greenDeep: '#154360',
   greenLight: '#d6eaf8',
-  greenPale:  '#ebf5fb',
-  mint:       '#aed6f1',
-  teal:       '#1abc9c',
-  yellow:     '#f9e04b',
+  greenPale: '#ebf5fb',
+  mint: '#aed6f1',
+  teal: '#1abc9c',
+  yellow: '#f9e04b',
   yellowDark: '#e6c820',
-  orange:     '#f39c12',
-  coral:      '#eb5c6c',     // Brand Coral/Rose
-  red:        '#eb5c6c',     // Brand Coral/Rose
-  sky:        '#5dade2',
-  purple:     '#9b59b6',
-  pink:       '#e91e63',
-  white:      '#ffffff',
-  ink:        '#1c2833',
-  inkLight:   '#2c3e50',
-  slate:      '#859dab',
-  bg:         '#ebf5fb',
+  orange: '#f39c12',
+  coral: '#eb5c6c', // Brand Coral/Rose
+  red: '#eb5c6c', // Brand Coral/Rose
+  sky: '#5dade2',
+  purple: '#9b59b6',
+  pink: '#e91e63',
+  white: '#ffffff',
+  ink: '#1c2833',
+  inkLight: '#2c3e50',
+  slate: '#859dab',
+  bg: '#ebf5fb',
 } as const;
 
 export const FacultyColors = {
   // Primary – desaturated, professional blue
-  primary:       '#3d71d9',
-  primaryDark:   '#1f618d',
-  primaryDeep:   '#154360',
-  primaryLight:  '#d4e6f1',
-  primaryPale:   '#eaf2f8',
+  primary: '#3d71d9',
+  primaryDark: '#1f618d',
+  primaryDeep: '#154360',
+  primaryLight: '#d4e6f1',
+  primaryPale: '#eaf2f8',
 
   // Accent – same family, restrained
-  teal:       '#1a9985',
-  orange:     '#d4880e',
-  yellow:     '#d9c22e',
-  red:        '#eb5c6c',
-  coral:      '#eb5c6c',
-  sky:        '#2980b9',
-  purple:     '#7d4b9a',
+  teal: '#1a9985',
+  orange: '#d4880e',
+  yellow: '#d9c22e',
+  red: '#eb5c6c',
+  coral: '#eb5c6c',
+  sky: '#2980b9',
+  purple: '#7d4b9a',
 
   // Neutrals
-  white:      '#ffffff',
-  ink:        '#1c2b24',
-  inkLight:   '#4f6259',
-  slate:      '#8ca69a',
-  bg:         '#eaf2f8',
+  white: '#ffffff',
+  ink: '#1c2b24',
+  inkLight: '#4f6259',
+  slate: '#8ca69a',
+  bg: '#eaf2f8',
 } as const;
 
 // Common design tokens shared across both palettes

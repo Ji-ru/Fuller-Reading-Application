@@ -1,4 +1,3 @@
-import auth from '@react-native-firebase/auth';
 import React, { useEffect, useState, useRef } from 'react';
 import {
   Dimensions,
@@ -25,7 +24,9 @@ import SessionsTab from '../../Components/Student/SessionsTab';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { ACCENT_COLORS, StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
+import { getAuth } from '@react-native-firebase/auth';
 
+const auth = getAuth();
 const alphabetData = readingMaterialData?.Alphabet || [];
 const wordsData = readingMaterialData?.Words || [];
 
@@ -232,7 +233,9 @@ function AralinMasteryCard({ group }: { group: AralinGroupedData }) {
           </View>
           <View style={{ flex: 1, marginLeft: 16 }}>
             <Text style={[S.aralinLabelText, { color: accent }]}>{group.aralinLabel}</Text>
-            <Text style={S.aralinTitleText}>Titik {group.letter.toUpperCase()}</Text>
+            <Text style={S.aralinTitleText}>
+              {['ang', 'mga', '-ng', 'ng-'].includes(group.letter.toLowerCase()) ? 'Pananda: ' : 'Titik: '} {group.letter}
+            </Text>
 
 
 
@@ -293,7 +296,7 @@ export default function ReadingHistoryScreen() {
   const fetchReports = async () => {
     try {
       setIsLoading(true);
-      const user = auth().currentUser;
+      const user = auth.currentUser;
       if (!user) return;
 
       const profile = await getUserProfile(user.uid);
@@ -358,7 +361,9 @@ export default function ReadingHistoryScreen() {
             idx: aIdx,
             type,
             letter,
-            title: type === 'Titik' ? `Titik ${letter.toUpperCase()}` : `Mga Salita (${letter.toUpperCase()})`
+            title: type === 'Titik'
+              ? `${['ang', 'mga', '-ng', 'ng-'].includes(letter.toLowerCase()) ? 'Pananda' : 'Titik'} ${letter}`
+              : `Mga Salita (${letter.toUpperCase()})`
           };
         }
       }
@@ -609,9 +614,9 @@ export default function ReadingHistoryScreen() {
             </View>
           </View>
         ) : activeTab === 'sessions' ? (
-          <SessionsTab studentId={auth().currentUser?.uid || ''} />
+          <SessionsTab studentId={auth.currentUser?.uid || ''} />
         ) : activeTab === 'analytics' ? (
-          <AnalyticsTab studentId={auth().currentUser?.uid || ''} reports={allReports} />
+          <AnalyticsTab studentId={auth.currentUser?.uid || ''} reports={allReports} />
         ) : (
           <PassageHistoryTab
             reports={allReports}

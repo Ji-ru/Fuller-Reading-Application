@@ -62,21 +62,21 @@ export default function UserHomeScreen() {
           if (profile && profile.firstName) {
             setFirstName(profile.firstName);
           }
-          
+
           const classCode = profile?.studentData?.classCode;
           if (classCode) {
 
-             try {
-               const actList = await AssessmentController.getStudentActivities(classCode);
-               let pendingCount = 0;
-               for (const act of actList) {
-                  const res = await AssessmentController.getStudentResult(act.activityId);
-                  if (!res) pendingCount++;
-               }
-               setPendingAssessments(pendingCount);
-             } catch (actErr) {
-               console.warn("Failed to fetch assessments for student:", actErr);
-             }
+            try {
+              const actList = await AssessmentController.getStudentActivities(classCode);
+              let pendingCount = 0;
+              for (const act of actList) {
+                const res = await AssessmentController.getStudentResult(act.activityId);
+                if (!res) pendingCount++;
+              }
+              setPendingAssessments(pendingCount);
+            } catch (actErr) {
+              console.warn("Failed to fetch assessments for student:", actErr);
+            }
           }
 
         }
@@ -173,23 +173,23 @@ export default function UserHomeScreen() {
         {/* ── Greeting Hero ────────────────────────────────────────────────── */}
         <BounceIn delay={24}>
           <View style={S.greetCard}>
-             {/* Decorative circles */}
-             <View style={[S.heroCircle, { backgroundColor: C.green + '14', top: -35, right: -35, width: 150, height: 150 }]} />
-             <View style={[S.heroCircle, { backgroundColor: C.teal + '0A', bottom: -25, left: -25, width: 100, height: 100 }]} />
-             <View style={[S.heroCircle, { backgroundColor: C.mint + '18', top: 20, right: 60, width: 50, height: 50 }]} />
-             
-             <View style={S.greetContent}>
-               <Text style={S.greetTimeLabel}>{getTimeGreeting().toUpperCase()}</Text>
-               <Text style={S.greetName}>{firstName}!</Text>
-               <Text style={S.greetSub}>Subukan natin ang iyong galing sa pagbasa!</Text>
-             </View>
+            {/* Decorative circles */}
+            <View style={[S.heroCircle, { backgroundColor: C.green + '14', top: -35, right: -35, width: 150, height: 150 }]} />
+            <View style={[S.heroCircle, { backgroundColor: C.teal + '0A', bottom: -25, left: -25, width: 100, height: 100 }]} />
+            <View style={[S.heroCircle, { backgroundColor: C.mint + '18', top: 20, right: 60, width: 50, height: 50 }]} />
 
-             <View style={S.greetImgWrapper}>
-               <FloatingImage
-                 source={require('../../../assets/images/Imagination-Reading.png')}
-                 style={S.greetImage}
-               />
-             </View>
+            <View style={S.greetContent}>
+              <Text style={S.greetTimeLabel}>{getTimeGreeting().toUpperCase()}</Text>
+              <Text style={S.greetName}>{firstName}!</Text>
+              <Text style={S.greetSub}>Subukan natin ang iyong galing sa pagbasa!</Text>
+            </View>
+
+            <View style={S.greetImgWrapper}>
+              <FloatingImage
+                source={require('../../../assets/images/Imagination-Reading.png')}
+                style={S.greetImage}
+              />
+            </View>
           </View>
         </BounceIn>
 
@@ -219,21 +219,21 @@ export default function UserHomeScreen() {
               </View>
             </Animated.View>
           </TouchableOpacity>
-                    <TouchableOpacity
+          <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => animatePress(cardScale1, () => handleNextStep('ReadingHistory'))}
           >
-            <Animated.View style={[S.primaryCard, { transform: [{ scale: cardScale1 }] }]}>
-              <View style={S.primaryCardGlow} />
-              <View style={S.primaryIconBox}>
-                <BookIcon size={32} color={C.white} />
+            <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale1 }] }]}>
+              <View style={S.secondaryCardGlow} />
+              <View style={S.secondaryIconBox}>
+                <BookIcon size={32} color={C.green} />
               </View>
-              <View style={S.primaryTextBox}>
-                <Text style={S.primaryLabel}>Kasaysayan</Text>
-                <Text style={S.primarySub}>Nakaraang Pagbasa</Text>
+              <View style={S.secondaryTextBox}>
+                <Text style={S.secondaryLabel}>Kasaysayan</Text>
+                <Text style={S.secondarySub}>Nakaraang Pagbasa</Text>
               </View>
-              <View style={S.primaryArrow}>
-                <ChevronRightIcon size={20} color={C.white} />
+              <View style={S.secondaryArrow}>
+                <ChevronRightIcon size={20} color={C.green} />
               </View>
             </Animated.View>
           </TouchableOpacity>
@@ -443,12 +443,22 @@ const S = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
+  secondaryCardGlow: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
   secondaryIconBox: {
     width: 56,
     height: 56,
-    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 18,
+    backgroundColor: C.greenLight,
   },
   secondaryTextBox: { flex: 1 },
   secondaryLabel: {
@@ -465,9 +475,10 @@ const S = StyleSheet.create({
   secondaryArrow: {
     width: 36,
     height: 36,
-    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: C.greenLight,
   },
 
   notifBadge: {

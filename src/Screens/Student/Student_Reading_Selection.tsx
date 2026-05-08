@@ -265,12 +265,8 @@ export default function PageSelectionScreen() {
   };
 
   const handleAlphabetSelect = (alphabet: Alphabet) => {
-    const raw = alphabet.letter;
-    const items = [
-      { letter: raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase() },
-      { letter: raw.toLowerCase() }
-    ];
-    handleReadingNext(items[0], 'alphabet', items, 0);
+    const items = [alphabet];
+    handleReadingNext(alphabet, 'alphabet', items, 0);
   };
 
   const handleWordSelect = (wordText: string) => {

@@ -16,6 +16,13 @@ import {
 } from '@react-native-firebase/firestore';
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
+// ─── v22: Module-level singletons ────────────────────────────────────────────
+// getFirestore() and getAuth() must be called ONCE at module level.
+// Calling them repeatedly inside methods triggers a deprecation warning in v22
+// and wastes resources by re-resolving the Firebase app on every call.
+const db = getFirestore();
+const auth = getAuth();
+
 type QDS = FirebaseFirestoreTypes.QueryDocumentSnapshot;
 
 export const MiscueReportController = {
@@ -29,10 +36,9 @@ export const MiscueReportController = {
     recordingDuration: string,
   ): Promise<string> {
     try {
-      const user = getAuth().currentUser;
+      const user = auth.currentUser;
       if (!user) throw new Error('User not logged in');
 
-      const db = getFirestore();
       const reportRef = doc(collection(db, 'miscueReports'));
       const reportId = reportRef.id;
 
@@ -49,6 +55,8 @@ export const MiscueReportController = {
         insertion,
         repetition,
 
+        // NOTE: fields are stored as `expectedWord` / `spokenWord`.
+        // All read paths must use these same names.
         miscues: miscues.map(m => ({
           type: m.type,
           expectedWord: m.expected,
@@ -66,7 +74,7 @@ export const MiscueReportController = {
         insertionCount: miscues.filter(m => m.type === 'insertion').length,
         repetitionCount: miscues.filter(m => m.type === 'repetition').length,
 
-        timestamp: new Date(),
+        timestamp: serverTimestamp(),
       };
 
       await setDoc(reportRef, reportData);
@@ -107,40 +115,48 @@ export const MiscueReportController = {
   // ================= FETCH STUDENT REPORTS =================
   async getStudentReports(studentId: string): Promise<MiscueReportDocument[]> {
     try {
-      const db = getFirestore();
-
-      // 1. Fetch real detailed trials
+      // 1. Real detailed trials (must resolve first — used to de-duplicate synthetics below)
       const reportSnap = await getDocs(
         query(
           collection(db, 'miscueReports'),
           where('studentId', '==', studentId),
-          orderBy('timestamp', 'desc')
-        )
+          orderBy('timestamp', 'desc'),
+        ),
       );
 
-      const realReports = reportSnap.docs.map((doc: QDS) => ({
-        reportId: doc.id,
-        ...doc.data(),
+      const realReports = reportSnap.docs.map((d: QDS) => ({
+        reportId: d.id,
+        ...d.data(),
       })) as MiscueReportDocument[];
 
-      // 2. Fetch Alphabet Completions (Synthesize legacy if missing from reports)
-      const alphaSnap = await getDocs(
-        query(
-          collection(db, 'alphabetCompleted'),
-          where('studentId', '==', studentId)
-        )
-      );
+      // FIX: parallelise alpha + word fetches — neither depends on the other
+      const [alphaSnap, wordSnap] = await Promise.all([
+        getDocs(
+          query(
+            collection(db, 'alphabetCompleted'),
+            where('studentId', '==', studentId),
+          ),
+        ),
+        getDocs(
+          query(
+            collection(db, 'wordCompleted'),
+            where('studentId', '==', studentId),
+          ),
+        ),
+      ]);
+
+      // 2. Synthesize Alphabet completions not already in reports
       const synthesizedAlpha = alphaSnap.docs
         .filter(
-          (doc: QDS) =>
+          (d: QDS) =>
             !realReports.some(
-              r => r.passageTitle === `Alphabet - ${doc.data().letter}`,
+              r => r.passageTitle === `Alphabet - ${d.data().letter}`,
             ),
         )
-        .map((doc: QDS) => {
-          const data = doc.data();
+        .map((d: QDS) => {
+          const data = d.data();
           return {
-            reportId: `syn-a-${doc.id}`,
+            reportId: `syn-a-${d.id}`,
             studentId,
             passageTitle: `Alphabet - ${data.letter}`,
             timestamp: data.createdAt || new Date(),
@@ -152,24 +168,18 @@ export const MiscueReportController = {
           } as unknown as MiscueReportDocument;
         });
 
-      // 3. Fetch Word Completions (Synthesize legacy if missing from reports)
-      const wordSnap = await getDocs(
-        query(
-          collection(db, 'wordCompleted'),
-          where('studentId', '==', studentId)
-        )
-      );
+      // 3. Synthesize Word completions not already in reports
       const synthesizedWords = wordSnap.docs
         .filter(
-          (doc: QDS) =>
+          (d: QDS) =>
             !realReports.some(
-              r => r.passageTitle === `Words for ${doc.data().letter}`,
+              r => r.passageTitle === `Words for ${d.data().letter}`,
             ),
         )
-        .map((doc: QDS) => {
-          const data = doc.data();
+        .map((d: QDS) => {
+          const data = d.data();
           return {
-            reportId: `syn-w-${doc.id}`,
+            reportId: `syn-w-${d.id}`,
             studentId,
             passageTitle: `Words for ${data.letter}`,
             timestamp: data.createdAt || new Date(),
@@ -199,9 +209,9 @@ export const MiscueReportController = {
     const groupMap = new Map<string, MiscueReportDocument[]>();
 
     reports.forEach(report => {
-      const passageTitle = report.passageTitle || 'Unknown Passage';
-      if (!groupMap.has(passageTitle)) groupMap.set(passageTitle, []);
-      groupMap.get(passageTitle)?.push(report);
+      const title = report.passageTitle || 'Unknown Passage';
+      if (!groupMap.has(title)) groupMap.set(title, []);
+      groupMap.get(title)?.push(report);
     });
 
     return Array.from(groupMap.entries()).map(([passageTitle, reports]) => ({
@@ -212,13 +222,12 @@ export const MiscueReportController = {
 
   // ================= WORD STORAGE =================
   async storeWordCorrectAttempt(letter: string, word: string): Promise<string> {
-    const user = getAuth().currentUser;
+    const user = auth.currentUser;
     if (!user) throw new Error('User not logged in');
 
     const existing = await this.hasWordBeenCompleted(user.uid, letter, word);
     if (existing) return existing;
 
-    const db = getFirestore();
     const docRef = doc(collection(db, 'wordCompleted'));
     await setDoc(docRef, {
       wordId: docRef.id,
@@ -231,16 +240,19 @@ export const MiscueReportController = {
     return docRef.id;
   },
 
-  async hasWordBeenCompleted(studentId: string, letter: string, word: string) {
-    const db = getFirestore();
+  async hasWordBeenCompleted(
+    studentId: string,
+    letter: string,
+    word: string,
+  ): Promise<string | null> {
     const snapshot = await getDocs(
       query(
         collection(db, 'wordCompleted'),
         where('studentId', '==', studentId),
         where('letter', '==', letter),
         where('word', '==', word),
-        limit(1)
-      )
+        limit(1),
+      ),
     );
 
     return snapshot.empty ? null : snapshot.docs[0].id;
@@ -248,13 +260,12 @@ export const MiscueReportController = {
 
   // ================= ALPHABET STORAGE =================
   async storeAlphabetCorrectAttempt(letter: string): Promise<string> {
-    const user = getAuth().currentUser;
+    const user = auth.currentUser;
     if (!user) throw new Error('User not logged in');
 
     const existing = await this.hasAlphabetBeenCompleted(user.uid, letter);
     if (existing) return existing;
 
-    const db = getFirestore();
     const docRef = doc(collection(db, 'alphabetCompleted'));
     await setDoc(docRef, {
       letterId: docRef.id,
@@ -266,15 +277,17 @@ export const MiscueReportController = {
     return docRef.id;
   },
 
-  async hasAlphabetBeenCompleted(studentId: string, letter: string) {
-    const db = getFirestore();
+  async hasAlphabetBeenCompleted(
+    studentId: string,
+    letter: string,
+  ): Promise<string | null> {
     const snapshot = await getDocs(
       query(
         collection(db, 'alphabetCompleted'),
         where('studentId', '==', studentId),
         where('letter', '==', letter),
-        limit(1)
-      )
+        limit(1),
+      ),
     );
 
     return snapshot.empty ? null : snapshot.docs[0].id;
@@ -286,8 +299,6 @@ export const MiscueReportController = {
       const { completedAlpha, completedWords } =
         await this.getStudentDetailedCompletion(studentId);
 
-      // A lesson is "mastered" if the user has completed its alphabet step AND at least one of its words
-      // (Legacy logic for compatibility, though frontend will now use detailed counts)
       const lettersWithWords = Object.keys(completedWords);
       return Array.from(completedAlpha).filter(letter =>
         lettersWithWords.includes(letter),
@@ -304,25 +315,24 @@ export const MiscueReportController = {
     completedPassages: Set<string>;
   }> {
     try {
-      const db = getFirestore();
       const [alphaSnap, wordsSnap, reportSnap] = await Promise.all([
         getDocs(
           query(
             collection(db, 'alphabetCompleted'),
-            where('studentId', '==', studentId)
-          )
+            where('studentId', '==', studentId),
+          ),
         ),
         getDocs(
           query(
             collection(db, 'wordCompleted'),
-            where('studentId', '==', studentId)
-          )
+            where('studentId', '==', studentId),
+          ),
         ),
         getDocs(
           query(
             collection(db, 'miscueReports'),
-            where('studentId', '==', studentId)
-          )
+            where('studentId', '==', studentId),
+          ),
         ),
       ]);
 
@@ -331,17 +341,15 @@ export const MiscueReportController = {
       );
 
       const completedWords: Record<string, Set<string>> = {};
-      wordsSnap.docs.forEach((doc: QDS) => {
-        const data = doc.data();
-        const letter = data.letter as string;
-        const word = data.word as string;
+      wordsSnap.docs.forEach((d: QDS) => {
+        const { letter, word } = d.data() as { letter: string; word: string };
         if (!completedWords[letter]) completedWords[letter] = new Set();
         completedWords[letter].add(word);
       });
 
       const completedPassages = new Set<string>();
-      reportSnap.docs.forEach((doc: QDS) => {
-        const data = doc.data();
+      reportSnap.docs.forEach((d: QDS) => {
+        const data = d.data();
         if ((data.accuracyRate || 0) >= 90) {
           completedPassages.add(data.passageTitle as string);
         }
@@ -359,13 +367,12 @@ export const MiscueReportController = {
   },
 
   // ================= DEBUG HELPER =================
-  async debugCheckReports(studentId: string) {
-    const db = getFirestore();
+  async debugCheckReports(studentId: string): Promise<void> {
     const snapshot = await getDocs(
       query(
         collection(db, 'miscueReports'),
-        where('studentId', '==', studentId)
-      )
+        where('studentId', '==', studentId),
+      ),
     );
 
     console.log(
@@ -374,14 +381,14 @@ export const MiscueReportController = {
     );
   },
 
+  // ================= STUDENT READING STATS =================
   async getStudentReadingStats(studentId: string) {
     try {
-      const db = getFirestore();
       const snapshot = await getDocs(
         query(
           collection(db, 'miscueReports'),
-          where('studentId', '==', studentId)
-        )
+          where('studentId', '==', studentId),
+        ),
       );
 
       if (snapshot.empty) {
@@ -395,61 +402,54 @@ export const MiscueReportController = {
       }
 
       let totalAccuracy = 0;
-
       const miscueTypeCount: Record<string, number> = {
         substitution: 0,
         omission: 0,
         insertion: 0,
         repetition: 0,
       };
-
       const wordFrequency: Record<string, number> = {};
       const passageMap: Record<string, { total: number; attempts: number }> =
         {};
 
-      snapshot.docs.forEach((doc: QDS) => {
-        const data = doc.data();
-
+      snapshot.docs.forEach((d: QDS) => {
+        const data = d.data();
         totalAccuracy += data.accuracyRate || 0;
 
-        // Count miscues
         miscueTypeCount.substitution += data.substitutionCount || 0;
         miscueTypeCount.omission += data.omissionCount || 0;
         miscueTypeCount.insertion += data.insertionCount || 0;
         miscueTypeCount.repetition += data.repetitionCount || 0;
 
-        // Count words
         if (data.miscues) {
-          data.miscues.forEach((m: any) => {
-            const word = m.expected || m.spoken;
-            if (!word) return;
-            wordFrequency[word] = (wordFrequency[word] || 0) + 1;
-          });
+          data.miscues.forEach(
+            (m: { expectedWord?: string; spokenWord?: string }) => {
+              // FIX: was `m.expected || m.spoken` — data is stored as expectedWord / spokenWord
+              const word = m.expectedWord || m.spokenWord;
+              if (!word) return;
+              wordFrequency[word] = (wordFrequency[word] || 0) + 1;
+            },
+          );
         }
 
-        // Passage performance
         const title = data.passageTitle || 'Unknown';
-        if (!passageMap[title]) {
-          passageMap[title] = { total: 0, attempts: 0 };
-        }
+        if (!passageMap[title]) passageMap[title] = { total: 0, attempts: 0 };
         passageMap[title].total += data.accuracyRate || 0;
         passageMap[title].attempts += 1;
       });
 
       const totalAttempts = snapshot.docs.length;
 
-      // Get top miscue type
       const topMiscueType =
-        Object.entries(miscueTypeCount).sort((a: [string, number], b: [string, number]) => b[1] - a[1])[0]?.[0] ||
-        'None';
+        Object.entries(miscueTypeCount).sort(
+          (a: [string, number], b: [string, number]) => b[1] - a[1],
+        )[0]?.[0] || 'None';
 
-      // Get most common words
       const mostCommonMiscueWords = Object.entries(wordFrequency)
         .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
         .slice(0, 5)
         .map(([word, count]) => ({ word, count }));
 
-      // Passage performance array
       const passagePerformance = Object.entries(passageMap).map(
         ([title, val]) => ({
           title,
@@ -471,20 +471,19 @@ export const MiscueReportController = {
     }
   },
 
+  // ================= PROGRESS OVER TIME =================
   async getStudentProgressOverTime(studentId: string) {
     try {
-      const db = getFirestore();
       const snapshot = await getDocs(
         query(
           collection(db, 'miscueReports'),
           where('studentId', '==', studentId),
-          orderBy('timestamp', 'asc')
-        )
+          orderBy('timestamp', 'asc'),
+        ),
       );
 
-      return snapshot.docs.map((doc: QDS) => {
-        const data = doc.data();
-
+      return snapshot.docs.map((d: QDS) => {
+        const data = d.data();
         return {
           date: data.timestamp?.toDate?.().toISOString() || '',
           accuracy: Number((data.accuracyRate || 0).toFixed(2)),
@@ -501,12 +500,11 @@ export const MiscueReportController = {
   // ================= ALPHABET MASTERY ANALYTICS =================
   async getAlphabetMasteryData(studentId: string) {
     try {
-      const db = getFirestore();
       const snap = await getDocs(
         query(
           collection(db, 'alphabetCompleted'),
-          where('studentId', '==', studentId)
-        )
+          where('studentId', '==', studentId),
+        ),
       );
 
       const masteredLetters = snap.docs.map((d: QDS) => ({
@@ -522,22 +520,20 @@ export const MiscueReportController = {
     }
   },
 
-  // Returns letters first mastered within [startDate, endDate].
-  // Requires Firestore composite index: alphabetCompleted [studentId ASC, createdAt ASC].
+  // Requires Firestore composite index: alphabetCompleted [studentId ASC, createdAt ASC]
   async getAlphabetMasteryByDateRange(
     studentId: string,
     startDate: Date,
     endDate: Date,
   ): Promise<Array<{ letter: string; timestamp: Date }>> {
     try {
-      const db = getFirestore();
       const snap = await getDocs(
         query(
           collection(db, 'alphabetCompleted'),
           where('studentId', '==', studentId),
           where('createdAt', '>=', Timestamp.fromDate(startDate)),
-          where('createdAt', '<=', Timestamp.fromDate(endDate))
-        )
+          where('createdAt', '<=', Timestamp.fromDate(endDate)),
+        ),
       );
 
       return snap.docs.map((d: QDS) => ({
@@ -555,12 +551,11 @@ export const MiscueReportController = {
     studentId: string,
   ): Promise<Array<{ letter: string; timestamp: Date }>> {
     try {
-      const db = getFirestore();
       const snap = await getDocs(
         query(
           collection(db, 'alphabetCompleted'),
-          where('studentId', '==', studentId)
-        )
+          where('studentId', '==', studentId),
+        ),
       );
 
       return snap.docs.map((d: QDS) => ({
@@ -577,12 +572,11 @@ export const MiscueReportController = {
   // ================= WORD MASTERY ANALYTICS =================
   async getWordMasteryData(studentId: string) {
     try {
-      const db = getFirestore();
       const wordSnap = await getDocs(
         query(
           collection(db, 'wordCompleted'),
-          where('studentId', '==', studentId)
-        )
+          where('studentId', '==', studentId),
+        ),
       );
 
       const masteredWords = wordSnap.docs.map((d: QDS) => ({
@@ -599,22 +593,20 @@ export const MiscueReportController = {
     }
   },
 
-  // Returns words first mastered within [startDate, endDate].
-  // Requires Firestore composite index: wordCompleted [studentId ASC, createdAt ASC].
+  // Requires Firestore composite index: wordCompleted [studentId ASC, createdAt ASC]
   async getWordMasteryByDateRange(
     studentId: string,
     startDate: Date,
     endDate: Date,
   ): Promise<Array<{ word: string; letter: string; timestamp: Date }>> {
     try {
-      const db = getFirestore();
       const snap = await getDocs(
         query(
           collection(db, 'wordCompleted'),
           where('studentId', '==', studentId),
           where('createdAt', '>=', Timestamp.fromDate(startDate)),
-          where('createdAt', '<=', Timestamp.fromDate(endDate))
-        )
+          where('createdAt', '<=', Timestamp.fromDate(endDate)),
+        ),
       );
 
       return snap.docs.map((d: QDS) => ({
@@ -633,12 +625,11 @@ export const MiscueReportController = {
     studentId: string,
   ): Promise<Array<{ word: string; letter: string }>> {
     try {
-      const db = getFirestore();
       const snap = await getDocs(
         query(
           collection(db, 'wordCompleted'),
-          where('studentId', '==', studentId)
-        )
+          where('studentId', '==', studentId),
+        ),
       );
 
       return snap.docs.map((d: QDS) => ({
