@@ -129,6 +129,7 @@ export interface MiscueReportDocument {
   totalWords: number;
   accuracyRate: number;
   wordPerMin: number;
+  wordCorrectPerMin: number;
   recordingDuration?: string;
 
   substitutionCount: number;

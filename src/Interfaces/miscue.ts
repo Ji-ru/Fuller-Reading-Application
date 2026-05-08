@@ -89,6 +89,7 @@ export interface OverAllStudentTopMiscue {
 export interface AverageWPMandAccuracy {
   averageAccuracy: number;
   averageWPM: number;
+  averageWCPM: number;
   totalReports: number;
   totalStudents: number;
 }
@@ -114,6 +115,7 @@ export interface StudentReadingStatus {
   status: 'fluent' | 'developing' | 'emerging' | 'atRisk' | 'insufficientData';
   averageAccuracy: number;
   averageWPM: number;
+  averageWCPM?: number;
   miscueDensity: number; // miscues per 100 words
   trend: 'improving' | 'stable' | 'declining';
   classificationScore?: number;
@@ -222,11 +224,13 @@ export interface ProgressData {
   date: string;
   accuracy: number;
   wpm: number;
+  wcpm: number;
 }
 
 export interface StudentProgressResult {
   timeline: ProgressData[];
   averageWPM: number;
+  averageWCPM: number;
   averageAccuracy: number;
   totalWords: number;
 }

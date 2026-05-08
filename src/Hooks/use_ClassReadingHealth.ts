@@ -7,10 +7,13 @@ import { ClassReadingHealth, StudentReadingStatus } from '../Interfaces/miscue';
 const db = getFirestore();
 
 // --- THRESHOLDS & CONSTANTS ---
-const defaultThresholds = {
-  fluentAccuracy: 95,
-  developingAccuracy: 85,
-  emergingAccuracy: 70,
+const SCORING_CONFIG = {
+  accuracy: {
+    fluent: 92,
+    developing: 85,
+    emerging: 70,
+    guardrail: 50, // Below this is automatic At-Risk
+  },
   fluentWPM: (grade: number) => ({ 1: 60, 2: 90, 3: 110 }[grade] || 60),
   developingWPM: (grade: number) => ({ 1: 40, 2: 65, 3: 85 }[grade] || 40),
   emergingWPM: (grade: number) => ({ 1: 20, 2: 40, 3: 60 }[grade] || 20),
@@ -99,11 +102,15 @@ const calculateMiscueScore = (density: number, avgPassageLength: number): number
 // --- MAIN CLASSIFICATION LOGIC ---
 const determineStatus = (finalScore: number, avgAccuracy: number, sufficientData: boolean): any => {
   if (!sufficientData) return 'insufficientData';
-  if (avgAccuracy < 70) return 'atRisk'; // Strict Guardrail
+  
+  // Use the config guardrail instead of hardcoded 70
+  if (avgAccuracy < SCORING_CONFIG.accuracy.guardrail) return 'atRisk'; 
 
-  if (finalScore >= 88) return 'fluent';
-  if (finalScore >= 75) return 'developing';
-  if (finalScore >= 55) return 'emerging';
+  // Use the config thresholds instead of hardcoded 88, 75, 55
+  if (finalScore >= SCORING_CONFIG.accuracy.fluent) return 'fluent';
+  if (finalScore >= SCORING_CONFIG.accuracy.developing) return 'developing';
+  if (finalScore >= SCORING_CONFIG.accuracy.emerging) return 'emerging';
+  
   return 'atRisk';
 };
 
@@ -124,7 +131,7 @@ const classifyStudent = (reports: MiscueReportDocument[], gradeLevel: number): S
 
   // Scoring logic
   const accuracyScore = avgAccuracy;
-  const wpmScore = Math.min(100, (avgWPM / defaultThresholds.fluentWPM(gradeLevel)) * 100);
+  const wpmScore = Math.min(100, (avgWPM / SCORING_CONFIG.fluentWPM(gradeLevel)) * 100);
   const miscueScore = calculateMiscueScore(avgMiscueDensity, avgLength);
 
   let finalScore = (accuracyScore * 0.5) + (wpmScore * 0.3) + (miscueScore * 0.2);

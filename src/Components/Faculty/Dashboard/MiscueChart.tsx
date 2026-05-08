@@ -129,7 +129,7 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   const miscueData = hookMiscueData || [];
   const totalMiscues = miscueData.reduce((sum, item) => sum + item.count, 0);
   const maxMiscueCount = miscueData.length > 0 ? Math.max(...miscueData.map(d => d.count), 1) : 1;
-  const averages = hookAverages || { averageAccuracy: 0, averageWPM: 0, totalStudents: 0 };
+  const averages = hookAverages || { averageAccuracy: 0, averageWPM: 0, averageWCPM: 0, totalStudents: 0 };
   const totalStudentsForWords = totalStudentsInClass ?? averages.totalStudents;
 
   let passage: TopMiscuedPassage | null = null;
@@ -194,6 +194,11 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
               <View style={S.statItem}>
                 <Text style={S.statValue}>{averages.averageWPM}</Text>
                 <Text style={S.statLabel}>Avg. WPM</Text>
+              </View>
+              <View style={S.statDivider} />
+              <View style={S.statItem}>
+                <Text style={S.statValue}>{averages.averageWCPM}</Text>
+                <Text style={S.statLabel}>Avg. WCPM</Text>
               </View>
               <View style={S.statDivider} />
               <View style={S.statItem}>

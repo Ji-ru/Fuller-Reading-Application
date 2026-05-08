@@ -501,6 +501,7 @@ const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
       );
       let totalStudentAverageAccuracy = 0;
       let totalStudentAverageWPM = 0;
+      let totalStudentAverageWCPM = 0;
       let totalStudentsWithReports = 0;
       let totalStudents = 0;
       let totalReports = 0;
@@ -528,14 +529,20 @@ const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
             (sum, report) => sum + (report.wordPerMin || 0),
             0,
           );
+          const studentTotalWCPM = reports.reduce(
+            (sum, report) => sum + (report.wordCorrectPerMin || 0),
+            0,
+          );
 
           const studentAverageAccuracy =
             studentTotalAccuracy / studentReportsCount;
           const studentAverageWPM = studentTotalWPM / studentReportsCount;
+          const studentAverageWCPM = studentTotalWCPM / studentReportsCount;
 
           // Add this student's averages to the overall totals
           totalStudentAverageAccuracy += studentAverageAccuracy;
           totalStudentAverageWPM += studentAverageWPM;
+          totalStudentAverageWCPM += studentAverageWCPM;
           totalStudentsWithReports++;
         }
 
@@ -559,9 +566,17 @@ const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
             )
           : 0;
 
+      const averageWCPM =
+        totalStudentsWithReports > 0
+          ? parseFloat(
+              (totalStudentAverageWCPM / totalStudentsWithReports).toFixed(2),
+            )
+          : 0;
+
       return {
         averageAccuracy,
         averageWPM,
+        averageWCPM,
         totalReports,
         totalStudents: processedStudents.size,
       };

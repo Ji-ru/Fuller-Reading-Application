@@ -58,6 +58,7 @@ export const MiscueReportController = {
     miscues: Miscue[],
     accuracy: number,
     wordPerMin: number,
+    wordCorrectPerMin: number,
     totalWords: number,
     recordingDuration?: string,
   ): Promise<string> {
@@ -106,6 +107,7 @@ export const MiscueReportController = {
         totalWords: totalWords,
         accuracyRate: accuracy,
         wordPerMin: wordPerMin,
+        wordCorrectPerMin: wordCorrectPerMin,
         recordingDuration: recordingDuration,
 
         substitutionCount: miscues.filter(m => m.type === 'substitution')
@@ -1010,7 +1012,13 @@ export const MiscueReportController = {
         0,
       );
 
+      const totalWCPM = filteredReports.reduce(
+        (sum, report) => sum + (report.wordCorrectPerMin || 0),
+        0,
+      );
+
       const averageWPM = totalWPM / filteredReports.length;
+      const averageWCPM = totalWCPM / filteredReports.length;
       const averageAccuracy = totalAccuracy / filteredReports.length;
 
       // Step 5: Generate timeline - USING THE CONSISTENT APPROACH
@@ -1025,6 +1033,7 @@ export const MiscueReportController = {
       return {
         timeline,
         averageWPM,
+        averageWCPM,
         averageAccuracy,
         totalWords,
       };
@@ -1053,7 +1062,7 @@ export const MiscueReportController = {
     // Step 2: Group reports by period
     const periodData = new Map<
       string,
-      { accuracySum: number; wpmSum: number; count: number }
+      { accuracySum: number; wpmSum: number; wcpmSum: number; count: number }
     >();
 
     for (const report of reports) {
@@ -1074,11 +1083,13 @@ export const MiscueReportController = {
       if (existing) {
         existing.accuracySum += report.accuracyRate;
         existing.wpmSum += report.wordPerMin;
+        existing.wcpmSum += report.wordCorrectPerMin || 0;
         existing.count += 1;
       } else {
         periodData.set(periodKey, {
           accuracySum: report.accuracyRate,
           wpmSum: report.wordPerMin,
+          wcpmSum: report.wordCorrectPerMin || 0,
           count: 1,
         });
       }
@@ -1093,6 +1104,7 @@ export const MiscueReportController = {
           date: period.displayDate,
           accuracy: data.accuracySum / data.count,
           wpm: data.wpmSum / data.count,
+          wcpm: data.wcpmSum / data.count,
         };
       }
 
@@ -1100,6 +1112,7 @@ export const MiscueReportController = {
         date: period.displayDate,
         accuracy: 0,
         wpm: 0,
+        wcpm: 0,
       };
     });
   },

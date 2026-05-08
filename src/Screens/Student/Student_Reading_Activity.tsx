@@ -61,6 +61,7 @@ export default function ReadingActivityScreenPage() {
 
   // Calculate words per minute (simplified - you'll need to implement this properly)
   const [wordPerMin, setWordPerMin] = useState(0);
+  const [wordCorrectPerMin, setWordCorrectPerMin] = useState(0);
   const [recordingDuration, setRecordingDuration] = useState(0); // In seconds
   const [hasStoredReport, setHasStoredReport] = useState(false);
 
@@ -237,6 +238,7 @@ export default function ReadingActivityScreenPage() {
     setIsCorrectAttempt(false);
     setRecordingDuration(0);
     setWordPerMin(0);
+    setWordCorrectPerMin(0);
 
     // Play Global Music again when returning to reading screen
     playMusic();
@@ -421,19 +423,19 @@ export default function ReadingActivityScreenPage() {
       }
       // const transcription = await processAudioWithGoogle(audioFile);
       // const transcription = await processAudioWithAssemblyAI(audioFile);
-      const transcription = await processAudioWithDeepgram(audioFile);
+      // const transcription = await processAudioWithDeepgram(audioFile);
       // const transcription = await processAudioWithPuter(audioFile);
       // const transcription = await processAudioWithWav2Vec2(audioFile);
-      // const transcription = await processAudioWithHubert(audioFile);
+      const transcription = await processAudioWithHubert(audioFile);
       // const transcription = await processAudioWithWhisper(audioFile);
-      setSpokenText(transcription.fulltext);
-      console.log('THIS IS THE SPOKEN: ' + transcription.fulltext);
+      setSpokenText(transcription);
+      console.log('THIS IS THE SPOKEN: ' + transcription);
       // console.log('THIS IS THE UTTERANCES: ' + transcription);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      await analyzeReading(transcription.fulltext, duration);
+      await analyzeReading(transcription, duration);
       setIsReadingCompleted(true);
     } catch (error) {
       // Fallback on error: 0% accuracy instead of 100% simulated response
@@ -445,7 +447,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithDeepgram, getSimulatedResponse, targetText]);
+  }, [processAudioWithHubert, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:
@@ -504,6 +506,25 @@ export default function ReadingActivityScreenPage() {
 
     const minutes = durationSeconds / 60;
     return Math.round(totalWords / minutes);
+  }, []);
+
+  /**
+   * Calculates the Word Correct Per Minute (WCPM) given total passage words, miscue count, and duration.
+   * @param totalPassageWords - Total words in the passage
+   * @param miscueCount - Number of errors (omissions and substitutions)
+   * @param durationSeconds - Duration in seconds
+   * @returns {number} Words correct per minute
+   */
+  const calculateWCPM = useCallback((
+    totalPassageWords: number,
+    miscueCount: number,
+    durationSeconds: number,
+  ): number => {
+    if (totalPassageWords <= 0 || durationSeconds <= 0) return 0;
+
+    const correctWords = Math.max(0, totalPassageWords - miscueCount);
+    const minutes = durationSeconds / 60;
+    return Math.round(correctWords / minutes);
   }, []);
 
   /**
@@ -706,10 +727,17 @@ export default function ReadingActivityScreenPage() {
       const wpm = calculateWordsPerMin(totalWords, duration);
       setWordPerMin(wpm);
 
-      console.log('This is WPM: ' + wpm);
+      // Calculate WCPM
+      const errorCount = detectedMiscues.filter(
+        m => m.type === 'substitution' || m.type === 'omission'
+      ).length;
+      const wcpm = calculateWCPM(totalWords, errorCount, duration);
+      setWordCorrectPerMin(wcpm);
+
+      console.log('This is WPM: ' + wpm + ' | WCPM: ' + wcpm);
       // To avoid duplication it needs to check if it was already stored 
       if (!hasStoredReport && duration > 0) {
-        await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
+        await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm, wcpm);
       }
     }
 
@@ -842,6 +870,7 @@ export default function ReadingActivityScreenPage() {
     duration: number,
     miscues: Miscue[],
     wpm: number,
+    wcpm: number,
   ) => {
     try {
       // Restriction: if duration is < 1s (0:00), don't store
@@ -863,6 +892,7 @@ export default function ReadingActivityScreenPage() {
         miscueCount: miscues.length,
         accuracy: accuracyNum,
         wpm: wpm,
+        wcpm: wcpm,
         duration: formattedDuration,
       });
 
@@ -872,6 +902,7 @@ export default function ReadingActivityScreenPage() {
         miscues,
         accuracyNum,
         wpm,
+        wcpm,
         totalWords,
         formattedDuration
       );
@@ -930,41 +961,6 @@ export default function ReadingActivityScreenPage() {
                 onLogout={handleLogout}
                 menuVisible={menuVisible}
               />
-
-              {/* Screen Title */}
-              {/* {!isReadingCompleted ? (<Svg height={60} width={400}>
-              <SvgText
-                x={190}                 // center X
-                y={35}                  // baseline Y
-                fontSize={40}
-                fontFamily="DynaPuff-Bold"
-                textAnchor="middle"     // center align
-                fill="none"          // inside color
-                stroke="#D7E9FF"        // outline color
-                strokeWidth={8}         // outline thickness
-                strokeLinejoin='round'
-              >
-                {type === 'alphabet'
-                  ? 'Alphabet Reading'
-                  : type === 'word'
-                    ? 'Word Reading'
-                    : 'Passage Reading'}
-              </SvgText>
-              <SvgText
-                x={190}
-                y={35}
-                fontSize={40}
-                fontFamily="DynaPuff-Bold"
-                textAnchor="middle"
-                fill="#3B7FC9"
-              >
-                {type === 'alphabet'
-                  ? 'Alphabet Reading'
-                  : type === 'word'
-                    ? 'Word Reading'
-                    : 'Passage Reading'}
-              </SvgText>
-            </Svg>): null} */}
 
               <PassageDisplay
                 material={readingMaterial}
