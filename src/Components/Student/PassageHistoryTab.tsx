@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import { StudentColors as C, Radii, Shadows, ACCENT_COLORS } from '../../Utilities/Theme';
-import { DUMMY_REPORTS } from '../../Utilities/DummyPerformanceData'; // DUMMY DATA
 import DateFilter, { TimeFilterType, SubPeriodFilter } from './DateFilter';
 import { getDateRange } from '../../Utilities/analyticsDateHelpers';
 import { BounceIn } from '../GlobalUse/Animations';
@@ -30,7 +29,7 @@ interface PassageGroup {
 }
 
 export default function PassageHistoryTab({ reports: realReports, onStartReading }: PassageHistoryTabProps) {
-  const reports = [...(realReports || []), ...DUMMY_REPORTS]; // MERGED DUMMY DATA
+  const reports = realReports || [];
   const [timeFilter, setTimeFilter] = useState<TimeFilterType>('week');
   const [periodOffset, setPeriodOffset] = useState<number>(0);
   const [selectedSubFilter, setSelectedSubFilter] = useState<SubPeriodFilter | null>(null);

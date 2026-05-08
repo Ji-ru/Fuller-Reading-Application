@@ -1,29 +1,48 @@
-
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
-import { ActivityDocument, ActivityResultDocument } from '../Interfaces/dataInterfaces';
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+} from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
+import {
+  ActivityDocument,
+  ActivityResultDocument,
+} from '../Interfaces/dataInterfaces';
 
 export class AssessmentController {
-  private static activitiesCollection = firestore().collection('activities');
-  private static resultsCollection = firestore().collection('activityResults');
-
   /**
    * Create a new assessment activity
    */
-  static async createActivity(data: Omit<ActivityDocument, 'activityId' | 'facultyId' | 'createdAt' | 'isActive'>) {
-    const user = auth().currentUser;
+  static async createActivity(
+    data: Omit<
+      ActivityDocument,
+      'activityId' | 'facultyId' | 'createdAt' | 'isActive'
+    >,
+  ) {
+    const auth = getAuth();
+    const user = auth.currentUser;
     if (!user) throw new Error('Unauthorized');
 
-    const activityRef = this.activitiesCollection.doc();
+    const db = getFirestore();
+    const activityRef = doc(collection(db, 'activities'));
     const newActivity: ActivityDocument = {
       ...data,
       activityId: activityRef.id,
       facultyId: user.uid,
-      createdAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
       isActive: true,
     };
 
-    await activityRef.set(newActivity);
+    await setDoc(activityRef, newActivity);
     return newActivity;
   }
 
@@ -31,21 +50,38 @@ export class AssessmentController {
    * Get activities for a specific faculty member
    */
   static async getFacultyActivities(classCode?: string) {
-    const user = auth().currentUser;
+    const auth = getAuth();
+    const user = auth.currentUser;
     if (!user) return [];
 
-    let query = this.activitiesCollection.where('facultyId', '==', user.uid);
+    const db = getFirestore();
+    const constraints: any[] = [where('facultyId', '==', user.uid)];
     if (classCode) {
-      query = query.where('classCode', '==', classCode);
+      constraints.push(where('classCode', '==', classCode));
     }
 
     try {
-      const snapshot = await query.orderBy('createdAt', 'desc').get();
-      return snapshot.docs.map(doc => doc.data() as ActivityDocument);
+      const snapshot = await getDocs(
+        query(
+          collection(db, 'activities'),
+          ...constraints,
+          orderBy('createdAt', 'desc') as any,
+        ),
+      );
+      return snapshot.docs.map(
+        (doc: any) => doc.data() as ActivityDocument,
+      );
     } catch (e) {
-      console.warn("Index not found or query error, falling back to unordered:", e);
-      const snapshot = await query.get();
-      return snapshot.docs.map(doc => doc.data() as ActivityDocument);
+      console.warn(
+        'Index not found or query error, falling back to unordered:',
+        e,
+      );
+      const snapshot = await getDocs(
+        query(collection(db, 'activities'), ...constraints),
+      );
+      return snapshot.docs.map(
+        (doc: any) => doc.data() as ActivityDocument,
+      );
     }
   }
 
@@ -53,17 +89,31 @@ export class AssessmentController {
    * Get activities for a specific class (Student perspective)
    */
   static async getStudentActivities(classCode: string) {
-    const query = this.activitiesCollection
-      .where('classCode', '==', classCode)
-      .where('isActive', '==', true);
+    const db = getFirestore();
+    const constraints: any[] = [
+      where('classCode', '==', classCode),
+      where('isActive', '==', true),
+    ];
 
     try {
-      const snapshot = await query.orderBy('createdAt', 'desc').get();
-      return snapshot.docs.map(doc => doc.data() as ActivityDocument);
+      const snapshot = await getDocs(
+        query(
+          collection(db, 'activities'),
+          ...constraints,
+          orderBy('createdAt', 'desc') as any,
+        ),
+      );
+      return snapshot.docs.map(
+        (doc: any) => doc.data() as ActivityDocument,
+      );
     } catch (e) {
-      console.warn("Index not found or student query error:", e);
-      const snapshot = await query.get();
-      return snapshot.docs.map(doc => doc.data() as ActivityDocument);
+      console.warn('Index not found or student query error:', e);
+      const snapshot = await getDocs(
+        query(collection(db, 'activities'), ...constraints),
+      );
+      return snapshot.docs.map(
+        (doc: any) => doc.data() as ActivityDocument,
+      );
     }
   }
 
@@ -71,31 +121,39 @@ export class AssessmentController {
    * Delete an activity
    */
   static async deleteActivity(activityId: string) {
-    await this.activitiesCollection.doc(activityId).delete();
+    const db = getFirestore();
+    await deleteDoc(doc(collection(db, 'activities'), activityId));
   }
 
   /**
    * Get a single activity by ID
    */
   static async getActivity(activityId: string) {
-    const doc = await this.activitiesCollection.doc(activityId).get();
-    if (!doc.exists) return null;
-    return doc.data() as ActivityDocument;
+    const db = getFirestore();
+    const docSnap = await getDoc(doc(collection(db, 'activities'), activityId));
+    if (!docSnap.exists()) return null;
+    return docSnap.data() as ActivityDocument;
   }
 
   /**
    * Submit activity result
    */
   static async submitResult(
-    activityId: string, 
-    score: number, 
-    total: number, 
-    responses?: { contentId: string, isCorrect: boolean, type: 'alphabet' | 'word' | 'passage' }[]
+    activityId: string,
+    score: number,
+    total: number,
+    responses?: {
+      contentId: string;
+      isCorrect: boolean;
+      type: 'alphabet' | 'word' | 'passage';
+    }[],
   ) {
-    const user = auth().currentUser;
+    const auth = getAuth();
+    const user = auth.currentUser;
     if (!user) throw new Error('Unauthorized');
 
-    const resultRef = this.resultsCollection.doc();
+    const db = getFirestore();
+    const resultRef = doc(collection(db, 'activityResults'));
     const percentage = Math.round((score / total) * 100);
 
     const result: ActivityResultDocument = {
@@ -105,11 +163,11 @@ export class AssessmentController {
       score,
       totalItems: total,
       percentage,
-      completedAt: firestore.FieldValue.serverTimestamp(),
-      responses
+      completedAt: serverTimestamp(),
+      responses,
     };
 
-    await resultRef.set(result);
+    await setDoc(resultRef, result);
     return result;
   }
 
@@ -117,18 +175,25 @@ export class AssessmentController {
    * Get results for an activity (Faculty perspective)
    */
   static async getActivityResults(activityId: string) {
-    const snapshot = await this.resultsCollection
-      .where('activityId', '==', activityId)
-      .get();
-      
-    return snapshot.docs.map(doc => doc.data() as ActivityResultDocument);
+    const db = getFirestore();
+    const snapshot = await getDocs(
+      query(
+        collection(db, 'activityResults'),
+        where('activityId', '==', activityId),
+      ),
+    );
+
+    return snapshot.docs.map(
+      (doc: any) => doc.data() as ActivityResultDocument,
+    );
   }
 
   /**
    * Check if student has completed an activity (Current User)
    */
   static async getStudentResult(activityId: string) {
-    const user = auth().currentUser;
+    const auth = getAuth();
+    const user = auth.currentUser;
     if (!user) return null;
     return this.getStudentResultForUser(activityId, user.uid);
   }
@@ -137,12 +202,16 @@ export class AssessmentController {
    * Check if student has completed an activity (Specified User)
    */
   static async getStudentResultForUser(activityId: string, studentId: string) {
-    const snapshot = await this.resultsCollection
-      .where('activityId', '==', activityId)
-      .where('studentId', '==', studentId)
-      .limit(1)
-      .get();
-      
+    const db = getFirestore();
+    const snapshot = await getDocs(
+      query(
+        collection(db, 'activityResults'),
+        where('activityId', '==', activityId),
+        where('studentId', '==', studentId),
+        limit(1),
+      ),
+    );
+
     if (snapshot.empty) return null;
     return snapshot.docs[0].data() as ActivityResultDocument;
   }

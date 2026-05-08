@@ -76,16 +76,56 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
     error,
   } = use_StudentAccuracySpeedTrends(studentId, timeFilter, periodOffset, reports);
 
+  // ── Display values derived from sub-filter (or overall if none) ──────────
+  const { displayAccuracy, displayWpm, displayTrend, subFilterIsEmpty } = useMemo(() => {
+    if (selectedSubFilter && reports) {
+      const { start, end } = selectedSubFilter;
+      const subReports = reports.filter(r => {
+        const d = r.timestamp?.toDate?.() || new Date(r.timestamp);
+        return d >= start && d <= end;
+      });
+
+      if (subReports.length === 0) {
+        // Honor the user's selection — show empty rather than reverting to overall.
+        return {
+          displayAccuracy: 0,
+          displayWpm: 0,
+          displayTrend: { dir: 'same' as const, pct: 0 },
+          subFilterIsEmpty: true,
+        };
+      }
+
+      const validAcc = subReports.filter(r => (r.accuracyRate || 0) > 0);
+      const validWpm = subReports.filter(r => (r.wordPerMin || 0) > 0);
+      const subAcc = validAcc.length > 0 ? validAcc.reduce((s, r) => s + r.accuracyRate, 0) / validAcc.length : 0;
+      const subWpm = validWpm.length > 0 ? validWpm.reduce((s, r) => s + r.wordPerMin, 0) / validWpm.length : 0;
+
+      return {
+        displayAccuracy: subAcc,
+        displayWpm: subWpm,
+        displayTrend: { dir: 'same' as const, pct: 0 },
+        subFilterIsEmpty: false,
+      };
+    }
+
+    return {
+      displayAccuracy: avgAccuracy,
+      displayWpm: avgWpm,
+      displayTrend: { dir: accDir, pct: accPct },
+      subFilterIsEmpty: false,
+    };
+  }, [selectedSubFilter, reports, avgAccuracy, avgWpm, accDir, accPct]);
+
   // ── Insight text ──
   const insight = useMemo(() => {
-    const pct = Math.abs(accPct).toFixed(1);
-    if (accDir === 'up') return `Ang accuracy ay tumaas ng ${pct}% sa panahong ito.`;
-    if (accDir === 'down') return `Ang accuracy ay bumaba ng ${pct}%. Subukang mag-review.`;
+    const pct = Math.abs(displayTrend.pct).toFixed(1);
+    if (displayTrend.dir === 'up') return `Ang accuracy ay tumaas ng ${pct}% sa panahong ito.`;
+    if (displayTrend.dir === 'down') return `Ang accuracy ay bumaba ng ${pct}%. Subukang mag-review.`;
     return 'Ang reading accuracy ay nananatiling consistent.';
-  }, [accDir, accPct]);
+  }, [displayTrend]);
 
-  const trendColor = accDir === 'up' ? GREEN : accDir === 'down' ? CORAL : INK_LIGHT;
-  const trendIcon = accDir === 'up' ? '▲' : accDir === 'down' ? '▼' : '—';
+  const trendColor = displayTrend.dir === 'up' ? GREEN : displayTrend.dir === 'down' ? CORAL : INK_LIGHT;
+  const trendIcon = displayTrend.dir === 'up' ? '▲' : displayTrend.dir === 'down' ? '▼' : '—';
 
   const hasData = chartData.some(d => d.accuracy > 0);
 
@@ -110,7 +150,7 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
   }
 
   // ── State: Empty ──
-  if (!hasData) {
+  if (!hasData || subFilterIsEmpty) {
     return (
       <View style={S.emptyBox}>
         <Text style={S.emptyIcon}>📊</Text>
@@ -124,18 +164,18 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
       {/* ── Summary Stats ─────────────────────────────────────── */}
       <View style={S.summaryRow}>
         <View style={S.summaryItem}>
-          <Text style={S.summaryValue}>{avgAccuracy.toFixed(1)}%</Text>
+          <Text style={S.summaryValue}>{displayAccuracy.toFixed(1)}%</Text>
           <Text style={S.summaryLabel}>Avg Accuracy</Text>
         </View>
         <View style={S.summaryDivider} />
         <View style={S.summaryItem}>
-          <Text style={S.summaryValue}>{avgWpm.toFixed(0)}</Text>
+          <Text style={S.summaryValue}>{displayWpm.toFixed(0)}</Text>
           <Text style={S.summaryLabel}>Avg WPM</Text>
         </View>
         <View style={S.summaryDivider} />
         <View style={S.summaryItem}>
           <Text style={[S.summaryValue, { color: trendColor }]}>
-            {trendIcon} {Math.abs(accPct).toFixed(1)}%
+            {trendIcon} {selectedSubFilter ? 'N/A' : `${Math.abs(displayTrend.pct).toFixed(1)}%`}
           </Text>
           <Text style={S.summaryLabel}>Trend</Text>
         </View>
@@ -159,15 +199,11 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
         if (!benchmark) return null;
 
         // Strict evaluation based on selected sub-filter
-        let latestAcc = avgAccuracy;
-        let latestWpm = avgWpm;
+        let latestAcc = displayAccuracy;
+        let latestWpm = displayWpm;
         let isStrictEmpty = false;
 
         if (selectedSubFilter) {
-          // If the user selected a specific day/week, try to find it in chartData
-          // chartData items have a date range associated with them? Wait, chartData just has labels.
-          // But actually, we can just filter the raw reports passed in (or chartData if it matches)
-          // Since the chartData doesn't store full Date objects, let's filter `reports` directly!
           const { start, end } = selectedSubFilter;
           const subReports = (reports || []).filter(r => {
             const d = r.timestamp?.toDate?.() || new Date(r.timestamp);
@@ -176,12 +212,8 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
 
           if (subReports.length === 0) {
             isStrictEmpty = true;
-          } else {
-            const validAcc = subReports.filter(r => (r.accuracyRate || 0) > 0);
-            const validWpm = subReports.filter(r => (r.wordPerMin || 0) > 0);
-            latestAcc = validAcc.length > 0 ? validAcc.reduce((s, r) => s + r.accuracyRate, 0) / validAcc.length : 0;
-            latestWpm = validWpm.length > 0 ? validWpm.reduce((s, r) => s + r.wordPerMin, 0) / validWpm.length : 0;
           }
+          // latestAcc and latestWpm are already set by the new useEffect hook
         } else {
           // Use the latest data point for benchmark if available, otherwise fallback to average
           latestAcc = chartData.filter(d => d.accuracy > 0).pop()?.accuracy || avgAccuracy;
@@ -296,19 +328,19 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
       <View
         style={[
           S.insightBar,
-          accDir === 'up' ? { backgroundColor: GREEN_BG }
-            : accDir === 'down' ? { backgroundColor: CORAL_BG }
+          displayTrend.dir === 'up' ? { backgroundColor: GREEN_BG }
+            : displayTrend.dir === 'down' ? { backgroundColor: CORAL_BG }
               : { backgroundColor: PRIMARY_PALE },
         ]}
       >
         <Text style={S.insightIcon}>
-          {accDir === 'up' ? '📈' : accDir === 'down' ? '📉' : '📊'}
+          {displayTrend.dir === 'up' ? '📈' : displayTrend.dir === 'down' ? '📉' : '📊'}
         </Text>
         <Text
           style={[
             S.insightText,
             {
-              color: accDir === 'up' ? GREEN : accDir === 'down' ? CORAL : INK_LIGHT,
+              color: displayTrend.dir === 'up' ? GREEN : displayTrend.dir === 'down' ? CORAL : INK_LIGHT,
             },
           ]}
         >

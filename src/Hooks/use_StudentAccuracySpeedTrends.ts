@@ -157,7 +157,7 @@ export function use_StudentAccuracySpeedTrends(
         weekNum++;
       }
     } else {
-      // Group by month (academic year: Jun-Mar)
+      // Group by month (academic year: Jun-May, 12 months)
       const months = [
         'Hun',
         'Hul',
@@ -169,6 +169,8 @@ export function use_StudentAccuracySpeedTrends(
         'Ene',
         'Peb',
         'Mar',
+        'Abr',
+        'May',
       ];
       let startYear = globalStart.getFullYear();
 
@@ -238,7 +240,7 @@ export function use_StudentAccuracySpeedTrends(
       accDir,
       peakAccIdx,
     };
-  }, [allReports, timeFilter]);
+  }, [allReports, timeFilter, periodOffset]);
 
   return { ...result, loading, error };
 }

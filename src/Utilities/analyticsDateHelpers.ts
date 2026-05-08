@@ -30,13 +30,13 @@ export function getDateRange(
     };
   }
 
-  // Academic year: Jun 1 – Mar 31
+  // Academic year: Jun 1 – May 31 (full 12 months so summer data isn't dropped)
   let sy = now.getFullYear();
   if (now.getMonth() < 5) sy--;
   sy -= offset;
   return {
     start: new Date(sy, 5, 1, 0, 0, 0, 0),
-    end: new Date(sy + 1, 2, 31, 23, 59, 59, 999),
+    end: new Date(sy + 1, 4, 31, 23, 59, 59, 999),
   };
 }
 

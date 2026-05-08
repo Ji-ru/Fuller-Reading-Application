@@ -1,9 +1,20 @@
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+  getFirestore,
+  collection,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  doc,
+} from '@react-native-firebase/firestore';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
+type QDS = FirebaseFirestoreTypes.QueryDocumentSnapshot;
+import { getAuth } from '@react-native-firebase/auth';
 import { getFacultyClasses_Student } from '../Hooks/use_FacultyClasses_Students';
 import { AssessmentController } from './AssessmentController';
 import { MiscueReportController } from './MiscueReportController';
-import { ClassDocument, UserDocument, ActivityResultDocument } from '../Interfaces/dataInterfaces';
+import { ClassDocument, UserDocument, ActivityResultDocument, MiscueReportDocument, ActivityDocument } from '../Interfaces/dataInterfaces';
 import readingMaterialData from '../../assets/ReadingMaterial/ReadingMaterial.json';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -109,11 +120,14 @@ export const ReportController = {
 
     for (const chunk of chunks) {
       try {
-        const snap = await firestore()
-          .collection('activityResults')
-          .where('studentId', 'in', chunk)
-          .get();
-        snap.docs.forEach(doc => results.push(doc.data() as ActivityResultDocument));
+        const db = getFirestore();
+        const snap = await getDocs(
+          query(
+            collection(db, 'activityResults'),
+            where('studentId', 'in', chunk)
+          )
+        );
+        snap.docs.forEach((doc: QDS) => results.push(doc.data() as ActivityResultDocument));
       } catch (e) {
         console.warn('ReportController: result fetch error', e);
       }
@@ -135,11 +149,14 @@ export const ReportController = {
 
     for (const chunk of chunks) {
       try {
-        const snap = await firestore()
-          .collection('miscueReports')
-          .where('studentId', 'in', chunk)
-          .get();
-        snap.docs.forEach(doc => results.push(doc.data()));
+        const db = getFirestore();
+        const snap = await getDocs(
+          query(
+            collection(db, 'miscueReports'),
+            where('studentId', 'in', chunk)
+          )
+        );
+        snap.docs.forEach((doc: QDS) => results.push(doc.data()));
       } catch (e) {
         console.warn('ReportController: miscue fetch error', e);
       }
@@ -227,8 +244,8 @@ export const ReportController = {
           return false;
         });
 
-        aralinReports.forEach(r => {
-          r.miscues?.forEach(m => {
+        aralinReports.forEach((r: MiscueReportDocument) => {
+          r.miscues?.forEach((m: { expectedWord?: string; spokenWord?: string }) => {
             const w = m.expectedWord || m.spokenWord;
             if (w) aralinMistakeFreq[w] = (aralinMistakeFreq[w] || 0) + 1;
           });
@@ -268,14 +285,14 @@ export const ReportController = {
     const studentIds = students.map(s => s.uid);
     
     const activeActivities = await AssessmentController.getStudentActivities(classDoc.classCode);
-    const activeActivityIds = new Set(activeActivities.map(a => a.activityId));
+    const activeActivityIds = new Set(activeActivities.map((a:any) => a.activityId));
 
     const rawResults = await this._getAllResultsForStudents(studentIds);
-    const allResults = rawResults.filter(r => activeActivityIds.has(r.activityId));
+    const allResults = rawResults.filter((r: ActivityResultDocument) => activeActivityIds.has(r.activityId));
 
     // Group results by student
     const resultsByStudent: Record<string, ActivityResultDocument[]> = {};
-    allResults.forEach(r => {
+    allResults.forEach((r: ActivityResultDocument) => {
       if (!resultsByStudent[r.studentId]) resultsByStudent[r.studentId] = [];
       resultsByStudent[r.studentId].push(r);
     });
@@ -285,12 +302,12 @@ export const ReportController = {
     for (const student of students) {
       const sResults = resultsByStudent[student.uid] || [];
       const scores = sResults
-        .sort((a, b) => {
+        .sort((a: ActivityResultDocument, b: ActivityResultDocument) => {
           const ta = a.completedAt?.toDate?.() || new Date(0);
           const tb = b.completedAt?.toDate?.() || new Date(0);
           return ta.getTime() - tb.getTime();
         })
-        .map(r => r.percentage);
+        .map((r: ActivityResultDocument) => r.percentage);
 
       const avg = scores.length > 0
         ? scores.reduce((a, b) => a + b, 0) / scores.length
@@ -362,18 +379,21 @@ export const ReportController = {
 
   async getStudentReport(studentId: string, studentName: string, classCode: string): Promise<StudentReport> {
     const activeActivities = await AssessmentController.getStudentActivities(classCode);
-    const activeActivityIds = new Set(activeActivities.map(a => a.activityId));
+    const activeActivityIds = new Set(activeActivities.map((a:any) => a.activityId));
 
     // Fetch assessment results
-    const resultsSnap = await firestore()
-      .collection('activityResults')
-      .where('studentId', '==', studentId)
-      .get();
-    const rawResults = resultsSnap.docs.map(d => d.data() as ActivityResultDocument);
-    const results = rawResults.filter(r => activeActivityIds.has(r.activityId));
+    const db = getFirestore();
+    const resultsSnap = await getDocs(
+      query(
+        collection(db, 'activityResults'),
+        where('studentId', '==', studentId)
+      )
+    );
+    const rawResults = resultsSnap.docs.map((d: QDS) => d.data() as ActivityResultDocument);
+    const results = rawResults.filter((r: ActivityResultDocument) => activeActivityIds.has(r.activityId));
 
     // Fetch activities to get titles and aralinIndex
-    const activityIds = [...new Set(results.map(r => r.activityId))];
+    const activityIds: string[] = Array.from(new Set(results.map((r: ActivityResultDocument) => r.activityId)));
     const activityMap: Record<string, { title: string; aralinIndex: number }> = {};
     for (const aid of activityIds) {
       try {
@@ -386,7 +406,7 @@ export const ReportController = {
 
     // Build history entries sorted by date
     const history: AssessmentHistoryEntry[] = results
-      .map(r => ({
+      .map((r: ActivityResultDocument) => ({
         activityId: r.activityId,
         title: activityMap[r.activityId]?.title || 'Pagsusulit',
         score: r.score,
@@ -395,7 +415,7 @@ export const ReportController = {
         completedAt: r.completedAt,
         aralinIndex: activityMap[r.activityId]?.aralinIndex || 0,
       }))
-      .sort((a, b) => {
+      .sort((a: AssessmentHistoryEntry, b: AssessmentHistoryEntry) => {
         const ta = a.completedAt?.toDate?.() || new Date(0);
         const tb = b.completedAt?.toDate?.() || new Date(0);
         return ta.getTime() - tb.getTime();
@@ -425,14 +445,15 @@ export const ReportController = {
     const { completedCount: aralinCompleted, progressList: aralinProgressList } = await this._calculateAralinProgressDetails(studentId);
 
     // Get lesson progress based on active activities
-    const completedActivityIds = new Set(results.map(r => r.activityId));
+    const completedActivityIds = new Set(results.map((r: ActivityResultDocument) => r.activityId));
     const lessonsCompleted = completedActivityIds.size;
 
     // Get student profile for grade level
     let gradeLevel = 1;
     try {
-      const userSnap = await firestore().collection('users').doc(studentId).get();
-      if (userSnap.exists) {
+      const db = getFirestore();
+      const userSnap = await getDoc(doc(collection(db, 'users'), studentId));
+      if (userSnap.exists()) {
         const userData = userSnap.data() as UserDocument;
         gradeLevel = userData.studentData?.gradeLevel || 1;
       }
@@ -471,14 +492,14 @@ export const ReportController = {
 
     // Map activityId -> aralinIndex
     const activityAralinMap: Record<string, number> = {};
-    activities.forEach(a => { activityAralinMap[a.activityId] = a.aralinIndex; });
+    activities.forEach((a: ActivityDocument) => { activityAralinMap[a.activityId] = a.aralinIndex; });
 
     // Group results by aralin
     const byAralin: Record<number, { scores: number[]; mistakes: number }> = {};
     let totalMistakes = 0;
     let totalCorrect = 0;
 
-    allResults.forEach(r => {
+    allResults.forEach((r: ActivityResultDocument) => {
       const aralin = activityAralinMap[r.activityId];
       if (aralin === undefined) return;
 

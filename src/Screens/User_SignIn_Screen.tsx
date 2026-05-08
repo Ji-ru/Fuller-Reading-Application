@@ -1,6 +1,6 @@
 // React Dependencies
 import React, { useState } from 'react';
-import auth from '@react-native-firebase/auth';
+import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import {
   View,
   Text,
@@ -57,7 +57,8 @@ export default function LoginScreen() {
 
   // Check if user is already logged in on mount
   React.useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((user) => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && !authChecked) {
         setAuthChecked(true);
         handleReplaceStep('Loading');

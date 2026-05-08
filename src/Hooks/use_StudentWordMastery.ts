@@ -61,7 +61,7 @@ function buildMonthSlots(start: Date): Array<{ label: string; slotStart: Date; s
 
 function buildYearSlots(start: Date): Array<{ label: string; slotStart: Date; slotEnd: Date }> {
   const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return Array.from({ length: 10 }, (_, i) => {
+  return Array.from({ length: 12 }, (_, i) => {
     const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
     return {
       label: MONTH_LABELS[d.getMonth()],
@@ -214,7 +214,13 @@ export function use_StudentWordMastery(
       timeFilter === 'month' ? buildMonthSlots(fullPeriodRange.start) :
                                buildYearSlots(fullPeriodRange.start);
 
-    return rawSlots.map(({ label, slotStart, slotEnd }) => {
+    // For year view, drop months that haven't started yet so the chart doesn't
+    // pad with empty future months. Past academic years are unaffected.
+    const visibleSlots = timeFilter === 'year'
+      ? rawSlots.filter(s => s.slotStart <= new Date())
+      : rawSlots;
+
+    return visibleSlots.map(({ label, slotStart, slotEnd }) => {
       const slotWords = fullPeriodRaw
         .filter(d => d.timestamp >= slotStart && d.timestamp <= slotEnd)
         .map(d => d.word);

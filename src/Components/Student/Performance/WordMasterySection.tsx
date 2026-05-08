@@ -94,7 +94,6 @@ export default function WordMasterySection({
     loading,
     stats,
     cumulativeStats,
-    periodLetters,
     cumulativeLetters,
     periodSlots,
     getAralinWords,
@@ -155,6 +154,21 @@ export default function WordMasterySection({
     [periodSlots],
   );
   const hasAnyActivity = periodSlots.some(s => s.wordCount > 0);
+
+  // Letters mastered in the ACTIVE slot only — drives letter-pill highlight
+  // so the selector reacts when the user taps a different bar.
+  const activeSlot = periodSlots[activeIdx];
+  const slotLetters = useMemo(() => {
+    const set = new Set<string>();
+    if (!activeSlot) return set;
+    activeSlot.words.forEach(w => {
+      const group = readingMaterialData.Words.find(g =>
+        g.contrasts.some(c => c.words.includes(w)),
+      );
+      if (group) set.add(group.letter);
+    });
+    return set;
+  }, [activeSlot]);
 
   // ── Loading ──
   if (loading) {
@@ -263,7 +277,7 @@ export default function WordMasterySection({
         >
           {readingMaterialData.Alphabet.map((item, idx) => {
             const sel = selectedLetter === item.letter;
-            const done = periodLetters.has(item.letter);
+            const done = slotLetters.has(item.letter);
             return (
               <TouchableOpacity
                 key={idx}

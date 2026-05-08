@@ -9,7 +9,6 @@ import MiscueInsightsChart from './Performance/MiscueInsightsChart';
 import { BookOpenIcon, ZapIcon, AlertTriangleIcon } from '../GlobalUse/Icons';
 import DateFilter, { TimeFilterType } from './DateFilter';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
-import { DUMMY_REPORTS } from '../../Utilities/DummyPerformanceData'; // DUMMY DATA
 
 import { SubPeriodFilter } from './DateFilter';
 
@@ -20,7 +19,7 @@ interface PerformanceTabProps {
 }
 
 export default function PerformanceTab({ studentId, reports: realReports, gradeLevel = 1 }: PerformanceTabProps) {
-  const reports = [...(realReports || []), ...DUMMY_REPORTS]; // MERGED DUMMY DATA
+  const reports = realReports || [];
   const [timeFilter, setTimeFilter] = useState<TimeFilterType>('week');
   const [periodOffset, setPeriodOffset] = useState(0);
   const [selectedSubFilter, setSelectedSubFilter] = useState<SubPeriodFilter | null>(null);

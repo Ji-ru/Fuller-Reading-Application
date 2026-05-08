@@ -216,6 +216,8 @@ export default function AlphabetMasterySection({
   const slotCount   = activeSlot?.correctCount ?? 0;
   const progressPct = Math.round((slotCount / totalLetters) * 100) || 0;
 
+  console.log("Alphabet Progress: " + progressPct);
+  
   const progressWidth = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     // Re-animate every time the active slot changes (reset to 0 first for a clean fill)
