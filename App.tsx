@@ -37,6 +37,7 @@ import StudentViewProfile from './src/Screens/Faculty/Faculty_Student_View_Profi
 import AdminDashboard from './src/Screens/Admin/Admin_Dashboard';
 import AdminUserManagement from './src/Screens/Admin/Admin_UserManagement';
 import AdminViewFacultyData from './src/Screens/Admin/Admin_ViewFacultyData';
+import AboutScreen from './src/Screens/About_Screen';
 
 const Stack = createNativeStackNavigator();
 configureGoogleSignIn();
@@ -48,6 +49,8 @@ function App() {
         <GlobalMusicProvider>
           <NavigationContainer>
             <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+
+              <Stack.Screen name="About" component={AboutScreen} />
 
               {/* SIGN IN PAGES */}
               <Stack.Screen name="Login" component={LoginScreen} />

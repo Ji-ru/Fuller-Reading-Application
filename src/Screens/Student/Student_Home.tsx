@@ -13,6 +13,7 @@ import { getCurrentUser, getUserProfile } from '../../Controller/AuthenticationC
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { sw, sh, sf } from '../../Utils/responsive';
+import upperNav from '../../UI_Designs/UpperNavigation';
 
 // ─── Palette ─────────────────
 const C = {
@@ -206,6 +207,16 @@ export default function UserHomeScreen() {
             activeOpacity={1}
           />
           <View style={S.dropdown}>
+            <TouchableOpacity
+              onPress={() => {
+                setMenuVisible(false);
+                handleNextStep('About');
+              }}
+              style={upperNav.logoutButton}
+            >
+              <Text style={upperNav.logoutText}>About</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
               style={S.dropdownItem}

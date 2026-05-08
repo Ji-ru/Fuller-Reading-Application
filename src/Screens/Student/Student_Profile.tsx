@@ -172,7 +172,7 @@ export default function Profile() {
   };
 
   // ── Hooks ───────────────────────────────────────────────────────────────────
-  const { handleLogout, handleBackStep } = useNavigationHelper();
+  const { handleLogout, handleBackStep, handleNextStep } = useNavigationHelper();
 
   useEffect(() => { fetchProfileData(); }, []);
 
@@ -320,6 +320,15 @@ export default function Profile() {
 
         {menuVisible && (
           <View style={upperNav.dropdownMenu}>
+            <TouchableOpacity
+              onPress={() => {
+                setMenuVisible(false);
+                handleNextStep('About');
+              }}
+              style={upperNav.logoutButton}
+            >
+              <Text style={upperNav.logoutText}>About</Text>
+            </TouchableOpacity>
             <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
               <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
               <Text style={upperNav.logoutText}>Logout</Text>
