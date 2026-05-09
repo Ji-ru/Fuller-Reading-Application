@@ -423,10 +423,10 @@ export default function ReadingActivityScreenPage() {
       }
       // const transcription = await processAudioWithGoogle(audioFile);
       // const transcription = await processAudioWithAssemblyAI(audioFile);
-      // const transcription = await processAudioWithDeepgram(audioFile);
+      const transcription = await processAudioWithDeepgram(audioFile);
       // const transcription = await processAudioWithPuter(audioFile);
       // const transcription = await processAudioWithWav2Vec2(audioFile);
-      const transcription = await processAudioWithHubert(audioFile);
+      // const transcription = await processAudioWithHubert(audioFile);
       // const transcription = await processAudioWithWhisper(audioFile);
       setSpokenText(transcription);
       console.log('THIS IS THE SPOKEN: ' + transcription);

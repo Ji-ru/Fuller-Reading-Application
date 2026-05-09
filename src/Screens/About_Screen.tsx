@@ -1,142 +1,556 @@
-import React from 'react';
-import { Text, ScrollView, TouchableOpacity, View, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Animated,
+  Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigationHelper } from '../Controller/NavigationController';
+import BubbleBackground from '../Components/GlobalUse/BubbleBackground';
+import { sw, sh, sf } from '../Utils/responsive';
 
+const { width: SW } = Dimensions.get('window');
+
+// ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  primary: '#388E3C',
-  dark: '#1F2937',
-  gray: '#6B7280',
-  bg: '#F6F8F7',
-  white: '#FFFFFF',
+  green:      '#2ca96a',
+  greenDark:  '#008443',
+  greenDeep:  '#005028',
+  greenLight: '#c0e8f2',
+  greenPale:  '#E8F5E9',
+  bg:         '#F1FBF4',
+  white:      '#ffffff',
+  ink:        '#1B2B22',
+  inkLight:   '#6B8E6B',
+  slate:      '#A5B8A7',
+  border:     '#C8E6C9',
 };
 
-export default function AboutScreen() {
-  const navigation = useNavigation();
+// ─── Team members ─────────────────────────────────────────────────────────────
+const TEAM = [
+  { name: 'Jibril Leander Paul M. Rubi',    role: 'Lead Developer',       emoji: '🧑' },
+  { name: 'Arth Luije S. Bancat',      role: 'Software Developer',       emoji: '🧑' },
+  { name: 'Erwin Leonardia',       role: 'AI/ML Developer',    emoji: '🧑' },
+];
+
+// ─── STT model (currently active) ────────────────────────────────────────────
+const STT_MODEL = {
+  name: 'Nova-3',
+  fullName: 'Deepgram Nova-3',
+  origin: 'Deepgram',
+  description:
+    'Nova-3 is an advanced speech-to-text model designed for highly accurate, ' +
+    'fast, and reliable transcription. It is optimized for real-time speech ' +
+    'recognition and can capture spoken words with strong contextual awareness, ' +
+    'making it well suited for evaluating young learners’ reading fluency, ' +
+    'pronunciation, and oral reading accuracy.',
+  badges: ['Real-time', 'High accuracy', 'Context-aware'],
+  color: '#2ca96a',
+};
+
+// ─── Fade-slide animation ─────────────────────────────────────────────────────
+function FadeSlideIn({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+}) {
+  const translateY = useRef(new Animated.Value(24)).current;
+  const opacity    = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.parallel([
+        Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 55, friction: 8 }),
+        Animated.timing(opacity,    { toValue: 1, duration: 280,         useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Animated.View style={{ transform: [{ translateY }], opacity }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// ─── Section heading ──────────────────────────────────────────────────────────
+function SectionHeading({ emoji, title }: { emoji: string; title: string }) {
+  return (
+    <View style={S.sectionHeading}>
+      <Text style={S.sectionEmoji}>{emoji}</Text>
+      <Text style={S.sectionTitle}>{title}</Text>
+      <View style={S.sectionLine} />
+    </View>
+  );
+}
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
+export default function AboutScreen() {
+  const { handleBackStep } = useNavigationHelper();
+
+  return (
+    <SafeAreaView style={S.bg}>
+      <BubbleBackground />
+
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <View style={S.header}>
+        <TouchableOpacity style={S.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
+          <Text style={S.backArrow}>‹</Text>
+        </TouchableOpacity>
+        <Text style={S.headerTitle}>About</Text>
+        <View style={S.backBtn} />
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={S.scroll}
       >
+        {/* ── Hero Banner ─────────────────────────────────────────────────── */}
+        <FadeSlideIn delay={0}>
+          <View style={S.heroBanner}>
+            <View style={S.heroTextWrap}>
+              <Text style={S.heroEyebrow}>CISC KIDS</Text>
+              <Text style={S.heroTitle}>Reading{'\n'}Assessment App</Text>
+              <Text style={S.heroVersion}>Version 1.0.0</Text>
+            </View>
+            <View style={S.heroIconWrap}>
+              <Text style={{ fontSize: sf(52) }}>📚</Text>
+            </View>
+          </View>
+        </FadeSlideIn>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.7}
-            style={styles.backBtn}
-          >
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
+        {/* ── App Description ─────────────────────────────────────────────── */}
+        <FadeSlideIn delay={80}>
+          <View style={S.card}>
+            <SectionHeading emoji="✨" title="About the App" />
+            <Text style={S.bodyText}>
+              CISC Kids is a mobile reading assessment platform designed for
+              Grade 1–3 students. It uses speech recognition to evaluate oral
+              reading fluency, detect miscues, and track reading progress over
+              time — giving teachers and students actionable insights in real
+              time.
+            </Text>
+            <Text style={[S.bodyText, { marginTop: sh(10) }]}>
+              The app supports three reading modes — alphabet recognition, word
+              pronunciation, and passage reading — each with automatic accuracy
+              scoring and miscue analysis (substitution, omission, insertion,
+              and repetition).
+            </Text>
 
-          <Text style={styles.title}>About</Text>
-          <View style={{ width: 40 }} />
-        </View>
+            {/* Feature chips */}
+            <View style={S.chipRow}>
+              {['Oral Fluency', 'Miscue Analysis', 'Progress Tracking', 'Grade 1–3', 'Filipino'].map(f => (
+                <View key={f} style={S.chip}>
+                  <Text style={S.chipText}>{f}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </FadeSlideIn>
 
-        {/* App Info Card */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Application</Text>
-          <Text style={styles.paragraph}>
-            This application supports reading development by helping learners
-            practice reading while giving teachers and students access to reading
-            accuracy, progress tracking, and performance insights.
-          </Text>
-        </View>
+        {/* ── STT Model ───────────────────────────────────────────────────── */}
+        <FadeSlideIn delay={140}>
+          <View style={S.card}>
+            <SectionHeading emoji="🎙" title="Speech Recognition Model" />
 
-        {/* Team Card */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Team Members</Text>
+            <View style={[S.modelCard, { borderColor: STT_MODEL.color + '55' }]}>
+              {/* Header row */}
+              <View style={S.modelHeaderRow}>
+                <View style={[S.modelIconCircle, { backgroundColor: STT_MODEL.color + '18' }]}>
+                  <Text style={{ fontSize: sf(26) }}>🤖</Text>
+                </View>
+                <View style={{ flex: 1, marginLeft: sw(14) }}>
+                  <Text style={[S.modelName, { color: STT_MODEL.color }]}>{STT_MODEL.name}</Text>
+                  <Text style={S.modelFullName}>{STT_MODEL.fullName}</Text>
+                  <Text style={S.modelOrigin}>by {STT_MODEL.origin}</Text>
+                </View>
+                <View style={[S.activePill, { backgroundColor: STT_MODEL.color }]}>
+                  <Text style={S.activePillText}>Active</Text>
+                </View>
+              </View>
 
-          <Text style={styles.listItem}>• Arth Luije S. Bancat</Text>
-          <Text style={styles.listItem}>• Erwin Leonardia</Text>
-          <Text style={styles.listItem}>• Jibril Leandear Paul M. Rubi</Text>
-        </View>
+              {/* Description */}
+              <Text style={S.modelDesc}>{STT_MODEL.description}</Text>
 
-        {/* System Card */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>AI & System Models</Text>
+              {/* Badges */}
+              <View style={S.chipRow}>
+                {STT_MODEL.badges.map(b => (
+                  <View key={b} style={[S.chip, { backgroundColor: STT_MODEL.color + '18', borderColor: STT_MODEL.color + '44' }]}>
+                    <Text style={[S.chipText, { color: STT_MODEL.color }]}>{b}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        </FadeSlideIn>
 
-          <Text style={styles.listItem}>• Speech recognition</Text>
-          <Text style={styles.listItem}>• Miscue detection</Text>
-          <Text style={styles.listItem}>• Reading accuracy analytics</Text>
-        </View>
+        {/* ── Team ────────────────────────────────────────────────────────── */}
+        <FadeSlideIn delay={200}>
+          <View style={S.card}>
+            <SectionHeading emoji="👥" title="The Team" />
 
+            <View style={S.teamGrid}>
+              {TEAM.map((member, i) => (
+                <Animated.View
+                  key={i}
+                  style={S.memberCard}
+                >
+                  <View style={S.memberAvatarCircle}>
+                    <Text style={S.memberEmoji}>{member.emoji}</Text>
+                  </View>
+                  <Text style={S.memberName}>{member.name}</Text>
+                  <Text style={S.memberRole}>{member.role}</Text>
+                </Animated.View>
+              ))}
+            </View>
+          </View>
+        </FadeSlideIn>
+
+        {/* ── Built with ──────────────────────────────────────────────────── */}
+        <FadeSlideIn delay={260}>
+          <View style={S.card}>
+            <SectionHeading emoji="🔧" title="Built With" />
+            <View style={S.techRow}>
+              {[
+                { label: 'React Native',  emoji: '⚛️'  },
+                { label: 'Firebase',      emoji: '🔥'  },
+                { label: 'Deepgram Nova3',   emoji: '🎙'  },
+                { label: 'TypeScript',   emoji: '📘'  },
+              ].map(t => (
+                <View key={t.label} style={S.techChip}>
+                  <Text style={S.techEmoji}>{t.emoji}</Text>
+                  <Text style={S.techLabel}>{t.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </FadeSlideIn>
+
+        {/* ── Footer ──────────────────────────────────────────────────────── */}
+        <FadeSlideIn delay={320}>
+          <View style={S.footer}>
+            <Text style={S.footerText}>Made with ❤️ for Filipino learners</Text>
+            <Text style={S.footerSub}>© 2026 CISC Kids. All rights reserved.</Text>
+          </View>
+        </FadeSlideIn>
+
+        <View style={{ height: sh(32) }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const S = StyleSheet.create({
+  bg: { flex: 1, backgroundColor: C.bg },
 
-  content: {
-    paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 30,
-  },
-
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 18,
+    paddingHorizontal: sw(16),
+    paddingTop: sh(8),
+    paddingBottom: sh(12),
+    zIndex: 10,
   },
-
   backBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: C.primary,
-    alignItems: 'center',
+    width: sw(44),
+    height: sw(44),
+    borderRadius: sw(12),
+    backgroundColor: C.greenDark,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backArrow: {
+    fontSize: sf(32),
+    color: C.white,
+    fontFamily: 'Nunito-Bold',
+    lineHeight: sf(36),
+    marginLeft: -sw(2),
+    paddingBottom: sh(2),
+  },
+  headerTitle: {
+    fontSize: sf(20),
+    fontFamily: 'Nunito-Black',
+    color: C.ink,
+    letterSpacing: 0.3,
   },
 
-  backText: {
-    fontSize: 30,
-    color: '#fff',
-    marginTop: -2,
+  scroll: {
+    paddingHorizontal: sw(16),
+    paddingTop: sh(4),
   },
 
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: C.dark,
+  // Hero banner
+  heroBanner: {
+    backgroundColor: C.greenDark,
+    borderRadius: sw(24),
+    paddingVertical: sh(28),
+    paddingHorizontal: sw(24),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: sh(16),
+    overflow: 'hidden',
+    elevation: 6,
+    shadowColor: C.greenDeep,
+    shadowOffset: { width: 0, height: sw(6) },
+    shadowOpacity: 0.3,
+    shadowRadius: sw(12),
+  },
+  heroTextWrap: { flex: 1 },
+  heroEyebrow: {
+    fontSize: sf(11),
+    fontFamily: 'Nunito-ExtraBold',
+    color: 'rgba(255,255,255,0.65)',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: sh(4),
+  },
+  heroTitle: {
+    fontSize: sf(30),
+    fontFamily: 'Nunito-Black',
+    color: C.white,
+    lineHeight: sf(36),
+    marginBottom: sh(10),
+  },
+  heroVersion: {
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Medium',
+    color: 'rgba(255,255,255,0.55)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: sw(10),
+    paddingVertical: sh(3),
+    borderRadius: sw(12),
+    alignSelf: 'flex-start',
+  },
+  heroIconWrap: {
+    width: sw(80),
+    height: sw(80),
+    borderRadius: sw(20),
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: sw(16),
   },
 
+  // Cards
   card: {
     backgroundColor: C.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    borderRadius: sw(20),
+    padding: sw(20),
+    marginBottom: sh(16),
     elevation: 2,
+    shadowColor: C.greenDeep,
+    shadowOffset: { width: 0, height: sw(2) },
+    shadowOpacity: 0.07,
+    shadowRadius: sw(8),
   },
 
+  // Section heading
+  sectionHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: sh(16),
+    gap: sw(8),
+  },
+  sectionEmoji: { fontSize: sf(20) },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: C.primary,
-    marginBottom: 10,
+    fontSize: sf(17),
+    fontFamily: 'Nunito-ExtraBold',
+    color: C.ink,
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1.5,
+    backgroundColor: C.border,
+    marginLeft: sw(4),
   },
 
-  paragraph: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: C.gray,
+  // Body text
+  bodyText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+    lineHeight: sf(22),
   },
 
-  listItem: {
-    fontSize: 14,
-    color: C.dark,
-    paddingVertical: 4,
+  // Chips
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: sw(8),
+    marginTop: sh(14),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chip: {
+    backgroundColor: C.greenPale,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: sw(20),
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(5),
+  },
+  chipText: {
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Bold',
+    color: C.greenDark,
+  },
+
+  // Model card
+  modelCard: {
+    borderWidth: 1.5,
+    borderRadius: sw(16),
+    padding: sw(16),
+    backgroundColor: '#FAFFFE',
+  },
+  modelHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: sh(14),
+  },
+  modelIconCircle: {
+    width: sw(56),
+    height: sw(56),
+    borderRadius: sw(16),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modelName: {
+    fontSize: sf(20),
+    fontFamily: 'Nunito-Black',
+    marginBottom: sh(2),
+  },
+  modelFullName: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+    marginBottom: sh(2),
+  },
+  modelOrigin: {
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Medium',
+    color: C.slate,
+  },
+  activePill: {
+    paddingHorizontal: sw(10),
+    paddingVertical: sh(4),
+    borderRadius: sw(20),
+    alignSelf: 'flex-start',
+  },
+  activePillText: {
+    fontSize: sf(11),
+    fontFamily: 'Nunito-ExtraBold',
+    color: C.white,
+    letterSpacing: 0.5,
+  },
+  modelDesc: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+    lineHeight: sf(20),
+    marginBottom: sh(4),
+  },
+
+  // Team grid
+  teamGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    gap: sw(12),
+  },
+  memberCard: {
+    width: '46%',
+    backgroundColor: C.greenPale,
+    borderRadius: sw(16),
+    padding: sw(16),
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  memberAvatarCircle: {
+    width: sw(54),
+    height: sw(54),
+    borderRadius: sw(27),
+    backgroundColor: C.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: sh(10),
+    borderWidth: 2,
+    borderColor: C.border,
+    elevation: 2,
+    shadowColor: C.greenDeep,
+    shadowOffset: { width: 0, height: sw(2) },
+    shadowOpacity: 0.1,
+    shadowRadius: sw(4),
+  },
+  memberEmoji:  { fontSize: sf(26) },
+  memberName: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-ExtraBold',
+    color: C.ink,
+    textAlign: 'center',
+    marginBottom: sh(3),
+  },
+  memberRole: {
+    fontSize: sf(11),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+    textAlign: 'center',
+  },
+
+  // Built with
+  techRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: sw(10),
+    marginTop: sh(14),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  techChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.greenPale,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: sw(12),
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(8),
+    gap: sw(6),
+  },
+  techEmoji: { fontSize: sf(16) },
+  techLabel: {
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.greenDark,
+  },
+
+  // Footer
+  footer: {
+    alignItems: 'center',
+    paddingVertical: sh(20),
+    gap: sh(6),
+  },
+  footerText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Bold',
+    color: C.inkLight,
+  },
+  footerSub: {
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Medium',
+    color: C.slate,
   },
 });
