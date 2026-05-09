@@ -516,4 +516,4 @@ const S = StyleSheet.create({
   },
   notifTxt: { color: C.white, fontSize: 10, fontWeight: '900' },
 
-]);
+});
