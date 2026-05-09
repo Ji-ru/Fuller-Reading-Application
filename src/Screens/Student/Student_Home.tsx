@@ -12,8 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BounceIn, FloatingImage } from '../../Components/GlobalUse/Animations';
 import {
-  BookIcon, UserProfileIcon, ClipboardListIcon, LogoutIcon,
-  BurgerIcon, ChevronRightIcon,
+  BookIcon, UserProfileIcon, LogoutIcon,
+  BurgerIcon, ChevronRightIcon, UsersIcon,
 } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { getCurrentUser, getUserProfile } from '../../Controller/AuthenticationController';
@@ -65,7 +65,6 @@ export default function UserHomeScreen() {
 
           const classCode = profile?.studentData?.classCode;
           if (classCode) {
-
             try {
               const actList = await AssessmentController.getStudentActivities(classCode);
               let pendingCount = 0;
@@ -78,7 +77,6 @@ export default function UserHomeScreen() {
               console.warn("Failed to fetch assessments for student:", actErr);
             }
           }
-
         }
       } catch (err) {
         console.error("Failed to fetch user data:", err);
@@ -137,19 +135,6 @@ export default function UserHomeScreen() {
           />
           <View style={S.dropdown}>
             <TouchableOpacity
-              onPress={() => { setMenuVisible(false); handleNextStep('Profile'); }}
-              style={S.dropdownItem}
-              activeOpacity={0.75}
-            >
-              <View style={[S.dropdownIconBox, { backgroundColor: C.green + '15' }]}>
-                <UserProfileIcon size={18} color={C.green} />
-              </View>
-              <Text style={[S.dropdownText, { color: C.ink }]}>Aking Profile</Text>
-            </TouchableOpacity>
-
-            <View style={S.dropdownDivider} />
-
-            <TouchableOpacity
               onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
               style={S.dropdownItem}
               activeOpacity={0.75}
@@ -193,13 +178,12 @@ export default function UserHomeScreen() {
           </View>
         </BounceIn>
 
-        {/* ── Quick Actions ────────────────────────────────────────────────── */}
+        {/* ── IYONG DAPAT GAWIN ───────────────────────────────────────────── */}
         <View style={S.sectionLabelRow}>
           <View style={S.sectionLabelDot} />
-          <Text style={S.sectionLabel}>IYONG DAPAT GAGAWIN</Text>
+          <Text style={S.sectionLabel}>IYONG DAPAT GAWIN</Text>
         </View>
 
-        {/* Primary CTA - Pagbasa */}
         <BounceIn delay={60}>
           <TouchableOpacity
             activeOpacity={0.9}
@@ -219,11 +203,13 @@ export default function UserHomeScreen() {
               </View>
             </Animated.View>
           </TouchableOpacity>
+
+          {/* Kasaysayan */}
           <TouchableOpacity
             activeOpacity={0.9}
-            onPress={() => animatePress(cardScale1, () => handleNextStep('ReadingHistory'))}
+            onPress={() => animatePress(cardScale2, () => handleNextStep('ReadingHistory'))}
           >
-            <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale1 }] }]}>
+            <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
               <View style={S.secondaryCardGlow} />
               <View style={S.secondaryIconBox}>
                 <BookIcon size={32} color={C.green} />
@@ -237,9 +223,47 @@ export default function UserHomeScreen() {
               </View>
             </Animated.View>
           </TouchableOpacity>
+
+          {/* Aking Klase */}
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => handleNextStep('MyClasses')}
+          >
+            <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
+              <View style={S.secondaryCardGlow} />
+              <View style={[S.secondaryIconBox, { backgroundColor: C.teal + '15' }]}>
+                <UsersIcon size={32} color={C.teal} />
+              </View>
+              <View style={S.secondaryTextBox}>
+                <Text style={S.secondaryLabel}>Aking Klase</Text>
+                <Text style={S.secondarySub}>Tingnan ang klase</Text>
+              </View>
+              <View style={S.secondaryArrow}>
+                <ChevronRightIcon size={20} color={C.teal} />
+              </View>
+            </Animated.View>
+          </TouchableOpacity>
+
+          {/* Aking Profile */}
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => handleNextStep('Profile')}
+          >
+            <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
+              <View style={S.secondaryCardGlow} />
+              <View style={[S.secondaryIconBox, { backgroundColor: C.green + '15' }]}>
+                <UserProfileIcon size={32} color={C.green} />
+              </View>
+              <View style={S.secondaryTextBox}>
+                <Text style={S.secondaryLabel}>Aking Profile</Text>
+                <Text style={S.secondarySub}>I-edit ang profile</Text>
+              </View>
+              <View style={S.secondaryArrow}>
+                <ChevronRightIcon size={20} color={C.green} />
+              </View>
+            </Animated.View>
+          </TouchableOpacity>
         </BounceIn>
-
-
 
       </ScrollView>
 
@@ -274,10 +298,7 @@ const S = StyleSheet.create({
     paddingVertical: 8,
     zIndex: 100,
   },
-  headerLogo: {
-    width: 100,
-    height: 90,
-  },
+  headerLogo: { width: 100, height: 90 },
   headerMenuBtn: {
     width: 44,
     height: 44,
@@ -327,7 +348,6 @@ const S = StyleSheet.create({
     backgroundColor: C.slate + '15',
     marginHorizontal: 14,
   },
-
 
   // ── Body ────────────────────────────────────────────────────────────────
   body: {
@@ -496,5 +516,4 @@ const S = StyleSheet.create({
   },
   notifTxt: { color: C.white, fontSize: 10, fontWeight: '900' },
 
-
-});
+]);

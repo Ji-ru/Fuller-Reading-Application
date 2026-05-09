@@ -40,6 +40,7 @@ export type RootStackParamList = {
   };
 
   ReadingHistory: undefined;
+  MyClasses: undefined;
   ChooseRole: undefined;
   Profile: undefined;
 

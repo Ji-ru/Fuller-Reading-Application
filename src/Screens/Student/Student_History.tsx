@@ -542,7 +542,7 @@ export default function ReadingHistoryScreen() {
               activeOpacity={0.8}
             >
               <TrophyIcon size={12} color={activeTab === 'progress' ? C.greenDeep : C.slate} />
-              <Text style={[S.tabText, activeTab === 'progress' && S.tabTextActive, { fontSize: 11 }]}>Pag-unlad</Text>
+              <Text style={[S.tabText, activeTab === 'progress' && S.tabTextActive, { fontSize: 11 }]}>Progress</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -551,7 +551,7 @@ export default function ReadingHistoryScreen() {
               activeOpacity={0.8}
             >
               <TimerIcon size={12} color={activeTab === 'sessions' ? C.greenDeep : C.slate} />
-              <Text style={[S.tabText, activeTab === 'sessions' && S.tabTextActive, { fontSize: 11 }]}>Serye</Text>
+              <Text style={[S.tabText, activeTab === 'sessions' && S.tabTextActive, { fontSize: 11 }]}>Sessions</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -560,7 +560,7 @@ export default function ReadingHistoryScreen() {
               activeOpacity={0.8}
             >
               <ZapIcon size={12} color={activeTab === 'analytics' ? C.greenDeep : C.slate} />
-              <Text style={[S.tabText, activeTab === 'analytics' && S.tabTextActive, { fontSize: 11 }]}>Pagsusuri</Text>
+              <Text style={[S.tabText, activeTab === 'analytics' && S.tabTextActive, { fontSize: 11 }]}>Analytics</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -569,7 +569,7 @@ export default function ReadingHistoryScreen() {
               activeOpacity={0.8}
             >
               <HistoryIcon size={12} color={activeTab === 'history' ? C.greenDeep : C.slate} />
-              <Text style={[S.tabText, activeTab === 'history' && S.tabTextActive, { fontSize: 11 }]}>Kasaysayan</Text>
+              <Text style={[S.tabText, activeTab === 'history' && S.tabTextActive, { fontSize: 11 }]}>History</Text>
             </TouchableOpacity>
           </View>
         </View>

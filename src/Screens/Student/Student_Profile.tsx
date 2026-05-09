@@ -22,6 +22,7 @@ import {
   getCurrentUser,
   getClassByCode,
   joinClass,
+  updateUserProfile,
 } from '../../Controller/AuthenticationController';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
@@ -274,6 +275,16 @@ export default function Profile() {
   const [joinError, setJoinError] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
 
+  // Edit profile states
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [editData, setEditData] = useState({
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    dateOfBirth: '',
+    sex: '',
+  });
+
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
@@ -285,6 +296,17 @@ export default function Profile() {
 
       const profile = await getUserProfile(cur.uid);
       setProfileData(profile);
+
+      // Populate edit data when profile loads
+      if (profile) {
+        setEditData({
+          firstName: profile.firstName || '',
+          middleName: profile.middleName || '',
+          lastName: profile.lastName || '',
+          dateOfBirth: profile.studentData?.dateOfBirth || '',
+          sex: profile.sex || '',
+        });
+      }
 
       if (profile?.studentData?.classCode) {
         const cls = await getClassByCode(profile.studentData.classCode);
@@ -325,6 +347,27 @@ export default function Profile() {
       expert:       { label: 'Dalubhasa',  Icon: StarIcon },
     };
     return map[level || 'beginner'] ?? map.beginner;
+  };
+
+  // Handle save info
+  const handleSaveInfo = async () => {
+    try {
+      const cur = getCurrentUser();
+      if (!cur) return;
+      
+      await updateUserProfile(cur.uid, {
+        firstName: editData.firstName,
+        middleName: editData.middleName,
+        lastName: editData.lastName,
+        sex: editData.sex,
+        'studentData.dateOfBirth': editData.dateOfBirth,
+      } as any);
+      
+      setEditingInfo(false);
+      await fetchAll();
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to update profile');
+    }
   };
 
 // ─── Jumping Dots Loading ───────────────────────────────────────────────────
@@ -481,14 +524,67 @@ export default function Profile() {
           <View style={S.section}>
             <View style={S.sectionTitleRow}>
               <UserProfileIcon size={16} color={C.ink} />
-              <Text style={S.sectionTitle}>Impormasyon</Text>
+              <Text style={S.sectionTitle}>Pangunahing Impormasyon</Text>
+              <TouchableOpacity onPress={() => setEditingInfo(!editingInfo)} style={S.editBtn} activeOpacity={0.7}>
+                <Text style={S.editBtnText}>{editingInfo ? 'Cancel' : 'Edit'}</Text>
+              </TouchableOpacity>
             </View>
-            <View style={S.infoRow}>
-              <InfoPill iconView={<GenderIcon size={18} color={C.green} />} label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
-            </View>
-            <View style={S.infoRow}>
-              <InfoPill iconView={<MailIcon size={18} color={C.green} />} label="Email" value={profileData?.email ?? '—'} />
-            </View>
+            
+            {editingInfo ? (
+              <View style={S.editForm}>
+                <TextInput
+                  style={S.editInput}
+                  placeholder="Unang Pangalan"
+                  value={editData.firstName}
+                  onChangeText={(v) => setEditData({ ...editData, firstName: v })}
+                />
+                <TextInput
+                  style={S.editInput}
+                  placeholder="Gitnang Pangalan"
+                  value={editData.middleName}
+                  onChangeText={(v) => setEditData({ ...editData, middleName: v })}
+                />
+                <TextInput
+                  style={S.editInput}
+                  placeholder="Apilyedo"
+                  value={editData.lastName}
+                  onChangeText={(v) => setEditData({ ...editData, lastName: v })}
+                />
+                <TextInput
+                  style={S.editInput}
+                  placeholder="Petsa ng Kapanganakan"
+                  value={editData.dateOfBirth}
+                  onChangeText={(v) => setEditData({ ...editData, dateOfBirth: v })}
+                />
+                <TextInput
+                  style={S.editInput}
+                  placeholder="Kasarian"
+                  value={editData.sex}
+                  onChangeText={(v) => setEditData({ ...editData, sex: v })}
+                />
+                <TouchableOpacity style={S.saveBtn} onPress={handleSaveInfo} activeOpacity={0.8}>
+                  <Text style={S.saveBtnText}>Save Changes</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View>
+                <View style={S.infoRow}>
+                  <InfoPill iconView={<CakeIcon size={18} color={C.green} />} label="Unang Pangalan" value={profileData?.firstName ?? '—'} />
+                </View>
+                <View style={S.infoRow}>
+                  <InfoPill iconView={<CakeIcon size={18} color={C.green} />} label="Gitnang Pangalan" value={profileData?.middleName ?? '—'} />
+                </View>
+                <View style={S.infoRow}>
+                  <InfoPill iconView={<CakeIcon size={18} color={C.green} />} label="Apilyedo" value={profileData?.lastName ?? '—'} />
+                </View>
+                <View style={S.infoRow}>
+                  <InfoPill iconView={<CakeIcon size={18} color={C.green} />} label="Petsa ng Kapanganakan" value={profileData?.studentData?.dateOfBirth ?? '—'} />
+                </View>
+                <View style={S.infoRow}>
+                  <InfoPill iconView={<GenderIcon size={18} color={C.green} />} label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
+                </View>
+              </View>
+            )}
           </View>
         </BounceIn>
       </ScrollView>

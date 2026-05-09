@@ -24,6 +24,7 @@ import PageSelectionScreen from './src/Screens/Student/Student_Reading_Selection
 import ReadingActivityScreenPage from './src/Screens/Student/Student_Reading_Activity';
 import ReadingHistoryScreen from './src/Screens/Student/Student_History';
 import StudentProfile from './src/Screens/Student/Student_Profile';
+import StudentClasses from './src/Screens/Student/Student_Classes';
 // import FacultyStack from './FacultyStack';
 
 // FACULTY PAGE
@@ -72,6 +73,7 @@ function App() {
             <Stack.Screen name="PassageSelection" component={PageSelectionScreen} />
             <Stack.Screen name="ReadingActivity" component={ReadingActivityScreenPage} />
             <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
+            <Stack.Screen name="MyClasses" component={StudentClasses} />
             {/* <Stack.Screen name="StudentAssessments" component={StudentAssessments} />
             <Stack.Screen name="StudentAssessmentActivity" component={StudentAssessmentActivity} />
             <Stack.Screen name="StudentAssessmentReview" component={StudentAssessmentReview} /> */}
