@@ -216,16 +216,16 @@ function InfoPill({
     <View style={S.infoPill}>
       <View style={{ flex: 1 }}>
         <Text style={S.infoPillLabel}>{label}</Text>
-        {editing && onChangeText ? (
-          <TextInput
-            style={S.infoPillInput}
-            value={value}
-            onChangeText={onChangeText}
-            placeholderTextColor={C.slate + '80'}
-          />
-        ) : (
-          <Text style={S.infoPillValue} numberOfLines={1>{value}</Text>
-        )}
+{editing && onChangeText ? (
+           <TextInput
+             style={S.infoPillInput}
+             value={value}
+             onChangeText={onChangeText}
+             placeholderTextColor={C.slate + '80'}
+           />
+         ) : (
+           <Text style={S.infoPillValue} numberOfLines={1}>{value}</Text>
+         )}
       </View>
     </View>
   );
