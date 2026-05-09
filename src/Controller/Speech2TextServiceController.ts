@@ -22,10 +22,10 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { useState, useCallback } from 'react';
-import { readFile } from 'react-native-fs';
 import { HUGGINGFACE_API_KEY } from '@env';
 import { Buffer } from 'buffer';
+import { useCallback, useState } from 'react';
+import { readFile } from 'react-native-fs';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDER SWITCH
@@ -51,7 +51,7 @@ const ENDPOINTS = {
    * Could be a HF Space URL, your own FastAPI server, etc.
    * Example: 'https://your-org-cisc-asr.hf.space/run/predict'
    */
-  custom: 'https://jayac0r30-marungko.hf.space/transcribe',
+  custom: 'https://cisckids2026-marungko-whisperapi.hf.space/transcribe',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ export const useSpeechToText = () => {
 
       // Read WAV as base64 then convert to binary for the request body
       const base64 = await readFile(audioFilePath, 'base64');
-      const binary  = Buffer.from(base64, 'base64');
+      const binary = Buffer.from(base64, 'base64');
 
       const prompt = options.targetText.slice(0, 800);
 
@@ -168,13 +168,13 @@ export const useSpeechToText = () => {
       }
 
       const formData = new FormData();
-      
+
       const fileUri = audioFilePath.startsWith("file://") ? audioFilePath : "file://" + audioFilePath;
 
       formData.append("file", {
         uri: fileUri,
-        name: "recording.wav", 
-        type: "audio/wav",     
+        name: "recording.wav",
+        type: "audio/wav",
       } as any);
 
       const response = await fetch(ENDPOINTS.custom, {
@@ -186,7 +186,7 @@ export const useSpeechToText = () => {
       });
 
       const responseText = await response.text();
-      
+
       if (!response.ok) {
         throw new Error(`Custom model error ${response.status}: ${responseText.substring(0, 50)}...`);
       }
@@ -284,9 +284,9 @@ export const useSpeechToText = () => {
       return words.filter((_, i) => i !== idx).join(' ');
     } else {
       // Substitute a random word
-      const idx     = Math.floor(Math.random() * words.length);
+      const idx = Math.floor(Math.random() * words.length);
       const mutated = [...words];
-      mutated[idx]  = 'bagay';
+      mutated[idx] = 'bagay';
       return mutated.join(' ');
     }
   }, []);
