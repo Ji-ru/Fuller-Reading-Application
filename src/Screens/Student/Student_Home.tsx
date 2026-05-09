@@ -231,15 +231,15 @@ export default function UserHomeScreen() {
           >
             <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
               <View style={S.secondaryCardGlow} />
-              <View style={[S.secondaryIconBox, { backgroundColor: C.teal + '15' }]}>
-                <UsersIcon size={32} color={C.teal} />
+              <View style={[S.secondaryIconBox, { backgroundColor: C.green + '15' }]}>
+                <UsersIcon size={32} color={C.green} />
               </View>
               <View style={S.secondaryTextBox}>
                 <Text style={S.secondaryLabel}>Aking Klase</Text>
                 <Text style={S.secondarySub}>Tingnan ang klase</Text>
               </View>
               <View style={S.secondaryArrow}>
-                <ChevronRightIcon size={20} color={C.teal} />
+                <ChevronRightIcon size={20} color={C.green} />
               </View>
             </Animated.View>
           </TouchableOpacity>

@@ -7,10 +7,10 @@ export const AudioPermissionService = {
   checkPermission: async () => {
     try {
       if (Platform.OS === 'android') {
+        // For Android 10+ (API 29+), we only need RECORD_AUDIO for audio recording
+        // Storage permissions are not required for app-specific directories
         const androidPermissions = [
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         ];
 
         const permissionChecks = await Promise.all(
@@ -31,10 +31,10 @@ export const AudioPermissionService = {
   requestPermission: async () => {
     try {
       if (Platform.OS === 'android') {
+        // For Android 10+ (API 29+), we only need RECORD_AUDIO for audio recording
+        // Storage permissions are not required for app-specific directories
         const androidPermissions = [
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         ];
 
         const grants = await PermissionsAndroid.requestMultiple(androidPermissions);

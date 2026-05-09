@@ -1,4 +1,4 @@
-/**
+  /**
  * Speech2TextServiceController.ts
  * ─────────────────────────────────────────────────────────────────────────────
  * Custom hook for speech-to-text transcription.
@@ -51,7 +51,7 @@ const ENDPOINTS = {
    * Could be a HF Space URL, your own FastAPI server, etc.
    * Example: 'https://your-org-cisc-asr.hf.space/run/predict'
    */
-  custom: 'https://jayac0r30-marungko.hf.space/transcribe',
+  custom: 'https://jayac0r30-marungko-whisperapi.hf.space/transcribe',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────

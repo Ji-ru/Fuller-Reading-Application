@@ -580,7 +580,6 @@ export default function ReadingHistoryScreen() {
             <BounceIn delay={24}>
               <View style={[S.heroBanner, { backgroundColor: C.greenDeep }]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[S.heroSub, { color: 'rgba(255,255,255,0.7)' }]}>Magandang araw, {studentName}!</Text>
                   <Text style={[S.heroTitle, { color: C.white }]}>Kasaysayan ng{'\n'}Iyong Pagbabasa</Text>
                 </View>
                 <View style={S.heroStatsBoxWrapper}>

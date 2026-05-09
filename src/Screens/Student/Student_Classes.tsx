@@ -108,7 +108,7 @@ export default function Student_Classes() {
         <BounceIn delay={72}>
           <View style={S.section}>
             <View style={S.sectionTitleRow}>
-              <BookOpenIcon size={16} color={C.ink} />
+              <BookOpenIcon size={16} color={C.green} />
               <Text style={S.sectionTitle}>Impormasyon ng Klase</Text>
             </View>
             
@@ -135,7 +135,7 @@ export default function Student_Classes() {
         <BounceIn delay={108}>
           <View style={S.section}>
             <View style={S.sectionTitleRow}>
-              <BookOpenIcon size={16} color={C.ink} />
+              <BookOpenIcon size={16} color={C.green} />
               <Text style={S.sectionTitle}>Code ng Klase</Text>
             </View>
             
@@ -149,7 +149,7 @@ export default function Student_Classes() {
         {/* Leave Class Button */}
         <BounceIn delay={144}>
           <TouchableOpacity style={S.leaveBtn} onPress={handleLeaveClass} activeOpacity={0.8}>
-            <Text style={S.leaveBtnText}>Leave Class</Text>
+            <Text style={S.leaveBtnText}>Umalis sa Klase</Text>
           </TouchableOpacity>
         </BounceIn>
       </View>
