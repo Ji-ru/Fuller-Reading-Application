@@ -85,7 +85,7 @@ const upperNav = StyleSheet.create({
     fontSize: sf(16),
     color: '#909090',
     fontWeight: '600',
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
   },
 });
 

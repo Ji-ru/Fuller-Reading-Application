@@ -33,7 +33,7 @@ const selection = StyleSheet.create({
   // ==========================================
   label: {
     fontSize: sf(35),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: '#3B7FC9',
     elevation: 5,
     shadowColor: '#000',
@@ -43,7 +43,7 @@ const selection = StyleSheet.create({
     textAlign: 'center',
   },
   sublabel: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     fontSize: sf(20),
     color: '#388E3C',
     alignSelf: 'flex-start',
@@ -57,12 +57,12 @@ const selection = StyleSheet.create({
     height: sw(120),
   },
   text: {
-    fontFamily: 'Nunito-Regular',
+    fontFamily: 'Andika-Regular',
     fontSize: sf(20),
     marginLeft: sw(10),
   },
   beginText: {
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     fontSize: sf(20),
     color: '#3B7FC9',
     marginLeft: sw(10),
@@ -119,12 +119,12 @@ const selection = StyleSheet.create({
     shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.25,
     shadowRadius: sw(3.84),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
   },
   activeTabText: {
     color: '#FFFFFF',
     fontSize: sf(18),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
   },
 
   // ==========================================
@@ -260,19 +260,19 @@ const selection = StyleSheet.create({
   },
   letterTitle: {
     fontSize: sf(18),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#1F2937',
     marginBottom: sh(4),
   },
   letterSubtitle: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: '#6B7280',
     marginBottom: sh(4),
   },
   letterProgress: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#2CA96A',
   },
   letterArrowContainer: {
@@ -330,14 +330,14 @@ const selection = StyleSheet.create({
   },
   combinedTitle: {
     fontSize: sf(16),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#1F2937',
     marginBottom: sh(4),
     lineHeight: sf(22),
   },
   combinedSubtitle: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: '#6B7280',
   },
   phonemeListContainer: {
@@ -380,13 +380,13 @@ const selection = StyleSheet.create({
   },
   phonemeTitle: {
     fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#374151',
     marginBottom: sh(2),
   },
   phonemeIPA: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: '#6B7280',
   },
   wordsGrid: {
@@ -410,7 +410,7 @@ const selection = StyleSheet.create({
   },
   wordBubbleText: {
     fontSize: sf(20),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#374151',
   },
   wordBubbleTextCompleted: {
@@ -439,14 +439,14 @@ const selection = StyleSheet.create({
   word: {
     fontSize: sf(30),
     fontWeight: '600',
-    fontFamily: 'Nunito-MediumItalic',
+    fontFamily: 'Andika-BoldItalic',
   },
   wordSectionContainer: {
     marginVertical: sh(5),
   },
   wordSection: {
     fontSize: sf(25),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     left: sw(10),
   },
 
@@ -503,11 +503,11 @@ const selection = StyleSheet.create({
   title: {
     fontSize: sf(20),
     color: '#008443',
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
   },
   author: {
     color: '#2CA96A',
-    fontFamily: 'Nunito-Regular',
+    fontFamily: 'Andika-Regular',
     fontSize: sf(15),
   },
   arrowContainer: {

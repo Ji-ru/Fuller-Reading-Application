@@ -327,7 +327,7 @@ const historyStyles = StyleSheet.create({
   loadingText: {
     marginTop: sh(14),
     fontSize: sf(15),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.inkLight,
   },
 

@@ -89,7 +89,7 @@ const readingStyles = StyleSheet.create({
   },
   passageTitle: {
     fontSize: sf(25),
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Andika-Bold',
     textAlign: 'center',
     marginBottom: sh(8),
   },
@@ -163,7 +163,7 @@ const readingStyles = StyleSheet.create({
     backgroundColor: '#FF4D4D',
   },
   recordingStatusText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     fontSize: sf(13),
     color: '#8899A6',
     letterSpacing: 0.3,
@@ -310,7 +310,7 @@ const readingStyles = StyleSheet.create({
   loadingText: {
     fontSize: sf(16),
     color: '#666',
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Andika-Regular',
     textAlign: 'center',
   },
 
@@ -332,7 +332,7 @@ const readingStyles = StyleSheet.create({
   },
   calculationText: {
     textAlign: 'center',
-    fontFamily: 'Satoshi-Black',
+    fontFamily: 'Andika-Bold',
     fontSize: sf(20),
     color: '#ffff',
   },
@@ -368,7 +368,7 @@ const readingStyles = StyleSheet.create({
   feedbackLabel: {
     fontSize: sf(15),
     padding: sw(5),
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#008443',
   },
   feedbackBookicon: {
@@ -879,7 +879,7 @@ const readingStyles = StyleSheet.create({
   scrollHintText: {
     color: '#FFFFFF',
     fontSize: sf(14),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Andika-Bold',
     textAlign: 'center',
   },
 
@@ -953,14 +953,14 @@ const readingStyles = StyleSheet.create({
   /** Uppercase letter text inside the big bubble */
   alphaUpperLetter: {
     fontSize: sf(62),
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#FFFFFF',
   },
 
   /** Lowercase letter text inside the small bubble */
   alphaLowerLetter: {
     fontSize: sf(42),
-    fontFamily: 'DynaPuff-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#008443',
   },
 
@@ -972,7 +972,7 @@ const readingStyles = StyleSheet.create({
   },
   alphaCaseLabel: {
     fontSize: sf(11),
-    fontFamily: 'Satoshi-Medium',
+    fontFamily: 'Andika-Regular',
     color: '#57b8b3',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -1213,7 +1213,7 @@ const readingStyles = StyleSheet.create({
     maxWidth: sw(320),
   },
   loadingModalTitle: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     fontSize: sf(18),
     color: '#1E1E1E',
     marginTop: sh(20),
