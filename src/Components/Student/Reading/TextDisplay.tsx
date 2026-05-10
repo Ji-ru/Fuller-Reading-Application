@@ -284,7 +284,7 @@ const dotStyles = StyleSheet.create({
     borderColor: '#008443',
   },
   counterText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     fontSize: 15,
     color: '#008443',
     letterSpacing: 0.5,
@@ -368,7 +368,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
     const renderedWords: JSX.Element[] = [];
     let keyCounter = 0;
-    const errorFont = type === 'passage' ? 'Nunito-Bold' : 'DynaPuff-Bold';
+    const errorFont = type === 'passage' ? 'Andika-Bold' : 'DynaPuff-Bold';
 
     originalWords.forEach((originalWord, index) => {
       const { word: cleanWord, punctuation } = extractPunctuation(originalWord);
@@ -396,7 +396,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       }
     });
 
-    return <Text style={[readingStyles.textLine, { fontFamily: type === 'passage' ? 'Nunito-Bold' : 'DynaPuff-Bold' }]}>{renderedWords}</Text>;
+    return <Text style={[readingStyles.textLine, { fontFamily: type === 'passage' ? 'Andika-Bold' : 'DynaPuff-Bold' }]}>{renderedWords}</Text>;
   };
 
   const renderTextContent = () => {
@@ -492,8 +492,8 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       )}
       {!isRecording && isReadingCompleted && passageGreeting && (
         <Svg height={35} width={350}>
-          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="none" stroke="#c0e8f2" strokeWidth={6} strokeLinejoin="round">{passageGreeting.title}</SvgText>
-          <SvgText x={180} y={25} fontSize={30} fontFamily="Nunito-Black" textAnchor="middle" fill="#008443">{passageGreeting.title}</SvgText>
+          <SvgText x={180} y={25} fontSize={30} fontFamily="Andika-Bold" textAnchor="middle" fill="none" stroke="#c0e8f2" strokeWidth={6} strokeLinejoin="round">{passageGreeting.title}</SvgText>
+          <SvgText x={180} y={25} fontSize={30} fontFamily="Andika-Bold" textAnchor="middle" fill="#008443">{passageGreeting.title}</SvgText>
         </Svg>
       )}
 

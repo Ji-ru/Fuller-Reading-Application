@@ -62,7 +62,7 @@ export default function StudentTabNavigator() {
                 tabBarActiveTintColor: '#6db4ff',
                 tabBarInactiveTintColor: '#8F9BB3',
                 tabBarLabelStyle: {
-                    fontFamily: 'DynaPuff-Bold',
+                    fontFamily: 'Andika-Bold',
                     fontSize: 12,
                     marginTop: 5
                 },

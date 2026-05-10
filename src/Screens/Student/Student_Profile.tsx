@@ -84,6 +84,7 @@ const headerStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
+  aboutIcon: { width: 20, height: 20, marginRight: 12, tintColor: '#909090'},
   backBtn: {
     width: 45, height: 45, borderRadius: 10,
     backgroundColor: '#008443',
@@ -298,7 +299,7 @@ export default function Profile() {
           <Svg height={60} width={200}>
             <SvgText
               x={100} y={35} fontSize={23}
-              fontFamily="Nunito-Black" textAnchor="middle"
+              fontFamily="Andika-Bold" textAnchor="middle"
               fill="none" stroke={C.primaryLight}
               strokeWidth={8} strokeLinejoin="round"
             >
@@ -306,7 +307,7 @@ export default function Profile() {
             </SvgText>
             <SvgText
               x={100} y={35} fontSize={23}
-              fontFamily="Nunito-Black" textAnchor="middle"
+              fontFamily="Andika-Bold" textAnchor="middle"
               fill={C.primary}
             >
               My Profile
@@ -327,8 +328,15 @@ export default function Profile() {
               }}
               style={upperNav.logoutButton}
             >
-              <Text style={upperNav.logoutText}>About</Text>
+              <Image
+                source={require('../../../assets/icons/icons8-info-50.png')}
+                style={headerStyles.aboutIcon}
+              />
+              <Text style={upperNav.aboutText}>About</Text>
             </TouchableOpacity>
+
+            <View style={upperNav.divider} />
+
             <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
               <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
               <Text style={upperNav.logoutText}>Logout</Text>
@@ -539,12 +547,12 @@ const S = StyleSheet.create({
   loadingText: {
     marginTop: sh(12),
     fontSize: sf(16),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.inkLight,
   },
   errorText: {
     fontSize: sf(16),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.coral,
     textAlign: 'center',
     marginBottom: sh(16),
@@ -559,7 +567,7 @@ const S = StyleSheet.create({
   retryButtonText: {
     color: C.card,
     fontSize: sf(16),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
   },
 
   // Header
@@ -604,7 +612,7 @@ const S = StyleSheet.create({
   },
   studentName: {
     fontSize: sf(24),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
     marginBottom: sh(6),
   },
@@ -616,7 +624,7 @@ const S = StyleSheet.create({
   },
   roleBadgeText: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.primary,
   },
 
@@ -649,7 +657,7 @@ const S = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: sf(18),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
   },
 
@@ -662,7 +670,7 @@ const S = StyleSheet.create({
   },
   editPillText: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.primary,
   },
 
@@ -682,12 +690,12 @@ const S = StyleSheet.create({
   },
   infoLabel: {
     fontSize: sf(14),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.inkLight,
   },
   infoValue: {
     fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
   },
 
@@ -700,13 +708,13 @@ const S = StyleSheet.create({
   },
   inputLabel: {
     fontSize: sf(14),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.inkLight,
     marginBottom: sh(6),
   },
   optionalText: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Regular',
+    fontFamily: 'Andika-Regular',
     color: C.slate,
   },
   textInput: {
@@ -716,7 +724,7 @@ const S = StyleSheet.create({
     paddingHorizontal: sw(14),
     paddingVertical: sh(10),
     fontSize: sf(15),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.ink,
     backgroundColor: C.inputBg,
   },
@@ -736,7 +744,7 @@ const S = StyleSheet.create({
   },
   cancelButtonText: {
     color: C.orange,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     fontSize: sf(14),
   },
   saveButton: {
@@ -756,6 +764,6 @@ const S = StyleSheet.create({
   saveButtonText: {
     fontSize: sf(14),
     color: C.card,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
   },
 });

@@ -1122,7 +1122,7 @@ export default function ReadingActivityScreenPage() {
 
               {/* Title */}
               <Text style={{
-                fontSize: 18, fontFamily: 'Nunito-ExtraBold',
+                fontSize: 18, fontFamily: 'Andika-Bold',
                 color: '#1E1E1E', textAlign: 'center', marginBottom: 8,
               }}>
                 Network Error
@@ -1130,7 +1130,7 @@ export default function ReadingActivityScreenPage() {
 
               {/* Message */}
               <Text style={{
-                fontSize: 14, fontFamily: 'Nunito-Medium',
+                fontSize: 14, fontFamily: 'Andika-Regular',
                 color: '#555', textAlign: 'center', marginBottom: 24, lineHeight: 20,
               }}>
                 {sttErrorMessage}
@@ -1145,7 +1145,7 @@ export default function ReadingActivityScreenPage() {
                     backgroundColor: '#F0F4FF', alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: '#008443', fontFamily: 'Nunito-Bold', fontSize: 14 }}>Dismiss</Text>
+                  <Text style={{ color: '#008443', fontFamily: 'Andika-Bold', fontSize: 14 }}>Dismiss</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -1155,7 +1155,7 @@ export default function ReadingActivityScreenPage() {
                     backgroundColor: '#008443', alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontFamily: 'Nunito-Bold', fontSize: 14 }}>Try Again</Text>
+                  <Text style={{ color: '#FFFFFF', fontFamily: 'Andika-Bold', fontSize: 14 }}>Try Again</Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -214,8 +214,14 @@ export default function UserHomeScreen() {
               }}
               style={upperNav.logoutButton}
             >
-              <Text style={upperNav.logoutText}>About</Text>
+              <Image
+                source={require('../../../assets/icons/icons8-info-50.png')}
+                style={S.aboutIcon}
+              />
+              <Text style={upperNav.aboutText}>About</Text>
             </TouchableOpacity>
+
+            <View style={upperNav.divider} />
 
             <TouchableOpacity
               onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
@@ -311,6 +317,7 @@ export default function UserHomeScreen() {
 const S = StyleSheet.create({
   bg: { flex: 1, backgroundColor: C.bg },
 
+  aboutIcon: { width: 20, height: 20, marginRight: 12, tintColor: '#909090'},
   // Header
   header: {
     flexDirection: 'row',
@@ -323,7 +330,7 @@ const S = StyleSheet.create({
   },
   headerLogo: {
     fontSize: sf(18),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.green, // the user requested #2ca96a for this, which is now C.green
     letterSpacing: 0.5,
   },
@@ -351,7 +358,7 @@ const S = StyleSheet.create({
     paddingHorizontal: sw(16), paddingVertical: sh(14),
   },
   dropdownIcon: { width: sw(20), height: sw(20), marginRight: sw(12), tintColor: C.coral },
-  dropdownText: { fontSize: sf(15), fontFamily: 'Nunito-Bold', color: C.coral },
+  dropdownText: { fontSize: sf(15), fontFamily: 'Andika-Bold', color: C.coral },
 
   mainContent: {
     flex: 1,
@@ -377,21 +384,21 @@ const S = StyleSheet.create({
   greetLeft: { flex: 1 },
   greetTime: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: C.green,
     letterSpacing: 1.2,
     marginBottom: sh(4),
   },
   greetName: {
     fontSize: sf(38),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
     lineHeight: sh(46),
     marginBottom: sh(8),
   },
   greetSub: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.slate,
     lineHeight: sh(19),
     maxWidth: sw(160),
@@ -417,7 +424,7 @@ const S = StyleSheet.create({
   },
   sectionLabelText: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: C.inkLight,
     letterSpacing: 1.5,
   },
@@ -464,10 +471,10 @@ const S = StyleSheet.create({
 
   // Button text
   actBtnLabel: {
-    fontSize: sf(17), fontFamily: 'Nunito-ExtraBold', color: C.white, marginBottom: sh(3),
+    fontSize: sf(17), fontFamily: 'Andika-Bold', color: C.white, marginBottom: sh(3),
   },
   actBtnSublabel: {
-    fontSize: sf(12), color: 'rgba(255,255,255,0.75)', fontFamily: 'Nunito-Medium',
+    fontSize: sf(12), color: 'rgba(255,255,255,0.75)', fontFamily: 'Andika-Regular',
   },
 
   // Arrow circle

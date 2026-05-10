@@ -84,18 +84,18 @@ const S = StyleSheet.create({
   },
   scoreValue: {
     fontSize: sf(32),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.primary,
   },
   scoreLabel: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.inkLight,
     marginTop: -sh(4),
   },
   feedbackText: {
     fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
     textAlign: 'center',
     lineHeight: sf(22),
@@ -105,7 +105,7 @@ const S = StyleSheet.create({
   // Miscue List
   sectionTitle: {
     fontSize: sf(16),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: C.primary,
     marginBottom: sh(12),
   },
@@ -135,13 +135,13 @@ const S = StyleSheet.create({
   miscueTagRepetition: { backgroundColor: '#BF00DD' },
   miscueTagText: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#FFFFFF',
   },
   miscueValue: {
     flex: 1,
     fontSize: sf(20),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.ink,
     lineHeight: sf(18),
   },
@@ -149,7 +149,7 @@ const S = StyleSheet.create({
   // Alphabet / Word specifics
   largeText: {
     fontSize: sf(60),
-    fontFamily: 'Andika-Black',
+    fontFamily: 'Andika-Bold',
     color: C.primary,
     marginBottom: sh(8),
   },
@@ -161,7 +161,7 @@ const S = StyleSheet.create({
   },
   statusText: {
     fontSize: sf(14),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.white,
   },
 
@@ -229,7 +229,7 @@ const S = StyleSheet.create({
   },
   btnText: {
     fontSize: sf(20),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.white,
   },
 });
@@ -298,7 +298,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
             <Svg height={50} width={250}>
               <SvgText
                 x={125} y={35} fontSize={30}
-                fontFamily="Nunito-Black" textAnchor="middle"
+                fontFamily="Andika-Bold" textAnchor="middle"
                 fill="none" stroke={C.primaryLight}
                 strokeWidth={6} strokeLinejoin='round'
               >
@@ -306,7 +306,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
               </SvgText>
               <SvgText
                 x={125} y={35} fontSize={30}
-                fontFamily="Nunito-Black" textAnchor="middle"
+                fontFamily="Andika-Bold" textAnchor="middle"
                 fill={isCorrect ? C.primary : C.warning}
               >
                 {isCorrect ? 'GOOD JOB!' : 'TRY AGAIN'}
@@ -360,7 +360,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           <Svg height={25} width={300}>
             <SvgText
               x={150} y={20} fontSize={24}
-              fontFamily="Nunito-Black" textAnchor="middle"
+              fontFamily="Andika-Bold" textAnchor="middle"
               fill="none" stroke={C.primaryLight}
               strokeWidth={6} strokeLinejoin='round'
             >
@@ -368,7 +368,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
             </SvgText>
             <SvgText
               x={150} y={20} fontSize={24}
-              fontFamily="Nunito-Black" textAnchor="middle"
+              fontFamily="Andika-Bold" textAnchor="middle"
               fill={C.primary}
             >
               READING SUMMARY
@@ -426,13 +426,13 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
 
           {hasNoTranscription ? (
             <View style={[S.miscueRow, { backgroundColor: '#FDE8E8', borderColor: '#E53935' }]}>
-              <Text style={[S.miscueValue, { textAlign: 'center', color: '#E53935', fontFamily: 'Nunito-Bold' }]}>
+              <Text style={[S.miscueValue, { textAlign: 'center', color: '#E53935', fontFamily: 'Andika-Bold' }]}>
                 Network Problem. Please try again.
               </Text>
             </View>
           ) : miscues.length === 0 && (
             <View style={[S.miscueRow, { backgroundColor: C.successBg, borderColor: C.success }]}>
-              <Text style={[S.miscueValue, { textAlign: 'center', color: C.success, fontFamily: 'Nunito-Bold' }]}>
+              <Text style={[S.miscueValue, { textAlign: 'center', color: C.success, fontFamily: 'Andika-Bold' }]}>
                 🌟 Perfect Reading! No miscues detected.
               </Text>
             </View>

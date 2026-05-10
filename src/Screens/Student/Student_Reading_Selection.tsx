@@ -58,6 +58,7 @@ const headerStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
+  aboutIcon: { width: 20, height: 20, marginRight: 12, tintColor: '#909090'},
   backBtn: {
     width: 45, height: 45, borderRadius: 10,
     backgroundColor: '#008443',
@@ -79,7 +80,7 @@ const headerStyles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 14,
   },
   dropdownIcon: { width: 20, height: 20, marginRight: 12, tintColor: C.coral },
-  dropdownText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.coral },
+  dropdownText: { fontSize: 15, fontFamily: 'Andika-Bold', color: C.coral },
 });
 
 // ─── BounceIn ─────────────────────────────────────────────────────────────────
@@ -147,21 +148,21 @@ const greetStyles = StyleSheet.create({
   greetLeft: { flex: 1 },
   greetTime: {
     fontSize: SW * 0.028,
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: '#3B7FC9',
     letterSpacing: 1.2,
     marginBottom: 2,
   },
   greetName: {
     fontSize: SW * 0.075,
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
     lineHeight: SW * 0.085,
     marginBottom: 4,
   },
   greetSub: {
     fontSize: SW * 0.03,
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.slate,
     lineHeight: SW * 0.04,
     maxWidth: SW * 0.45,
@@ -421,7 +422,7 @@ export default function PageSelectionScreen() {
         <Text style={[
           selection.wordBubbleText,
           completed && selection.wordBubbleTextCompleted,
-          { fontFamily: 'Nunito-Bold' }
+          { fontFamily: 'Andika-Bold' }
         ]}>
           {word}
         </Text>
@@ -505,7 +506,7 @@ export default function PageSelectionScreen() {
                 x={110}                 // center X
                 y={35}                  // baseline Y
                 fontSize={23}
-                fontFamily="Nunito-Black"
+                fontFamily="Andika-Bold"
                 textAnchor="middle"     // center align
                 fill="none"          // inside color
                 stroke="#E8F5E9"        // outline color
@@ -518,7 +519,7 @@ export default function PageSelectionScreen() {
                 x={110}
                 y={35}
                 fontSize={23}
-                fontFamily="Nunito-Black"
+                fontFamily="Andika-Bold"
                 textAnchor="middle"
                 fill="#1B5E20"
               >
@@ -540,8 +541,14 @@ export default function PageSelectionScreen() {
               }}
               style={upperNav.logoutButton}
             >
-              <Text style={upperNav.logoutText}>About</Text>
+              <Image
+                source={require('../../../assets/icons/icons8-info-50.png')}
+                style={headerStyles.aboutIcon}
+              />
+              <Text style={upperNav.aboutText}>About</Text>
             </TouchableOpacity>
+
+            <View style={upperNav.divider} />
 
             <TouchableOpacity onPress={handleLogoutPress} style={headerStyles.dropdownItem} activeOpacity={0.75}>
               <Image

@@ -18,6 +18,7 @@ const upperNav = StyleSheet.create({
     width: logoWidth,
     height: logoHeight,
   },
+  divider:    { height: 1, backgroundColor: '#E8F5E9', marginHorizontal: 12 },
   menuIcon: {
     width: menuIconSize,
     height: menuIconSize * (35 / 50), // maintain original ratio
@@ -79,6 +80,12 @@ const upperNav = StyleSheet.create({
     color: '#e74c3c',
     fontWeight: '600',
     fontFamily: 'Satoshi-Medium',
+  },
+  aboutText: {
+    fontSize: sf(16),
+    color: '#909090',
+    fontWeight: '600',
+    fontFamily: 'Nunito-Bold',
   },
 });
 

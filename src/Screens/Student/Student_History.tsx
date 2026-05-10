@@ -60,6 +60,7 @@ const headerStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
+  aboutIcon: { width: 20, height: 20, marginRight: 12, tintColor: '#909090'},
   backBtn: {
     width: 45, height: 45, borderRadius: 10,
     backgroundColor: '#008443',
@@ -465,14 +466,14 @@ export default function ReadingHistoryScreen() {
         <Svg height={60} width={220}>
           <SvgText
             x={110} y={35} fontSize={23}
-            fontFamily="Nunito-Black" textAnchor="middle"
+            fontFamily="Andika-Bold" textAnchor="middle"
             fill="none" stroke="#E8F5E9" strokeWidth={8} strokeLinejoin="round"
           >
             Reading History
           </SvgText>
           <SvgText
             x={110} y={35} fontSize={23}
-            fontFamily="Nunito-Black" textAnchor="middle"
+            fontFamily="Andika-Bold" textAnchor="middle"
             fill="#1B5E20"
           >
             Reading History
@@ -487,14 +488,21 @@ export default function ReadingHistoryScreen() {
       {menuVisible && (
         <View style={upperNav.dropdownMenu}>
           <TouchableOpacity
-            onPress={() => {
-              setMenuVisible(false);
-              handleNextStep('About');
-            }}
-            style={upperNav.logoutButton}
-          >
-            <Text style={upperNav.logoutText}>About</Text>
-          </TouchableOpacity>
+              onPress={() => {
+                setMenuVisible(false);
+                handleNextStep('About');
+              }}
+              style={upperNav.logoutButton}
+            >
+              <Image
+                source={require('../../../assets/icons/icons8-info-50.png')}
+                style={headerStyles.aboutIcon}
+              />
+              <Text style={upperNav.aboutText}>About</Text>
+            </TouchableOpacity>
+
+            <View style={upperNav.divider} />
+
           <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
             <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
             <Text style={upperNav.logoutText}>Logout</Text>
@@ -1078,7 +1086,7 @@ const tabStyles = StyleSheet.create({
   },
   tabText: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: '#388E3C',
   },
   tabTextActive: {
@@ -1101,7 +1109,7 @@ const tabStyles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: sf(16),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#1F2937',
     marginBottom: sh(10),
   },
@@ -1180,7 +1188,7 @@ const filterStyles = StyleSheet.create({
   },
   periodLabel: {
     fontSize: sf(14),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#1F2937',
   },
 
@@ -1215,7 +1223,7 @@ const filterStyles = StyleSheet.create({
   },
   dayChipLabel: {
     fontSize: sf(10),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: '#6B7280',
     marginBottom: sh(2),
   },
@@ -1224,7 +1232,7 @@ const filterStyles = StyleSheet.create({
   },
   dayChipDate: {
     fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#1F2937',
   },
   dayChipDateActive: {
@@ -1264,7 +1272,7 @@ const filterStyles = StyleSheet.create({
   },
   weekChipText: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#388E3C',
   },
   weekChipTextActive: {

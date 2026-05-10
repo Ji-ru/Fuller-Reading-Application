@@ -100,7 +100,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
       </View>
 
       {!hasPermission && (
-        <Text style={{ marginTop: 8, color: '#FF4D4D', fontFamily: 'Nunito-Bold' }}>
+        <Text style={{ marginTop: 8, color: '#FF4D4D', fontFamily: 'Andika-Bold' }}>
           Microphone permission required
         </Text>
       )}
