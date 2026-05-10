@@ -27,7 +27,7 @@ import bubbles from '../../UI_Designs/BubblesDesign';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 
 export default function StudentAssessments() {
-  const { handleBackStep, handleAssessmentNext } = useNavigationHelper();
+  const { handleBackStep, handleAssessmentNext, handleAssessmentReview } = useNavigationHelper();
   const [activities, setActivities] = useState<ActivityDocument[]>([]);
   const [results, setResults] = useState<Record<string, ActivityResultDocument>>({});
   const [loading, setLoading] = useState(true);
@@ -84,7 +84,6 @@ export default function StudentAssessments() {
   const renderActivityItem = (activity: ActivityDocument, index: number) => {
     const result = results[activity.activityId];
     const isCompleted = !!result;
-    const { handleAssessmentReview } = useNavigationHelper();
 
     return (
       <BounceIn key={activity.activityId} delay={index * 36}>

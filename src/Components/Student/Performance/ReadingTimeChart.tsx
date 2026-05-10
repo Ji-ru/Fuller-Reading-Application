@@ -7,6 +7,11 @@ import {
 } from 'react-native';
 import { use_StudentReadingTime } from '../../../Hooks/use_StudentReadingTime';
 import { StudentColors as C, Radii, Shadows } from '../../../Utilities/Theme';
+import {
+  AlertTriangleIcon,
+  BookOpenIcon,
+  LightBulbIcon,
+} from '../../GlobalUse/Icons';
 
 // ── Design Tokens (project-consistent) ───────────────────────────────────────
 const PRIMARY = C.green;        // #3d71d9 — brand royal blue
@@ -71,7 +76,10 @@ export default function ReadingTimeChart({ studentId, timeFilter, reports }: Rea
   if (error) {
     return (
       <View style={S.errorCard}>
-        <Text style={S.errorText}>⚠️ {error}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <AlertTriangleIcon size={18} color={CORAL} />
+          <Text style={S.errorText}>{error}</Text>
+        </View>
         <Text style={S.errorSub}>Hindi ma-load ang datos ng pagbasa</Text>
       </View>
     );
@@ -94,8 +102,8 @@ export default function ReadingTimeChart({ studentId, timeFilter, reports }: Rea
   if (totalSessions === 0) {
     return (
       <View style={S.centered}>
-        <Text style={{ fontSize: 28, marginBottom: 8 }}>📚</Text>
-        <Text style={S.loadingText}>Walang aktibidad sa panahong ito.</Text>
+        <BookOpenIcon size={48} color={INK_LIGHT} />
+        <Text style={[S.loadingText, { marginTop: 16 }]}>Walang aktibidad sa panahong ito.</Text>
       </View>
     );
   }
@@ -122,7 +130,7 @@ export default function ReadingTimeChart({ studentId, timeFilter, reports }: Rea
 
       {/* ── Insight Bar ────────────────────────────────────────────── */}
       <View style={S.insightBar}>
-        <Text style={S.insightIcon}>💡</Text>
+        <LightBulbIcon size={18} color={GREEN} />
         <Text style={S.insightText}>{insightText}</Text>
       </View>
 

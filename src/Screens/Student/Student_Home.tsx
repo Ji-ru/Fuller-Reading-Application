@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BounceIn, FloatingImage } from '../../Components/GlobalUse/Animations';
 import {
   BookIcon, UserProfileIcon, LogoutIcon,
-  BurgerIcon, ChevronRightIcon, UsersIcon,
+  BurgerIcon, ChevronRightIcon, UsersIcon, HistoryIcon,
 } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { getCurrentUser, getUserProfile } from '../../Controller/AuthenticationController';
@@ -212,7 +212,7 @@ export default function UserHomeScreen() {
             <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
               <View style={S.secondaryCardGlow} />
               <View style={S.secondaryIconBox}>
-                <BookIcon size={32} color={C.green} />
+                <HistoryIcon size={32} color={C.green} />
               </View>
               <View style={S.secondaryTextBox}>
                 <Text style={S.secondaryLabel}>Kasaysayan</Text>
@@ -231,15 +231,15 @@ export default function UserHomeScreen() {
           >
             <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
               <View style={S.secondaryCardGlow} />
-              <View style={[S.secondaryIconBox, { backgroundColor: C.teal + '15' }]}>
-                <UsersIcon size={32} color={C.teal} />
+              <View style={[S.secondaryIconBox, { backgroundColor: C.sky + '15' }]}>
+                <UsersIcon size={32} color={C.sky} />
               </View>
               <View style={S.secondaryTextBox}>
                 <Text style={S.secondaryLabel}>Aking Klase</Text>
                 <Text style={S.secondarySub}>Tingnan ang klase</Text>
               </View>
               <View style={S.secondaryArrow}>
-                <ChevronRightIcon size={20} color={C.teal} />
+                <ChevronRightIcon size={20} color={C.sky} />
               </View>
             </Animated.View>
           </TouchableOpacity>

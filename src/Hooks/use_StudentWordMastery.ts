@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { MiscueReportController } from '../Controller/MiscueReportController';
 import { getDateRange } from '../Utilities/analyticsDateHelpers';
 import readingMaterialData from '../../assets/ReadingMaterial/ReadingMaterial.json';
@@ -8,6 +8,7 @@ import { SubPeriodFilter } from '../Components/Student/DateFilter';
 
 export interface WordMasteryStats {
   mastered: number;
+  tried: number;
   inProgress: number;
   new: number;
   total: number;
@@ -89,9 +90,10 @@ export function use_StudentWordMastery(
   periodOffset: number = 0,
   selectedSubFilter: SubPeriodFilter | null = null,
 ) {
+  const [refreshCount, setRefreshCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // All-time mastery map: word → letter (fetched once per screen mount)
+  // All-time mastery map: word → letter (fetched once per screen mount or on refresh)
   const [allTimeWords, setAllTimeWords] = useState<Map<string, string>>(new Map());
   const allTimeFetched = useRef(false);
 
@@ -108,30 +110,64 @@ export function use_StudentWordMastery(
 
   // ── 1. Fetch all-time mastery once ──
   useEffect(() => {
-    if (!studentId || allTimeFetched.current) return;
+    if (!studentId || (allTimeFetched.current && refreshCount === 0)) return;
     MiscueReportController.getWordMasteryAllTime(studentId)
       .then(data => {
         setAllTimeWords(new Map(data.map(d => [d.word, d.letter])));
         allTimeFetched.current = true;
       })
       .catch(e => console.error('Word mastery all-time fetch error:', e));
-  }, [studentId]);
+  }, [studentId, refreshCount]);
 
   // ── 2. Fetch full period once per timeFilter / periodOffset change ──
   //    selectedSubFilter does NOT trigger a re-fetch; narrowing is done client-side.
+  const [triedWordsRaw, setTriedWordsRaw] = useState<
+    Array<{ word: string; timestamp: Date }>
+  >([]);
+
   useEffect(() => {
     if (!studentId) return;
     let cancelled = false;
     setLoading(true);
 
-    MiscueReportController.getWordMasteryByDateRange(
-      studentId,
-      fullPeriodRange.start,
-      fullPeriodRange.end,
-    )
-      .then(data => {
+    Promise.all([
+      MiscueReportController.getWordMasteryByDateRange(
+        studentId,
+        fullPeriodRange.start,
+        fullPeriodRange.end,
+      ),
+      // Also fetch incorrect word attempts from miscueReports
+      (async () => {
+        const { default: firestore } = await import('@react-native-firebase/firestore');
+        const snap = await firestore()
+          .collection('miscueReports')
+          .where('studentId', '==', studentId)
+          .get();
+        return snap.docs
+          .filter(d => {
+            const data = d.data();
+            const title = (data.passageTitle || '') as string;
+            const ts = data.timestamp?.toDate?.() || new Date(data.timestamp || 0);
+            return (
+              title.startsWith('Words for ') &&
+              (data.accuracyRate || 0) < 100 &&
+              ts >= fullPeriodRange.start &&
+              ts <= fullPeriodRange.end
+            );
+          })
+          .map(d => {
+            const data = d.data();
+            return {
+              word: (data.passageTitle || '').replace('Words for ', '').trim(),
+              timestamp: data.timestamp?.toDate?.() || new Date(data.timestamp || 0),
+            };
+          });
+      })(),
+    ])
+      .then(([masteredData, triedData]) => {
         if (cancelled) return;
-        setFullPeriodRaw(data);
+        setFullPeriodRaw(masteredData);
+        setTriedWordsRaw(triedData);
         setLoading(false);
       })
       .catch(e => {
@@ -142,7 +178,7 @@ export function use_StudentWordMastery(
       });
 
     return () => { cancelled = true; };
-  }, [studentId, fullPeriodRange]);
+  }, [studentId, fullPeriodRange, refreshCount]);
 
   // ── Derive periodWords — narrowed to selectedSubFilter if active ──
   const periodWords = useMemo(() => {
@@ -178,6 +214,17 @@ export function use_StudentWordMastery(
     const total = getAllWordsFromMaterial().size;
     const mastered = periodWords.size;
 
+    // Words attempted but read incorrectly in this period
+    const triedWordsSet = new Set(
+      (selectedSubFilter
+        ? triedWordsRaw.filter(d =>
+            d.timestamp >= selectedSubFilter.start &&
+            d.timestamp <= selectedSubFilter.end)
+        : triedWordsRaw
+      ).map(d => d.word.toLowerCase())
+    );
+    const tried = triedWordsSet.size;
+
     let inProgress = 0;
     periodLetters.forEach(letter => {
       const group = readingMaterialData.Words.find(g => g.letter === letter);
@@ -190,14 +237,26 @@ export function use_StudentWordMastery(
       }
     });
 
-    return { mastered, inProgress, new: Math.max(0, total - mastered - inProgress), total };
-  }, [periodWords, periodLetters]);
+    return { 
+      mastered, 
+      tried,
+      inProgress, 
+      new: Math.max(0, total - mastered - tried - inProgress), 
+      total 
+    };
+  }, [periodWords, periodLetters, triedWordsRaw, selectedSubFilter]);
 
   // ── Cumulative (all-time) stats — for progress bar ──
   const cumulativeStats = useMemo((): WordMasteryStats => {
     const total = getAllWordsFromMaterial().size;
     const mastered = allTimeWords.size;
-    return { mastered, inProgress: 0, new: Math.max(0, total - mastered), total };
+    return { 
+      mastered, 
+      tried: 0, // Not tracking cumulative tried in this simple view
+      inProgress: 0, 
+      new: Math.max(0, total - mastered), 
+      total 
+    };
   }, [allTimeWords]);
 
   // Letters mastered all-time (for the green dot on letter pills)
@@ -234,15 +293,27 @@ export function use_StudentWordMastery(
     const group = readingMaterialData.Words.find(g => g.letter === letter);
     if (!group) return [];
 
-    const isLetterActiveInPeriod = periodLetters.has(letter);
+    // Words attempted but read incorrectly in this period
+    const triedWordsSet = new Set(
+      (selectedSubFilter
+        ? triedWordsRaw.filter(d =>
+            d.timestamp >= selectedSubFilter.start &&
+            d.timestamp <= selectedSubFilter.end)
+        : triedWordsRaw
+      ).map(d => d.word.toLowerCase())
+    );
+
     const result: AralinWordInfo[] = [];
 
     group.contrasts.forEach(c => {
       c.words.forEach(w => {
+        // Skip if word is just the letter itself (e.g. "M", "m", "S", "s")
+        if (w.toLowerCase() === letter.toLowerCase() && w.length === 1) return;
+
         let status: 'mastered' | 'tried' | 'unseen' = 'unseen';
         if (periodWords.has(w)) {
           status = 'mastered';
-        } else if (isLetterActiveInPeriod) {
+        } else if (triedWordsSet.has(w.toLowerCase())) {
           status = 'tried';
         }
         result.push({ word: w, status });
@@ -252,10 +323,10 @@ export function use_StudentWordMastery(
     return result;
   };
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     allTimeFetched.current = false;
-    setAllTimeWords(new Map());
-  };
+    setRefreshCount(prev => prev + 1);
+  }, []);
 
   return {
     loading,

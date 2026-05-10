@@ -23,7 +23,7 @@ import {
 } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import { getAuth } from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { Alphabet, Contrasts, Passage, Word } from '../../Interfaces/passage';
 import bubbles from '../../UI_Designs/BubblesDesign';
@@ -207,7 +207,7 @@ export default function PageSelectionScreen() {
     let isMounted = true;
     const fetchMastery = async () => {
       try {
-        const user = getAuth().currentUser;
+        const user = auth().currentUser;
         if (user) {
           const { completedAlpha: alpha, completedWords: words, completedPassages: passages } = 
             await MiscueReportController.getStudentDetailedCompletion(user.uid);
@@ -257,10 +257,6 @@ export default function PageSelectionScreen() {
   };
 
   const handleLessonSelect = (index: number) => {
-    if (index > 0 && !isLessonMastered(index - 1)) {
-      setLockModalVisible(true);
-      return;
-    }
     setSelectedAralin(index);
   };
 
@@ -342,7 +338,7 @@ export default function PageSelectionScreen() {
     const totalWordsCount = getTotalWordsForLetter(item.letter);
     
     const isFullyMastered = isAlphaDone && (totalWordsCount === 0 || completedWordsCount >= totalWordsCount);
-    const isLocked = index > 0 && !isLessonMastered(index - 1);
+    const isLocked = false;
     const bg = isLocked ? '#dfe6e9' : BLUE_SHADES[index % BLUE_SHADES.length];
 
     return (

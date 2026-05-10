@@ -9,6 +9,12 @@ import { use_StudentAccuracySpeedTrends } from '../../../Hooks/use_StudentAccura
 import { StudentColors as C, Radii, Shadows } from '../../../Utilities/Theme';
 import { MiscueReportDocument } from '../../../Interfaces/dataInterfaces';
 import { SubPeriodFilter } from '../DateFilter';
+import {
+  BarChartIcon,
+  TrendUpIcon,
+  ZapIcon,
+  AlertTriangleIcon,
+} from '../../GlobalUse/Icons';
 
 // ── Design Tokens (aligned with project theme) ──────────────────────────────
 const PRIMARY = C.green;            // #3d71d9
@@ -97,8 +103,8 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
 
       const validAcc = subReports.filter(r => (r.accuracyRate || 0) > 0);
       const validWpm = subReports.filter(r => (r.wordPerMin || 0) > 0);
-      const subAcc = validAcc.length > 0 ? validAcc.reduce((s, r) => s + r.accuracyRate, 0) / validAcc.length : 0;
-      const subWpm = validWpm.length > 0 ? validWpm.reduce((s, r) => s + r.wordPerMin, 0) / validWpm.length : 0;
+      const subAcc = validAcc.length > 0 ? validAcc.reduce((s, r) => s + (r.accuracyRate || 0), 0) / validAcc.length : 0;
+      const subWpm = validWpm.length > 0 ? validWpm.reduce((s, r) => s + (isFinite(r.wordPerMin) ? (r.wordPerMin || 0) : 0), 0) / validWpm.length : 0;
 
       return {
         displayAccuracy: subAcc,
@@ -143,7 +149,10 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
   if (error) {
     return (
       <View style={S.errorCard}>
-        <Text style={S.errorText}>⚠️ {error}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <AlertTriangleIcon size={18} color={CORAL} />
+          <Text style={S.errorText}>{error}</Text>
+        </View>
         <Text style={S.errorSub}>Hindi ma-load ang datos ng accuracy</Text>
       </View>
     );
@@ -153,7 +162,7 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
   if (!hasData || subFilterIsEmpty) {
     return (
       <View style={S.emptyBox}>
-        <Text style={S.emptyIcon}>📊</Text>
+        <BarChartIcon size={40} color={INK_LIGHT} />
         <Text style={S.emptyText}>Walang datos pa sa panahong ito.</Text>
       </View>
     );
@@ -193,8 +202,8 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
         </View>
       </View>
 
-      {/* ── Grade Benchmark Card ───────────────────────────────── */}
-      {gradeLevel && hasData && (() => {
+      {/* ── Grade Benchmark Card (Commented out as requested) ── */}
+      {/* {gradeLevel && hasData && (() => {
         const benchmark = GRADE_BENCHMARKS.find(b => b.grade === gradeLevel);
         if (!benchmark) return null;
 
@@ -265,7 +274,7 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
             </View>
           </View>
         );
-      })()}
+      })()} */}
 
       {/* ── Bar Breakdown (Dual Rows) ─────────────────────────── */}
       <View style={S.breakdownCard}>
@@ -333,9 +342,11 @@ export default function AccuracySpeedChart({ studentId, timeFilter, periodOffset
               : { backgroundColor: PRIMARY_PALE },
         ]}
       >
-        <Text style={S.insightIcon}>
-          {displayTrend.dir === 'up' ? '📈' : displayTrend.dir === 'down' ? '📉' : '📊'}
-        </Text>
+        <View style={{ marginRight: 8 }}>
+          {displayTrend.dir === 'up' ? <TrendUpIcon size={18} color={GREEN} /> 
+            : displayTrend.dir === 'down' ? <View style={{ transform: [{ rotate: '180deg' }] }}><TrendUpIcon size={18} color={CORAL} /></View>
+            : <BarChartIcon size={18} color={INK_LIGHT} />}
+        </View>
         <Text
           style={[
             S.insightText,

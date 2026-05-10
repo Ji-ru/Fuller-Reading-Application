@@ -115,7 +115,7 @@ export function use_StudentAccuracySpeedTrends(
             dayReports.reduce((s, r) => s + (r.accuracyRate || 0), 0) /
             dayReports.length;
           const wpmAvg =
-            dayReports.reduce((s, r) => s + (r.wordPerMin || 0), 0) /
+            dayReports.reduce((s, r) => s + (isFinite(r.wordPerMin) ? (r.wordPerMin || 0) : 0), 0) /
             dayReports.length;
           chartData.push({ label, accuracy: accAvg, wpm: wpmAvg });
         } else {
@@ -146,7 +146,7 @@ export function use_StudentAccuracySpeedTrends(
             weekReports.reduce((s, r) => s + (r.accuracyRate || 0), 0) /
             weekReports.length;
           const wpmAvg =
-            weekReports.reduce((s, r) => s + (r.wordPerMin || 0), 0) /
+            weekReports.reduce((s, r) => s + (isFinite(r.wordPerMin) ? (r.wordPerMin || 0) : 0), 0) /
             weekReports.length;
           chartData.push({ label, accuracy: accAvg, wpm: wpmAvg });
         } else {
@@ -188,7 +188,7 @@ export function use_StudentAccuracySpeedTrends(
             monthReports.reduce((s, r) => s + (r.accuracyRate || 0), 0) /
             monthReports.length;
           const wpmAvg =
-            monthReports.reduce((s, r) => s + (r.wordPerMin || 0), 0) /
+            monthReports.reduce((s, r) => s + (isFinite(r.wordPerMin) ? (r.wordPerMin || 0) : 0), 0) /
             monthReports.length;
           chartData.push({ label: m, accuracy: accAvg, wpm: wpmAvg });
         } else {

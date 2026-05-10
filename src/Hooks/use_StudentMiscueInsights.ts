@@ -119,7 +119,8 @@ export function use_StudentMiscueInsights(
       if (r.miscues && r.miscues.length > 0) {
         // Use detailed miscues array
         r.miscues.forEach(m => {
-          const type = m.type?.charAt(0).toUpperCase() + m.type?.slice(1).toLowerCase();
+          if (!m.type) return;
+          const type = m.type.charAt(0).toUpperCase() + m.type.slice(1).toLowerCase();
           if (typeCounts[type] !== undefined) {
             typeCounts[type]++;
           }
@@ -147,16 +148,23 @@ export function use_StudentMiscueInsights(
     const passageMap = new Map<string, { accSum: number; attempts: number; miscues: number }>();
 
     filteredReports.forEach(r => {
-      if (!r.passageTitle) return;
-      const existing = passageMap.get(r.passageTitle) || { accSum: 0, attempts: 0, miscues: 0 };
+      const title = r.passageTitle?.trim();
+      if (!title) return;
+      
+      const existing = passageMap.get(title) || { accSum: 0, attempts: 0, miscues: 0 };
       existing.accSum += r.accuracyRate || 0;
       existing.attempts += 1;
-      existing.miscues += r.totalMiscues || 0;
-      passageMap.set(r.passageTitle, existing);
+      
+      const reportTotalMiscues = r.totalMiscues !== undefined 
+        ? r.totalMiscues 
+        : (r.miscues ? r.miscues.length : ((r.substitutionCount || 0) + (r.omissionCount || 0) + (r.insertionCount || 0) + (r.repetitionCount || 0)));
+      
+      existing.miscues += reportTotalMiscues;
+      passageMap.set(title, existing);
     });
 
     let topPassage: TopPassage | null = null;
-    let maxMiscues = 0;
+    let maxMiscues = -1;
 
     passageMap.forEach((data, title) => {
       if (data.miscues > maxMiscues) {
@@ -179,8 +187,8 @@ export function use_StudentMiscueInsights(
     filteredReports.forEach(r => {
       if (!r.miscues) return;
       r.miscues.forEach(m => {
-        const word = m.expectedWord?.toLowerCase();
-        if (!word) return;
+        const word = m.expectedWord?.trim().toLowerCase();
+        if (!word || !m.type) return;
 
         const existing = wordMap.get(word) || {
           count: 0,
@@ -192,7 +200,7 @@ export function use_StudentMiscueInsights(
           existing.studentIds.add(r.studentId);
         }
 
-        const type = m.type?.charAt(0).toUpperCase() + m.type?.slice(1).toLowerCase();
+        const type = m.type.charAt(0).toUpperCase() + m.type.slice(1).toLowerCase();
         existing.typeCounts[type] = (existing.typeCounts[type] || 0) + 1;
 
         wordMap.set(word, existing);

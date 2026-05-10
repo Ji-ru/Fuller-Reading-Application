@@ -445,82 +445,9 @@ export default function Profile() {
           </View>
         </BounceIn>
 
-        {/* ── Sumali sa Klase ─────────────────────────────────────────────── */}
-        <BounceIn delay={72}>
-          <View style={S.section}>
-            <View style={S.sectionTitleRow}>
-              <BookOpenIcon size={16} color={C.ink} />
-              <Text style={S.sectionTitle}>Sumali sa Klase</Text>
-            </View>
-            {classData ? (
-              <View style={S.joinedClassBox}>
-                <Text style={S.joinedClassLabel}>Kasalukuyang Klase</Text>
-                <Text style={S.joinedClassName}>{classData.className}</Text>
-                <Text style={S.joinedClassCode}>Code: {profileData?.studentData?.classCode}</Text>
-              </View>
-            ) : (
-              <>
-                <Text style={S.joinClassDesc}>
-                  Ilagay ang class code na ibinigay ng iyong guro para sumali sa klase.
-                </Text>
-                <View style={S.joinInputRow}>
-                  <TextInput
-                    style={[S.joinInput, joinError ? { borderColor: C.red } : null]}
-                    placeholder="e.g. X7K9R2"
-                    placeholderTextColor={C.slate}
-                    value={joinCode}
-                    onChangeText={(t) => { setJoinCode(t.toUpperCase()); setJoinError(''); setJoinSuccess(''); }}
-                    autoCapitalize="characters"
-                    maxLength={6}
-                    editable={!joinLoading}
-                  />
-                  <TouchableOpacity
-                    style={[S.joinBtn, joinLoading && { opacity: 0.7 }]}
-                    disabled={joinLoading || !joinCode.trim()}
-                    onPress={async () => {
-                      setJoinError('');
-                      setJoinSuccess('');
-                      if (!joinCode.trim()) return;
-                      setJoinLoading(true);
-                      try {
-                        const user = getCurrentUser();
-                        if (!user) throw new Error('Hindi naka-login.');
-                        const result = await joinClass(user.uid, joinCode.trim());
-                        setJoinSuccess(`Sumali ka na sa ${result.className}!`);
-                        setJoinCode('');
-                        // Refresh profile data
-                        await fetchAll();
-                      } catch (e: any) {
-                        const msg = e.message || '';
-                        if (msg.includes('Invalid or inactive')) {
-                          setJoinError('Walang klase na may ganitong code.');
-                        } else if (msg.includes('Already enrolled')) {
-                          setJoinError('Kasali ka na sa klase na ito.');
-                        } else {
-                          setJoinError('Nagkaroon ng error. Subukan muli.');
-                        }
-                      } finally {
-                        setJoinLoading(false);
-                      }
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    {joinLoading ? (
-                      <ActivityIndicator size="small" color={C.white} />
-                    ) : (
-                      <Text style={S.joinBtnText}>Sumali</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-                {joinError ? <Text style={S.joinErrorText}>{joinError}</Text> : null}
-                {joinSuccess ? <Text style={S.joinSuccessText}>{joinSuccess}</Text> : null}
-              </>
-            )}
-          </View>
-        </BounceIn>
 
         {/* ── Personal Info ─────────────────────────────────────────────────── */}
-        <BounceIn delay={108}>
+        <BounceIn delay={72}>
           <View style={S.section}>
             <View style={S.sectionTitleRow}>
               <UserProfileIcon size={16} color={C.ink} />
@@ -532,56 +459,115 @@ export default function Profile() {
             
             {editingInfo ? (
               <View style={S.editForm}>
-                <TextInput
-                  style={S.editInput}
-                  placeholder="Unang Pangalan"
-                  value={editData.firstName}
-                  onChangeText={(v) => setEditData({ ...editData, firstName: v })}
-                />
-                <TextInput
-                  style={S.editInput}
-                  placeholder="Gitnang Pangalan"
-                  value={editData.middleName}
-                  onChangeText={(v) => setEditData({ ...editData, middleName: v })}
-                />
-                <TextInput
-                  style={S.editInput}
-                  placeholder="Apilyedo"
-                  value={editData.lastName}
-                  onChangeText={(v) => setEditData({ ...editData, lastName: v })}
-                />
-                <TextInput
-                  style={S.editInput}
-                  placeholder="Petsa ng Kapanganakan"
-                  value={editData.dateOfBirth}
-                  onChangeText={(v) => setEditData({ ...editData, dateOfBirth: v })}
-                />
-                <TextInput
-                  style={S.editInput}
-                  placeholder="Kasarian"
-                  value={editData.sex}
-                  onChangeText={(v) => setEditData({ ...editData, sex: v })}
-                />
+                <View style={S.editFieldGroup}>
+                  <Text style={S.editFieldLabel}>Unang Pangalan</Text>
+                  <TextInput
+                    style={S.editInput}
+                    placeholder="Unang Pangalan"
+                    placeholderTextColor={C.slate}
+                    value={editData.firstName}
+                    onChangeText={(v) => setEditData({ ...editData, firstName: v })}
+                  />
+                </View>
+                <View style={S.editFieldGroup}>
+                  <Text style={S.editFieldLabel}>Gitnang Pangalan</Text>
+                  <TextInput
+                    style={S.editInput}
+                    placeholder="Gitnang Pangalan"
+                    placeholderTextColor={C.slate}
+                    value={editData.middleName}
+                    onChangeText={(v) => setEditData({ ...editData, middleName: v })}
+                  />
+                </View>
+                <View style={S.editFieldGroup}>
+                  <Text style={S.editFieldLabel}>Apilyedo</Text>
+                  <TextInput
+                    style={S.editInput}
+                    placeholder="Apilyedo"
+                    placeholderTextColor={C.slate}
+                    value={editData.lastName}
+                    onChangeText={(v) => setEditData({ ...editData, lastName: v })}
+                  />
+                </View>
+                <View style={S.editFieldGroup}>
+                  <Text style={S.editFieldLabel}>Petsa ng Kapanganakan</Text>
+                  <TextInput
+                    style={S.editInput}
+                    placeholder="MM/DD/YYYY"
+                    placeholderTextColor={C.slate}
+                    value={editData.dateOfBirth}
+                    onChangeText={(v) => setEditData({ ...editData, dateOfBirth: v })}
+                  />
+                </View>
+                <View style={S.editFieldGroup}>
+                  <Text style={S.editFieldLabel}>Kasarian</Text>
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity
+                      style={[S.genderBtn, editData.sex === 'male' && S.genderBtnActive]}
+                      onPress={() => setEditData({ ...editData, sex: 'male' })}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[S.genderBtnText, editData.sex === 'male' && S.genderBtnTextActive]}>Lalaki</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[S.genderBtn, editData.sex === 'female' && S.genderBtnActive]}
+                      onPress={() => setEditData({ ...editData, sex: 'female' })}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[S.genderBtnText, editData.sex === 'female' && S.genderBtnTextActive]}>Babae</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
                 <TouchableOpacity style={S.saveBtn} onPress={handleSaveInfo} activeOpacity={0.8}>
-                  <Text style={S.saveBtnText}>Save Changes</Text>
+                  <Text style={S.saveBtnText}>I-save ang mga Pagbabago</Text>
                 </TouchableOpacity>
               </View>
             ) : (
-              <View>
-                <View style={S.infoRow}>
-                  <InfoPill iconView={<CakeIcon size={18} color={C.green} />} label="Unang Pangalan" value={profileData?.firstName ?? '—'} />
+              <View style={S.infoGrid}>
+                <View style={S.infoItem}>
+                  <View style={[S.infoIconBox, { backgroundColor: C.green + '12' }]}>
+                    <UserProfileIcon size={18} color={C.green} />
+                  </View>
+                  <View style={S.infoTextBox}>
+                    <Text style={S.infoPillLabel}>Unang Pangalan</Text>
+                    <Text style={S.infoPillValue}>{profileData?.firstName ?? '—'}</Text>
+                  </View>
                 </View>
-                <View style={S.infoRow}>
-                  <InfoPill iconView={<CakeIcon size={18} color={C.green} />} label="Gitnang Pangalan" value={profileData?.middleName ?? '—'} />
+                <View style={S.infoItem}>
+                  <View style={[S.infoIconBox, { backgroundColor: C.teal + '12' }]}>
+                    <UserProfileIcon size={18} color={C.teal} />
+                  </View>
+                  <View style={S.infoTextBox}>
+                    <Text style={S.infoPillLabel}>Gitnang Pangalan</Text>
+                    <Text style={S.infoPillValue}>{profileData?.middleName ?? '—'}</Text>
+                  </View>
                 </View>
-                <View style={S.infoRow}>
-                  <InfoPill iconView={<CakeIcon size={18} color={C.green} />} label="Apilyedo" value={profileData?.lastName ?? '—'} />
+                <View style={S.infoItem}>
+                  <View style={[S.infoIconBox, { backgroundColor: C.sky + '12' }]}>
+                    <UserProfileIcon size={18} color={C.sky} />
+                  </View>
+                  <View style={S.infoTextBox}>
+                    <Text style={S.infoPillLabel}>Apilyedo</Text>
+                    <Text style={S.infoPillValue}>{profileData?.lastName ?? '—'}</Text>
+                  </View>
                 </View>
-                <View style={S.infoRow}>
-                  <InfoPill iconView={<CakeIcon size={18} color={C.green} />} label="Petsa ng Kapanganakan" value={profileData?.studentData?.dateOfBirth ?? '—'} />
+                <View style={S.infoItem}>
+                  <View style={[S.infoIconBox, { backgroundColor: C.orange + '12' }]}>
+                    <CakeIcon size={18} color={C.orange} />
+                  </View>
+                  <View style={S.infoTextBox}>
+                    <Text style={S.infoPillLabel}>Petsa ng Kapanganakan</Text>
+                    <Text style={S.infoPillValue}>{profileData?.studentData?.dateOfBirth ?? '—'}</Text>
+                  </View>
                 </View>
-                <View style={S.infoRow}>
-                  <InfoPill iconView={<GenderIcon size={18} color={C.green} />} label="Kasarian" value={profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'} />
+                <View style={S.infoItem}>
+                  <View style={[S.infoIconBox, { backgroundColor: C.purple + '12' }]}>
+                    <GenderIcon size={18} color={C.purple} />
+                  </View>
+                  <View style={S.infoTextBox}>
+                    <Text style={S.infoPillLabel}>Kasarian</Text>
+                    <Text style={S.infoPillValue}>{profileData?.sex === 'male' ? 'Lalaki' : profileData?.sex === 'female' ? 'Babae' : '—'}</Text>
+                  </View>
                 </View>
               </View>
             )}
@@ -818,10 +804,32 @@ const S = StyleSheet.create({
   seeMore:          { fontSize: 12, color: C.green, fontWeight: '600' },
 
   infoRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 6 },
+  infoGrid:     { gap: 10 },
+  infoItem:     { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.greenPale, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  infoIconBox:  { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  infoTextBox:  { flex: 1 },
   infoPill:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.greenPale, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, flex: 1 },
 
-  infoPillLabel: { fontSize: 12, color: C.slate },
-  infoPillValue: { fontSize: 14, fontWeight: '700', color: C.ink },
+  infoPillLabel: { fontSize: 11, color: C.slate, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  infoPillValue: { fontSize: 15, fontWeight: '700', color: C.ink, marginTop: 1 },
+
+  editBtn:      { marginLeft: 'auto', backgroundColor: C.greenPale, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10 },
+  editBtnText:  { fontSize: 13, fontWeight: '700', color: C.green },
+  editForm:     { gap: 12, marginTop: 4 },
+  editFieldGroup: { gap: 4 },
+  editFieldLabel: { fontSize: 12, fontWeight: '700', color: C.slate, marginLeft: 4 },
+  editInput:    {
+    height: 37, backgroundColor: C.greenPale, borderRadius: 12,
+    paddingHorizontal: 14, fontSize: 14, fontWeight: '600', color: C.ink,
+    borderWidth: 1.5, borderColor: C.greenLight,
+  },
+  saveBtn:      {
+    backgroundColor: C.green, paddingVertical: 14, borderRadius: 14,
+    alignItems: 'center', marginTop: 6,
+    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
+  },
+  saveBtnText:  { fontSize: 16, fontWeight: '800', color: C.white },
 
   tilesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statTile: {
@@ -832,6 +840,17 @@ const S = StyleSheet.create({
   statTileValue: { fontSize: 24, fontWeight: '800', marginBottom: 2 },
   statTileLabel: { fontSize: 14, color: C.inkLight, textAlign: 'center' },
   statTileTap:   { fontSize: 10, color: C.slate, marginTop: 6 },
+
+  genderBtn: {
+    flex: 1, height: 37, borderRadius: 12, backgroundColor: C.greenPale,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1.5, borderColor: C.greenLight,
+  },
+  genderBtnActive: {
+    backgroundColor: C.green, borderColor: C.green,
+  },
+  genderBtnText: { fontSize: 15, fontWeight: '700', color: C.slate },
+  genderBtnTextActive: { color: C.white },
 
   trendRow:       { flexDirection: 'row', gap: 10, marginBottom: 12 },
   trendPill:      { flex: 1, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', backgroundColor: C.white },

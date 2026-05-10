@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
@@ -14,6 +14,8 @@ import { getCurrentUser, getUserProfile, getClassByCode } from '../../Controller
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
+import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
+import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
 
 function BackArrow({ color = C.ink }: { color?: string }) {
   return (
@@ -25,6 +27,7 @@ export default function Student_Classes() {
   const [loading, setLoading] = useState(true);
   const [classData, setClassData] = useState<ClassDocument | null>(null);
   const [firstName, setFirstName] = useState('Mag-aaral');
+  const [leaveModalVisible, setLeaveModalVisible] = useState(false);
   const { handleBackStep } = useNavigationHelper();
 
   useEffect(() => {
@@ -53,29 +56,20 @@ export default function Student_Classes() {
   }, []);
 
   const handleLeaveClass = () => {
-    Alert.alert(
-      'Leave Class',
-      'Are you sure you want to leave this class?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Leave', style: 'destructive', onPress: () => console.log('Leave class pressed') },
-      ]
-    );
+    setLeaveModalVisible(true);
+  };
+
+  const confirmLeaveClass = () => {
+    setLeaveModalVisible(false);
+    console.log('Leave class pressed');
   };
 
   if (loading) {
     return (
       <SafeAreaView style={S.bg}>
-        <View style={S.headerBar}>
-          <TouchableOpacity onPress={handleBackStep} style={S.backBtn} activeOpacity={0.7}>
-            <BackArrow />
-          </TouchableOpacity>
-          <Text style={S.headerTitle}>Aking Klase</Text>
-          <View style={{ width: 44 }} />
-        </View>
-        <View style={S.loadingContainer}>
-          <ActivityIndicator size="large" color={C.teal} />
-          <Text style={S.loadingText}>Naglo-load...</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <LoadingDots color={C.green} />
+          <Text style={{ fontSize: 16, fontWeight: '700', color: C.slate, marginTop: 10 }}>Naglo-load ang klase...</Text>
         </View>
       </SafeAreaView>
     );
@@ -88,7 +82,7 @@ export default function Student_Classes() {
         <TouchableOpacity onPress={handleBackStep} style={S.backBtn} activeOpacity={0.7}>
           <BackArrow />
         </TouchableOpacity>
-        <Text style={S.headerTitle}>Aking Klase</Text>
+        <Image style={S.headerLogo} source={require('../../../assets/images/cisckids copy.png')} resizeMode="contain" />
         <View style={{ width: 44 }} />
       </View>
 
@@ -115,7 +109,7 @@ export default function Student_Classes() {
             <View style={S.infoCard}>
               <View style={S.infoRow}>
                 <Text style={S.infoLabel}>Antas ng Baitang</Text>
-                <Text style={S.infoValue}>{classData?.gradeLevel ? `Grade ${classData.gradeLevel}` : 'N/A'}</Text>
+                <Text style={S.infoValue}>{classData?.gradeLevel ? `Baitang ${classData.gradeLevel}` : 'N/A'}</Text>
               </View>
 
               <View style={S.infoRow}>
@@ -153,6 +147,17 @@ export default function Student_Classes() {
           </TouchableOpacity>
         </BounceIn>
       </View>
+
+      <ConfirmationModal
+        visible={leaveModalVisible}
+        onCancel={() => setLeaveModalVisible(false)}
+        onConfirm={confirmLeaveClass}
+        title="Umalis sa Klase?"
+        message="Sigurado ka bang gusto mong umalis sa klaseng ito?"
+        cancelText="Bumalik"
+        confirmText="Umalis"
+        type="danger"
+      />
     </SafeAreaView>
   );
 }
@@ -177,11 +182,7 @@ const S = StyleSheet.create({
     alignItems: 'center',
     ...Shadows.subtle,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: C.ink,
-  },
+  headerLogo: { width: 100, height: 90 },
   
   loadingContainer: {
     flex: 1,

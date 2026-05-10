@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
 import { BounceIn } from '../GlobalUse/Animations';
-import WordMasterySection from './Performance/WordMasterySection';
-import ReadingTimeChart from './Performance/ReadingTimeChart';
 import AccuracySpeedChart from './Performance/AccuracySpeedChart';
 import MiscueInsightsChart from './Performance/MiscueInsightsChart';
-import { BookOpenIcon, ZapIcon, AlertTriangleIcon } from '../GlobalUse/Icons';
-import DateFilter, { TimeFilterType } from './DateFilter';
+import { ZapIcon, AlertTriangleIcon, TrophyIcon, StarIcon } from '../GlobalUse/Icons';
+import DateFilter, { TimeFilterType, SubPeriodFilter } from './DateFilter';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
-
-import { SubPeriodFilter } from './DateFilter';
 
 interface PerformanceTabProps {
   studentId: string;
@@ -30,157 +26,87 @@ export default function PerformanceTab({ studentId, reports: realReports, gradeL
     setSelectedSubFilter(null);
   };
 
-  const handleOffsetChange = (offset: number) => {
-    setPeriodOffset(offset);
-    setSelectedSubFilter(null);
-  };
-
   return (
     <ScrollView style={S.root} contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
 
-      {/* ── HEADER ── */}
-      <BounceIn delay={80}>
-        <View style={S.header}>
-          <Text style={S.headerTitle}>Dashboard ng Pagganap</Text>
-          <Text style={S.headerSub}>Subaybayan ang iyong galing sa pagbabasa</Text>
-        </View>
-      </BounceIn>
-
       {/* ── DATE FILTER ── */}
-      <BounceIn delay={140}>
+      <BounceIn delay={160}>
         <DateFilter 
           timeFilter={timeFilter} 
           setTimeFilter={handleTimeFilterChange} 
           periodOffset={periodOffset}
-          onOffsetChange={handleOffsetChange}
+          onOffsetChange={setPeriodOffset}
           selectedSubFilter={selectedSubFilter}
           onSubFilterChange={setSelectedSubFilter}
         />
       </BounceIn>
 
-      {/* ══════════════════════════════════════════════════════
-           SECTION 2 — PASSAGE ANALYTICS
-         ══════════════════════════════════════════════════════ */}
-
-      {/* Subsection 2A: Reading Time Activity */}
-      {/* <BounceIn delay={300}>
-        <View style={S.sectionCard}>
-          <View style={S.sectionHeaderRow}>
-            <View style={[S.iconDot, { backgroundColor: C.teal + '18' }]}>
-              <BookOpenIcon size={16} color={C.teal} />
+      {/* ── CHARTS ── */}
+      <View style={S.chartsContainer}>
+        
+        {/* Speed & Accuracy */}
+        <BounceIn delay={200}>
+          <View style={S.chartSection}>
+            <View style={S.chartHeader}>
+              <ZapIcon size={18} color={C.orange} />
+              <Text style={S.chartTitle}>Accuracy at Bilis</Text>
             </View>
-            <Text style={S.sectionTitle}>Pagbasa ng Mga Talata</Text>
+            <AccuracySpeedChart
+              studentId={studentId}
+              timeFilter={timeFilter}
+              periodOffset={periodOffset}
+              selectedSubFilter={selectedSubFilter}
+              reports={reports}
+              gradeLevel={gradeLevel}
+            />
           </View>
+        </BounceIn>
 
-          <ReadingTimeChart
-            studentId={studentId}
-            timeFilter={timeFilter}
-            reports={reports}
-          />
-        </View>
-      </BounceIn> */}
-
-      {/* Subsection 2B: Speed & Accuracy */}
-      <BounceIn delay={320}>
-        <View style={S.sectionCard}>
-          <View style={S.sectionHeaderRow}>
-            <View style={[S.iconDot, { backgroundColor: C.orange + '18' }]}>
-              <ZapIcon size={16} color={C.orange} />
+        {/* Miscue Insights */}
+        <BounceIn delay={240}>
+          <View style={S.chartSection}>
+            <View style={S.chartHeader}>
+              <Text style={S.chartTitle}>Mga Maling Nagagawa (Miscues)</Text>
             </View>
-            <Text style={S.sectionTitle}>Accuracy at Bilis</Text>
+            <MiscueInsightsChart
+              studentId={studentId}
+              timeFilter={timeFilter}
+              periodOffset={periodOffset}
+              selectedSubFilter={selectedSubFilter}
+              reports={reports}
+            />
           </View>
+        </BounceIn>
 
-          <AccuracySpeedChart
-            studentId={studentId}
-            timeFilter={timeFilter}
-            periodOffset={periodOffset}
-            selectedSubFilter={selectedSubFilter}
-            reports={reports}
-            gradeLevel={gradeLevel}
-          />
-        </View>
-      </BounceIn>
-
-      {/* Subsection 2C: Miscue Insights */}
-      <BounceIn delay={440}>
-        <View style={S.sectionCard}>
-          <View style={S.sectionHeaderRow}>
-            <View style={[S.iconDot, { backgroundColor: '#eb5c6c18' }]}>
-              <AlertTriangleIcon size={16} color="#eb5c6c" />
-            </View>
-            <Text style={S.sectionTitle}>Miscue Insights</Text>
-          </View>
-
-          <MiscueInsightsChart
-            studentId={studentId}
-            timeFilter={timeFilter}
-            periodOffset={periodOffset}
-            selectedSubFilter={selectedSubFilter}
-            reports={reports}
-          />
-        </View>
-      </BounceIn>
+      </View>
 
       <View style={{ height: 60 }} />
     </ScrollView>
   );
 }
 
-// ─── STYLES ──────────────────────────────────────────────────────────────────
 const S = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 40,
-  },
+  root: { flex: 1 },
+  content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 40 },
 
-  /* Header */
-  header: {
-    marginBottom: 18,
-    paddingLeft: 2,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: C.ink,
-    letterSpacing: -0.3,
-  },
-  headerSub: {
-    fontSize: 13,
-    color: C.slate,
-    fontWeight: '600',
-    marginTop: 3,
-  },
-
-  /* Section Card (each section is its own card) */
-  sectionCard: {
+  // Charts Container
+  chartsContainer: { gap: 16 },
+  chartSection: {
     backgroundColor: C.white,
     borderRadius: Radii.lg,
-    padding: 18,
-    marginBottom: 16,
-    ...Shadows.card,
+    padding: 16,
     borderWidth: 1,
-    borderColor: C.greenPale,
+    borderColor: 'rgba(0,0,0,0.05)',
+    ...Shadows.subtle,
   },
-  sectionHeaderRow: {
+  chartHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  iconDot: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: C.ink,
-  },
+  chartTitle: { fontSize: 16, fontWeight: '800', color: C.ink },
 });

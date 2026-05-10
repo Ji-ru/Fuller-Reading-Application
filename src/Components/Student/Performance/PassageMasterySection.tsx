@@ -11,17 +11,17 @@ import {
 import { StudentColors as C, Radii, Shadows } from '../../../Utilities/Theme';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  use_StudentWordMastery,
-  AralinWordInfo,
-  WordPeriodSlot,
-} from '../../../Hooks/use_StudentWordMastery';
+  use_StudentPassageMastery,
+  AralinPassageInfo,
+  PassagePeriodSlot,
+} from '../../../Hooks/use_StudentPassageMastery';
 import readingMaterialData from '../../../../assets/ReadingMaterial/ReadingMaterial.json';
 import { CheckCircleIcon, XCircleIcon } from '../../GlobalUse/Icons';
 import { SubPeriodFilter } from '../DateFilter';
 
 // ── Design constants ──────────────────────────────────────────────────────────
-const GREEN = '#22c55e';
-const GREEN_DIM = 'rgba(34,197,94,0.14)';
+const ORANGE = '#f97316';
+const ORANGE_DIM = 'rgba(249,115,22,0.14)';
 const BAR_MAX_H = 80;
 
 // ── Bar column ────────────────────────────────────────────────────────────────
@@ -33,14 +33,14 @@ const BarColumn = ({
   index,
   onPress,
 }: {
-  slot: WordPeriodSlot;
+  slot: PassagePeriodSlot;
   isActive: boolean;
   maxCount: number;
   index: number;
   onPress: () => void;
 }) => {
-  const hasData = slot.wordCount > 0;
-  const targetH = hasData && maxCount > 0 ? (slot.wordCount / maxCount) * BAR_MAX_H : 0;
+  const hasData = slot.passageCount > 0;
+  const targetH = hasData && maxCount > 0 ? (slot.passageCount / maxCount) * BAR_MAX_H : 0;
   const heightAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -56,8 +56,8 @@ const BarColumn = ({
 
   return (
     <TouchableOpacity onPress={onPress} style={S.barCol} activeOpacity={0.75}>
-      <Text style={[S.barCount, { color: hasData ? (isActive ? GREEN : C.slate) : C.mint }]}>
-        {hasData ? `×${slot.wordCount}` : '—'}
+      <Text style={[S.barCount, { color: hasData ? (isActive ? ORANGE : C.slate) : C.mint }]}>
+        {hasData ? `×${slot.passageCount}` : '—'}
       </Text>
 
       <View style={S.barTrack}>
@@ -65,13 +65,13 @@ const BarColumn = ({
           <Animated.View
             style={[
               S.barFill,
-              { height: heightAnim, backgroundColor: isActive ? GREEN : `${GREEN}55` },
+              { height: heightAnim, backgroundColor: isActive ? ORANGE : `${ORANGE}55` },
             ]}
           />
         )}
       </View>
 
-      <View style={[S.barTick, { backgroundColor: isActive ? GREEN : 'transparent' }]} />
+      <View style={[S.barTick, { backgroundColor: isActive ? ORANGE : 'transparent' }]} />
 
       <Text style={[S.barLabel, isActive && S.barLabelActive, !hasData && S.barLabelEmpty]}>
         {slot.label}
@@ -82,28 +82,28 @@ const BarColumn = ({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-interface WordMasterySectionProps {
+interface PassageMasterySectionProps {
   studentId: string;
   timeFilter: 'week' | 'month' | 'year';
   periodOffset?: number;
   selectedSubFilter?: SubPeriodFilter | null;
 }
 
-export default function WordMasterySection({
+export default function PassageMasterySection({
   studentId,
   timeFilter,
   periodOffset = 0,
   selectedSubFilter = null,
-}: WordMasterySectionProps) {
+}: PassageMasterySectionProps) {
   const {
     loading,
     stats,
     cumulativeStats,
     cumulativeLetters,
     periodSlots,
-    getAralinWords,
+    getAralinPassages,
     refresh,
-  } = use_StudentWordMastery(studentId, timeFilter, periodOffset, selectedSubFilter);
+  } = use_StudentPassageMastery(studentId, timeFilter, periodOffset, selectedSubFilter);
 
   useFocusEffect(
     useCallback(() => {
@@ -114,7 +114,7 @@ export default function WordMasterySection({
   const [selectedLetter, setSelectedLetter] = useState<string>('M');
   const [showGrid, setShowGrid] = useState(true);
 
-  const aralinWords = getAralinWords(selectedLetter);
+  const aralinPassages = getAralinPassages(selectedLetter);
 
   // ── Bar chart: default active slot = today (or last slot with data) ──
   const defaultIdx = useMemo(() => {
@@ -125,7 +125,7 @@ export default function WordMasterySection({
       if (now >= slotStart && now <= slotEnd) return i;
     }
     for (let i = periodSlots.length - 1; i >= 0; i--) {
-      if (periodSlots[i].wordCount > 0) return i;
+      if (periodSlots[i].passageCount > 0) return i;
     }
     return periodSlots.length - 1;
   }, [periodSlots]);
@@ -162,22 +162,19 @@ export default function WordMasterySection({
   }, [activeIdx, periodSlots.length]);
 
   const maxCount = useMemo(
-    () => Math.max(...periodSlots.map(s => s.wordCount), 1),
+    () => Math.max(...periodSlots.map(s => s.passageCount), 1),
     [periodSlots],
   );
-  const hasAnyActivity = periodSlots.some(s => s.wordCount > 0);
+  const hasAnyActivity = periodSlots.some(s => s.passageCount > 0);
 
-  // Letters mastered in the ACTIVE slot only — drives letter-pill highlight
-  // so the selector reacts when the user taps a different bar.
+  // Letters mastered in the ACTIVE slot only
   const activeSlot = periodSlots[activeIdx];
   const slotLetters = useMemo(() => {
     const set = new Set<string>();
     if (!activeSlot) return set;
-    activeSlot.words.forEach(w => {
-      const group = readingMaterialData.Words.find(g =>
-        g.contrasts.some(c => c.words.includes(w)),
-      );
-      if (group) set.add(group.letter);
+    activeSlot.passages.forEach(title => {
+      const passage = readingMaterialData.Passages.find((p: any) => p.title === title);
+      if (passage) set.add(passage.letter);
     });
     return set;
   }, [activeSlot]);
@@ -186,7 +183,7 @@ export default function WordMasterySection({
   if (loading) {
     return (
       <View style={S.loadBox}>
-        <ActivityIndicator color={C.green} size="small" />
+        <ActivityIndicator color={ORANGE} size="small" />
         <Text style={S.loadText}>Nilo-load ang datos…</Text>
       </View>
     );
@@ -194,17 +191,17 @@ export default function WordMasterySection({
 
   const progressPercent = Math.round((stats.mastered / stats.total) * 100) || 0;
   const progressColor =
-    progressPercent >= 85 ? '#22c55e' :
+    progressPercent >= 85 ? ORANGE :
       progressPercent >= 60 ? '#f59e0b' :
         '#ef4444';
 
   return (
     <View>
 
-      {/* ── LAYER 1: Summary chips (period-filtered) ── */}
+      {/* ── LAYER 1: Summary chips (Period Filtered) ── */}
       <View style={S.chipRow}>
-        <View style={[S.chip, { backgroundColor: '#22c55e12' }]}>
-          <Text style={[S.chipNum, { color: '#16a34a' }]}>{stats.mastered}</Text>
+        <View style={[S.chip, { backgroundColor: ORANGE_DIM }]}>
+          <Text style={[S.chipNum, { color: ORANGE }]}>{stats.mastered}</Text>
           <Text style={S.chipLabel}>Natutuhan</Text>
         </View>
         <View style={[S.chip, { backgroundColor: '#f59e0b12' }]}>
@@ -227,7 +224,7 @@ export default function WordMasterySection({
           <View style={[S.trackFill, { width: `${progressPercent}%`, backgroundColor: progressColor }]} />
         </View>
         <Text style={S.progressCaption}>
-          {stats.mastered} sa {stats.total} na salita ang natapos na
+          {stats.mastered} sa {stats.total} na talata ang natapos na
         </Text>
       </View>
 
@@ -260,34 +257,34 @@ export default function WordMasterySection({
         </ScrollView>
       </View>
 
-      {/* ── LAYER 5: Word grid (progressive detail) ── */}
+      {/* ── LAYER 5: Passage list (progressive detail) ── */}
       {showGrid && (
         <View style={S.gridSection}>
           <View style={S.gridHeaderRow}>
-            <Text style={S.gridTitle}>Salita para sa Aralin {selectedLetter}</Text>
+            <Text style={S.gridTitle}>Talata para sa Aralin {selectedLetter}</Text>
             <View style={S.gridBadge}>
               <Text style={S.gridBadgeText}>
-                {aralinWords.filter(w => w.status === 'mastered').length}/{aralinWords.length}
+                {aralinPassages.filter(w => w.status === 'mastered').length}/{aralinPassages.length}
               </Text>
             </View>
           </View>
 
-          {aralinWords.length > 0 ? (
-            <View style={S.grid}>
-              {aralinWords.map((item, idx) => (
+          {aralinPassages.length > 0 ? (
+            <View style={S.list}>
+              {aralinPassages.map((item, idx) => (
                 <View key={idx} style={[S.tile, tileStyle(item.status)]}>
                   <Text style={[
                     S.tileWord,
-                    item.status === 'mastered' && { color: '#16a34a' },
+                    item.status === 'mastered' && { color: ORANGE },
                     item.status === 'tried' && { color: '#d97706' },
                   ]}>
-                    {item.word}
+                    "{item.title}"
                   </Text>
                   <View style={S.tileIcon}>
                     {item.status === 'mastered' ? (
-                      <CheckCircleIcon size={14} color="#22c55e" />
+                      <CheckCircleIcon size={16} color={ORANGE} />
                     ) : item.status === 'tried' ? (
-                      <XCircleIcon size={14} color="#f59e0b" />
+                      <XCircleIcon size={16} color="#f59e0b" />
                     ) : (
                       <Text style={S.unseenDash}>—</Text>
                     )}
@@ -297,13 +294,13 @@ export default function WordMasterySection({
             </View>
           ) : (
             <View style={S.emptyGrid}>
-              <Text style={S.emptyGridText}>Walang salita sa araling ito.</Text>
+              <Text style={S.emptyGridText}>Walang talata sa araling ito.</Text>
             </View>
           )}
 
           <View style={S.legend}>
             <View style={S.legendItem}>
-              <View style={[S.legendDot, { backgroundColor: '#22c55e' }]} />
+              <View style={[S.legendDot, { backgroundColor: ORANGE }]} />
               <Text style={S.legendText}>Natutuhan</Text>
             </View>
             <View style={S.legendItem}>
@@ -325,7 +322,7 @@ export default function WordMasterySection({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function tileStyle(status: string) {
   switch (status) {
-    case 'mastered': return { backgroundColor: '#22c55e0D', borderColor: '#22c55e30' };
+    case 'mastered': return { backgroundColor: `${ORANGE}0D`, borderColor: `${ORANGE}30` };
     case 'tried': return { backgroundColor: '#f59e0b0D', borderColor: '#f59e0b30' };
     default: return { backgroundColor: C.bg, borderColor: C.greenPale };
   }
@@ -385,33 +382,33 @@ const S = StyleSheet.create({
   letterSection: { marginBottom: 12 },
   letterHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   letterHeaderText: { fontSize: 13, fontWeight: '800', color: C.ink },
-  toggleText: { fontSize: 11, fontWeight: '700', color: C.green },
+  toggleText: { fontSize: 11, fontWeight: '700' },
   letterScroll: { paddingVertical: 4, paddingRight: 16 },
   letterCircle: {
     width: 38, height: 38, borderRadius: 19,
     backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center', marginRight: 8,
   },
-  letterCircleSel: { backgroundColor: C.green, transform: [{ scale: 1.08 }], ...Shadows.subtle },
-  letterCircleDone: { backgroundColor: C.greenLight, borderWidth: 1.5, borderColor: C.green + '40' },
+  letterCircleSel: { backgroundColor: ORANGE, transform: [{ scale: 1.08 }], ...Shadows.subtle },
+  letterCircleDone: { backgroundColor: '#ffedd5', borderWidth: 1.5, borderColor: ORANGE + '40' },
   letterChar: { fontSize: 14, fontWeight: '900', color: C.slate },
   letterCharSel: { color: C.white },
-  doneDot: { position: 'absolute', bottom: 3, width: 5, height: 5, borderRadius: 2.5, backgroundColor: C.green },
+  doneDot: { position: 'absolute', bottom: 3, width: 5, height: 5, borderRadius: 2.5, backgroundColor: ORANGE },
 
-  /* Word grid */
+  /* Passage list */
   gridSection: { backgroundColor: C.bg, padding: 14, borderRadius: Radii.md, marginTop: 4 },
   gridHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   gridTitle: { fontSize: 14, fontWeight: '800', color: C.ink },
-  gridBadge: { backgroundColor: C.green + '18', paddingHorizontal: 10, paddingVertical: 3, borderRadius: Radii.pill },
-  gridBadgeText: { fontSize: 11, fontWeight: '800', color: C.green },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
+  gridBadge: { backgroundColor: ORANGE_DIM, paddingHorizontal: 10, paddingVertical: 3, borderRadius: Radii.pill },
+  gridBadgeText: { fontSize: 11, fontWeight: '800', color: ORANGE },
+  list: { flexDirection: 'column' },
   tile: {
-    width: '47%', marginHorizontal: '1.5%', marginBottom: 8,
-    paddingVertical: 12, paddingHorizontal: 12,
+    width: '100%', marginBottom: 8,
+    paddingVertical: 14, paddingHorizontal: 14,
     borderRadius: Radii.sm, borderWidth: 1,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  tileWord: { fontSize: 14, fontWeight: '700', color: C.slate },
-  tileIcon: { width: 20, alignItems: 'center' },
+  tileWord: { fontSize: 14, fontWeight: '700', color: C.slate, fontStyle: 'italic', flex: 1, paddingRight: 8 },
+  tileIcon: { width: 24, alignItems: 'center' },
   unseenDash: { fontSize: 14, fontWeight: '700', color: C.mint },
   emptyGrid: { paddingVertical: 24, alignItems: 'center' },
   emptyGridText: { fontSize: 12, color: C.slate, fontStyle: 'italic' },

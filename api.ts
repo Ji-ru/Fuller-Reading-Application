@@ -1,7 +1,7 @@
 // api.ts
 // This file handles communication with your custom Hugging Face AI backend.
 
-const API_URL = "https://jayac0r30-marungko.hf.space/transcribe";
+const API_URL = "https://cisckids2026-marungko-whisperapi.hf.space/transcribe";
 
 /**
  * Sends an audio file to the custom HuBERT API for transcription.
@@ -38,7 +38,7 @@ export async function transcribeAudio(audioUri: string): Promise<string> {
 
     if (!response.ok) {
         console.error(`HTTP Error ${response.status}: ${responseText}`);
-        return `Server Error ${response.status}: ${responseText.substring(0, 50)}...`;
+        throw new Error(`Server Error ${response.status}: ${responseText.substring(0, 50)}`);
     }
 
     // Parse the JSON response
@@ -50,11 +50,11 @@ export async function transcribeAudio(audioUri: string): Promise<string> {
         return text;
     } else {
         console.error("Server returned an error:", result.detail);
-        return "Error transcribing audio. Please try again.";
+        throw new Error(result.detail || "Error transcribing audio.");
     }
 
   } catch (error: any) {
     console.error("Network or Fetch Error:", error);
-    return `Error: ${error.message || "Could not connect to the AI server."}`;
+    throw new Error(error.message || "Could not connect to the AI server.");
   }
 }

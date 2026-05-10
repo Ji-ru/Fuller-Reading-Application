@@ -193,7 +193,9 @@ export default function ReadingActivityScreenPage() {
     } else if (type === 'passage' && isPassage(readingMaterial)) {
       return readingMaterial.title;
     } else if (type === 'word' && isWords(readingMaterial)) {
-      return `Words for ${readingMaterial.letter}`;
+      // Use the actual word being read (e.g. "sa", "ama") not the lesson letter ("A")
+      const actualWord = readingMaterial.contrasts[0]?.words[0] || readingMaterial.letter;
+      return `Words for ${actualWord}`;
     }
     return 'Unknown';
   }, [readingMaterial, type]);
@@ -326,7 +328,7 @@ export default function ReadingActivityScreenPage() {
       }
 
       // Store detailed trial report
-      if (!hasStoredReport) storeMiscueReport(accuracyNum, duration, [], 0);
+      if (!hasStoredReport) storeMiscueReport(transcription, accuracyNum, duration, [], 0);
     } else if (type === 'passage' && isPassage(readingMaterial)) {
       const detectedMiscues = MiscueAnalysisService.detectMiscues(readingMaterial.text, transcription);
       const calculatedAccuracy = MiscueAnalysisService.calculateAccuracy(readingMaterial.text, transcription);
@@ -336,8 +338,8 @@ export default function ReadingActivityScreenPage() {
       setFeedback(accuracyFeedback);
       accuracyNum = convertAccuracyStringToNumber(calculatedAccuracy);
       setIsCorrectAttempt(accuracyNum >= 85);
-      const wpm = Math.round((totalWords / duration) * 60);
-      if (!hasStoredReport) storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm);
+      const wpm = duration > 0 ? Math.round((totalWords / duration) * 60) : 0;
+      if (!hasStoredReport) storeMiscueReport(transcription, accuracyNum, duration, detectedMiscues, wpm);
     } else if (type === 'word' && isWords(readingMaterial)) {
       const targetWord = getTargetText();
       const correct = isTextPerfect(transcription, targetWord);
@@ -358,7 +360,7 @@ export default function ReadingActivityScreenPage() {
       }
 
       // Store detailed trial report
-      if (!hasStoredReport) storeMiscueReport(accuracyNum, duration, [], 0);
+      if (!hasStoredReport) storeMiscueReport(transcription, accuracyNum, duration, [], 0);
     }
 
   };
@@ -392,7 +394,7 @@ export default function ReadingActivityScreenPage() {
       const simulatedResponse = getSimulatedResponse(targetText);
       setSpokenText(simulatedResponse);
       try {
-        await analyzeReadingRef.current(simulatedResponse, 0);
+        await analyzeReadingRef.current(simulatedResponse, duration);
       } catch (e) {
         console.error('Fallback analysis error:', e);
       }
@@ -406,8 +408,9 @@ export default function ReadingActivityScreenPage() {
     if (isRecording) {
       try {
         const audioFile = await stopRecording();
-        setRecordingDuration(recordTime);
-        await handleAudioProcessing(audioFile, recordTime);
+        const finalDuration = Math.max(1, recordTime);
+        setRecordingDuration(finalDuration);
+        await handleAudioProcessing(audioFile, finalDuration);
       } catch (error) {
         Alert.alert('Error', 'Failed to process recording');
       }
@@ -420,10 +423,10 @@ export default function ReadingActivityScreenPage() {
     }
   }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText]);
 
-  const storeMiscueReport = useCallback(async (accuracyNum: number, duration: number, miscues: Miscue[], wpm: number) => {
+  const storeMiscueReport = useCallback(async (transcriptionText: string, accuracyNum: number, duration: number, miscues: Miscue[], wpm: number) => {
     try {
       if (hasStoredReport) return;
-      if (!spokenText || spokenText.trim() === '' || duration < 1) return;
+      if (!transcriptionText || transcriptionText.trim() === '') return;
       if (type === 'passage' && wpm <= 0) return;
 
       const mins = Math.floor(duration / 60);
@@ -503,13 +506,13 @@ export default function ReadingActivityScreenPage() {
         {/* Stable Footer Controls - Lifted */}
         <View style={[
           readingStyles.footerControls,
-          (type === 'passage' || (type === 'alphabet' && items.length <= 1)) && { justifyContent: 'center' },
+          (type === 'passage' || items.length <= 1) && { justifyContent: 'center' },
           type === 'passage' && { bottom: 60 }
         ]}>
-          {(type !== 'passage') && (
+          {(type !== 'passage' && items.length > 1) && (
             <NavArrow
               direction="left"
-              disabled={((type !== 'alphabet' && type !== 'word') && currentIndex === 0) || isRecording}
+              disabled={currentIndex === 0 || isRecording}
               onPress={handlePrevious}
             />
           )}
@@ -521,10 +524,10 @@ export default function ReadingActivityScreenPage() {
             onRecordToggle={handleRecordToggle}
           />
 
-          {(type !== 'passage') && (
+          {(type !== 'passage' && items.length > 1) && (
             <NavArrow
               direction="right"
-              isFinish={(type !== 'alphabet' && type !== 'word') && currentIndex === items.length - 1}
+              isFinish={currentIndex === items.length - 1}
               disabled={isRecording}
               onPress={handleNext}
             />

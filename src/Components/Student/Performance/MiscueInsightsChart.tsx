@@ -5,6 +5,10 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import {
+  AlertTriangleIcon,
+  PartyIcon,
+} from '../../GlobalUse/Icons';
 import { use_StudentMiscueInsights } from '../../../Hooks/use_StudentMiscueInsights';
 import { StudentColors as C, Radii } from '../../../Utilities/Theme';
 import { MiscueReportDocument } from '../../../Interfaces/dataInterfaces';
@@ -69,7 +73,10 @@ export default function MiscueInsightsChart({ studentId, timeFilter, periodOffse
   if (error) {
     return (
       <View style={S.errorCard}>
-        <Text style={S.errorText}>⚠️ {error}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <AlertTriangleIcon size={18} color={CORAL} />
+          <Text style={S.errorText}>{error}</Text>
+        </View>
         <Text style={S.errorSub}>Hindi ma-load ang datos ng miscue</Text>
       </View>
     );
@@ -89,7 +96,10 @@ export default function MiscueInsightsChart({ studentId, timeFilter, periodOffse
 
         {total === 0 ? (
           <View style={S.emptyBox}>
-            <Text style={S.emptyText}>Walang miscue sa panahong ito 🎉</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+               <PartyIcon size={20} color={PRIMARY} />
+               <Text style={S.emptyText}>Walang miscue sa panahong ito</Text>
+            </View>
           </View>
         ) : (
           <View style={S.barsContainer}>
@@ -183,13 +193,6 @@ export default function MiscueInsightsChart({ studentId, timeFilter, periodOffse
                           {MISCUE_LABELS[item.dominantMiscueType] || item.dominantMiscueType}
                         </Text>
                       </View>
-                      {Number.isFinite(item.studentCount) && item.studentCount > 0 && (
-                        <View style={S.studentChip}>
-                          <Text style={S.studentChipText}>
-                            👥 {item.studentCount} {item.studentCount === 1 ? 'student' : 'students'}
-                          </Text>
-                        </View>
-                      )}
                     </View>
                   </View>
                   <Text style={S.wordCount}>×{item.errorCount}</Text>

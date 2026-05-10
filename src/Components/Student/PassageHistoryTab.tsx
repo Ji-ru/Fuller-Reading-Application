@@ -1,620 +1,197 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
-import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
-import { StudentColors as C, Radii, Shadows, ACCENT_COLORS } from '../../Utilities/Theme';
-import DateFilter, { TimeFilterType, SubPeriodFilter } from './DateFilter';
 import { getDateRange } from '../../Utilities/analyticsDateHelpers';
+import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
 import { BounceIn } from '../GlobalUse/Animations';
-import { 
-  BookOpenIcon, 
-  HistoryIcon, 
-  TimerIcon, 
-  ZapIcon, 
-  StarIcon, 
-  TrophyIcon, 
-  ChevronRightIcon,
-  FlexIcon,
-  PartyIcon
+import {
+  BookOpenIcon,
+  HistoryIcon,
+  PartyIcon,
+  StarIcon,
+  ZapIcon
 } from '../GlobalUse/Icons';
+import DateFilter, { SubPeriodFilter, TimeFilterType } from './DateFilter';
 
 interface PassageHistoryTabProps {
   reports: MiscueReportDocument[];
   onStartReading: () => void;
 }
 
-interface PassageGroup {
-  passageTitle: string;
-  reports: MiscueReportDocument[];
-}
-
-export default function PassageHistoryTab({ reports: realReports, onStartReading }: PassageHistoryTabProps) {
+export default function ReadingTimeline({ reports: realReports, onStartReading }: PassageHistoryTabProps) {
   const reports = realReports || [];
   const [timeFilter, setTimeFilter] = useState<TimeFilterType>('week');
   const [periodOffset, setPeriodOffset] = useState<number>(0);
   const [selectedSubFilter, setSelectedSubFilter] = useState<SubPeriodFilter | null>(null);
-  const [expandedPassages, setExpandedPassages] = useState<Set<number>>(new Set());
+  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
 
-  // Filter only passages (Talata) and group by passageTitle
-  const groupedReports = useMemo(() => {
-    // Apply Date Range filter
-    const activeRange = selectedSubFilter ?? getDateRange(timeFilter, periodOffset);
+  // ── FILTER & SORT ──
+  const timelineData = useMemo(() => {
+    const range = selectedSubFilter ?? getDateRange(timeFilter, periodOffset);
 
-    // Collect all valid passage titles (case-insensitive mapping for safety)
-    const validPassages = new Map(
-      readingMaterialData.Passages.map(p => [p.title.toLowerCase(), p.title])
-    );
-
-    const groupsMap = new Map<string, MiscueReportDocument[]>();
-
-    reports.forEach(r => {
+    return reports.filter(r => {
       const d = r.timestamp?.toDate?.() || new Date(r.timestamp || 0);
-
-      // Skip if outside active date boundary
-      if (d.getTime() < activeRange.start.getTime() || d.getTime() > activeRange.end.getTime()) {
-        return;
-      }
-
-      const titleLower = (r.passageTitle || '').toLowerCase();
-      if (validPassages.has(titleLower)) {
-        const correctTitle = validPassages.get(titleLower)!;
-        if (!groupsMap.has(correctTitle)) {
-          groupsMap.set(correctTitle, []);
-        }
-        groupsMap.get(correctTitle)!.push(r);
-      }
+      return d.getTime() >= range.start.getTime() && d.getTime() <= range.end.getTime();
+    }).sort((a, b) => {
+      const timeA = a.timestamp?.toDate?.()?.getTime() || new Date(a.timestamp || 0).getTime();
+      const timeB = b.timestamp?.toDate?.()?.getTime() || new Date(b.timestamp || 0).getTime();
+      return timeB - timeA; // Newest first
     });
-
-    const groups: PassageGroup[] = [];
-    groupsMap.forEach((reportList, title) => {
-      // Sort reports by oldest first so Attempt # is chronological
-      reportList.sort((a, b) => {
-        const timeA = a.timestamp?.toDate?.()?.getTime() || new Date(a.timestamp || 0).getTime();
-        const timeB = b.timestamp?.toDate?.()?.getTime() || new Date(b.timestamp || 0).getTime();
-        return timeA - timeB; // ascending
-      });
-
-      groups.push({
-        passageTitle: title,
-        reports: reportList
-      });
-    });
-
-    // Sort passages by the most recently attempted overall
-    groups.sort((a, b) => {
-      const lastA = a.reports[a.reports.length - 1];
-      const lastB = b.reports[b.reports.length - 1];
-      const timeA = lastA.timestamp?.toDate?.()?.getTime() || new Date(lastA.timestamp || 0).getTime();
-      const timeB = lastB.timestamp?.toDate?.()?.getTime() || new Date(lastB.timestamp || 0).getTime();
-      return timeB - timeA;
-    });
-
-    return groups;
   }, [reports, timeFilter, periodOffset, selectedSubFilter]);
 
-  const togglePassageExpansion = (index: number) => {
-    setExpandedPassages(prev => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
+  // ── HELPERS ──
+  const getTypeInfo = (title: string) => {
+    if (title.startsWith('Alphabet -')) return { label: 'Titik', color: C.teal, icon: StarIcon };
+    if (title.startsWith('Words for')) return { label: 'Salita', color: C.green, icon: ZapIcon };
+    return { label: 'Talata', color: '#f97316', icon: BookOpenIcon };
   };
 
-  // Stats generators
-  const getTotalAttempts = () => {
-    return groupedReports.reduce((sum, g) => sum + g.reports.length, 0);
-  };
-
-  const getAverageAccuracy = () => {
-    const total = getTotalAttempts();
-    if (total === 0) return 0;
-    const sum = groupedReports.reduce((accSum, g) => {
-      return accSum + g.reports.reduce((rSum, r) => rSum + (r.accuracyRate || 0), 0);
-    }, 0);
-    return (sum / total).toFixed(1);
-  };
-
-  const getBestWPM = () => {
-    let best = 0;
-    groupedReports.forEach(g => {
-      g.reports.forEach(r => {
-        if ((r.wordPerMin || 0) > best) best = r.wordPerMin || 0;
-      });
-    });
-    return best;
+  const formatDisplayTitle = (title: string) => {
+    return title
+      .replace('Alphabet - ', '')
+      .replace('Words for ', '')
+      .trim();
   };
 
   const formatDate = (timestamp: any) => {
     const d = timestamp?.toDate?.() || new Date(timestamp || 0);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  const formatDuration = (val?: number | string) => {
-    if (!val) return '0:00';
-    if (typeof val === 'string' && val.includes(':')) return val;
-    const s = typeof val === 'string' ? parseInt(val) : val;
-    const m = Math.floor(s / 60);
-    const rem = s % 60;
-    return `${m}:${rem.toString().padStart(2, '0')}`;
-  };
-
-  const getTotalMiscues = (report: MiscueReportDocument) => {
-    // If it has explicitly defined counts (from controller)
-    if (report.hasOwnProperty('totalMiscues')) {
-        return report.totalMiscues || 0;
-    }
-    // Fallback recalculation
-    return (report.substitutionCount || 0) + 
-           (report.omissionCount || 0) + 
-           (report.insertionCount || 0) + 
-           (report.repetitionCount || 0);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <View style={S.container}>
+
+      {/* ── DATE FILTER ── */}
       <BounceIn delay={80}>
-        <DateFilter 
-          timeFilter={timeFilter} 
+        <DateFilter
+          timeFilter={timeFilter}
           setTimeFilter={(f) => { setTimeFilter(f); setPeriodOffset(0); setSelectedSubFilter(null); }}
           periodOffset={periodOffset}
-          onOffsetChange={(o) => { setPeriodOffset(o); setSelectedSubFilter(null); }}
+          onOffsetChange={setPeriodOffset}
           selectedSubFilter={selectedSubFilter}
           onSubFilterChange={setSelectedSubFilter}
         />
       </BounceIn>
 
-      {groupedReports.length === 0 ? (
-        <BounceIn delay={120}>
-          <View style={S.emptyContainer}>
-            <View style={S.emptyIconContainer}>
-              <HistoryIcon size={48} color={C.green} />
-            </View>
-            <Text style={S.emptyTitle}>No Reading History Yet</Text>
-            <Text style={S.emptyMessage}>
-              You haven't completed any reading activities yet. Start reading
-              passages to track your progress and see your improvement over time!
-            </Text>
-            <TouchableOpacity
-              style={S.emptyButton}
-              onPress={onStartReading}
-              activeOpacity={0.8}
-            >
-              <Text style={S.emptyButtonText}>Start Reading</Text>
-            </TouchableOpacity>
-          </View>
-        </BounceIn>
+      {timelineData.length === 0 ? (
+        <View style={S.emptyBox}>
+          <HistoryIcon size={40} color={C.slate} />
+          <Text style={S.emptyText}>Walang nakitang kasaysayan sa panahong ito.</Text>
+        </View>
       ) : (
-        <>
-          <BounceIn delay={120}>
-            <View style={S.statsBar}>
-              <View style={S.statItem}>
-                <Text style={S.statValue}>{groupedReports.length}</Text>
-                <Text style={S.statLabel}>Mga Talata</Text>
-              </View>
-              <View style={S.statDivider} />
-              <View style={S.statItem}>
-                <Text style={S.statValue}>{getTotalAttempts()}</Text>
-                <Text style={S.statLabel}>Attempts</Text>
-              </View>
-              <View style={S.statDivider} />
-              <View style={S.statItem}>
-                <Text style={S.statValue}>{getAverageAccuracy()}%</Text>
-                <Text style={S.statLabel}>Avg. Acc</Text>
-              </View>
-              <View style={S.statDivider} />
-              <View style={S.statItem}>
-                <Text style={S.statValue}>{getBestWPM()}</Text>
-                <Text style={S.statLabel}>Best WPM</Text>
-              </View>
-            </View>
-          </BounceIn>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.timelineContainer}>
+          {timelineData.map((report, idx) => {
+            const info = getTypeInfo(report.passageTitle || '');
+            const isExpanded = expandedReportId === report.reportId;
+            const Icon = info.icon;
 
-          <View style={S.contentContainer}>
-            <BounceIn delay={180}>
-              <Text style={S.sectionLabel}>Iyong Mga Reading Sessions</Text>
-            </BounceIn>
+            return (
+              <BounceIn key={report.reportId || idx} delay={100 + idx * 30}>
+                <View style={S.timelineRow}>
+                  {/* Left Line */}
+                  <View style={S.lineCol}>
+                    <View style={[S.dot, { backgroundColor: info.color }]} />
+                    {idx !== timelineData.length - 1 && <View style={S.verticalLine} />}
+                  </View>
 
-            {groupedReports.map((group, passageIndex) => {
-              const isExpanded = expandedPassages.has(passageIndex);
-              return (
-                <BounceIn key={passageIndex} delay={220 + passageIndex * 60}>
-                  <View style={[S.passageCard, isExpanded && S.passageCardExpanded]}>
-                    <TouchableOpacity
-                      onPress={() => togglePassageExpansion(passageIndex)}
-                      style={S.passageHeader}
-                      activeOpacity={0.7}
-                    >
-                      <View style={S.passageIconContainer}>
-                        <BookOpenIcon size={24} color={C.greenDeep} />
-                      </View>
-                      <View style={S.passageInfo}>
-                        <Text style={S.passageTitle} numberOfLines={2}>
-                          {group.passageTitle}
-                        </Text>
-                        <Text style={S.passageAttempts}>
-                          {group.reports.length} attempt{group.reports.length > 1 ? 's' : ''}
+                  {/* Right Content */}
+                  <TouchableOpacity
+                    style={[S.eventCard, isExpanded && S.eventCardExpanded]}
+                    onPress={() => setExpandedReportId(isExpanded ? null : report.reportId)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={S.eventHeader}>
+                      <View style={S.eventMain}>
+                        <Text style={S.eventDate}>{formatDate(report.timestamp)}</Text>
+                        <Text style={S.eventTitle} numberOfLines={1}>
+                          {formatDisplayTitle(report.passageTitle || 'Unknown')}
                         </Text>
                       </View>
-                      <View style={[S.passageArrowContainer, isExpanded && { transform: [{ rotate: '90deg' }] }]}>
-                        <ChevronRightIcon size={16} color={C.slate} />
+                      <View style={[S.accuracyPill, { backgroundColor: info.color + '15' }]}>
+                        <Text style={[S.accuracyText, { color: info.color }]}>{report.accuracyRate}%</Text>
                       </View>
-                    </TouchableOpacity>
+                    </View>
 
                     {isExpanded && (
-                      <View style={S.reportsContainer}>
-                        {/* Reverse to show latest attempt at the top within the expansion! */}
-                        {group.reports.slice().reverse().map((report, idx) => {
-                          const chronologicalIndex = group.reports.length - idx; // so oldest is #1
-                          const totalMiscues = getTotalMiscues(report);
-                          const subLabel = report.substitution || 'None';
-                          const omitLabel = report.omission || 'None';
-                          const insLabel = report.insertion || 'None';
-                          const repLabel = report.repetition || 'None';
-
-                          return (
-                            <View key={report.reportId || idx.toString()} style={S.reportCard}>
-                              <View style={S.reportDateRow}>
-                                <Text style={S.reportDate}>
-                                  {formatDate(report.timestamp)}
-                                </Text>
-                                <View style={S.reportAttemptBadge}>
-                                  <Text style={S.reportAttemptText}>
-                                    #{chronologicalIndex}
-                                  </Text>
-                                </View>
-                              </View>
-
-                              <View style={S.metricsGrid}>
-                                <View style={S.metricCard}>
-                                  <Text style={S.metricValue}>{(report.accuracyRate || 0).toFixed(1)}%</Text>
-                                  <Text style={S.metricLabel}>Accuracy</Text>
-                                </View>
-                                <View style={S.metricCard}>
-                                  <Text style={S.metricValue}>{report.wordPerMin || 0}</Text>
-                                  <Text style={S.metricLabel}>WPM</Text>
-                                </View>
-                                <View style={S.metricCard}>
-                                  <Text style={S.metricValue}>{formatDuration(report.recordingDuration)}</Text>
-                                  <Text style={S.metricLabel}>Duration</Text>
-                                </View>
-                                <View style={S.metricCard}>
-                                  <Text style={S.metricValue}>{totalMiscues}</Text>
-                                  <Text style={S.metricLabel}>Miscues</Text>
-                                </View>
-                              </View>
-
-                              {totalMiscues > 0 && (
-                                <View style={S.miscueSection}>
-                                  <Text style={S.miscueSectionTitle}>Miscue Breakdown</Text>
-                                  {subLabel !== 'None' && (
-                                    <View style={S.miscueRow}>
-                                      <View style={[S.miscueTag, S.miscueTagSubstitution]}>
-                                        <Text style={[S.miscueTagText, { color: C.red }]}>✎ Pagpapalit</Text>
-                                      </View>
-                                      <Text style={S.miscueDetail} numberOfLines={2}>{subLabel}</Text>
-                                    </View>
-                                  )}
-                                  {omitLabel !== 'None' && (
-                                    <View style={S.miscueRow}>
-                                      <View style={[S.miscueTag, S.miscueTagOmission]}>
-                                        <Text style={[S.miscueTagText, { color: C.orange }]}>- Pagkakaltas</Text>
-                                      </View>
-                                      <Text style={S.miscueDetail} numberOfLines={2}>{omitLabel}</Text>
-                                    </View>
-                                  )}
-                                  {insLabel !== 'None' && (
-                                    <View style={S.miscueRow}>
-                                      <View style={[S.miscueTag, S.miscueTagInsertion]}>
-                                        <Text style={[S.miscueTagText, { color: C.teal }]}>+ Pagdaragdag</Text>
-                                      </View>
-                                      <Text style={S.miscueDetail} numberOfLines={2}>{insLabel}</Text>
-                                    </View>
-                                  )}
-                                  {repLabel !== 'None' && (
-                                    <View style={S.miscueRow}>
-                                      <View style={[S.miscueTag, S.miscueTagRepetition]}>
-                                        <Text style={[S.miscueTagText, { color: C.purple }]}>↺ Pag-uulit</Text>
-                                      </View>
-                                      <Text style={S.miscueDetail} numberOfLines={2}>{repLabel}</Text>
-                                    </View>
-                                  )}
-                                </View>
-                              )}
-
-                              {totalMiscues === 0 && (
-                                <View style={S.perfectBadge}>
-                                  <PartyIcon size={20} color={C.green} />
-                                  <Text style={S.perfectText}>
-                                    Walang mali! Ang galing!
-                                  </Text>
-                                </View>
-                              )}
-                            </View>
-                          );
-                        })}
+                      <View style={S.eventDetails}>
+                        <View style={S.detailRow}>
+                          <Text style={S.detailLabel}>Bilis (WPM):</Text>
+                          <Text style={S.detailValue}>{report.wordPerMin || 0}</Text>
+                        </View>
+                        {report.miscues && report.miscues.length > 0 && (
+                          <View style={S.miscueSummary}>
+                            <Text style={S.miscueSummaryTitle}>Mga naging mali:</Text>
+                            <Text style={S.miscueSummaryText}>
+                              {report.miscues.map(m => m.expectedWord).slice(0, 5).join(', ')}
+                              {report.miscues.length > 5 ? '...' : ''}
+                            </Text>
+                          </View>
+                        )}
+                        {report.accuracyRate === 100 && (
+                          <View style={S.perfectTag}>
+                            <PartyIcon size={14} color={C.green} />
+                            <Text style={S.perfectTagText}>Perpektong Pagbasa!</Text>
+                          </View>
+                        )}
                       </View>
                     )}
-                  </View>
-                </BounceIn>
-              );
-            })}
-            <View style={{height: 40}} />
-          </View>
-        </>
+                  </TouchableOpacity>
+                </View>
+              </BounceIn>
+            );
+          })}
+          <View style={{ height: 60 }} />
+        </ScrollView>
       )}
     </View>
   );
 }
 
 const S = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    flex: 1,
-  },
-  emptyContainer: {
-    backgroundColor: C.white,
-    borderRadius: Radii.xl,
-    padding: 32,
-    alignItems: 'center',
-    ...Shadows.cardLift,
-    marginTop: 20,
-  },
-  emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: C.green + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  emptyIcon: {
-    fontSize: 36,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: C.ink,
-    marginBottom: 12,
-  },
-  emptyMessage: {
-    fontSize: 15,
-    color: C.slate,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  emptyButton: {
-    backgroundColor: C.green,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: Radii.pill,
-    ...Shadows.subtle,
-  },
-  emptyButtonText: {
-    color: C.white,
-    fontWeight: '800',
-    fontSize: 16,
-  },
+  container: { flex: 1, paddingHorizontal: 16 },
 
-  // ── Stats Bar ──
-  statsBar: {
-    flexDirection: 'row',
+  timelineContainer: { paddingTop: 10 },
+
+  emptyBox: { alignItems: 'center', paddingVertical: 60, gap: 12 },
+  emptyText: { color: C.slate, fontWeight: '600', fontSize: 14 },
+
+  timelineRow: { flexDirection: 'row', gap: 16 },
+
+  // Left side
+  lineCol: { width: 20, alignItems: 'center' },
+  dot: { width: 12, height: 12, borderRadius: 6, zIndex: 1 },
+  verticalLine: { width: 2, flex: 1, backgroundColor: 'rgba(0,0,0,0.05)', marginTop: -2 },
+
+  // Right side
+  eventCard: {
+    flex: 1,
     backgroundColor: C.white,
     borderRadius: Radii.lg,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'space-around',
+    padding: 16,
     marginBottom: 20,
-    ...Shadows.card,
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: C.greenDeep,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: C.slate,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: C.slate + '40',
-  },
-
-  // ── Content List ──
-  contentContainer: {
-    paddingBottom: 20,
-  },
-  sectionLabel: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: C.ink,
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  passageCard: {
-    backgroundColor: C.white,
-    borderRadius: Radii.lg,
-    marginBottom: 12,
-    overflow: 'hidden',
-    ...Shadows.card,
-  },
-  passageCardExpanded: {
-    ...Shadows.cardLift,
-  },
-  passageHeader: {
-    flexDirection: 'row',
-    padding: 16,
-    alignItems: 'center',
-  },
-  passageIconContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: C.bg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  passageIconText: {
-    fontSize: 22,
-  },
-  passageInfo: {
-    flex: 1,
-  },
-  passageTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: C.ink,
-    marginBottom: 4,
-  },
-  passageAttempts: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.slate,
-  },
-  passageArrowContainer: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  passageArrow: {
-    fontSize: 14,
-    color: C.slate,
-  },
-
-  // ── Expanded Reports ──
-  reportsContainer: {
-    backgroundColor: C.bg,
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: C.slate + '20',
-  },
-  reportCard: {
-    backgroundColor: C.white,
-    borderRadius: Radii.md,
-    padding: 16,
-    marginBottom: 12,
     ...Shadows.subtle,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
   },
-  reportDateRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  reportDate: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: C.ink,
-  },
-  reportAttemptBadge: {
-    backgroundColor: C.green + '20',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  reportAttemptText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: C.greenDeep,
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  metricCard: {
-    backgroundColor: C.bg,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: Radii.sm,
-    alignItems: 'center',
-    width: '23%',
-  },
-  metricValue: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: C.ink,
-    marginBottom: 4,
-  },
-  metricLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: C.slate,
-    textAlign: 'center',
-  },
+  eventCardExpanded: { ...Shadows.card, borderColor: 'rgba(0,0,0,0.1)' },
 
-  // ── Miscues ──
-  miscueSection: {
-    backgroundColor: C.bg + '50',
-    borderRadius: Radii.sm,
-    padding: 12,
-  },
-  miscueSectionTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: C.slate,
-    marginBottom: 10,
-    textTransform: 'uppercase',
-  },
-  miscueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  miscueTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginRight: 10,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  miscueTagSubstitution: { backgroundColor: C.red + '15' },
-  miscueTagOmission: { backgroundColor: C.orange + '15' },
-  miscueTagInsertion: { backgroundColor: C.teal + '15' },
-  miscueTagRepetition: { backgroundColor: C.purple + '15' },
-  miscueTagText: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  miscueDetail: {
-    flex: 1,
-    fontSize: 13,
-    color: C.slate,
-    fontWeight: '600',
-  },
+  eventHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  eventMain: { flex: 1, marginRight: 10 },
+  eventDate: { fontSize: 10, fontWeight: '800', color: C.slate, textTransform: 'uppercase', marginBottom: 2 },
+  eventTitle: { fontSize: 15, fontWeight: '800', color: C.ink },
 
-  // ── Perfect Badge ──
-  perfectBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.green + '15',
-    padding: 12,
-    borderRadius: Radii.sm,
-  },
-  perfectIcon: {
-    fontSize: 18,
-    marginRight: 10,
-  },
-  perfectText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: C.greenDeep,
-    flex: 1,
-  },
+  accuracyPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 },
+  accuracyText: { fontSize: 13, fontWeight: '900' },
+
+  eventDetails: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', gap: 8 },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  detailLabel: { fontSize: 12, fontWeight: '600', color: C.slate },
+  detailValue: { fontSize: 12, fontWeight: '800', color: C.ink },
+
+  miscueSummary: { backgroundColor: C.bg, padding: 8, borderRadius: 8 },
+  miscueSummaryTitle: { fontSize: 11, fontWeight: '800', color: C.slate, marginBottom: 2 },
+  miscueSummaryText: { fontSize: 12, color: C.ink, fontStyle: 'italic' },
+
+  perfectTag: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  perfectTagText: { fontSize: 12, fontWeight: '800', color: C.green },
 });

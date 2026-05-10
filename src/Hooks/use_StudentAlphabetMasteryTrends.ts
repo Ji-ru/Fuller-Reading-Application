@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { MiscueReportController } from '../Controller/MiscueReportController';
 import { getDateRange } from '../Utilities/analyticsDateHelpers';
 import readingMaterialData from '../../assets/ReadingMaterial/ReadingMaterial.json';
@@ -69,6 +69,7 @@ export function use_StudentAlphabetMasteryTrends(
   periodOffset: number = 0,
   selectedSubFilter: SubPeriodFilter | null = null,
 ) {
+  const [refreshCount, setRefreshCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [allTimeLetters, setAllTimeLetters] = useState<Set<string>>(new Set());
   const allTimeFetched = useRef(false);
@@ -85,14 +86,14 @@ export function use_StudentAlphabetMasteryTrends(
 
   // Fetch all-time mastered letters once per screen mount
   useEffect(() => {
-    if (!studentId || allTimeFetched.current) return;
+    if (!studentId || (allTimeFetched.current && refreshCount === 0)) return;
     MiscueReportController.getAlphabetMasteryAllTime(studentId)
       .then(data => {
         setAllTimeLetters(new Set(data.map(d => d.letter)));
         allTimeFetched.current = true;
       })
       .catch(e => console.error('Alphabet all-time fetch error:', e));
-  }, [studentId]);
+  }, [studentId, refreshCount]);
 
   // Re-fetch period data whenever timeFilter or periodOffset changes
   useEffect(() => {
@@ -118,7 +119,7 @@ export function use_StudentAlphabetMasteryTrends(
       });
 
     return () => { cancelled = true; };
-  }, [studentId, dateRange]);
+  }, [studentId, dateRange, refreshCount]);
 
   // Build period slots — each slot knows its own date range for sync comparisons
   const periodSlots = useMemo((): AlphabetPeriodSlot[] => {
@@ -163,10 +164,10 @@ export function use_StudentAlphabetMasteryTrends(
     );
   }, [periodRaw, selectedSubFilter]);
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     allTimeFetched.current = false;
-    setAllTimeLetters(new Set());
-  };
+    setRefreshCount(prev => prev + 1);
+  }, []);
 
   return {
     loading,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { StudentColors as C, Radii } from '../../../Utilities/Theme';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   use_StudentAlphabetMasteryTrends,
   AlphabetPeriodSlot,
@@ -144,7 +145,14 @@ export default function AlphabetMasterySection({
     periodCount,
     allTimeCount,
     totalLetters,
+    refresh,
   } = use_StudentAlphabetMasteryTrends(studentId, timeFilter, periodOffset, selectedSubFilter);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   // ── Default to today's slot (or last slot with data for past periods) ──
   const defaultIdx = useMemo(() => {
@@ -212,23 +220,17 @@ export default function AlphabetMasterySection({
     [],
   );
 
-  // ── Progress bar — keyed to active slot, same as bar chart + letter grid ──
-  const slotCount   = activeSlot?.correctCount ?? 0;
-  const progressPct = Math.round((slotCount / totalLetters) * 100) || 0;
-
-  console.log("Alphabet Progress: " + progressPct);
-  
+  const allTimePercent = Math.round((allTimeCount / totalLetters) * 100) || 0;
   const progressWidth = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    // Re-animate every time the active slot changes (reset to 0 first for a clean fill)
-    progressWidth.setValue(0);
     Animated.spring(progressWidth, {
-      toValue: progressPct,
+      toValue: allTimePercent,
       useNativeDriver: false,
       tension: 60,
       friction: 10,
     }).start();
-  }, [progressPct, progressWidth, activeIdx]);
+  }, [allTimePercent]);
 
   // ── Loading ──
   if (loading) {
@@ -245,29 +247,27 @@ export default function AlphabetMasterySection({
   return (
     <View>
 
-      {/* ── LAYER 1: Summary chips ── */}
+      {/* ── LAYER 1: Summary chips (Period Filtered) ── */}
       <View style={S.chipRow}>
         <View style={[S.chip, { backgroundColor: TEAL_DIM }]}>
           <Text style={[S.chipNum, { color: TEAL }]}>{periodCount}</Text>
-          <Text style={S.chipLabel}>Sa Panahon</Text>
+          <Text style={S.chipLabel}>Natutuhan</Text>
         </View>
-        <View style={[S.chip, { backgroundColor: C.greenLight + 'AA' }]}>
-          <Text style={[S.chipNum, { color: C.green }]}>{allTimeCount}</Text>
+        <View style={[S.chip, { backgroundColor: C.bg }]}>
+          <Text style={[S.chipNum, { color: C.slate }]}>{allTimeCount}</Text>
           <Text style={S.chipLabel}>Kabuuan</Text>
         </View>
         <View style={[S.chip, { backgroundColor: C.bg }]}>
-          <Text style={[S.chipNum, { color: C.slate }]}>{Math.max(0, totalLetters - allTimeCount)}</Text>
+          <Text style={[S.chipNum, { color: C.mint }]}>{Math.max(0, totalLetters - allTimeCount)}</Text>
           <Text style={S.chipLabel}>Hindi pa</Text>
         </View>
       </View>
-
-      {/* ── LAYER 2: Slot progress bar ── */}
+ 
+      {/* ── LAYER 2: Progress bar (Overall Mastery) ── */}
       <View style={S.progressCard}>
         <View style={S.progressRow}>
-          <Text style={S.progressLabel}>
-            {activeSlot ? `Titik sa ${activeSlot.label}` : 'Pag-unlad'}
-          </Text>
-          <Text style={[S.progressPct, { color: TEAL }]}>{progressPct}%</Text>
+          <Text style={S.progressLabel}>Kabuuan ng Pag-unlad</Text>
+          <Text style={[S.progressPct, { color: TEAL }]}>{allTimePercent}%</Text>
         </View>
         <View style={S.trackBg}>
           <Animated.View
@@ -281,50 +281,8 @@ export default function AlphabetMasterySection({
           />
         </View>
         <Text style={S.progressCaption}>
-          {slotCount > 0
-            ? `${slotCount} titik ang natapos sa ${activeSlot?.label ?? 'panahong ito'}`
-            : `Walang titik ang natapos sa ${activeSlot?.label ?? 'panahong ito'}`}
+          {allTimeCount} sa {totalLetters} na titik ang natapos na
         </Text>
-      </View>
-
-      {/* ── LAYER 3: Bar chart — letters mastered per slot ── */}
-      <View style={S.chartSection}>
-        <View style={S.chartHeader}>
-          <Text style={S.chartTitle}>Mga Titik Natutuhan</Text>
-          {hasAnyActivity && (
-            <View style={[S.badge, { backgroundColor: TEAL_DIM }]}>
-              <Text style={[S.badgeText, { color: TEAL }]}>{periodCount} titik</Text>
-            </View>
-          )}
-        </View>
-
-        {hasAnyActivity ? (
-          <ScrollView
-            ref={stripRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={S.barStrip}
-          >
-            {periodSlots.map((slot, i) => (
-              <BarColumn
-                key={i}
-                slot={slot}
-                isActive={activeIdx === i}
-                maxCount={maxCount}
-                index={i}
-                onPress={() => setActiveIdx(i)}
-              />
-            ))}
-          </ScrollView>
-        ) : (
-          <View style={S.emptyChart}>
-            <Text style={S.emptyIcon}>📭</Text>
-            <Text style={S.emptyTitle}>Walang bagong titik</Text>
-            <Text style={S.emptyBody}>
-              Walang titik ang natapos sa panahong ito.
-            </Text>
-          </View>
-        )}
       </View>
 
       {/* ── LAYER 4: Letter grid for active slot ── */}
