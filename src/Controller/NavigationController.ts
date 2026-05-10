@@ -74,6 +74,7 @@ export type RootStackParamList = {
   };
 
   FacultyTabs: undefined;
+  About: undefined;
 };
 
 // A list of all the screens within RootStackParamList

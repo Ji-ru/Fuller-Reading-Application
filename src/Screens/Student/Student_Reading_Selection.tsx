@@ -245,7 +245,7 @@ export const READING_COLORS = [
 ];
 
 export default function PageSelectionScreen() {
-  const { handleLogout, handleBackStep, handleReadingNext } = useNavigationHelper();
+  const { handleLogout, handleBackStep, handleReadingNext, handleNextStep } = useNavigationHelper();
 
   const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
   const isAlphabetCompleted = (letter: string) => completedAlphabets.some(a => a.letter === letter);
@@ -533,6 +533,16 @@ export default function PageSelectionScreen() {
 
         {menuVisible && (
           <View style={headerStyles.dropdown}>
+            <TouchableOpacity
+              onPress={() => {
+                setMenuVisible(false);
+                handleNextStep('About');
+              }}
+              style={upperNav.logoutButton}
+            >
+              <Text style={upperNav.logoutText}>About</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={handleLogoutPress} style={headerStyles.dropdownItem} activeOpacity={0.75}>
               <Image
                 source={require('../../../assets/icons/Logout-icon.png')}
