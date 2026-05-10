@@ -30,6 +30,8 @@ import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/
 import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
 import StudentCompletionProgress from '../../Components/Faculty/StudentView_Status/StudentCompletionProgress';
 import { sw, sh, sf } from '../../Utils/responsive';
+import ExportExcel from '../../Components/GlobalUse/ExportExcel';
+import ExportPdf from '../../Components/GlobalUse/ExportPdf';
 
 const auth = getAuth();
 
@@ -528,6 +530,11 @@ export default function ReadingHistoryScreen() {
 
           {/* ── TAB BAR ────────────────────────────────────────────────────── */}
           <FadeSlideIn delay={60}>
+            <View style={tabStyles.exportRow}>
+              <ExportExcel studentName="Student" />
+              <ExportPdf />
+            </View>
+            <View style={tabStyles.tabGrid}></View>
             <View style={tabStyles.tabGrid}>
               {(
                 [
@@ -1096,6 +1103,14 @@ const tabStyles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: sh(10),
   },
+    exportRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginHorizontal: sw(16),
+    gap: sw(8), 
+    marginTop: sh(10),
+    marginBottom: sh(4),
+  },
 });
 
 // ─── Filter styles ──────────────────────────────────────────────────────────
@@ -1261,4 +1276,5 @@ const filterStyles = StyleSheet.create({
   weekChipTextActive: {
     color: '#ffffff',
   },
+  
 });
