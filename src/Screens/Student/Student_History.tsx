@@ -29,9 +29,9 @@ import StudentMiscueInsights from '../../Components/Faculty/StudentView_Status/S
 import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
 import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
 import StudentCompletionProgress from '../../Components/Faculty/StudentView_Status/StudentCompletionProgress';
-import { sw, sh, sf } from '../../Utils/responsive';
-import ExportExcel from '../../Components/GlobalUse/ExportExcel';
+import { Icon, IconName } from '../../Components/GlobalUse/Icon';
 import ExportPdf from '../../Components/GlobalUse/ExportPdf';
+import { sw, sh, sf } from '../../Utils/responsive';
 
 const auth = getAuth();
 
@@ -537,34 +537,56 @@ export default function ReadingHistoryScreen() {
           {/* Header */}
           <Header />
 
+          {/* ── EXPORT BUTTON ───────────────────────────────────────────────── */}
+          <FadeSlideIn delay={40}>
+            <View style={tabStyles.exportRow}>
+              <ExportPdf
+                studentId={uid}
+                groupedReports={groupedReports}
+                historyFilter={historyFilter}
+                historyAnchor={filterAnchor}
+                historySelectedDay={selectedDay}
+                historySelectedWeekOfMonth={selectedWeekOfMonth}
+                perfTimeRange={perfTimeRange}
+                perfAnchor={perfAnchor}
+                perfSelectedDay={perfSelectedDay}
+                perfSelectedWeekOfMonth={perfSelectedWeekOfMonth}
+                gradeLevel={gradeLevel}
+              />
+            </View>
+          </FadeSlideIn>
+
           {/* ── TAB BAR ────────────────────────────────────────────────────── */}
           <FadeSlideIn delay={60}>
-            <View style={tabStyles.exportRow}>
-              <ExportExcel studentName="Student" />
-              <ExportPdf />
-            </View>
-            <View style={tabStyles.tabGrid}></View>
             <View style={tabStyles.tabGrid}>
               {(
                 [
-                  { key: 'completion', icon: '📋', label: 'Progress' },
-                  { key: 'sessions',   icon: '📚', label: 'Sessions' },
-                  { key: 'performance', icon: '📊', label: 'Analytics' },
-                  { key: 'history',    icon: '🕓', label: 'History' },
-                ] as { key: ActiveTab; icon: string; label: string }[]
-              ).map(tab => (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={[tabStyles.tab, activeTab === tab.key && tabStyles.tabActive]}
-                  onPress={() => setActiveTab(tab.key)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={tabStyles.tabIcon}>{tab.icon}</Text>
-                  <Text style={[tabStyles.tabText, activeTab === tab.key && tabStyles.tabTextActive]}>
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                  { key: 'completion',  icon: 'progress',  label: 'Progress' },
+                  { key: 'sessions',    icon: 'sessions',  label: 'Sessions' },
+                  { key: 'performance', icon: 'analytics', label: 'Analytics' },
+                  { key: 'history',     icon: 'history',   label: 'History' },
+                ] as { key: ActiveTab; icon: IconName; label: string }[]
+              ).map(tab => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <TouchableOpacity
+                    key={tab.key}
+                    style={[tabStyles.tab, isActive && tabStyles.tabActive]}
+                    onPress={() => setActiveTab(tab.key)}
+                    activeOpacity={0.8}
+                  >
+                    <Icon
+                      name={tab.icon}
+                      size={sf(18)}
+                      color={isActive ? '#ffffff' : '#388E3C'}
+                      filled={isActive}
+                    />
+                    <Text style={[tabStyles.tabText, isActive && tabStyles.tabTextActive]}>
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </FadeSlideIn>
 
@@ -575,7 +597,8 @@ export default function ReadingHistoryScreen() {
             <>
               {/* ── Filter Bar ──────────────────────────────────────────── */}
               <FadeSlideIn delay={100}>
-                <View style={filterStyles.container}>
+                <View style={[tabStyles.section, { marginHorizontal: sw(16) }]}>
+                  <Text style={tabStyles.sectionTitle}>Reading History</Text>
                   {/* Range selector pills */}
                   <View style={filterStyles.rangeBar}>
                     {(['week', 'month', 'year'] as const).map(range => (
@@ -676,7 +699,7 @@ export default function ReadingHistoryScreen() {
                 <FadeSlideIn delay={120}>
                   <View style={historyStyles.emptyContainer}>
                     <View style={historyStyles.emptyIconContainer}>
-                      <Text style={historyStyles.emptyIcon}>📚</Text>
+                      <Icon name="bookStack" size={sf(36)} color="#388E3C" />
                     </View>
                     <Text style={historyStyles.emptyTitle}>No Reading History</Text>
                     <Text style={historyStyles.emptyMessage}>
@@ -741,7 +764,7 @@ export default function ReadingHistoryScreen() {
                               activeOpacity={0.7}
                             >
                               <View style={historyStyles.passageIconContainer}>
-                                <Text style={historyStyles.passageIconText}>📖</Text>
+                                <Icon name="bookOpen" size={sf(20)} color="#388E3C" filled />
                               </View>
                               <View style={historyStyles.passageInfo}>
                                 <Text style={historyStyles.passageTitle} numberOfLines={2}>
@@ -839,7 +862,7 @@ export default function ReadingHistoryScreen() {
 
                                         {totalMiscues === 0 && (
                                           <View style={historyStyles.perfectBadge}>
-                                            <Text style={historyStyles.perfectIcon}>🌟</Text>
+                                            <Icon name="star" size={sf(16)} color="#15803D" filled />
                                             <Text style={historyStyles.perfectText}>
                                               Perfect reading! No miscues detected.
                                             </Text>
@@ -950,15 +973,28 @@ export default function ReadingHistoryScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Day-of-week chips (Week mode only) */}
+                  {/* Day-of-week chips (Week mode only) — with activity dots */}
                   {perfTimeRange === 'week' && (() => {
                     const monday = getWeekStart(perfAnchor);
                     const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
                     const today = new Date(); today.setHours(0, 0, 0, 0);
+
+                    // Build a set of day-of-month keys with activity (for dot indicators)
+                    const activeDateKeys = new Set<string>();
+                    for (const group of groupedReports) {
+                      for (const r of group.reports) {
+                        try {
+                          const d: Date = r.timestamp?.toDate?.() ?? new Date(r.timestamp);
+                          activeDateKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+                        } catch { /* skip */ }
+                      }
+                    }
+
                     const days = DAY_LABELS.map((label, i) => {
                       const date = new Date(monday); date.setDate(monday.getDate() + i);
-                      const isToday = date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
-                      return { label, dateNum: date.getDate(), index: i, isToday };
+                      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+                      const isToday = date.getTime() === today.getTime();
+                      return { label, dateNum: date.getDate(), index: i, hasActivity: activeDateKeys.has(dateKey), isToday };
                     });
                     return (
                       <View style={filterStyles.dayRow}>
@@ -975,12 +1011,21 @@ export default function ReadingHistoryScreen() {
                               onPress={() => setPerfSelectedDay(prev => prev === day.index ? null : day.index)}
                               activeOpacity={0.7}
                             >
-                              <Text style={[filterStyles.dayChipLabel, isSelected && filterStyles.dayChipLabelActive]}>
+                              <Text style={[
+                                filterStyles.dayChipLabel,
+                                isSelected && filterStyles.dayChipLabelActive,
+                              ]}>
                                 {day.label}
                               </Text>
-                              <Text style={[filterStyles.dayChipDate, isSelected && filterStyles.dayChipDateActive]}>
+                              <Text style={[
+                                filterStyles.dayChipDate,
+                                isSelected && filterStyles.dayChipDateActive,
+                              ]}>
                                 {day.dateNum}
                               </Text>
+                              {day.hasActivity && !isSelected && (
+                                <View style={filterStyles.activityDot} />
+                              )}
                             </TouchableOpacity>
                           );
                         })}
@@ -1002,11 +1047,17 @@ export default function ReadingHistoryScreen() {
                           return (
                             <TouchableOpacity
                               key={w.weekNum}
-                              style={[filterStyles.weekChip, isSelected && filterStyles.weekChipActive]}
+                              style={[
+                                filterStyles.weekChip,
+                                isSelected && filterStyles.weekChipActive,
+                              ]}
                               onPress={() => setPerfSelectedWeekOfMonth(prev => prev === w.weekNum ? null : w.weekNum)}
                               activeOpacity={0.7}
                             >
-                              <Text style={[filterStyles.weekChipText, isSelected && filterStyles.weekChipTextActive]}>
+                              <Text style={[
+                                filterStyles.weekChipText,
+                                isSelected && filterStyles.weekChipTextActive,
+                              ]}>
                                 Week {w.weekNum}
                               </Text>
                             </TouchableOpacity>
@@ -1045,6 +1096,12 @@ export default function ReadingHistoryScreen() {
 
 // ─── Tab styles ─────────────────────────────────────────────────────────────
 const tabStyles = StyleSheet.create({
+  exportRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: sw(16),
+    marginTop: sh(8),
+  },
   tabGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1111,14 +1168,6 @@ const tabStyles = StyleSheet.create({
     fontFamily: 'Nunito-Bold',
     color: '#1F2937',
     marginBottom: sh(10),
-  },
-    exportRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginHorizontal: sw(16),
-    gap: sw(8), 
-    marginTop: sh(10),
-    marginBottom: sh(4),
   },
 });
 

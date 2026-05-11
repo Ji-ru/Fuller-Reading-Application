@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../Controller/NavigationController';
 import BubbleBackground from '../Components/GlobalUse/BubbleBackground';
 import { sw, sh, sf } from '../Utils/responsive';
+import upperNav from '../UI_Designs/UpperNavigation';
+import Svg, { Text as SvgText } from 'react-native-svg';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -101,12 +103,39 @@ export default function AboutScreen() {
       <BubbleBackground />
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <View style={S.header}>
-        <TouchableOpacity style={S.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
-          <Text style={S.backArrow}>‹</Text>
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>About</Text>
-        <View style={S.backBtn} />
+      <View style={{ zIndex: 100 }}>
+        <View style={upperNav.header}>
+          <TouchableOpacity style={S.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
+            <Text style={S.backArrowText}>‹</Text>
+          </TouchableOpacity>
+          <Svg height={60} width={220}>
+            <SvgText
+              x={110}
+              y={35}
+              fontSize={23}
+              fontFamily="Nunito-Black"
+              textAnchor="middle"
+              fill="none"
+              stroke="#E8F5E9"
+              strokeWidth={8}
+              strokeLinejoin="round"
+            >
+              About
+            </SvgText>
+            <SvgText
+              x={110}
+              y={35}
+              fontSize={23}
+              fontFamily="Nunito-Black"
+              textAnchor="middle"
+              fill="#1B5E20"
+            >
+              About
+            </SvgText>
+          </Svg>
+          {/* Spacer to balance the layout (matches back button width) */}
+          <View style={S.headerSpacer} />
+        </View>
       </View>
 
       <ScrollView
@@ -253,36 +282,25 @@ const S = StyleSheet.create({
   bg: { flex: 1, backgroundColor: C.bg },
 
   // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: sw(16),
-    paddingTop: sh(8),
-    paddingBottom: sh(12),
-    zIndex: 10,
-  },
   backBtn: {
-    width: sw(44),
-    height: sw(44),
-    borderRadius: sw(12),
-    backgroundColor: C.greenDark,
+    width: 45,
+    height: 45,
+    borderRadius: 10,
+    backgroundColor: '#008443',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backArrow: {
-    fontSize: sf(32),
-    color: C.white,
+  backArrowText: {
+    fontSize: 40,
     fontFamily: 'Nunito-Bold',
-    lineHeight: sf(36),
-    marginLeft: -sw(2),
-    paddingBottom: sh(2),
+    color: C.white,
+    lineHeight: 28,
+    marginLeft: -2,
+    paddingBottom: 2,
   },
-  headerTitle: {
-    fontSize: sf(20),
-    fontFamily: 'Nunito-Black',
-    color: C.ink,
-    letterSpacing: 0.3,
+  headerSpacer: {
+    width: 45,
+    height: 45,
   },
 
   scroll: {

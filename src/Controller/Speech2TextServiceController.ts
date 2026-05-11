@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { readFile } from 'react-native-fs';
 import { API_KEY, DEEPGRAM_API } from '@env';
 import { Buffer } from 'buffer';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 // ASSEMBLY API AND URL
 const ASSEMBLYAI_API_KEY = API_KEY;

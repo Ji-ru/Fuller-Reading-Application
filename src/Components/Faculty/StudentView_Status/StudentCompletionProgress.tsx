@@ -26,6 +26,7 @@ import {
 import { useStudentCompletedAlphabet, useStudentCompletedWord } from '../../../Hooks/Student/use_StudentCompletedReading';
 import readingMaterialData from '../../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 import { sw, sh, sf } from '../../../Utils/responsive';
+import { Icon } from '../../GlobalUse/Icon';
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -181,7 +182,7 @@ const StudentCompletionProgress: React.FC<Props> = ({ studentId }) => {
       ════════════════════════════════════════════════════════════════════ */}
       <View style={S.sectionCard}>
         <View style={S.sectionHeader}>
-          <Text style={S.sectionIcon}>🔤</Text>
+          <Icon name="alphabet" size={sf(24)} color={C.primary} filled />
           <View style={{ flex: 1 }}>
             <Text style={S.sectionTitle}>Alphabet Completed</Text>
             <Text style={S.sectionSubtitle}>
@@ -241,7 +242,7 @@ const StudentCompletionProgress: React.FC<Props> = ({ studentId }) => {
       ════════════════════════════════════════════════════════════════════ */}
       <View style={S.sectionCard}>
         <View style={S.sectionHeader}>
-          <Text style={S.sectionIcon}>📖</Text>
+          <Icon name="bookOpen" size={sf(24)} color={C.primary} filled />
           <View style={{ flex: 1 }}>
             <Text style={S.sectionTitle}>Words Completed</Text>
             <Text style={S.sectionSubtitle}>

@@ -29,6 +29,10 @@ import StudentCompletionProgress from '../../Components/Faculty/StudentView_Stat
 import StudentTotalActivityToday from '../../Components/Faculty/StudentView_Status/StudentTotalActivityToday';
 import FadeSlideIn from '../../Components/GlobalUse/FadeSlideIn';
 import { DateRangeFilter, DateBounds } from '../../Components/GlobalUse/DateRangeFilter';
+import ExportExcel from '../../Components/GlobalUse/ExportExcel';
+import ExportPdf from '../../Components/GlobalUse/ExportPdf';
+import { Icon, IconName } from '../../Components/GlobalUse/Icon';
+import { FacultyColors } from '../../Utilities/Theme';
 
 const C = {
   ink: '#1b2e23',
@@ -282,27 +286,40 @@ export default function StudentViewProfile() {
 
           {/* TAB SWITCHER (Reused from Student_History) */}
           <FadeSlideIn delay={60}>
+            <View style={tabStyles.exportRow}>
+              <ExportExcel studentName="Student" />
+              <ExportPdf studentId={studentId} gradeLevel={gradeLevel} />
+            </View>
+            {/* <View style={tabStyles.tabGrid}></View> */}
             <View style={tabStyles.tabGrid}>
               {(
                 [
-                  { key: 'completion', icon: '📋', label: 'Progress' },
-                  { key: 'sessions', icon: '📚', label: 'Sessions' },
-                  { key: 'performance', icon: '📊', label: 'Analytics' },
-                  { key: 'history', icon: '🕓', label: 'History' },
-                ] as { key: ActiveTab; icon: string; label: string }[]
-              ).map(tab => (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={[tabStyles.tab, activeTab === tab.key && tabStyles.tabActive]}
-                  onPress={() => setActiveTab(tab.key)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={tabStyles.tabIcon}>{tab.icon}</Text>
-                  <Text style={[tabStyles.tabText, activeTab === tab.key && tabStyles.tabTextActive]}>
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                  { key: 'completion', icon: 'progress', label: 'Progress' },
+                  { key: 'sessions', icon: 'sessions', label: 'Sessions' },
+                  { key: 'performance', icon: 'analytics', label: 'Analytics' },
+                  { key: 'history', icon: 'history', label: 'History' },
+                ] as { key: ActiveTab; icon: IconName; label: string }[]
+              ).map(tab => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <TouchableOpacity
+                    key={tab.key}
+                    style={[tabStyles.tab, isActive && tabStyles.tabActive]}
+                    onPress={() => setActiveTab(tab.key)}
+                    activeOpacity={0.8}
+                  >
+                    <Icon
+                      name={tab.icon}
+                      size={sf(18)}
+                      color={isActive ? '#ffffff' : FacultyColors.primary}
+                      filled={isActive}
+                    />
+                    <Text style={[tabStyles.tabText, isActive && tabStyles.tabTextActive]}>
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </FadeSlideIn>
 
@@ -390,7 +407,7 @@ export default function StudentViewProfile() {
                       </Text>
                       <TouchableOpacity
                         style={historyTabStyles.emptyButton}
-                        onPress={() => { setSelectedDay(null); setSelectedWeekOfMonth(null); setFilterAnchor(new Date()); }}
+                        onPress={() => setHistoryBounds(null)}
                         activeOpacity={0.8}
                       >
                         <Text style={historyTabStyles.emptyButtonText}>Go to Today</Text>
@@ -589,154 +606,15 @@ const tabStyles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: sf(15), fontFamily: 'Nunito-Bold', color: '#1B5E20', marginBottom: sh(10),
-  }
-});
-
-const filterStyles = StyleSheet.create({
-  rangeBar: {
+  },
+     exportRow: {
     flexDirection: 'row',
-    backgroundColor: '#E8F5E9',
-    borderRadius: sw(10),
-    padding: sw(3),
-    marginBottom: sh(10),
-  },
-  rangeBtn: {
-    flex: 1,
-    paddingVertical: sh(8),
-    alignItems: 'center',
-    borderRadius: sw(8),
-  },
-  rangeBtnActive: {
-    backgroundColor: '#388E3C',
-    elevation: 2,
-    shadowColor: '#1B5E20',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.2,
-    shadowRadius: sw(2),
-  },
-  rangeBtnText: {
-    fontSize: sf(13),
-    fontFamily: 'Nunito-Bold',
-    color: '#388E3C',
-  },
-  rangeBtnTextActive: { color: '#ffffff' },
-  periodNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: sw(12),
-    paddingVertical: sh(6),
-    paddingHorizontal: sw(6),
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sh(1) },
-    shadowOpacity: 0.05,
-    shadowRadius: sw(2),
-  },
-  arrowBtn: {
-    width: sw(36),
-    height: sw(36),
-    borderRadius: sw(10),
-    backgroundColor: '#E8F5E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrowText: {
-    fontSize: sf(22),
-    fontFamily: 'Nunito-Bold',
-    color: '#388E3C',
-    lineHeight: sf(24),
-  },
-  periodLabelBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: sh(4),
-  },
-  periodLabel: {
-    fontSize: sf(14),
-    fontFamily: 'Nunito-Bold',
-    color: '#1F2937',
-  },
-  dayRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
+    marginHorizontal: sw(16),
+    gap: sw(8), 
     marginTop: sh(10),
-    gap: sw(4),
+    marginBottom: sh(4),
   },
-  dayChip: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: sh(8),
-    borderRadius: sw(10),
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-  },
-  dayChipActive: {
-    backgroundColor: '#388E3C',
-    borderColor: '#388E3C',
-    elevation: 2,
-    shadowColor: '#1B5E20',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.2,
-    shadowRadius: sw(2),
-  },
-  dayChipToday: {
-    borderColor: '#388E3C',
-    borderWidth: 1.5,
-  },
-  dayChipLabel: {
-    fontSize: sf(10),
-    fontFamily: 'Nunito-Medium',
-    color: '#6B7280',
-    marginBottom: sh(2),
-  },
-  dayChipLabelActive: { color: '#ffffff' },
-  dayChipDate: {
-    fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
-    color: '#1F2937',
-  },
-  dayChipDateActive: { color: '#ffffff' },
-  activityDot: {
-    width: sw(5),
-    height: sw(5),
-    borderRadius: sw(3),
-    backgroundColor: '#388E3C',
-    marginTop: sh(3),
-  },
-  weekOfMonthRow: {
-    flexDirection: 'row',
-    marginTop: sh(10),
-    gap: sw(6),
-  },
-  weekChip: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: sh(8),
-    borderRadius: sw(8),
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-  },
-  weekChipActive: {
-    backgroundColor: '#388E3C',
-    borderColor: '#388E3C',
-    elevation: 2,
-    shadowColor: '#1B5E20',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.2,
-    shadowRadius: sw(2),
-  },
-  weekChipText: {
-    fontSize: sf(12),
-    fontFamily: 'Nunito-Bold',
-    color: '#388E3C',
-  },
-  weekChipTextActive: { color: '#ffffff' },
 });
 
 const historyTabStyles = StyleSheet.create({
@@ -799,4 +677,5 @@ const historyTabStyles = StyleSheet.create({
   perfectBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: sw(10), padding: sw(10), gap: sw(8), borderWidth: 1, borderColor: '#BBF7D0' },
   perfectIcon: { fontSize: sf(16) },
   perfectText: { fontSize: sf(12), fontFamily: 'Nunito-Bold', color: '#15803D', flex: 1 },
+  
 });

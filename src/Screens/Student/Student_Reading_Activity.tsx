@@ -447,7 +447,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithHubert, getSimulatedResponse, targetText]);
+  }, [processAudioWithAssemblyAI, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:

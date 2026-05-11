@@ -255,6 +255,7 @@ export const useNavigationHelper = () => {
     email,
     role,
     sex,
+    gradeLevel,
     reading_Level,
   }: {
     uid: string;
@@ -264,12 +265,14 @@ export const useNavigationHelper = () => {
     email?: string;
     role?: UserRole;
     sex: string;
+    gradeLevel?: number;
     reading_Level?: 'beginner' | 'emerging' | 'intermediate' | 'advanced';
   }) => {
     if (role === 'student') {
       handleStudentViewStats({
         studentId: uid,
         studentName: `${firstName} ${middleName ?? ''} ${lastName}`.trim(),
+        gradeLevel: gradeLevel ?? 1,
         readingLevel: reading_Level || '',
       });
     } else if (role === 'faculty') {
@@ -326,6 +329,7 @@ export const useNavigationHelper = () => {
     studentId: string;
     studentName: string;
     readingLevel: string;
+    gradeLevel: number;
   }) => {
     navigation.navigate('StudentViewProfile', studentData);
   };

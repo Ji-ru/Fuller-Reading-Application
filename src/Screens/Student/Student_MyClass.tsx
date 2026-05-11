@@ -322,14 +322,14 @@ export default function StudentMyClass() {
                 <Svg height={60} width={200}>
                     <SvgText
                         x={100} y={35} fontSize={23}
-                        fontFamily="Nunito-Black" textAnchor="middle"
+                        fontFamily="Andika-Bold" textAnchor="middle"
                         fill="none" stroke="#E8F5E9" strokeWidth={8} strokeLinejoin="round"
                     >
                         My Class
                     </SvgText>
                     <SvgText
                         x={100} y={35} fontSize={23}
-                        fontFamily="Nunito-Black" textAnchor="middle"
+                        fontFamily="Andika-Bold" textAnchor="middle"
                         fill="#1B5E20"
                     >
                         My Class
@@ -556,14 +556,14 @@ const popupStyles = StyleSheet.create({
     iconCircleDanger: { backgroundColor: COLORS.dangerLight, borderColor: '#FECACA' },
     iconEmoji: { fontSize: sf(34) },
     title: {
-        fontSize: sf(22), fontFamily: 'Satoshi-Bold', color: COLORS.text,
+        fontSize: sf(22), fontFamily: 'Andika-Bold', color: COLORS.text,
         marginBottom: sh(12), textAlign: 'center',
     },
     body: {
-        fontSize: sf(14), fontFamily: 'Satoshi-Regular', color: COLORS.textSecondary,
+        fontSize: sf(14), fontFamily: 'Andika-Regular', color: COLORS.textSecondary,
         textAlign: 'center', lineHeight: sf(22), marginBottom: sh(28),
     },
-    bodyBold: { fontFamily: 'Satoshi-Bold', color: COLORS.text },
+    bodyBold: { fontFamily: 'Andika-Bold', color: COLORS.text },
     actionButton: {
         width: '100%', paddingVertical: sh(15), borderRadius: sw(14),
         alignItems: 'center', elevation: 2,
@@ -571,11 +571,11 @@ const popupStyles = StyleSheet.create({
     },
     buttonRow: { flexDirection: 'row', width: '100%' },
     actionButtonCancel: { backgroundColor: '#F3F4F6', elevation: 0, shadowOpacity: 0 },
-    actionButtonCancelText: { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: '#4B5563' },
+    actionButtonCancelText: { fontSize: sf(16), fontFamily: 'Andika-Bold', color: '#4B5563' },
     actionButtonWarning: { backgroundColor: COLORS.warning, shadowColor: COLORS.warning },
     actionButtonSuccess: { backgroundColor: COLORS.teal, shadowColor: COLORS.tealDark },
     actionButtonDanger: { backgroundColor: COLORS.danger, shadowColor: '#991B1B' },
-    actionButtonText: { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: '#FFF' },
+    actionButtonText: { fontSize: sf(16), fontFamily: 'Andika-Bold', color: '#FFF' },
 });
 
 // ─── Page styles ──────────────────────────────────────────────────────────────
@@ -585,17 +585,17 @@ const styles = StyleSheet.create({
     scroll: { flex: 1 },
     scrollContent: { paddingHorizontal: sw(20), paddingTop: sh(16), paddingBottom: sh(120) },
 
-    pageTitle: { fontSize: sf(30), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(4) },
-    pageSubtitle: { fontSize: sf(14), fontFamily: 'Satoshi-Regular', color: COLORS.textSecondary, marginBottom: sh(28) },
+    pageTitle: { fontSize: sf(30), fontFamily: 'Andika-Bold', color: COLORS.text, marginBottom: sh(4) },
+    pageSubtitle: { fontSize: sf(14), fontFamily: 'Andika-Regular', color: COLORS.textSecondary, marginBottom: sh(28) },
 
     stateBox: { alignItems: 'center', justifyContent: 'center', paddingVertical: sh(56), gap: sw(12) },
-    stateText: { fontSize: sf(15), fontFamily: 'Satoshi-Medium', color: COLORS.textSecondary },
+    stateText: { fontSize: sf(15), fontFamily: 'Andika-Regular', color: COLORS.textSecondary },
 
     errorBox: { backgroundColor: COLORS.dangerLight, borderRadius: sw(16), paddingHorizontal: sw(24) },
     errorIcon: { fontSize: sf(32) },
-    errorText: { fontSize: sf(15), fontFamily: 'Satoshi-Medium', color: COLORS.danger, textAlign: 'center' },
+    errorText: { fontSize: sf(15), fontFamily: 'Andika-Regular', color: COLORS.danger, textAlign: 'center' },
     retryButton: { marginTop: sh(4), backgroundColor: COLORS.teal, paddingHorizontal: sw(28), paddingVertical: sh(10), borderRadius: sw(20) },
-    retryText: { color: '#FFF', fontFamily: 'Satoshi-Bold', fontSize: sf(15) },
+    retryText: { color: '#FFF', fontFamily: 'Andika-Bold', fontSize: sf(15) },
 
     emptyCard: {
         backgroundColor: COLORS.surface, borderRadius: sw(20), padding: sw(32),
@@ -609,9 +609,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center', marginBottom: sh(20),
     },
     emptyIcon: { width: sw(52), height: sw(52), tintColor: COLORS.teal },
-    emptyTitle: { fontSize: sf(22), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(10) },
-    emptyBody: { fontSize: sf(14), fontFamily: 'Satoshi-Regular', color: COLORS.textSecondary, textAlign: 'center', lineHeight: sf(22) },
-    emptyHighlight: { fontFamily: 'Satoshi-Bold', color: COLORS.teal },
+    emptyTitle: { fontSize: sf(22), fontFamily: 'Andika-Bold', color: COLORS.text, marginBottom: sh(10) },
+    emptyBody: { fontSize: sf(14), fontFamily: 'Andika-Regular', color: COLORS.textSecondary, textAlign: 'center', lineHeight: sf(22) },
+    emptyHighlight: { fontFamily: 'Andika-Bold', color: COLORS.teal },
 
     classCard: {
         backgroundColor: COLORS.surface, borderRadius: sw(20), overflow: 'hidden',
@@ -624,47 +624,47 @@ const styles = StyleSheet.create({
     statusActive: { backgroundColor: '#E8F5E9' },
     statusArchived: { backgroundColor: '#F5F5F5' },
     statusDot: { width: sw(7), height: sw(7), borderRadius: sw(4) },
-    statusText: { fontSize: sf(12), fontFamily: 'Satoshi-Bold', textTransform: 'uppercase', letterSpacing: sf(0.5) },
-    cardClassName: { fontSize: sf(26), fontFamily: 'Satoshi-Bold', color: COLORS.text, paddingHorizontal: sw(20), paddingTop: sh(8), paddingBottom: sh(20) },
+    statusText: { fontSize: sf(12), fontFamily: 'Andika-Bold', textTransform: 'uppercase', letterSpacing: sf(0.5) },
+    cardClassName: { fontSize: sf(26), fontFamily: 'Andika-Bold', color: COLORS.text, paddingHorizontal: sw(20), paddingTop: sh(8), paddingBottom: sh(20) },
     cardDivider: { height: sw(1), backgroundColor: COLORS.border, marginHorizontal: sw(20), marginBottom: sh(20) },
     infoGrid: { paddingHorizontal: sw(20), gap: sw(14), marginBottom: sh(24) },
     infoRow: { flexDirection: 'row', alignItems: 'center', gap: sw(14) },
     infoIcon: { fontSize: sf(22), width: sw(32), textAlign: 'center' },
     infoText: { flex: 1 },
-    infoLabel: { fontSize: sf(11), fontFamily: 'Satoshi-Medium', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: sf(0.5), marginBottom: sh(1) },
-    infoValue: { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: COLORS.text },
+    infoLabel: { fontSize: sf(11), fontFamily: 'Andika-Regular', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: sf(0.5), marginBottom: sh(1) },
+    infoValue: { fontSize: sf(16), fontFamily: 'Andika-Bold', color: COLORS.text },
     codeCard: { backgroundColor: COLORS.tealLight, marginHorizontal: sw(20), marginBottom: sh(20), borderRadius: sw(14), padding: sw(16), alignItems: 'center', borderWidth: 1, borderColor: COLORS.tealMid },
-    codeCardLabel: { fontSize: sf(11), fontFamily: 'Satoshi-Medium', color: COLORS.tealDark, textTransform: 'uppercase', letterSpacing: sf(0.6), marginBottom: sh(4) },
-    codeCardValue: { fontSize: sf(28), fontFamily: 'Satoshi-Bold', color: COLORS.tealDark, letterSpacing: sf(4), marginBottom: sh(4) },
-    codeCardHint: { fontSize: sf(12), fontFamily: 'Satoshi-Regular', color: COLORS.teal },
+    codeCardLabel: { fontSize: sf(11), fontFamily: 'Andika-Regular', color: COLORS.tealDark, textTransform: 'uppercase', letterSpacing: sf(0.6), marginBottom: sh(4) },
+    codeCardValue: { fontSize: sf(28), fontFamily: 'Andika-Bold', color: COLORS.tealDark, letterSpacing: sf(4), marginBottom: sh(4) },
+    codeCardHint: { fontSize: sf(12), fontFamily: 'Andika-Regular', color: COLORS.teal },
 
     leaveClassButton: { marginHorizontal: sw(20), marginBottom: sh(24), alignItems: 'center', paddingVertical: sh(12), backgroundColor: '#FFF0F0', borderRadius: sw(12) },
-    leaveClassText: { fontSize: sf(14), fontFamily: 'Satoshi-Bold', color: COLORS.danger },
+    leaveClassText: { fontSize: sf(14), fontFamily: 'Andika-Bold', color: COLORS.danger },
 
     fabContainer: { position: 'absolute', bottom: sh(28), left: sw(20), right: sw(20) },
     fabButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: sh(16), borderRadius: sw(18), gap: sw(8), elevation: 6, shadowColor: COLORS.tealDark, shadowOffset: { width: 0, height: sw(4) }, shadowOpacity: 0.25, shadowRadius: sw(10) },
     fabButtonActive: { backgroundColor: COLORS.teal },
     fabButtonDisabled: { backgroundColor: '#B0C4C3' },
     fabIcon: { fontSize: sf(20), color: '#FFF', lineHeight: sf(22) },
-    fabText: { fontSize: sf(17), fontFamily: 'Satoshi-Bold', color: '#FFF' },
+    fabText: { fontSize: sf(17), fontFamily: 'Andika-Bold', color: '#FFF' },
 
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
     modalSheet: { backgroundColor: COLORS.surface, borderTopLeftRadius: sw(28), borderTopRightRadius: sw(28), padding: sw(28), paddingBottom: sh(48) },
     sheetHandle: { width: sw(44), height: sw(4), borderRadius: sw(2), backgroundColor: COLORS.border, alignSelf: 'center', marginBottom: sh(24) },
-    modalTitle: { fontSize: sf(24), fontFamily: 'Satoshi-Bold', color: COLORS.text, marginBottom: sh(6) },
-    modalSubtitle: { fontSize: sf(14), fontFamily: 'Satoshi-Regular', color: COLORS.textSecondary, marginBottom: sh(28), lineHeight: sf(20) },
+    modalTitle: { fontSize: sf(24), fontFamily: 'Andika-Bold', color: COLORS.text, marginBottom: sh(6) },
+    modalSubtitle: { fontSize: sf(14), fontFamily: 'Andika-Regular', color: COLORS.textSecondary, marginBottom: sh(28), lineHeight: sf(20) },
 
     codeInputWrapper: { borderWidth: 1.5, borderColor: COLORS.border, borderRadius: sw(14), backgroundColor: '#FAFAFA', marginBottom: sh(12) },
     codeInputError: { borderColor: COLORS.danger },
-    codeInput: { paddingHorizontal: sw(16), paddingVertical: sh(16), fontSize: sf(22), fontFamily: 'Satoshi-Bold', color: COLORS.text, letterSpacing: sf(4) },
+    codeInput: { paddingHorizontal: sw(16), paddingVertical: sh(16), fontSize: sf(22), fontFamily: 'Andika-Bold', color: COLORS.text, letterSpacing: sf(4) },
 
     inlineErrorBox: { backgroundColor: COLORS.dangerLight, borderRadius: sw(10), paddingHorizontal: sw(14), paddingVertical: sh(10), marginBottom: sh(20) },
-    inlineErrorText: { fontSize: sf(13), fontFamily: 'Satoshi-Medium', color: COLORS.danger, textAlign: 'center' },
+    inlineErrorText: { fontSize: sf(13), fontFamily: 'Andika-Regular', color: COLORS.danger, textAlign: 'center' },
 
     modalButtons: { flexDirection: 'row', gap: sw(12), marginTop: sh(8) },
     cancelButton: { flex: 1, paddingVertical: sh(15), borderRadius: sw(14), backgroundColor: COLORS.background, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-    cancelButtonText: { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: COLORS.textSecondary },
+    cancelButtonText: { fontSize: sf(16), fontFamily: 'Andika-Bold', color: COLORS.textSecondary },
     joinSubmitButton: { flex: 2, paddingVertical: sh(15), borderRadius: sw(14), backgroundColor: COLORS.teal, alignItems: 'center', elevation: 3, shadowColor: COLORS.tealDark, shadowOffset: { width: 0, height: sw(3) }, shadowOpacity: 0.2, shadowRadius: sw(6) },
     joinSubmitButtonBusy: { backgroundColor: COLORS.tealMid },
-    joinSubmitText: { fontSize: sf(16), fontFamily: 'Satoshi-Bold', color: '#FFF' },
+    joinSubmitText: { fontSize: sf(16), fontFamily: 'Andika-Bold', color: '#FFF' },
 });

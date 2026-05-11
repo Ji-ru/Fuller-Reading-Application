@@ -15,6 +15,7 @@ import {
 import { useStudentWordMastery } from '../../../Hooks/Student/useStudentWordMastery';
 import { WordPeriodSlot } from '../../../Interfaces/dataInterfaces';
 import { sw, sh, sf } from '../../../Utils/responsive';
+import { Icon } from '../../GlobalUse/Icon';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -461,7 +462,7 @@ const WordGrid = ({ lesson }: { lesson: LessonProgress }) => {
 
 const EmptyState = () => (
   <View style={styles.emptyNotice}>
-    <Text style={styles.emptyIcon}>📚</Text>
+    <Icon name="bookStack" size={sf(36)} color={T.muted} />
     <Text style={styles.emptyTitle}>No chapters yet</Text>
     <Text style={styles.emptyBody}>
       Complete a word reading session to see progress here.
@@ -615,7 +616,8 @@ export default function StudentWordMastery({ studentId }: Props) {
               Accuracy Per {timeRange === 'week' ? 'Day' : timeRange === 'month' ? 'Week' : 'Month'}
             </Text>
             <View style={styles.tapHintBadge}>
-              <Text style={styles.tapHintText}>👆 Tap bars to view details</Text>
+              <Icon name="tap" size={sf(12)} color={T.violet} />
+              <Text style={styles.tapHintText}>Tap bars to view details</Text>
             </View>
           </View>
 
@@ -1087,6 +1089,9 @@ const styles = StyleSheet.create({
     marginBottom: sh(14),
   },
   tapHintBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(6),
     backgroundColor: T.violetDim,
     paddingHorizontal: sw(10),
     paddingVertical: sh(6),

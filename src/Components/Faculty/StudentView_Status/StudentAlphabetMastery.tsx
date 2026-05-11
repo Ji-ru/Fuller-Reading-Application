@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useStudentAlphabetMasteryTrends } from '../../../Hooks/Student/useStudentAlphabetMasteryTrends';
 import { sw, sh, sf } from '../../../Utils/responsive';
+import { Icon } from '../../GlobalUse/Icon';
 
 // ============================================================================
 // DESIGN TOKENS  (light / white theme)
@@ -383,7 +384,7 @@ const RangeTab = ({
 
 const EmptySlotNotice = ({ label }: { label: string }) => (
   <View style={styles.emptyNotice}>
-    <Text style={styles.emptyIcon}>📭</Text>
+    <Icon name="inbox" size={sf(36)} color={T.muted} />
     <Text style={styles.emptyTitle}>No session for {label}</Text>
     <Text style={styles.emptyBody}>
       No alphabet reading was recorded in this period. Select another period to
@@ -514,8 +515,11 @@ export default function StudentAlphabetMastery({ studentId }: Props) {
           ]}
         >
           <View style={[styles.statusDot, { backgroundColor: color }]} />
+          {acc !== null && pct === 100 && (
+            <Icon name="trophy" size={sf(13)} color={color} filled />
+          )}
           <Text style={[styles.statusText, { color }]}>
-            {acc === null ? 'No Data' : pct === 100 ? '🏆 Complete' : `${pct}% Done`}
+            {acc === null ? 'No Data' : pct === 100 ? 'Complete' : `${pct}% Done`}
           </Text>
         </View>
       </View>
@@ -564,7 +568,8 @@ export default function StudentAlphabetMastery({ studentId }: Props) {
             </Text>
           </View>
           <View style={styles.tapHintBadge}>
-            <Text style={styles.tapHintText}>👆 Tap bars to view details</Text>
+            <Icon name="tap" size={sf(12)} color={T.violet} />
+            <Text style={styles.tapHintText}>Tap bars to view details</Text>
           </View>
 
         </View>
@@ -1163,6 +1168,10 @@ const styles = StyleSheet.create({
     lineHeight: sf(18),
   },
   tapHintBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(6),
+    alignSelf: 'flex-start',
     backgroundColor: T.violetDim,
     paddingHorizontal: sw(10),
     paddingVertical: sh(6),

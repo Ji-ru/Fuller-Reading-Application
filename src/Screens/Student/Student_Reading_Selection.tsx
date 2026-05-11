@@ -23,6 +23,7 @@ import { getAuth } from '@react-native-firebase/auth';
 import { WordContext } from '../../Interfaces/dataInterfaces';
 import Svg, { Text as SvgText } from 'react-native-svg';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
+import { Icon } from '../../Components/GlobalUse/Icon';
 
 const currentStudentId = getAuth().currentUser?.uid ?? '';
 const { width: SW } = Dimensions.get('window');
@@ -322,9 +323,12 @@ export default function PageSelectionScreen() {
   // Color palette is defined at module level as READING_COLORS (reusable)
 
   const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => {
-    const bgColor = READING_COLORS[index % READING_COLORS.length];
     const completed = isAlphabetCompleted(item.letter);
-  
+    // Completed letters keep their vibrant accent color; untried letters are muted gray.
+    const bgColor = completed
+      ? READING_COLORS[index % READING_COLORS.length]
+      : '#C7CCD1';
+
     return (
       <FadeSlideIn delay={60 + index * 25} style={{ width: '23%' }}>
         <TouchableOpacity
@@ -380,9 +384,9 @@ export default function PageSelectionScreen() {
           activeOpacity={0.7}
         >
           <View style={selection.letterCardContent}>
-            {/* Chapter icon (using book emoji, can be replaced with any icon) */}
+            {/* Chapter icon */}
             <View style={selection.letterIconContainer}>
-              <Text style={selection.letterIconText}>📙</Text>
+              <Icon name="bookStack" size={28} color="#008443" filled />
             </View>
 
             {/* Chapter info */}
@@ -421,7 +425,6 @@ export default function PageSelectionScreen() {
         <Text style={[
           selection.wordBubbleText,
           completed && selection.wordBubbleTextCompleted,
-          { fontFamily: 'Nunito-Bold' }
         ]}>
           {word}
         </Text>
@@ -444,7 +447,7 @@ export default function PageSelectionScreen() {
         <View style={selection.phonemeSection}>
           <View style={selection.phonemHeader}>
             <View style={selection.phonemeIconContainer}>
-              <Text style={selection.phonemeIcon}>📖</Text>
+              <Icon name="bookOpen" size={24} color="#008443" filled />
             </View>
             <View style={selection.phonemeInfo}>
               <Text style={selection.phonemeTitle}>{lesson.title}</Text>
@@ -504,8 +507,8 @@ export default function PageSelectionScreen() {
               <SvgText
                 x={110}                 // center X
                 y={35}                  // baseline Y
-                fontSize={23}
-                fontFamily="Nunito-Black"
+                fontSize={24}
+                fontFamily="Andika-Bold"
                 textAnchor="middle"     // center align
                 fill="none"          // inside color
                 stroke="#E8F5E9"        // outline color
@@ -517,8 +520,8 @@ export default function PageSelectionScreen() {
               <SvgText
                 x={110}
                 y={35}
-                fontSize={23}
-                fontFamily="Nunito-Black"
+                fontSize={24}
+                fontFamily="Andika-Bold"
                 textAnchor="middle"
                 fill="#1B5E20"
               >

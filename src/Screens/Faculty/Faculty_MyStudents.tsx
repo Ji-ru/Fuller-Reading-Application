@@ -150,7 +150,7 @@ export default function MyStudents() {
             item.lastName
           }`.trim(),
           readingLevel: item.studentData?.reading_Level || 'N/A',
-          gradeLevel: item.studentData?.gradeLevel ?? undefined,
+          gradeLevel: item.studentData?.gradeLevel ?? 1,
         })
       }
       activeOpacity={0.7}
