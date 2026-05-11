@@ -23,7 +23,7 @@ import { sw, sh, sf } from '../../Utils/responsive';
 import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
 import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Status/Student_Accuracy_Chart';
 import StudentMiscueInsights from '../../Components/Faculty/StudentView_Status/Student_MiscueInsights';
-import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
+// import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
 import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
 import StudentCompletionProgress from '../../Components/Faculty/StudentView_Status/StudentCompletionProgress';
 import StudentTotalActivityToday from '../../Components/Faculty/StudentView_Status/StudentTotalActivityToday';
@@ -345,12 +345,12 @@ export default function StudentViewProfile() {
                     <StudentTotalActivityToday studentId={studentId} />
                   </View>
                 </FadeSlideIn>
-                <FadeSlideIn delay={160}>
+                {/* <FadeSlideIn delay={160}>
                   <View style={tabStyles.section}>
                     <Text style={tabStyles.sectionTitle}>Alphabet Mastery</Text>
                     <StudentAlphabetMastery studentId={studentId} />
                   </View>
-                </FadeSlideIn>
+                </FadeSlideIn> */}
                 <FadeSlideIn delay={240}>
                   <View style={tabStyles.section}>
                     <Text style={tabStyles.sectionTitle}>Word Mastery</Text>

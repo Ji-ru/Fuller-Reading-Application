@@ -269,7 +269,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           onPress={onNextItem}
           activeOpacity={0.8}
         >
-          <Text style={S.btnText}> {type === 'alphabet' ? 'Next Letter' : type === 'word' ? 'Next Word' : 'Next Passage'} </Text>
+          <Text style={S.btnText}> {/* type === 'alphabet' ? 'Next Letter' : */ type === 'word' ? 'Next Word' : 'Next Passage'} </Text>
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
@@ -284,10 +284,12 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
   );
 
   // ─── ALPHABET & WORD ───────────────────────────────────────────────────────
-  if (type === 'alphabet' || type === 'word') {
-    const accuracy = passedAccuracy || (type === 'alphabet'
-      ? MiscueAnalysisService.checkAlphabetPhonemeAccuracy(targetText, spokenText).accuracy
-      : (isTextCorrect ? '100' : '0')
+  if (/* type === 'alphabet' || */ type === 'word') {
+    const accuracy = passedAccuracy || (
+      // type === 'alphabet'
+      //   ? MiscueAnalysisService.checkAlphabetPhonemeAccuracy(targetText, spokenText).accuracy
+      //   :
+      (isTextCorrect ? '100' : '0')
     );
     const isCorrect = accuracy === '100';
 
@@ -316,7 +318,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
 
           <View style={S.scoreSection}>
             <Text style={S.largeText}>
-              {type === 'alphabet' ? targetText.toUpperCase() : targetText}
+              {/* type === 'alphabet' ? targetText.toUpperCase() : */ targetText}
             </Text>
             <View style={[S.statusBadge, { backgroundColor: isCorrect ? C.success : C.warning }]}>
               <Text style={S.statusText}>

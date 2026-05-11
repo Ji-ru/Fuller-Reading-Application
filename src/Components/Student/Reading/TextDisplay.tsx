@@ -16,7 +16,7 @@ import {
   Alphabet,
   Word,
   isPassage,
-  isAlphabet,
+  // isAlphabet,
   isWords,
 } from '../../../Interfaces/passage';
 import { Miscue } from '../../../Interfaces/miscue';
@@ -69,74 +69,74 @@ const DOTS: Array<{ cx: number; cy: number; r: number }> = [
 ];
 
 // ─── Alphabet sizes ────────────────────────────────────────────────────────────
-const ALPHA_CARD_WIDTH = 300;
-const ALPHA_CARD_HEIGHT = 280;
-const ALPHA_FONT = 160; // same size for both glyphs — baseline stays level
-
-const alphabetCardStyle = StyleSheet.create({
-  card: {
-    width: ALPHA_CARD_WIDTH,
-    height: ALPHA_CARD_HEIGHT,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    borderWidth: 4,
-    borderColor: '#008443',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // shadow
-    elevation: 8,
-    shadowColor: '#008443',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.20,
-    shadowRadius: 10,
-    marginTop: 30,
-    marginBottom: 24,
-    alignSelf: 'center',
-  },
-  letterRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline', // keeps both glyphs on the same text baseline
-    justifyContent: 'center',
-    gap: 8,
-  },
-  upper: {
-    fontSize: ALPHA_FONT,
-    fontFamily: 'Andika-Bold',
-    color: '#008443',
-  },
-  separator: {
-    fontSize: ALPHA_FONT,
-    fontFamily: 'Andika-Bold',
-    color: '#C8E6C9',
-  },
-  lower: {
-    fontSize: ALPHA_FONT,
-    fontFamily: 'Andika-Bold',
-    color: '#2ca96a',
-  },
-});
-
-interface AlphabetCharacterProps {
-  letter: string;
-}
-
-const AlphabetCharacter: React.FC<AlphabetCharacterProps> = ({ letter }) => {
-  return (
-    <View style={alphabetCardStyle.card}>
-      <View style={alphabetCardStyle.letterRow}>
-        <Text style={alphabetCardStyle.upper} allowFontScaling={false}>
-          {letter.toUpperCase()}
-        </Text>
-        <Text style={alphabetCardStyle.separator} allowFontScaling={false}>
-          {''}
-        </Text>
-        <Text style={alphabetCardStyle.lower} allowFontScaling={false}>
-          {letter.toLowerCase()}
-        </Text>
-      </View>
-    </View>
-  );
-};
+// const ALPHA_CARD_WIDTH = 300;
+// const ALPHA_CARD_HEIGHT = 280;
+// const ALPHA_FONT = 160; // same size for both glyphs — baseline stays level
+//
+// const alphabetCardStyle = StyleSheet.create({
+//   card: {
+//     width: ALPHA_CARD_WIDTH,
+//     height: ALPHA_CARD_HEIGHT,
+//     backgroundColor: '#FFFFFF',
+//     borderRadius: 28,
+//     borderWidth: 4,
+//     borderColor: '#008443',
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     // shadow
+//     elevation: 8,
+//     shadowColor: '#008443',
+//     shadowOffset: { width: 0, height: 4 },
+//     shadowOpacity: 0.20,
+//     shadowRadius: 10,
+//     marginTop: 30,
+//     marginBottom: 24,
+//     alignSelf: 'center',
+//   },
+//   letterRow: {
+//     flexDirection: 'row',
+//     alignItems: 'baseline', // keeps both glyphs on the same text baseline
+//     justifyContent: 'center',
+//     gap: 8,
+//   },
+//   upper: {
+//     fontSize: ALPHA_FONT,
+//     fontFamily: 'Andika-Bold',
+//     color: '#008443',
+//   },
+//   separator: {
+//     fontSize: ALPHA_FONT,
+//     fontFamily: 'Andika-Bold',
+//     color: '#C8E6C9',
+//   },
+//   lower: {
+//     fontSize: ALPHA_FONT,
+//     fontFamily: 'Andika-Bold',
+//     color: '#2ca96a',
+//   },
+// });
+//
+// interface AlphabetCharacterProps {
+//   letter: string;
+// }
+//
+// const AlphabetCharacter: React.FC<AlphabetCharacterProps> = ({ letter }) => {
+//   return (
+//     <View style={alphabetCardStyle.card}>
+//       <View style={alphabetCardStyle.letterRow}>
+//         <Text style={alphabetCardStyle.upper} allowFontScaling={false}>
+//           {letter.toUpperCase()}
+//         </Text>
+//         <Text style={alphabetCardStyle.separator} allowFontScaling={false}>
+//           {''}
+//         </Text>
+//         <Text style={alphabetCardStyle.lower} allowFontScaling={false}>
+//           {letter.toLowerCase()}
+//         </Text>
+//       </View>
+//     </View>
+//   );
+// };
 
 
 interface WordCharacterProps {
@@ -408,33 +408,33 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   };
 
   // ── ALPHABET ────────────────────────────────────────────────────────────────
-  if (isAlphabet(material)) {
-    // After recording: swap the character illustration for the result card
-    if (!isRecording && isReadingCompleted) {
-      return (
-        <View style={readingStyles.scene}>
-          <StarRatingDisplay accuracy={accuracy} visible={isReadingCompleted} />
-          <FeedbackResult
-            targetText={material.letter}
-            spokenText={spokenText}
-            miscues={miscues}
-            onTryAgain={onTryAgain ?? (() => { })}
-            onNextItem={onNextItem}
-            hasNextItem={hasNextItem}
-            type="alphabet"
-            accuracy={accuracyString}
-            feedback={feedback}
-            isTextCorrect={isTextCorrect}
-          />
-        </View>
-      );
-    }
-    return (
-      <View style={readingStyles.scene}>
-        <AlphabetCharacter letter={material.letter} />
-      </View>
-    );
-  }
+  // if (isAlphabet(material)) {
+  //   // After recording: swap the character illustration for the result card
+  //   if (!isRecording && isReadingCompleted) {
+  //     return (
+  //       <View style={readingStyles.scene}>
+  //         <StarRatingDisplay accuracy={accuracy} visible={isReadingCompleted} />
+  //         <FeedbackResult
+  //           targetText={material.letter}
+  //           spokenText={spokenText}
+  //           miscues={miscues}
+  //           onTryAgain={onTryAgain ?? (() => { })}
+  //           onNextItem={onNextItem}
+  //           hasNextItem={hasNextItem}
+  //           type="alphabet"
+  //           accuracy={accuracyString}
+  //           feedback={feedback}
+  //           isTextCorrect={isTextCorrect}
+  //         />
+  //       </View>
+  //     );
+  //   }
+  //   return (
+  //     <View style={readingStyles.scene}>
+  //       <AlphabetCharacter letter={material.letter} />
+  //     </View>
+  //   );
+  // }
 
   // ── WORD — Redesigned ──────────────────────────────────────────────────────
   if (type === 'word' && isWords(material)) {
@@ -497,7 +497,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         </Svg>
       )}
 
-      {!isReadingCompleted ? (
+      {!isReadingCompleted && isPassage(material) ? (
         <Image style={readingStyles.readingImage} source={getPassageImage(material.image)} />
       ) : null}
 

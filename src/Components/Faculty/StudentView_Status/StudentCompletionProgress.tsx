@@ -23,7 +23,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useStudentCompletedAlphabet, useStudentCompletedWord } from '../../../Hooks/Student/use_StudentCompletedReading';
+import { /* useStudentCompletedAlphabet, */ useStudentCompletedWord } from '../../../Hooks/Student/use_StudentCompletedReading';
 import readingMaterialData from '../../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 import { sw, sh, sf } from '../../../Utils/responsive';
 import { Icon } from '../../GlobalUse/Icon';
@@ -85,13 +85,13 @@ interface ChapterProgress {
 }
 
 // ─── Data extraction ──────────────────────────────────────────────────────────
-const ALPHABET_TOTAL = 26;
+// const ALPHABET_TOTAL = 26;
 const WORD_CHAPTERS: ChapterDef[] =
   (readingMaterialData as any).Words?.[0]?.chapters ?? [];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const StudentCompletionProgress: React.FC<Props> = ({ studentId }) => {
-  const completedAlphabets = useStudentCompletedAlphabet(studentId);
+  // const completedAlphabets = useStudentCompletedAlphabet(studentId);
   const completedWords = useStudentCompletedWord(studentId);
 
   // Loading state: hooks return empty arrays while loading, but we can
@@ -99,14 +99,14 @@ const StudentCompletionProgress: React.FC<Props> = ({ studentId }) => {
   const isReady = true; // hooks provide real-time data with initial empty arrays
 
   // ── Alphabet progress ─────────────────────────────────────────────────────
-  const alphabetProgress = useMemo(() => {
-    const completedSet = new Set(
-      completedAlphabets.map(a => a.letter?.toUpperCase()),
-    );
-    const completed = completedSet.size;
-    const pct = ALPHABET_TOTAL > 0 ? (completed / ALPHABET_TOTAL) * 100 : 0;
-    return { completed, total: ALPHABET_TOTAL, pct };
-  }, [completedAlphabets]);
+  // const alphabetProgress = useMemo(() => {
+  //   const completedSet = new Set(
+  //     completedAlphabets.map(a => a.letter?.toUpperCase()),
+  //   );
+  //   const completed = completedSet.size;
+  //   const pct = ALPHABET_TOTAL > 0 ? (completed / ALPHABET_TOTAL) * 100 : 0;
+  //   return { completed, total: ALPHABET_TOTAL, pct };
+  // }, [completedAlphabets]);
 
   // ── Word progress — O(1) lookup set ───────────────────────────────────────
   const completedWordSet = useMemo(() => {
@@ -180,7 +180,7 @@ const StudentCompletionProgress: React.FC<Props> = ({ studentId }) => {
       {/* ════════════════════════════════════════════════════════════════════
           SECTION 1: ALPHABET COMPLETION
       ════════════════════════════════════════════════════════════════════ */}
-      <View style={S.sectionCard}>
+      {/* <View style={S.sectionCard}>
         <View style={S.sectionHeader}>
           <Icon name="alphabet" size={sf(24)} color={C.primary} filled />
           <View style={{ flex: 1 }}>
@@ -196,7 +196,7 @@ const StudentCompletionProgress: React.FC<Props> = ({ studentId }) => {
           </View>
         </View>
 
-        {/* Progress bar */}
+        Progress bar
         <View style={S.progressTrack}>
           <View
             style={[
@@ -209,7 +209,7 @@ const StudentCompletionProgress: React.FC<Props> = ({ studentId }) => {
           />
         </View>
 
-        {/* Letter grid */}
+        Letter grid
         <View style={S.letterGrid}>
           {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
             const done = completedAlphabets.some(
@@ -235,7 +235,7 @@ const StudentCompletionProgress: React.FC<Props> = ({ studentId }) => {
             );
           })}
         </View>
-      </View>
+      </View> */}
 
       {/* ════════════════════════════════════════════════════════════════════
           SECTION 2: WORD COMPLETION BY CHAPTER

@@ -14,11 +14,11 @@ import {
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 import selection from '../../UI_Designs/PassageSelectionStyles';
-import { Alphabet, Passage, Word } from '../../Interfaces/passage';
+import { /* Alphabet, */ Passage, Word } from '../../Interfaces/passage';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-import { useStudentCompletedAlphabet, useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
+import { /* useStudentCompletedAlphabet, */ useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
 import { getAuth } from '@react-native-firebase/auth';
 import { WordContext } from '../../Interfaces/dataInterfaces';
 import Svg, { Text as SvgText } from 'react-native-svg';
@@ -208,7 +208,7 @@ function FadeSlideIn({
   );
 }
 
-const alphabetData = readingMaterialData?.Alphabet || [];
+// const alphabetData = readingMaterialData?.Alphabet || [];
 const passages = readingMaterialData?.Passages || [];
 
 // New structure: Words[0].chapters[]
@@ -248,15 +248,15 @@ export const READING_COLORS = [
 export default function PageSelectionScreen() {
   const { handleLogout, handleBackStep, handleReadingNext, handleNextStep } = useNavigationHelper();
 
-  const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
-  const isAlphabetCompleted = (letter: string) => completedAlphabets.some(a => a.letter === letter);
+  // const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
+  // const isAlphabetCompleted = (letter: string) => completedAlphabets.some(a => a.letter === letter);
 
   const completedWords = useStudentCompletedWord(currentStudentId);
   const normalize = (value: string) => value.trim().toLowerCase();
   const isWordCompleted = (word: string) => completedWords.some(a => normalize(a.word) === normalize(word));
 
   const [menuVisible, setMenuVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<'alphabet' | 'passage' | 'word'>('alphabet');
+  const [activeTab, setActiveTab] = useState<'passage' | 'word'>('word');
   const [logoutVisible, setLogoutVisible] = useState(false);
 
   // New state for chapter selection
@@ -280,9 +280,9 @@ export default function PageSelectionScreen() {
     setMenuVisible(!menuVisible);
   };
 
-  const handleAlphabetSelect = (alphabet: Alphabet) => {
-    handleReadingNext(alphabet, 'alphabet');
-  };
+  // const handleAlphabetSelect = (alphabet: Alphabet) => {
+  //   handleReadingNext(alphabet, 'alphabet');
+  // };
 
   // Updated word selection – find the lesson containing the word
   const handleWordSelect = (wordText: string, lesson: any, chapter: any) => {
@@ -322,51 +322,51 @@ export default function PageSelectionScreen() {
 
   // Color palette is defined at module level as READING_COLORS (reusable)
 
-  const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => {
-    const completed = isAlphabetCompleted(item.letter);
-    // Completed letters keep their vibrant accent color; untried letters are muted gray.
-    const bgColor = completed
-      ? READING_COLORS[index % READING_COLORS.length]
-      : '#C7CCD1';
+  // const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => {
+  //   const completed = isAlphabetCompleted(item.letter);
+  //   // Completed letters keep their vibrant accent color; untried letters are muted gray.
+  //   const bgColor = completed
+  //     ? READING_COLORS[index % READING_COLORS.length]
+  //     : '#C7CCD1';
 
-    return (
-      <FadeSlideIn delay={60 + index * 25} style={{ width: '23%' }}>
-        <TouchableOpacity
-          style={[selection.alphabetItem, { backgroundColor: bgColor, width: '100%' }]}
-          onPress={() => handleAlphabetSelect(item)}
-          activeOpacity={0.78}
-        >
-          {/* Gloss dot */}
-          <View style={selection.alphabetHighlightDot} />
+  //   return (
+  //     <FadeSlideIn delay={60 + index * 25} style={{ width: '23%' }}>
+  //       <TouchableOpacity
+  //         style={[selection.alphabetItem, { backgroundColor: bgColor, width: '100%' }]}
+  //         onPress={() => handleAlphabetSelect(item)}
+  //         activeOpacity={0.78}
+  //       >
+  //         {/* Gloss dot */}
+  //         <View style={selection.alphabetHighlightDot} />
   
-          {/* Uppercase + lowercase side by side, baseline-aligned */}
-          <View style={selection.alphabetContainer}>
-            <Text
-              style={selection.alphabetLetter}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {item.letter.toUpperCase()}
-            </Text>
-            <Text
-              style={selection.alphabetLetterSmall}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {item.letter.toLowerCase()}
-            </Text>
-          </View>
+  //         {/* Uppercase + lowercase side by side, baseline-aligned */}
+  //         <View style={selection.alphabetContainer}>
+  //           <Text
+  //             style={selection.alphabetLetter}
+  //             numberOfLines={1}
+  //             adjustsFontSizeToFit
+  //           >
+  //             {item.letter.toUpperCase()}
+  //           </Text>
+  //           <Text
+  //             style={selection.alphabetLetterSmall}
+  //             numberOfLines={1}
+  //             adjustsFontSizeToFit
+  //           >
+  //             {item.letter.toLowerCase()}
+  //           </Text>
+  //         </View>
   
-          {/* Completed badge — top-right */}
-          {completed && (
-            <View style={selection.completedBadge}>
-              <Text style={selection.completedCheckmark}>✓</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </FadeSlideIn>
-    );
-  };
+  //         {/* Completed badge — top-right */}
+  //         {completed && (
+  //           <View style={selection.completedBadge}>
+  //             <Text style={selection.completedCheckmark}>✓</Text>
+  //           </View>
+  //         )}
+  //       </TouchableOpacity>
+  //     </FadeSlideIn>
+  //   );
+  // };
 
   // --- CHAPTER CARD (Step 1) – reuses letterCard styles ---
   const renderChapterCard = ({ item, index }: { item: any; index: number }) => {
@@ -583,7 +583,7 @@ export default function PageSelectionScreen() {
 
         {/* Tabs – unchanged */}
         <View style={selection.tabContainer}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[selection.tab, activeTab === 'alphabet' && selection.activeTab]}
             onPress={() => {
               setActiveTab('alphabet');
@@ -593,7 +593,7 @@ export default function PageSelectionScreen() {
             <Text style={[selection.tabText, activeTab === 'alphabet' && selection.activeTabText]}>
               Alphabet
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity
             style={[selection.tab, activeTab === 'word' && selection.activeTab]}
@@ -622,7 +622,7 @@ export default function PageSelectionScreen() {
 
         {/* Content */}
         <View style={selection.contentContainer}>
-          {activeTab === 'alphabet' && (
+          {/* {activeTab === 'alphabet' && (
             <>
               <FadeSlideIn delay={40}>
                 <Text style={selection.sublabel}>Select a letter to read:</Text>
@@ -637,7 +637,7 @@ export default function PageSelectionScreen() {
                 contentContainerStyle={selection.alphabetListContainer}
               />
             </>
-          )}
+          )} */}
 
           {/* WORDS TAB – new chapter/lesson navigation */}
           {activeTab === 'word' && (

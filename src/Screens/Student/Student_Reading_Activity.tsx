@@ -20,8 +20,8 @@ import { RecordingControls } from '../../Components/Student/Reading/RecordingCon
 import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
 import { Miscue } from '../../Interfaces/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
-import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
-import { makeTodayKey } from '../../Utilities/currentDateUtils';
+import { /* isAlphabet, */ isPassage, isWords } from '../../Interfaces/passage';
+// import { makeTodayKey } from '../../Utilities/currentDateUtils';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
 import { useGlobalMusic } from '../../Components/GlobalUse/Background/GlobalMusicContext';
 import { BubbleBackgroundUpper } from '../../Components/GlobalUse/BubbleBackground';
@@ -71,12 +71,12 @@ export default function ReadingActivityScreenPage() {
   const [hasCheckedExisting, setHasCheckedExisting] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
 
-  // State for storing Alphabet Sessions 
-  const alphabetSessionIdRef = useRef<string | null>(null);
-  const attemptedSetRef = useRef(new Set<string>());
-  const correctSetRef = useRef(new Set<string>());
-  const incorrectSetRef = useRef(new Set<string>());
-  const sessionDateKeyRef = useRef<string | null>(null);
+  // State for storing Alphabet Sessions
+  // const alphabetSessionIdRef = useRef<string | null>(null);
+  // const attemptedSetRef = useRef(new Set<string>());
+  // const correctSetRef = useRef(new Set<string>());
+  // const incorrectSetRef = useRef(new Set<string>());
+  // const sessionDateKeyRef = useRef<string | null>(null);
 
   // State for storing Word Sessions 
   const wordSessionIdRef = useRef<string | null>(null);
@@ -104,11 +104,11 @@ export default function ReadingActivityScreenPage() {
     // This return function acts as "componentWillUnmount"
     return () => {
       // Finalize Alphabet Session if one was started
-      if (type === 'alphabet' && alphabetSessionIdRef.current) {
-        MiscueReportController.finalizeAlphabetSession(
-          alphabetSessionIdRef.current
-        ).catch((err) => console.error('Failed to finalize alphabet session', err));
-      }
+      // if (type === 'alphabet' && alphabetSessionIdRef.current) {
+      //   MiscueReportController.finalizeAlphabetSession(
+      //     alphabetSessionIdRef.current
+      //   ).catch((err) => console.error('Failed to finalize alphabet session', err));
+      // }
       // Finalize Word Session if one was started
       if (type === 'word' && wordSessionIdRef.current) {
         MiscueReportController.finalizeWordSession(
@@ -159,13 +159,14 @@ export default function ReadingActivityScreenPage() {
   }, [readingMaterial, type, wordContext]);
 
   const getNextReadingItem = useCallback(() => {
-    if (type === 'alphabet' && isAlphabet(readingMaterial)) {
-      const alphaList = readingMaterialData.Alphabet;
-      const index = alphaList.findIndex(a => a.letter === readingMaterial.letter);
-      if (index >= 0 && index < alphaList.length - 1) {
-        return { type: 'alphabet', readingMaterial: alphaList[index + 1], wordContext: undefined };
-      }
-    } else if (type === 'passage' && isPassage(readingMaterial)) {
+    // if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+    //   const alphaList = readingMaterialData.Alphabet;
+    //   const index = alphaList.findIndex(a => a.letter === readingMaterial.letter);
+    //   if (index >= 0 && index < alphaList.length - 1) {
+    //     return { type: 'alphabet', readingMaterial: alphaList[index + 1], wordContext: undefined };
+    //   }
+    // } else
+    if (type === 'passage' && isPassage(readingMaterial)) {
       const passList = readingMaterialData.Passages;
       const index = passList.findIndex(p => p.title === readingMaterial.title);
       if (index >= 0 && index < passList.length - 1) {
@@ -190,13 +191,14 @@ export default function ReadingActivityScreenPage() {
   const [prevItem, setPrevItem] = useState<{ type: any; readingMaterial: any; wordContext: any } | null>(null);
 
   const getPreviousReadingItem = useCallback(() => {
-    if (type === 'alphabet' && isAlphabet(readingMaterial)) {
-      const alphaList = readingMaterialData.Alphabet;
-      const index = alphaList.findIndex(a => a.letter === readingMaterial.letter);
-      if (index > 0) {
-        return { type: 'alphabet', readingMaterial: alphaList[index - 1], wordContext: undefined };
-      }
-    } else if (type === 'passage' && isPassage(readingMaterial)) {
+    // if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+    //   const alphaList = readingMaterialData.Alphabet;
+    //   const index = alphaList.findIndex(a => a.letter === readingMaterial.letter);
+    //   if (index > 0) {
+    //     return { type: 'alphabet', readingMaterial: alphaList[index - 1], wordContext: undefined };
+    //   }
+    // } else
+    if (type === 'passage' && isPassage(readingMaterial)) {
       const passList = readingMaterialData.Passages;
       const index = passList.findIndex(p => p.title === readingMaterial.title);
       if (index > 0) {
@@ -260,32 +262,32 @@ export default function ReadingActivityScreenPage() {
     }
   }, [prevItem, handleReplaceStep, handleTryAgain]);
 
-  const ensureAlphabetDailySession = useCallback(async () => {
-    if (type !== 'alphabet') return null;
-
-    const todayKey = makeTodayKey();
-
-    // clear if date rollover (your existing logic)
-    if (sessionDateKeyRef.current && sessionDateKeyRef.current !== todayKey) {
-      attemptedSetRef.current.clear();
-      correctSetRef.current.clear();
-      incorrectSetRef.current.clear();
-    }
-
-    sessionDateKeyRef.current = todayKey;
-
-    const sessionId = await MiscueReportController.startAlphabetSession();
-
-    // NEW: if the doc id changed, reset in-memory sets
-    if (alphabetSessionIdRef.current && alphabetSessionIdRef.current !== sessionId) {
-      attemptedSetRef.current.clear();
-      correctSetRef.current.clear();
-      incorrectSetRef.current.clear();
-    }
-
-    alphabetSessionIdRef.current = sessionId;
-    return sessionId;
-  }, [type]);
+  // const ensureAlphabetDailySession = useCallback(async () => {
+  //   if (type !== 'alphabet') return null;
+  //
+  //   const todayKey = makeTodayKey();
+  //
+  //   // clear if date rollover (your existing logic)
+  //   if (sessionDateKeyRef.current && sessionDateKeyRef.current !== todayKey) {
+  //     attemptedSetRef.current.clear();
+  //     correctSetRef.current.clear();
+  //     incorrectSetRef.current.clear();
+  //   }
+  //
+  //   sessionDateKeyRef.current = todayKey;
+  //
+  //   const sessionId = await MiscueReportController.startAlphabetSession();
+  //
+  //   // NEW: if the doc id changed, reset in-memory sets
+  //   if (alphabetSessionIdRef.current && alphabetSessionIdRef.current !== sessionId) {
+  //     attemptedSetRef.current.clear();
+  //     correctSetRef.current.clear();
+  //     incorrectSetRef.current.clear();
+  //   }
+  //
+  //   alphabetSessionIdRef.current = sessionId;
+  //   return sessionId;
+  // }, [type]);
 
   /**
    * Returns the reading target text based on the type (alphabet, passage, or word).
@@ -294,9 +296,10 @@ export default function ReadingActivityScreenPage() {
    * - Word: returns the first word in contrasts
    */
   const getTargetText = useCallback((): string => {
-    if (type === 'alphabet' && isAlphabet(readingMaterial)) {
-      return readingMaterial.letter;
-    } else if (type === 'passage' && isPassage(readingMaterial)) {
+    // if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+    //   return readingMaterial.letter;
+    // } else
+    if (type === 'passage' && isPassage(readingMaterial)) {
       return readingMaterial.text;
     } else if (type === 'word' && isWords(readingMaterial)) {
       // return readingMaterial.contrasts.flatMap(contrast => contrast.words).join(' ');
@@ -312,9 +315,10 @@ export default function ReadingActivityScreenPage() {
    * @returns {string} Report title
    */
   const getTitle = useCallback((): string => {
-    if (type === 'alphabet' && isAlphabet(readingMaterial)) {
-      return `Alphabet - ${readingMaterial.letter}`;
-    } else if (type === 'passage' && isPassage(readingMaterial)) {
+    // if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+    //   return `Alphabet - ${readingMaterial.letter}`;
+    // } else
+    if (type === 'passage' && isPassage(readingMaterial)) {
       return readingMaterial.title;
     } else if (type === 'word' && isWords(readingMaterial)) {
       return `Words for ${readingMaterial.letter}`;
@@ -475,9 +479,9 @@ export default function ReadingActivityScreenPage() {
       setHasStoredReport(false); // Reset for new attempts
       setHasStoredCorrectAttempt(false); // Reset storage flag for new attempt
 
-      if (type === 'alphabet') {
-        await ensureAlphabetDailySession(); // prevents race
-      }
+      // if (type === 'alphabet') {
+      //   await ensureAlphabetDailySession(); // prevents race
+      // }
       if (type === 'word') {
         if (!wordSessionIdRef.current) {
           wordSessionIdRef.current = await MiscueReportController.startWordSession();
@@ -490,7 +494,7 @@ export default function ReadingActivityScreenPage() {
 
       await startRecording(targetText);
     }
-  }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText, type, ensureAlphabetDailySession, pauseMusic]);
+  }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText, type, /* ensureAlphabetDailySession, */ pauseMusic]);
 
   /**
    * Calculates the Words Per Minute (WPM) given transcribed speech and duration in seconds.
@@ -577,17 +581,18 @@ export default function ReadingActivityScreenPage() {
         const user = auth.currentUser;
         if (!user) return;
 
-        if (type === 'alphabet' && isAlphabet(readingMaterial)) {
-          const existing =
-            await MiscueReportController.hasAlphabetBeenCompleted(
-              user.uid,
-              readingMaterial.letter,
-            );
-          if (existing) {
-            console.log('Alphabet already completed:', readingMaterial.letter);
-            setAlreadyCompleted(true);
-          }
-        } else if (type === 'word' && isWords(readingMaterial)) {
+        // if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+        //   const existing =
+        //     await MiscueReportController.hasAlphabetBeenCompleted(
+        //       user.uid,
+        //       readingMaterial.letter,
+        //     );
+        //   if (existing) {
+        //     console.log('Alphabet already completed:', readingMaterial.letter);
+        //     setAlreadyCompleted(true);
+        //   }
+        // } else
+        if (type === 'word' && isWords(readingMaterial)) {
           const existing = await MiscueReportController.hasWordBeenCompleted(
             user.uid,
             wordContext?.chapterId || 0,
@@ -626,78 +631,78 @@ export default function ReadingActivityScreenPage() {
     let isWordAlphabetCorrect = false; // Track correct status locally
     console.log("This is transcribed alphabet: " + transcription);
     // ALPHABET READING ANALYZATION
-    if (type === 'alphabet' && isAlphabet(readingMaterial)) {
-      const sessionId = await ensureAlphabetDailySession();
-      const result = MiscueAnalysisService.checkAlphabetPhonemeAccuracy(
-        readingMaterial.letter,
-        transcription,
-      );
-
-      accuracyNum = convertAccuracyStringToNumber(result.accuracy);
-      isWordAlphabetCorrect = result.isCorrect;
-
-      setIsCorrectAttempt(result.isCorrect);
-      setAccuracyString(result.accuracy);
-      setFeedback(result.feedback);
-      setMiscues([]);
-
-      // Store correct alphabet attempt ONLY if correct AND not already stored
-      if (result.isCorrect && !hasStoredCorrectAttempt && duration > 0) {
-        try {
-          await MiscueReportController.storeAlphabetCorrectAttempt(
-            readingMaterial.letter,
-          );
-          setHasStoredCorrectAttempt(true);
-          setAlreadyCompleted(true); // Update local state
-          console.log('Alphabet stored in database');
-        } catch (error) {
-          console.error('Failed to store alphabet attempt:', error);
-        }
-      }
-
-      // Checks the session, then record the reading attempt
-      if (sessionId && duration > 0) {
-        const letter = readingMaterial.letter.toUpperCase();
-        const attempted = attemptedSetRef.current;
-        const correct = correctSetRef.current;
-        const incorrect = incorrectSetRef.current;
-
-        const firstAttempt = !attempted.has(letter);
-        if (firstAttempt) attempted.add(letter);
-
-        if (result.isCorrect) {
-          const firstCorrect = !correct.has(letter);
-          const wasIncorrect = incorrect.has(letter);
-
-          correct.add(letter);
-          incorrect.delete(letter);
-
-          await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
-            incAttempted: firstAttempt,
-            incCorrect: firstCorrect,
-            addCorrect: firstCorrect,
-            removeIncorrect: wasIncorrect,
-          });
-        } else {
-          if (!correct.has(letter)) {
-            const firstIncorrect = !incorrect.has(letter);
-            incorrect.add(letter);
-
-            await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
-              incAttempted: firstAttempt,
-              addIncorrect: firstIncorrect,
-            });
-          } else if (firstAttempt) {
-            await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
-              incAttempted: true,
-            });
-          }
-        }
-      }
-    }
+    // if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+    //   const sessionId = await ensureAlphabetDailySession();
+    //   const result = MiscueAnalysisService.checkAlphabetPhonemeAccuracy(
+    //     readingMaterial.letter,
+    //     transcription,
+    //   );
+    //
+    //   accuracyNum = convertAccuracyStringToNumber(result.accuracy);
+    //   isWordAlphabetCorrect = result.isCorrect;
+    //
+    //   setIsCorrectAttempt(result.isCorrect);
+    //   setAccuracyString(result.accuracy);
+    //   setFeedback(result.feedback);
+    //   setMiscues([]);
+    //
+    //   // Store correct alphabet attempt ONLY if correct AND not already stored
+    //   if (result.isCorrect && !hasStoredCorrectAttempt && duration > 0) {
+    //     try {
+    //       await MiscueReportController.storeAlphabetCorrectAttempt(
+    //         readingMaterial.letter,
+    //       );
+    //       setHasStoredCorrectAttempt(true);
+    //       setAlreadyCompleted(true); // Update local state
+    //       console.log('Alphabet stored in database');
+    //     } catch (error) {
+    //       console.error('Failed to store alphabet attempt:', error);
+    //     }
+    //   }
+    //
+    //   // Checks the session, then record the reading attempt
+    //   if (sessionId && duration > 0) {
+    //     const letter = readingMaterial.letter.toUpperCase();
+    //     const attempted = attemptedSetRef.current;
+    //     const correct = correctSetRef.current;
+    //     const incorrect = incorrectSetRef.current;
+    //
+    //     const firstAttempt = !attempted.has(letter);
+    //     if (firstAttempt) attempted.add(letter);
+    //
+    //     if (result.isCorrect) {
+    //       const firstCorrect = !correct.has(letter);
+    //       const wasIncorrect = incorrect.has(letter);
+    //
+    //       correct.add(letter);
+    //       incorrect.delete(letter);
+    //
+    //       await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
+    //         incAttempted: firstAttempt,
+    //         incCorrect: firstCorrect,
+    //         addCorrect: firstCorrect,
+    //         removeIncorrect: wasIncorrect,
+    //       });
+    //     } else {
+    //       if (!correct.has(letter)) {
+    //         const firstIncorrect = !incorrect.has(letter);
+    //         incorrect.add(letter);
+    //
+    //         await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
+    //           incAttempted: firstAttempt,
+    //           addIncorrect: firstIncorrect,
+    //         });
+    //       } else if (firstAttempt) {
+    //         await MiscueReportController.recordAlphabetAttempt(sessionId, letter, {
+    //           incAttempted: true,
+    //         });
+    //       }
+    //     }
+    //   }
+    // }
 
     // PASSAGE READING ANALYZATION AND DATABASE STORING
-    else if (type === 'passage' && isPassage(readingMaterial)) {
+    /* else */ if (type === 'passage' && isPassage(readingMaterial)) {
       // Passage miscue detection
       const detectedMiscues = MiscueAnalysisService.detectMiscues(
         readingMaterial.text,
@@ -850,7 +855,7 @@ export default function ReadingActivityScreenPage() {
       setTimeout(() => {
         displayFeedbackModal(
           accuracyNum,
-          type === 'alphabet' || type === 'word',
+          /* type === 'alphabet' || */ type === 'word',
           isWordAlphabetCorrect,
         );
       }, 500);
@@ -952,7 +957,7 @@ export default function ReadingActivityScreenPage() {
             <View style={readingStyles.insideContainer}>
 
               {/* Bubble background — visible after reading is completed */}
-              {(isAlphabet(readingMaterial) || isWords(readingMaterial)) && <BubbleBackgroundUpper />}
+              {(/* isAlphabet(readingMaterial) || */ isWords(readingMaterial)) && <BubbleBackgroundUpper />}
 
               {/* Header */}
               <ReadingHeader

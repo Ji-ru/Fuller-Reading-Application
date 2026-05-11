@@ -11,8 +11,7 @@ import RNPrint from 'react-native-print';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
 
-import { useStudentCompletedAlphabet, useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
-import { useStudentAlphabetMasteryTrends } from '../../Hooks/Student/useStudentAlphabetMasteryTrends';
+import { useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
 import { useStudentWordMastery } from '../../Hooks/Student/useStudentWordMastery';
 import {
   useStudentAccuracyTrends,
@@ -63,7 +62,7 @@ interface ExportPdfButtonProps {
   historyAnchor?: Date;
   historySelectedDay?: number | null;
   historySelectedWeekOfMonth?: number | null;
-  /** Analytics + Sessions tab filter (Sessions reuses this per user choice). */
+  /** Analytics + Word Mastery tab filter (Word Mastery reuses this per user choice). */
   perfTimeRange?: TimeRange;
   perfAnchor?: Date;
   perfSelectedDay?: number | null;
@@ -364,16 +363,11 @@ function buildAccuracyBarsSvg(items: { label: string; value: number | null }[]):
 // Per-section HTML builders
 // ═════════════════════════════════════════════════════════════════════════════
 
-interface AlphabetCompletion { letter: string; }
 interface WordCompletion { word: string; }
 
 function buildProgressSectionHtml(
-  completedAlphabets: AlphabetCompletion[],
   completedWords: WordCompletion[],
 ): string {
-  const ALPHABET_TOTAL = 26;
-  const completedSet = new Set(completedAlphabets.map(a => (a as any).letter?.toUpperCase()).filter(Boolean));
-  const alphaPct = (completedSet.size / ALPHABET_TOTAL) * 100;
 
   const WORD_CHAPTERS: any[] = (readingMaterialData as any).Words?.[0]?.chapters ?? [];
   const wordSet = new Set(completedWords.map(w => (w as any).word?.trim().toLowerCase()).filter(Boolean));
@@ -402,14 +396,6 @@ function buildProgressSectionHtml(
 
   const statusColor = (pct: number) =>
     pct >= 100 ? '#2CA96A' : pct >= 50 ? '#F59E0B' : pct > 0 ? '#EF4444' : '#9CA3AF';
-
-  const letterGrid = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
-    const done = completedSet.has(letter);
-    const bg = done ? '#ECFDF5' : '#EEF2FF';
-    const border = done ? '#2CA96A' : '#E5E7EB';
-    const color = done ? '#2CA96A' : '#9CA3AF';
-    return `<div class="letter-cell" style="background:${bg};border-color:${border};color:${color}">${letter}</div>`;
-  }).join('');
 
   const chapterCards = chapters.map(ch => {
     const c = statusColor(ch.pct);
@@ -452,20 +438,6 @@ function buildProgressSectionHtml(
   <div class="prog-card">
     <div class="card-head">
       <div>
-        <div class="card-title">Alphabet Completed</div>
-        <div class="card-sub">${completedSet.size} of ${ALPHABET_TOTAL} letters mastered</div>
-      </div>
-      <span class="pct-pill" style="background:${statusColor(alphaPct)}1f;color:${statusColor(alphaPct)}">${alphaPct.toFixed(0)}%</span>
-    </div>
-    <div class="bar-track">
-      <div class="bar-fill" style="width:${alphaPct.toFixed(1)}%;background:${statusColor(alphaPct)}"></div>
-    </div>
-    <div class="letter-grid">${letterGrid}</div>
-  </div>
-
-  <div class="prog-card">
-    <div class="card-head">
-      <div>
         <div class="card-title">Words Completed</div>
         <div class="card-sub">${wordDone} of ${wordTotal} words mastered</div>
       </div>
@@ -478,68 +450,6 @@ function buildProgressSectionHtml(
   </div>`;
 }
 
-function buildAlphabetMasterySectionHtml(
-  slots: any[],
-  summary: any,
-  rangeLabel: string,
-): string {
-  const items = slots.map(s => ({ label: s.label, value: s.accuracy }));
-  const totalSessions = summary?.totalSessions ?? 0;
-  const avgAccuracy: number | null = summary?.avgAccuracy ?? null;
-
-  const lastWithData = [...slots].reverse().find(s => s.accuracy !== null && s.accuracy !== undefined);
-  const selected = lastWithData ?? slots[slots.length - 1];
-  const selectedAcc: number | null = selected?.accuracy ?? null;
-  const selectedMastered = selected?.correctLetters?.length ?? 0;
-  const selectedAttempted = selected?.attemptedCount ?? 0;
-  const selectedCorrect = selected?.correctCount ?? 0;
-
-  const correctSet = new Set<string>(selected?.correctLetters ?? []);
-  const wrongSet = new Set<string>(selected?.incorrectLetters ?? []);
-  const letterGrid = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(L => {
-    let cls = 'untried', mark = '';
-    if (correctSet.has(L)) { cls = 'correct'; mark = '✓'; }
-    else if (wrongSet.has(L)) { cls = 'wrong'; mark = '✗'; }
-    return `<div class="alpha-tile ${cls}">${L}${mark ? `<span class="alpha-mark">${mark}</span>` : ''}</div>`;
-  }).join('');
-
-  const bars = buildAccuracyBarsSvg(items);
-
-  return `
-  <div class="sub-section">
-    <div class="sub-head">
-      <h3 class="sub-title">Alphabet Mastery</h3>
-      <span class="sub-period">${esc(rangeLabel)}</span>
-    </div>
-
-    <div class="mini-stats">
-      <div class="mini-stat"><div class="mini-val acc">${avgAccuracy !== null ? `${avgAccuracy}%` : '—'}</div><div class="mini-lbl">Avg Accuracy</div></div>
-      <div class="mini-stat"><div class="mini-val blue">${totalSessions}</div><div class="mini-lbl">Sessions</div></div>
-      <div class="mini-stat"><div class="mini-val violet">${selectedAcc !== null ? selectedMastered : '—'}</div><div class="mini-lbl">Mastered (latest)</div></div>
-    </div>
-
-    <div class="chart-box">
-      <div class="chart-label">Accuracy per period</div>
-      ${bars}
-      <div class="legend-row">
-        <span><i class="dot" style="background:#34d399"></i>≥ 85% Excellent</span>
-        <span><i class="dot" style="background:#fbbf24"></i>≥ 60% Good</span>
-        <span><i class="dot" style="background:#f87171"></i>&lt; 60% Needs work</span>
-      </div>
-    </div>
-
-    <div class="chart-box">
-      <div class="chart-label">Latest period — letter status (${esc(selected?.label ?? '—')})</div>
-      <div class="alpha-status-row">
-        <span class="status-chip" style="background:#ECFDF5;color:#10B981">✓ ${correctSet.size}</span>
-        <span class="status-chip" style="background:#FEE2E2;color:#EF4444">✗ ${wrongSet.size}</span>
-        <span class="status-chip" style="background:#F3F4F6;color:#9CA3AF">— ${Math.max(26 - selectedAttempted, 0)}</span>
-        <span class="status-chip" style="background:#EEF2FF;color:#6B7280">${selectedCorrect}/${selectedAttempted} attempted</span>
-      </div>
-      <div class="alpha-grid">${letterGrid}</div>
-    </div>
-  </div>`;
-}
 
 function buildWordMasterySectionHtml(
   chapters: any[],
@@ -1025,12 +935,7 @@ interface BuildOpts {
   gradeLevel?: number;
 
   // Data inputs
-  completedAlphabets: AlphabetCompletion[];
   completedWords: WordCompletion[];
-
-  alphaSlots: any[];
-  alphaSummary: any;
-  alphaRangeLabel: string;
 
   wordChapters: any[];
   wordSlots: any[];
@@ -1052,8 +957,7 @@ interface BuildOpts {
 }
 
 function buildPdfHtml(opts: BuildOpts): string {
-  const progressHtml = buildProgressSectionHtml(opts.completedAlphabets, opts.completedWords);
-  const alphabetHtml = buildAlphabetMasterySectionHtml(opts.alphaSlots, opts.alphaSummary, opts.alphaRangeLabel);
+  const progressHtml = buildProgressSectionHtml(opts.completedWords);
   const wordHtml = buildWordMasterySectionHtml(opts.wordChapters, opts.wordSlots, opts.wordSummary, opts.wordRangeLabel);
   const accuracyHtml = buildAccuracyTrendsSectionHtml(opts.accuracyChart, opts.gradeLevel);
   const miscueHtml = buildMiscueInsightsSectionHtml(
@@ -1274,25 +1178,6 @@ function buildPdfHtml(opts: BuildOpts): string {
   .bar-track.sm { height: 5px; }
   .bar-fill { height: 100%; border-radius: 5px; }
 
-  /* ── Alphabet letter grid (Progress section) ── */
-  .letter-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
-    margin-top: 6px;
-  }
-  .letter-cell {
-    width: 22px;
-    height: 22px;
-    border-radius: 5px;
-    border: 1px solid;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-  }
 
   /* ── Chapter / lesson rows ── */
   .chapter-card {
@@ -1319,26 +1204,6 @@ function buildPdfHtml(opts: BuildOpts): string {
   .lesson-title { font-size: 11px; color: #1F2937; font-weight: 500; }
   .lesson-frac { font-size: 11px; font-weight: 700; }
 
-  /* ── Alphabet mastery tiles ── */
-  .alpha-status-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-  .status-chip { padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; }
-  .alpha-grid { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
-  .alpha-tile {
-    position: relative;
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
-    border: 1.5px solid;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 800;
-  }
-  .alpha-tile.correct { background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.30); color: #34d399; }
-  .alpha-tile.wrong   { background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.30); color: #f87171; }
-  .alpha-tile.untried { background: rgba(0,0,0,0.03); border-color: #e2e8f0; color: #64748b; }
-  .alpha-mark { position: absolute; bottom: 1px; right: 3px; font-size: 6px; font-weight: 700; }
 
   /* ── Word mastery sub-blocks ── */
   .word-chapter {
@@ -1514,10 +1379,9 @@ function buildPdfHtml(opts: BuildOpts): string {
   ${progressHtml}
 
   <!-- ══════════════════════════════════════════════════════════════════
-       TAB 2 — SESSIONS
+       TAB 2 — WORD MASTERY
   ══════════════════════════════════════════════════════════════════ -->
-  <h2 class="tab-title">🔤 Sessions</h2>
-  ${alphabetHtml}
+  <h2 class="tab-title">📖 Word Mastery</h2>
   ${wordHtml}
 
   <!-- ══════════════════════════════════════════════════════════════════
@@ -1608,15 +1472,12 @@ export default function ExportPdf({
 
   // ── Hooks for each section's data ────────────────────────────────────────
   // Progress (no time filter — curriculum-wide)
-  const completedAlphabets = useStudentCompletedAlphabet(studentId);
   const completedWords = useStudentCompletedWord(studentId);
 
-  // Sessions — uses Analytics filter (per user decision)
-  const sessionsTimeRange: TimeRange = perfTimeRange;
-  const { slots: alphaSlots, summary: alphaSummary } =
-    useStudentAlphabetMasteryTrends(studentId, sessionsTimeRange);
+  // Word Mastery — uses Analytics filter (per user decision)
+  const wordTimeRange: TimeRange = perfTimeRange;
   const { chapters: wordChapters, slots: wordSlots, summary: wordSummary } =
-    useStudentWordMastery(studentId, sessionsTimeRange);
+    useStudentWordMastery(studentId, wordTimeRange);
 
   // Analytics filter resolution — day/week chip overrides bound to explicit dates
   const perfAnchorResolved = perfAnchor ?? new Date();
@@ -1661,7 +1522,7 @@ export default function ExportPdf({
         hour: '2-digit', minute: '2-digit',
       });
 
-      const sessionsRangeLabel = formatPeriodLabel(perfTimeRange, perfAnchorResolved);
+      const wordRangeLabel = formatPeriodLabel(perfTimeRange, perfAnchorResolved);
       const analyticsRangeLabel = perfBounds.start && perfBounds.end
         ? `${perfBounds.start.toLocaleDateString()} – ${perfBounds.end.toLocaleDateString()}`
         : formatPeriodLabel(perfTimeRange, perfAnchorResolved);
@@ -1672,17 +1533,12 @@ export default function ExportPdf({
         role,
         gradeLevel,
 
-        completedAlphabets: completedAlphabets as any,
         completedWords: completedWords as any,
-
-        alphaSlots,
-        alphaSummary,
-        alphaRangeLabel: sessionsRangeLabel,
 
         wordChapters,
         wordSlots,
         wordSummary,
-        wordRangeLabel: sessionsRangeLabel,
+        wordRangeLabel,
 
         accuracyChart,
         miscueData,
