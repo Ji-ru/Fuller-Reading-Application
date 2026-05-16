@@ -1,0 +1,1 @@
+APP_ARGS=--project-dir D:\CAPS\Fuller-Reading-Application\android\.. 
