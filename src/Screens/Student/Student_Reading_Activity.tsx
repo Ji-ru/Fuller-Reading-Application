@@ -399,29 +399,37 @@ export default function ReadingActivityScreenPage() {
         console.error('Fallback analysis error:', e);
       }
       setIsReadingCompleted(true);
-    } finally {
-      setIsTranscribing(false);
-    }
-  }, [getSimulatedResponse, targetText]);
+  const handleRetry = () => {
+    setIsReadingCompleted(false);
+    setIsCorrectAttempt(false);
+    setAccuracyString('0%');
+    setMiscues([]);
+    setFeedback('');
+    resetAll();
+  };
 
-  const handleRecordToggle = useCallback(async () => {
+  const handleRecordToggle = async () => {
     if (isRecording) {
+      setIsTranscribing(true);
+      const audioFile = await stopRecording();
+      const startTime = Date.now();
       try {
-        const audioFile = await stopRecording();
-        const finalDuration = Math.max(1, recordTime);
-        setRecordingDuration(finalDuration);
-        await handleAudioProcessing(audioFile, finalDuration);
+        const transcription = await transcribeAudioAPI(audioFile);
+        const duration = (Date.now() - startTime) / 1000;
+        await analyzeReading(transcription, duration);
+        setIsReadingCompleted(true);
       } catch (error) {
-        Alert.alert('Error', 'Failed to process recording');
+        console.error('Transcription failed:', error);
+        Alert.alert('Mali', 'Hindi maiproseso ang iyong boses. Pakisubukan muli.');
+      } finally {
+        setIsTranscribing(false);
       }
     } else {
-      setHasShownModalForCurrentAttempt(false);
-      setHasStoredReport(false);
-      setHasStoredCorrectAttempt(false);
-      resetAll();
-      await startRecording(targetText);
+      setFeedback('');
+      setIsReadingCompleted(false);
+      startRecording(getTargetText());
     }
-  }, [isRecording, recordTime, stopRecording, handleAudioProcessing, startRecording, targetText]);
+  };
 
   const storeMiscueReport = useCallback(async (transcriptionText: string, accuracyNum: number, duration: number, miscues: Miscue[], wpm: number) => {
     try {
@@ -494,11 +502,61 @@ export default function ReadingActivityScreenPage() {
             )}
 
             {isReadingCompleted && !isLoading && !isTranscribing && (
-              <BounceIn style={S.feedbackBox}>
-                <Text style={[S.feedbackText, isCorrectAttempt ? { color: '#3d71d9' } : { color: '#eb5c6c' }]}>
-                  {isCorrectAttempt ? 'Napakahusay!' : 'Subukan muli...'}
-                </Text>
-              </BounceIn>
+              <>
+                <BounceIn style={S.feedbackBox}>
+                  <Text style={[S.feedbackText, isCorrectAttempt ? { color: '#3d71d9' } : { color: '#eb5c6c' }]}>
+                    {(() => {
+                      const acc = convertAccuracyStringToNumber(accuracyString);
+                      if (acc === 100) return 'Napakahusay!';
+                      if (acc >= 90) return 'Magaling!';
+                      if (acc >= 85) return 'Mahusay!';
+                      return 'Subukan muli...';
+                    })()}
+                  </Text>
+                </BounceIn>
+
+                {type === 'passage' && miscues.length > 0 && (
+                  <BounceIn delay={200} style={S.miscueReportContainer}>
+                    <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
+                    <View style={S.miscueTypesRow}>
+                      {(() => {
+                        const typeCounts = {
+                          omission: miscues.filter(m => m.type === 'omission').length,
+                          substitution: miscues.filter(m => m.type === 'substitution').length,
+                          insertion: miscues.filter(m => m.type === 'insertion').length,
+                          repetition: miscues.filter(m => m.type === 'repetition').length,
+                        };
+                        return [
+                          { type: 'omission', fil: 'Kaligtaan', color: '#f39c12', count: typeCounts.omission },
+                          { type: 'substitution', fil: 'Pagpapalit', color: '#eb5c6c', count: typeCounts.substitution },
+                          { type: 'insertion', fil: 'Pagsingit', color: '#3d71d9', count: typeCounts.insertion },
+                          { type: 'repetition', fil: 'Pag-uulit', color: '#9b59b6', count: typeCounts.repetition },
+                        ].map((m) => (
+                          m.count > 0 ? (
+                            <View key={m.type} style={[S.miscueTypeChip, { backgroundColor: m.color + '15', borderColor: m.color }]}>
+                              <Text style={[S.miscueTypeChipText, { color: m.color }]}>
+                                {m.fil} ({m.count})
+                              </Text>
+                            </View>
+                          ) : null
+                        ));
+                      })()}
+                    </View>
+                  </BounceIn>
+                )}
+
+                {isReadingCompleted && (
+                  <BounceIn delay={400} style={S.actionButtonsContainer}>
+                    <TouchableOpacity style={S.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
+                      <Text style={S.retryBtnText}>Muling Subukan</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity style={S.backToLessonBtn} onPress={handleBackStep} activeOpacity={0.8}>
+                      <Text style={S.backToLessonBtnText}>Bumalik sa Aralin</Text>
+                    </TouchableOpacity>
+                  </BounceIn>
+                )}
+              </>
             )}
           </View>
         </View>
@@ -517,12 +575,14 @@ export default function ReadingActivityScreenPage() {
             />
           )}
 
-          <RecordingControls
-            isRecording={isRecording}
-            isLoading={isLoading || isTranscribing}
-            hasPermission={hasPermission}
-            onRecordToggle={handleRecordToggle}
-          />
+          {!isReadingCompleted && (
+            <RecordingControls
+              isRecording={isRecording}
+              isLoading={isLoading || isTranscribing}
+              hasPermission={hasPermission}
+              onRecordToggle={handleRecordToggle}
+            />
+          )}
 
           {(type !== 'passage' && items.length > 1) && (
             <NavArrow
@@ -548,8 +608,85 @@ const S = StyleSheet.create({
   checkMark: { color: '#ffffff', fontSize: 18, fontWeight: '900' },
   maliCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#eb5c6c', justifyContent: 'center', alignItems: 'center' },
   maliX: { color: '#ffffff', fontSize: 18, fontWeight: '900' },
-  feedbackText: { fontSize: 18, fontWeight: '900', letterSpacing: 0.3 },
-  accuracySub: { fontSize: 14, fontWeight: '700', color: '#859dab', marginTop: 4 },
+  feedbackText: { fontSize: 18, fontWeight: '900', letterSpacing: 0.3, fontFamily: 'Andika-Bold' },
+  accuracySub: { fontSize: 14, fontWeight: '700', color: '#859dab', marginTop: 4, fontFamily: 'Andika-Regular' },
   miniStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 },
-  miniStatusText: { fontSize: 14, fontWeight: '700', color: '#859dab' },
+  miniStatusText: { fontSize: 14, fontWeight: '700', color: '#859dab', fontFamily: 'Andika-Bold' },
+
+  miscueReportContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d6eaf8',
+    width: '95%',
+    shadowColor: '#154360',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  miscueReportTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#859dab',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontFamily: 'Andika-Bold',
+  },
+  miscueTypesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  miscueTypeChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  miscueTypeChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: 'Andika-Bold',
+  },
+  actionButtonsContainer: {
+    marginTop: 20,
+    width: '95%',
+    gap: 12,
+  },
+  retryBtn: {
+    backgroundColor: '#3d71d9',
+    paddingVertical: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    shadowColor: '#3d71d9',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  retryBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Andika-Bold',
+  },
+  backToLessonBtn: {
+    backgroundColor: '#fff',
+    paddingVertical: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#3d71d9',
+  },
+  backToLessonBtnText: {
+    color: '#3d71d9',
+    fontSize: 16,
+    fontFamily: 'Andika-Bold',
+  },
 });

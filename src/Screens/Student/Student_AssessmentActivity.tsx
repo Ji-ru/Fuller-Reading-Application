@@ -209,14 +209,26 @@ export default function StudentAssessmentActivity() {
 
   const handleRecordToggle = async () => {
     if (isRecording) {
+      setIsTranscribing(true);
       const audioFile = await stopRecording();
       await handleAudioProcessing(audioFile);
     } else {
+      setSpokenText('');
+      setIsProcessed(false);
+      setIsCorrect(null);
+      setMiscues([]);
       const targetText = currentCard.type === 'alphabet' ? currentCard.letter
         : currentCard.type === 'word' ? currentCard.contrasts[0].words[0]
           : ''; // For passage, target is text
       await startRecording(targetText);
     }
+  };
+
+  const handleRetry = () => {
+    setIsProcessed(false);
+    setIsCorrect(null);
+    setMiscues([]);
+    setSpokenText('');
   };
 
   if (loading || !deck.length) return <View style={S.loading}><ActivityIndicator size="large" color={C.teal} /></View>;
@@ -398,7 +410,14 @@ export default function StudentAssessmentActivity() {
                 )}
               </View>
               <Text style={[S.feedbackText, isCorrect ? S.correctLabel : S.wrongLabel]}>
-                {isCorrect ? 'Napakahusay!' : 'Subukan Muli'}
+                {(() => {
+                  if (!isCorrect) return 'Subukan Muli';
+                  // Use score/totalItems if available, otherwise fallback
+                  const ratio = score / deck.length;
+                  if (ratio === 1) return 'Napakahusay!';
+                  if (ratio >= 0.9) return 'Magaling!';
+                  return 'Mahusay!';
+                })()}
               </Text>
             </BounceIn>
           )}
@@ -430,6 +449,18 @@ export default function StudentAssessmentActivity() {
                   ));
                 })()}
               </View>
+            </BounceIn>
+          )}
+
+          {isProcessed && (
+            <BounceIn delay={400} style={S.actionButtonsContainer}>
+              <TouchableOpacity style={S.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
+                <Text style={S.retryBtnText}>Muling Subukan</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={S.backToLessonBtn} onPress={handleBackStep} activeOpacity={0.8}>
+                <Text style={S.backToLessonBtnText}>Bumalik sa Aralin</Text>
+              </TouchableOpacity>
             </BounceIn>
           )}
         </View>
@@ -585,11 +616,18 @@ const S = StyleSheet.create({
 
   miscueReportContainer: {
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 16,
+    backgroundColor: C.white,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: C.teal + '15',
+    width: '95%',
+    ...Shadows.card,
   },
   miscueReportTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Andika-Bold',
     color: C.inkLight,
     marginBottom: 8,
     textTransform: 'uppercase',
@@ -610,7 +648,41 @@ const S = StyleSheet.create({
   },
   miscueTypeChipText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'Andika-Bold',
+  },
+  actionButtonsContainer: {
+    marginTop: 20,
+    width: '95%',
+    gap: 12,
+  },
+  retryBtn: {
+    backgroundColor: C.green,
+    paddingVertical: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    shadowColor: C.green,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  retryBtnText: {
+    color: C.white,
+    fontSize: 16,
+    fontFamily: 'Andika-Bold',
+  },
+  backToLessonBtn: {
+    backgroundColor: C.white,
+    paddingVertical: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: C.green,
+  },
+  backToLessonBtnText: {
+    color: C.green,
+    fontSize: 16,
+    fontFamily: 'Andika-Bold',
   },
 });
 

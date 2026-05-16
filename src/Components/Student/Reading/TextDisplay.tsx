@@ -100,11 +100,18 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
           const noAudio = !spokenText || spokenText.trim() === '';
           if (noAudio) {
             // No audio detected — all words red
-            wordColor = '#e74c3c';
+            wordColor = '#eb5c6c';
           } else {
             const posData = miscuesByPosition.get(globalWordIndex);
-            const hasError = posData?.substitution || posData?.omission || posData?.repetition;
-            wordColor = hasError ? '#e74c3c' : '#1a7a45';
+            if (posData?.substitution) {
+              wordColor = '#eb5c6c'; // Pagpapalit (Red)
+            } else if (posData?.omission) {
+              wordColor = '#f39c12'; // Kaligtaan (Orange)
+            } else if (posData?.repetition) {
+              wordColor = '#9b59b6'; // Pag-uulit (Purple)
+            } else {
+              wordColor = '#1a7a45'; // Correct (Green)
+            }
           }
         }
 
