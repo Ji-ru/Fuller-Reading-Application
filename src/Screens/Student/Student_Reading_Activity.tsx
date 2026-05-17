@@ -1,6 +1,6 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -393,12 +393,12 @@ export default function ReadingActivityScreenPage() {
       console.error('Audio processing error:', error);
       const simulatedResponse = getSimulatedResponse(targetText);
       setSpokenText(simulatedResponse);
-      try {
-        await analyzeReadingRef.current(simulatedResponse, duration);
-      } catch (e) {
-        console.error('Fallback analysis error:', e);
-      }
-setIsReadingCompleted(true);
+        try {
+          await analyzeReadingRef.current(simulatedResponse, duration);
+        } catch (e) {
+          console.error('Fallback analysis error:', e);
+        }
+      setIsReadingCompleted(true);
     }
     }, [targetText, getSimulatedResponse, analyzeReadingRef, transcribeAudioAPI, getSimulatedResponse, setIsTranscribing, setFinalTagalogText, setSpokenText, analyzeReadingRef, setIsReadingCompleted]);
 
@@ -455,7 +455,7 @@ setIsReadingCompleted(true);
 
   return (
     <SafeAreaView style={readingStyles.container}>
-      <View style={readingStyles.insideContainer}>
+      <ScrollView style={readingStyles.insideContainer} contentContainerStyle={readingStyles.insideScrollContent} showsVerticalScrollIndicator={false}>
         {/* Bubble Decorations */}
         <View style={bubbles.bubblesContainer}>
           <View style={[bubbles.bubble, bubbles.bubbleTopRight]} />
@@ -519,46 +519,47 @@ setIsReadingCompleted(true);
                 </BounceIn>
 
 {type === 'passage' && miscues.length > 0 && (
-                  <BounceIn delay={200} style={S.miscueReportContainerNew}>
-                    <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
-                    
-{(() => {
-                       const typeCounts = {
-                         omission: miscues.filter(m => m.type === 'omission').length,
-                         substitution: miscues.filter(m => m.type === 'substitution').length,
-                         insertion: miscues.filter(m => m.type === 'insertion').length,
-                         repetition: miscues.filter(m => m.type === 'repetition').length,
-                       };
-                       const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
-                       const max = Math.max(...Object.values(typeCounts), 1);
-                       const colors = {
-                         omission: { bar: '#FF9800', bg: '#FFF3E0', label: 'Kaligtaan' },
-                         substitution: { bar: '#eb5c6c', bg: '#FFEBEE', label: 'Pagpapalit' },
-                         insertion: { bar: '#42A5F5', bg: '#E3F2FD', label: 'Pagdaragdag' },
-                         repetition: { bar: '#AB47BC', bg: '#F3E5F5', label: 'Pag-uulit' },
-                       };
-                       return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
-                         const pct = (count / max) * 100;
-                         const c = colors[type as keyof typeof colors];
-                         return (
-                           <View key={type} style={S.miscueBarRow}>
-                             <View style={S.miscueBarHeader}>
-                               <View style={[S.miscueBarDot, { backgroundColor: c.bar }]} />
-                               <Text style={S.miscueBarLabel}>{c.label}</Text>
-                               <Text style={S.miscueBarPct}>{total > 0 ? Math.round((count / total) * 100) : 0}%</Text>
-                             </View>
-                             <View style={S.miscueBarTrackContainer}>
-                               <View style={[S.miscueBarTrack, { backgroundColor: c.bg }]}>
-                                 <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
+                    <BounceIn delay={200} style={S.miscueReportContainerNew}>
+                      <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
+                      <View style={{ width: '100%' }}>
+                        {(() => {
+                         const typeCounts = {
+                           omission: miscues.filter(m => m.type === 'omission').length,
+                           substitution: miscues.filter(m => m.type === 'substitution').length,
+                           insertion: miscues.filter(m => m.type === 'insertion').length,
+                           repetition: miscues.filter(m => m.type === 'repetition').length,
+                         };
+                         const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
+                         const max = Math.max(...Object.values(typeCounts), 1);
+                         const colors = {
+                            omission: { bar: '#FF9800', bg: '#FFF3E0', label: 'Pagkakaltas' },
+                           substitution: { bar: '#eb5c6c', bg: '#FFEBEE', label: 'Pagpapalit' },
+                           insertion: { bar: '#42A5F5', bg: '#E3F2FD', label: 'Pagdaragdag' },
+                           repetition: { bar: '#AB47BC', bg: '#F3E5F5', label: 'Pag-uulit' },
+                         };
+                         return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
+                           const pct = (count / max) * 100;
+                           const c = colors[type as keyof typeof colors];
+                           return (
+                             <View key={type} style={S.miscueBarRow}>
+                               <View style={S.miscueBarHeader}>
+                                 <View style={[S.miscueBarDot, { backgroundColor: c.bar }]} />
+                                 <Text style={S.miscueBarLabel}>{c.label}</Text>
+                                 <Text style={S.miscueBarPct}>{total > 0 ? Math.round((count / total) * 100) : 0}%</Text>
                                </View>
-                               <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
+                               <View style={S.miscueBarTrackContainer}>
+                                 <View style={[S.miscueBarTrack, { backgroundColor: c.bg }]}>
+                                   <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
+                                 </View>
+                                 <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
+                               </View>
                              </View>
-                           </View>
-                         );
-                       });
-                     })()}
-                  </BounceIn>
-                )}
+                           );
+});
+                        })()}
+                      </View>
+                    </BounceIn>
+                  )}
 
                 {isReadingCompleted && (
                   <BounceIn delay={400} style={S.actionButtonsContainer}>
@@ -575,6 +576,7 @@ setIsReadingCompleted(true);
             )}
           </View>
         </View>
+        </ScrollView>
 
         {/* Stable Footer Controls - Lifted */}
         <View style={[
@@ -608,7 +610,6 @@ setIsReadingCompleted(true);
             />
           )}
         </View>
-      </View>
     </SafeAreaView>
 
 
@@ -616,7 +617,7 @@ setIsReadingCompleted(true);
 }
 
 const S = StyleSheet.create({
-  statusReserved: { height: 80, justifyContent: 'flex-start', alignItems: 'center', width: '100%' },
+  statusReserved: { flex: 1, justifyContent: 'flex-start', alignItems: 'center', width: '100%' },
   feedbackBox: { alignItems: 'center' },
   feedbackIconBox: { width: 54, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   checkCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#3d71d9', justifyContent: 'center', alignItems: 'center' },

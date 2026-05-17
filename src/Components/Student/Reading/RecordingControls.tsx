@@ -151,12 +151,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  listeningText: {
-    fontFamily: 'Andika-Bold',
-    fontSize: 14,
-    color: '#eb5c6c',
-    letterSpacing: 1.2,
-  },
+listeningText: {
+  fontFamily: 'Andika-Bold',
+  fontSize: 14,
+  color: '#eb5c6c',
+  letterSpacing: 0.5,
+},
   hintText: {
     fontFamily: 'Andika-Bold',
     fontSize: 13,

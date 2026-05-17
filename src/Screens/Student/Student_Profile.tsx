@@ -676,8 +676,8 @@ export default function Profile() {
           </Text>
           {[
             { type: 'Substitution', fil: 'Pagpapalit', desc: 'Binago ang salita — "pusa" → "aso"',      color: C.red    },
-            { type: 'Omission',     fil: 'Kaligtaan',  desc: 'Nalaktawan ang isang salita',              color: C.orange },
-            { type: 'Insertion',    fil: 'Pagsingit',  desc: 'Nagdagdag ng salitang hindi nasa teksto',  color: C.yellow },
+            { type: 'Omission',     fil: 'Pagkakaltas',  desc: 'Nalaktawan ang isang salita',             color: C.orange },
+            { type: 'Insertion',    fil: 'Pagdaragdag',  desc: 'Nagdagdag ng salitang hindi nasa teksto', color: C.yellow  },
             { type: 'Repetition',   fil: 'Pag-uulit',  desc: 'Inulit ang isang salita o parirala',       color: C.teal   },
           ].map(m => (
             <View key={m.type} style={[S.miscueTypeCard, { borderLeftColor: m.color }]}>

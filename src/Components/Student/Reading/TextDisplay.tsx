@@ -103,14 +103,14 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
             wordColor = '#eb5c6c';
 } else {
              const posData = miscuesByPosition.get(globalWordIndex);
-             if (posData?.substitution) {
-               wordColor = '#eb5c6c'; // Pagpapalit (Red)
-             } else if (posData?.omission) {
-               wordColor = '#f39c12'; // Kaligtaan (Orange)
-             } else if (posData?.insertion) {
-               wordColor = '#3498db'; // Pagsingit (Blue)
-             } else if (posData?.repetition) {
-               wordColor = '#9b59b6'; // Pag-uulit (Purple)
+              if (posData?.substitution) {
+                wordColor = '#eb5c6c'; // Pagpapalit (Red)
+              } else if (posData?.omission) {
+                wordColor = '#f39c12'; // Pagkakaltas (Orange)
+              } else if (posData?.insertion) {
+                wordColor = '#3498db'; // Pagdaragdag (Blue)
+              } else if (posData?.repetition) {
+                wordColor = '#9b59b6'; // Pag-uulit (Purple)
              } else {
                wordColor = '#1a7a45'; // Correct (Green)
              }

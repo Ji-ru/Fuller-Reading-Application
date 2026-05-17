@@ -12,7 +12,10 @@ const readingStyles = StyleSheet.create({
 
   insideContainer: {
     flex: 1,
-    justifyContent: 'flex-start',
+  },
+
+  insideScrollContent: {
+    paddingBottom: 160,
   },
 
   // ── Passage Card ────────────────────────────────────────────────────────
@@ -424,7 +427,7 @@ const readingStyles = StyleSheet.create({
   },
 
   activityContentWrapper: {
-    flex: 1,
+    flexGrow: 1,
     width: '100%',
     justifyContent: 'flex-start',
     alignItems: 'center',

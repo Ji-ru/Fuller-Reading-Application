@@ -247,7 +247,7 @@ export default function Student_Classes() {
                     {validatingClassCode ? (
                       <ActivityIndicator size="small" color={C.white} />
                     ) : (
-                      <Text style={S.verifyBtnText}>E Verify ito</Text>
+                      <Text style={S.verifyBtnText}>E-verify</Text>
                     )}
                   </TouchableOpacity>
                 </View>

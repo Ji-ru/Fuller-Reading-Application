@@ -393,87 +393,92 @@ export default function StudentAssessmentActivity() {
         </BounceIn>
 
         <View style={S.statusReserved}>
-          {(isTranscribing || isRecording) && (
-            <View style={S.miniStatus}>
-              {isTranscribing ? <ActivityIndicator size="small" color={C.teal} /> : <View style={S.redDot} />}
-              <Text style={S.miniStatusText}>{isTranscribing ? 'Pinoproseso...' : 'Nakikinig...'}</Text>
-            </View>
-          )}
-
-          {isProcessed && (
-            <BounceIn style={S.feedbackBox}>
-              <View style={[S.feedbackIconBox, { backgroundColor: isCorrect ? C.green + '15' : C.coral + '15' }]}>
-                {isCorrect ? (
-                  <CheckCircleIcon size={32} color={C.green} />
-                ) : (
-                  <View style={S.maliCircle}><Text style={S.maliX}>✕</Text></View>
-                )}
+          <ScrollView
+            style={S.miscueScroll}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-start', alignItems: 'center' }}
+            showsVerticalScrollIndicator={false}
+          >
+            {(isTranscribing || isRecording) && (
+              <View style={S.miniStatus}>
+                {isTranscribing ? <ActivityIndicator size="small" color={C.teal} /> : <View style={S.redDot} />}
+                <Text style={S.miniStatusText}>{isTranscribing ? 'Pinoproseso...' : 'Nakikinig...'}</Text>
               </View>
-              <Text style={[S.feedbackText, isCorrect ? S.correctLabel : S.wrongLabel]}>
+            )}
+
+            {isProcessed && (
+              <BounceIn style={S.feedbackBox}>
+                <View style={[S.feedbackIconBox, { backgroundColor: isCorrect ? C.green + '15' : C.coral + '15' }]}>
+                  {isCorrect ? (
+                    <CheckCircleIcon size={32} color={C.green} />
+                  ) : (
+                    <View style={S.maliCircle}><Text style={S.maliX}>✕</Text></View>
+                  )}
+                </View>
+                <Text style={[S.feedbackText, isCorrect ? S.correctLabel : S.wrongLabel]}>
+                  {(() => {
+                    if (!isCorrect) return 'Subukan Muli';
+                    const ratio = score / deck.length;
+                    if (ratio === 1) return 'Napakahusay!';
+                    if (ratio >= 0.9) return 'Magaling!';
+                    return 'Mahusay!';
+                  })()}
+                </Text>
+              </BounceIn>
+            )}
+
+            {isProcessed && miscues.length > 0 && (
+              <BounceIn delay={200} style={S.miscueReportContainer}>
+                <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
                 {(() => {
-                  if (!isCorrect) return 'Subukan Muli';
-                  // Use score/totalItems if available, otherwise fallback
-                  const ratio = score / deck.length;
-                  if (ratio === 1) return 'Napakahusay!';
-                  if (ratio >= 0.9) return 'Magaling!';
-                  return 'Mahusay!';
-                })()}
-              </Text>
-            </BounceIn>
-          )}
-
-          {isProcessed && miscues.length > 0 && (
-            <BounceIn delay={200} style={S.miscueReportContainer}>
-              <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
-              {(() => {
-                const typeCounts = {
-                  omission: miscues.filter(m => m.type === 'omission').length,
-                  substitution: miscues.filter(m => m.type === 'substitution').length,
-                  insertion: miscues.filter(m => m.type === 'insertion').length,
-                  repetition: miscues.filter(m => m.type === 'repetition').length,
-                };
-                const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
-                const max = Math.max(...Object.values(typeCounts), 1);
-                const colors = {
-                  omission: { bar: '#f39c12', bg: '#FFF3E0', label: 'Kaligtaan' },
-                  substitution: { bar: '#eb5c6c', bg: '#FFEBEE', label: 'Pagpapalit' },
-                  insertion: { bar: '#42A5F5', bg: '#E3F2FD', label: 'Pagdaragdag' },
-                  repetition: { bar: '#AB47BC', bg: '#F3E5F5', label: 'Pag-uulit' },
-                };
-                return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
-                  const pct = (count / max) * 100;
-                  const c = colors[type as keyof typeof colors];
-                  return (
-                    <View key={type} style={S.miscueBarRow}>
-                      <View style={S.miscueBarHeader}>
-                        <View style={[S.miscueBarDot, { backgroundColor: c.bar }]} />
-                        <Text style={S.miscueBarLabel}>{c.label}</Text>
-                        <Text style={S.miscueBarPct}>{total > 0 ? Math.round((count / total) * 100) : 0}%</Text>
-                      </View>
-                      <View style={S.miscueBarTrackContainer}>
-                        <View style={[S.miscueBarTrack, { backgroundColor: c.bg }]}>
-                          <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
+                  const typeCounts = {
+                    omission: miscues.filter(m => m.type === 'omission').length,
+                    substitution: miscues.filter(m => m.type === 'substitution').length,
+                    insertion: miscues.filter(m => m.type === 'insertion').length,
+                    repetition: miscues.filter(m => m.type === 'repetition').length,
+                  };
+                  const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
+                  const max = Math.max(...Object.values(typeCounts), 1);
+                  const colors = {
+                    omission: { bar: '#f39c12', bg: '#FFF3E0', label: 'Pagkakaltas' },
+                    substitution: { bar: '#eb5c6c', bg: '#FFEBEE', label: 'Pagpapalit' },
+                    insertion: { bar: '#42A5F5', bg: '#E3F2FD', label: 'Pagdaragdag' },
+                    repetition: { bar: '#AB47BC', bg: '#F3E5F5', label: 'Pag-uulit' },
+                  };
+                  return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
+                    const pct = (count / max) * 100;
+                    const c = colors[type as keyof typeof colors];
+                    return (
+                      <View key={type} style={S.miscueBarRow}>
+                        <View style={S.miscueBarHeader}>
+                          <View style={[S.miscueBarDot, { backgroundColor: c.bar }]} />
+                          <Text style={S.miscueBarLabel}>{c.label}</Text>
+                          <Text style={S.miscueBarPct}>{total > 0 ? Math.round((count / total) * 100) : 0}%</Text>
                         </View>
-                        <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
+                        <View style={S.miscueBarTrackContainer}>
+                          <View style={[S.miscueBarTrack, { backgroundColor: c.bg }]}>
+                            <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
+                          </View>
+                          <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
+                        </View>
                       </View>
-                    </View>
-                  );
-                });
-              })()}
-            </BounceIn>
-          )}
+                    );
+                  });
+                })()}
+              </BounceIn>
+            )}
 
-          {isProcessed && (
-            <BounceIn delay={400} style={S.actionButtonsContainer}>
-              <TouchableOpacity style={S.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
-                <Text style={S.retryBtnText}>Muling Subukan</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={S.backToLessonBtn} onPress={handleBackStep} activeOpacity={0.8}>
-                <Text style={S.backToLessonBtnText}>Bumalik sa Aralin</Text>
-              </TouchableOpacity>
-            </BounceIn>
-          )}
+            {isProcessed && (
+              <BounceIn delay={400} style={S.actionButtonsContainer}>
+                <TouchableOpacity style={S.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
+                  <Text style={S.retryBtnText}>Muling Subukan</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={S.backToLessonBtn} onPress={handleBackStep} activeOpacity={0.8}>
+                  <Text style={S.backToLessonBtnText}>Bumalik sa Aralin</Text>
+                </TouchableOpacity>
+              </BounceIn>
+            )}
+          </ScrollView>
         </View>
       </View>
 
@@ -567,7 +572,8 @@ const S = StyleSheet.create({
   correctLabel: { color: C.green },
   wrongLabel: { color: C.coral },
 
-  statusReserved: { height: 80, justifyContent: 'flex-start', alignItems: 'center', width: '100%' },
+  statusReserved: { flex: 1, justifyContent: 'flex-start', alignItems: 'center', width: '100%' },
+  miscueScroll: { width: '100%' },
   miniStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   miniStatusText: { fontSize: 13, fontWeight: '700', color: C.slate, opacity: 0.8 },
   redDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.coral },

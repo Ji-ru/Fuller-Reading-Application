@@ -5,8 +5,23 @@ import { Miscue } from '../Interfaces/miscue';
 
 export class MiscueAnalysisService {
   static detectMiscues(passageText: string, spokenText: string): Miscue[] {
-    if (!spokenText || spokenText === 'Walang natukoy na pagbigkas!') {
-      return [];
+    // Check for no speech detected then mark every target word as omitted
+    if (!spokenText ||
+        spokenText.trim() === '' ||
+        spokenText.toLowerCase().trim() === 'no speech detected!') {
+      const targetWords = passageText
+        .toLowerCase()
+        .replace(/[^a-zñ0-9\s]/g, '')
+        .split(/\s+/)
+        .filter(word => word.length > 0);
+
+      return targetWords.map(word => ({
+        expected: word,
+        spoken: '',
+        position: 0,
+        timestamp: new Date(),
+        type: 'omission',
+      }));
     }
 
     // Strip punctuation and split into words (supporting Filipino ñ)
@@ -255,7 +270,7 @@ export class MiscueAnalysisService {
 
   // Enhanced accuracy calculation that considers miscues
   static calculateAccuracy(passageText: string, spokenText: string): string {
-    if (!spokenText || spokenText === 'No speech detected') return '0';
+    if (!spokenText || spokenText.trim() === '' || spokenText.toLowerCase().trim() === 'no speech detected!') return '0';
 
     const targetWords = passageText
       .toLowerCase()
@@ -322,11 +337,11 @@ export class MiscueAnalysisService {
     accuracy: string;
     feedback: string;
   } {
-    if (!spokenText || spokenText === 'No Speech Detected!') {
+    if (!spokenText || spokenText.toLowerCase().trim() === 'no speech detected!') {
       return {
         isCorrect: false,
         accuracy: '0',
-        feedback: 'No sound detected',
+        feedback: 'Walang natukoy na pagbigkas',
       };
     }
 
@@ -360,11 +375,11 @@ export class MiscueAnalysisService {
     accuracy: string;
     feedback: string;
   } {
-    if (!spokenText || spokenText === 'No Speech Detected!') {
+    if (!spokenText || spokenText.toLowerCase().trim() === 'no speech detected!') {
       return {
         isCorrect: false,
         accuracy: '0',
-        feedback: 'No sound detected',
+        feedback: 'Walang natukoy na pagbigkas',
       };
     }
 

@@ -343,32 +343,33 @@ export default function SignUpOneScreen() {
                 <>
                   <Text style={signup.textform}>Class Code (Opsyonal)</Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-                    <TextInput
-                      style={[signup.textInputForm, { flex: 1 }]}
-                      placeholder="Ilagay ang code"
-                      value={classCode}
-                      onChangeText={(text) => {
-                        setClassCode(text);
-                        setClassCodeValidation(null);
-                      }}
-                      autoCapitalize="characters"
-                      editable={!validatingClassCode}
-                    />
-                    <TouchableOpacity
-                      style={[
-                        localStyles.validateBtn,
-                        validatingClassCode && { opacity: 0.6 }
-                      ]}
-                      onPress={handleValidateClassCode}
-                      disabled={validatingClassCode}
-                      activeOpacity={0.7}
-                    >
-                      {validatingClassCode ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                      ) : (
-                        <Text style={localStyles.validateBtnText}>Verify</Text>
-                      )}
-                    </TouchableOpacity>
+<TextInput
+  style={[signup.textInputForm, { flex: 3 }]}
+  placeholder="Ilagay ang code"
+  value={classCode}
+  onChangeText={(text) => {
+    setClassCode(text);
+    setClassCodeValidation(null);
+  }}
+  autoCapitalize="characters"
+  editable={!validatingClassCode}
+/>
+<TouchableOpacity
+  style={[
+    localStyles.validateBtn,
+    { flex: 1 },
+    validatingClassCode && { opacity: 0.6 }
+  ]}
+  onPress={handleValidateClassCode}
+  disabled={validatingClassCode}
+  activeOpacity={0.7}
+>
+  {validatingClassCode ? (
+    <ActivityIndicator size="small" color="#fff" />
+  ) : (
+    <Text style={localStyles.validateBtnText}>Verify</Text>
+  )}
+</TouchableOpacity>
                   </View>
                   {classCodeValidation && (
                     <Text style={[
