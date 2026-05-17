@@ -151,12 +151,10 @@ export default function LoginScreen() {
       setLoading(true);
 
       // Call the login function
-      const result = await loginUser(email.trim(), password);
+      await loginUser(email.trim(), password);
 
-      if (result.success) {
-        // Navigate to Loading screen to check user role
-        handleReplaceStep('Loading');
-      }
+      // Navigate to Loading screen to check user role
+      handleReplaceStep('Loading');
     } catch (error: any) {
       // Handle specific login errors
       let errorMessage = 'Login failed. Please try again.';
@@ -207,14 +205,18 @@ export default function LoginScreen() {
 
     try {
       setLoading(true);
-      await sendPasswordReset(email);
-      showAlert(
-        'Tagumpay',
-        'Ang link para sa pag-reset ng password ay naipadala na sa iyong email.',
-        'primary'
-      );
+      const result = await sendPasswordReset(email);
+      if (result.success) {
+        showAlert(
+          'Tagumpay',
+          'Ang link para sa pag-reset ng password ay naipadala na sa iyong email.',
+          'primary'
+        );
+      } else {
+        showAlert('May Problema', result.error || 'Hindi maipadala ang link sa email.', 'danger');
+      }
     } catch (error: any) {
-      showAlert('May Problema', error.message, 'danger');
+      showAlert('May Problema', error.message || 'Hindi maipadala ang link sa email.', 'danger');
     } finally {
       setLoading(false);
     }

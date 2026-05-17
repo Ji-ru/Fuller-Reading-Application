@@ -140,7 +140,7 @@ export default function SignUpTwoScreen() {
       }, 2000);
     } catch (error: any) {
       setModalVisible(false);
-      Alert.alert('Registration Error', error.message);
+      Alert.alert('Registration Error', error.message || 'May naganap na error. Pakisubukan muli.');
     }
   };
 

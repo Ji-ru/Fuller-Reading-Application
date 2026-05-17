@@ -1,4 +1,4 @@
-// Note: This file is a pure service/controller — not a React function component or hook.
+// Note: This file is a pure service/controller—not a React function component or hook.
 // React hooks (useState, useEffect, useRef, useCallback, useMemo) are not used or allowed here.
 // Only use hooks inside function components or custom hooks (functions starting with 'use').
 import {
@@ -6,54 +6,37 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  sendPasswordResetEmail,
 } from '@react-native-firebase/auth';
 import {
   getFirestore,
   collection,
   doc,
   setDoc,
+  updateDoc,
   getDoc,
   getDocs,
-  updateDoc,
-  deleteDoc,
   query,
   where,
   limit,
   serverTimestamp,
   arrayUnion,
+  arrayRemove,
 } from '@react-native-firebase/firestore';
-import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import {
-  UserDocument,
-  MiscueReportDocument,
-  ClassDocument,
-} from '../Interfaces/dataInterfaces';
+import { UserDocument, ClassDocument, UserRole } from '../Interfaces/dataInterfaces';
 import { getCurrentAcademicYear } from '../Utilities/acadYearUtils';
 
-// ─── v22: Module-level singletons ─────────────────────────────────────────────
-// getFirestore() and getAuth() must be called ONCE at module level.
-// This file previously called getFirestore() 12 times and getAuth() 7 times
-// across different functions — each call triggers a deprecation warning in v22.
-const db = getFirestore();
+// Initialize Firebase instances once
 const auth = getAuth();
-
-// ─── Helper ───────────────────────────────────────────────────────────────────
-const formatDateToReadable = (date: Date): string => {
-  const day = date.getDate();
-  const month = date.toLocaleString('default', { month: 'long' });
-  const year = date.getFullYear();
-  return `${day} ${month} ${year}`;
-};
+const db = getFirestore();
 
 /* -------------------------------------------------------------
-   CREATE USER ACCOUNT (FACULTY OR STUDENT)
+   CREATE USER ACCOUNT USING REGULAR
 ------------------------------------------------------------- */
 export const SignUpUserCredentials = async (
   email: string,
   password: string,
   userData: {
-    role: string;
+    role: UserRole;
     firstName: string;
     middleName?: string;
     lastName: string;
@@ -63,10 +46,13 @@ export const SignUpUserCredentials = async (
     dateOfBirth?: string;
     assignedGradeLevels?: number[];
     classCode?: string;
+    parentConsent?: {
+      confirmed: boolean;
+    };
   },
 ) => {
   try {
-    // 1. Create user
+    // 1. Create user - MODULAR API
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -74,74 +60,93 @@ export const SignUpUserCredentials = async (
     );
     const user = userCredential.user;
 
-    // 2. Base user document
-    const userDocument: UserDocument = {
-      uid: user.uid,
-      email,
-      role: userData.role,
-      firstName: userData.firstName,
-      middleName: userData.middleName,
-      lastName: userData.lastName,
-      sex: userData.sex,
-      profileImageUrl: userData.profileImageUrl,
-      createdAt: serverTimestamp(),
-    };
+    await createUserDocument(user.uid, email, userData);
 
-    let readableDOB = '';
-    if (userData.dateOfBirth) {
-      readableDOB = formatDateToReadable(new Date(userData.dateOfBirth));
-    }
-
-    // 3. Role-specific data
-    if (userData.role === 'student') {
-      userDocument.studentData = {
-        gradeLevel: userData.gradeLevel || 1,
-        dateOfBirth: readableDOB,
-        classCode: userData.classCode || '',
-        reading_Level: 'beginner',
-      };
-    } else if (userData.role === 'faculty') {
-      userDocument.facultyData = {
-        assignedGradeLevels: userData.assignedGradeLevels || [],
-        assignedClassIds: [],
-      };
-    }
-
-    // FIX: was doc(collection(db, 'users'), user.uid) — deprecated in v22
-    // Correct pattern for a known ID: doc(db, 'collectionName', 'docId')
-    await setDoc(doc(db, 'users', user.uid), userDocument);
-
-    // 5. Auto-create class for faculty
-    if (
-      userData.role === 'faculty' &&
-      userData.assignedGradeLevels &&
-      userData.assignedGradeLevels.length > 0
-    ) {
-      await createClass(
-        user.uid,
-        userData.firstName,
-        userData.lastName,
-        userData.assignedGradeLevels[0],
-      );
-    }
-
-    // 6. Auto-enroll student
-    let enrollmentResult = { success: false, message: '' };
-    if (userData.role === 'student' && userData.classCode) {
-      try {
-        await joinClass(user.uid, userData.classCode);
-        enrollmentResult = { success: true, message: 'Successfully enrolled in class' };
-        console.log('Auto-enrollment successful:', userData.classCode);
-      } catch (e: any) {
-        enrollmentResult = { success: false, message: e.message };
-        console.error('Auto-enrollment failed:', e.message);
-      }
-    }
-
-    return { success: true, user, enrollment: enrollmentResult };
+    return { success: true, user };
   } catch (error: any) {
     throw new Error(`Registration Failed: ${error.message}`);
   }
+};
+
+// Shared: creates the Firestore user document and handles faculty class creation
+const createUserDocument = async (
+  uid: string,
+  email: string,
+  userData: {
+    role: UserRole;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    sex: string;
+    profileImageUrl?: string;
+    gradeLevel?: number;
+    dateOfBirth?: string;
+    assignedGradeLevels?: number[];
+    classCode?: string;
+    parentConsent?: {
+      confirmed: boolean;
+    };
+  },
+) => {
+  const userDocument: UserDocument = {
+    uid,
+    email,
+    role: userData.role,
+    firstName: userData.firstName,
+    middleName: userData.middleName,
+    lastName: userData.lastName,
+    sex: userData.sex,
+    profileImageUrl: userData.profileImageUrl,
+    createdAt: serverTimestamp(),
+  };
+
+  if (userData.role === 'student') {
+    userDocument.studentData = {
+      gradeLevel: userData.gradeLevel || 1,
+      dateOfBirth: userData.dateOfBirth,
+      classCode: userData.classCode || '',
+      reading_Level: 'beginner',
+    };
+
+    // Auto-enroll student in class if classCode provided
+    if (userData.classCode) {
+      try {
+        const classData = await getClassByCode(userData.classCode.toUpperCase());
+        if (classData && classData.isActive) {
+          await updateDoc(doc(db, 'users', uid), {
+            'studentData.classCode': userData.classCode,
+            updatedAt: serverTimestamp(),
+          });
+
+          await updateDoc(doc(db, 'classes', classData.classId), {
+            studentIds: arrayUnion(uid),
+            updatedAt: serverTimestamp(),
+          });
+        }
+      } catch (e) {
+        console.error('Auto-enroll error:', e);
+      }
+    }
+  } else if (userData.role === 'faculty') {
+    userDocument.facultyData = {
+      assignedGradeLevels: userData.assignedGradeLevels || [],
+      assignedClassIds: [],
+    };
+
+    // Auto-create class for faculty
+    if (userData.assignedGradeLevels && userData.assignedGradeLevels.length > 0) {
+      const initialAssignedGrade = userData.assignedGradeLevels[0];
+      await createClass(
+        uid,
+        userData.firstName,
+        userData.lastName,
+        initialAssignedGrade,
+      );
+    }
+  }
+
+  const userRef = doc(db, 'users', uid);
+  await setDoc(userRef, userDocument);
 };
 
 /* -------------------------------------------------------------
@@ -171,11 +176,13 @@ export const createClass = async (
       createdAt: serverTimestamp(),
     };
 
-    // FIX: was doc(collection(db, 'classes'), classId) — deprecated in v22
-    await setDoc(doc(db, 'classes', classId), classDocument);
+    // Store class - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await setDoc(classRef, classDocument);
 
-    // FIX: was doc(collection(db, 'users'), facultyId) — deprecated in v22
-    await updateDoc(doc(db, 'users', facultyId), {
+    // Update faculty document - MODULAR API
+    const facultyRef = doc(db, 'users', facultyId);
+    await updateDoc(facultyRef, {
       'facultyData.assignedClassIds': arrayUnion(classId),
       'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
       updatedAt: serverTimestamp(),
@@ -183,14 +190,14 @@ export const createClass = async (
 
     return { classId, classCode, acadYear: classDocument.acadYear };
   } catch (error: any) {
-    throw new Error(`Class Registration Failed: ${error.message}`);
+    throw new Error(`Automatic Class Registration Failed: ${error.message}`);
   }
 };
 
 /* -------------------------------------------------------------
    CLASS CODE GENERATOR
 ------------------------------------------------------------- */
-const generateClassCode = (): string => {
+const generateClassCode = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';
   for (let i = 0; i < 6; i++) {
@@ -200,120 +207,30 @@ const generateClassCode = (): string => {
 };
 
 /* -------------------------------------------------------------
-   CREATE CUSTOM CLASS
-------------------------------------------------------------- */
-export const createCustomClass = async (
-  facultyId: string,
-  className: string,
-  gradeLevel: number,
-): Promise<string> => {
-  try {
-    const classId = `Class_${Date.now()}_${Math.random()
-      .toString(36)
-      .substring(2, 9)}`;
-    const classCode = generateClassCode();
-
-    const classDocument: ClassDocument = {
-      classId,
-      classCode,
-      className,
-      gradeLevel,
-      acadYear: getCurrentAcademicYear(),
-      facultyId,
-      studentIds: [],
-      isActive: true,
-      createdAt: serverTimestamp(),
-    };
-
-    // FIX: was doc(collection(db, 'classes'), classId) — deprecated in v22
-    await setDoc(doc(db, 'classes', classId), classDocument);
-
-    // FIX: was doc(collection(db, 'users'), facultyId) — deprecated in v22
-    await updateDoc(doc(db, 'users', facultyId), {
-      'facultyData.assignedClassIds': arrayUnion(classId),
-      'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
-      updatedAt: serverTimestamp(),
-    });
-
-    return classCode;
-  } catch (error: any) {
-    throw new Error(`Custom Class Registration Failed: ${error.message}`);
-  }
-};
-
-/* -------------------------------------------------------------
    GET CLASS BY CODE
 ------------------------------------------------------------- */
 export const getClassByCode = async (classCode: string) => {
   try {
-    const querySnapshot = await getDocs(
-      query(
-        collection(db, 'classes'),
-        where('classCode', '==', classCode),
-        where('isActive', '==', true),
-        limit(1),
-      ),
+    const classesRef = collection(db, 'classes');
+    const q = query(
+      classesRef,
+      where('classCode', '==', classCode.toUpperCase()),
+      limit(1),
     );
+
+    const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) return null;
 
-    const snap = querySnapshot.docs[0];
-    return { id: snap.id, ...snap.data() } as ClassDocument & { id: string };
+    const doc = querySnapshot.docs[0];
+
+    return {
+      id: doc.id,
+      ...doc.data(),
+    } as ClassDocument & { id: string };
   } catch (error: any) {
     throw new Error('Failed to get class: ' + error.message);
   }
-};
-
-/* -------------------------------------------------------------
-   GET ALL ACTIVE CLASSES
-------------------------------------------------------------- */
-export const getAllActiveClasses = async () => {
-  try {
-    // FIX: was fetching ALL classes and filtering in JS — push the filter to Firestore
-    const querySnapshot = await getDocs(
-      query(collection(db, 'classes'), where('isActive', '==', true)),
-    );
-
-    return querySnapshot.docs.map(
-      (snap: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
-        id: snap.id,
-        ...snap.data(),
-      }),
-    ) as (ClassDocument & { id: string })[];
-  } catch (error: any) {
-    throw new Error('Failed to fetch classes: ' + error.message);
-  }
-};
-
-/* -------------------------------------------------------------
-   VALIDATE CLASS CODE
-------------------------------------------------------------- */
-export const validateClassCode = async (classCode: string): Promise<{ valid: boolean; message: string }> => {
-  try {
-    if (!classCode.trim()) {
-      return { valid: false, message: 'Class code is required' };
-    }
-
-    const classData = await getClassByCode(classCode.trim().toUpperCase());
-    if (!classData) {
-      return { valid: false, message: 'Invalid or inactive class code' };
-    }
-
-    return { valid: true, message: `Found class: ${classData.className}` };
-  } catch (error: any) {
-    return { valid: false, message: error.message || 'Failed to validate class code' };
-  }
-};
-
-/* -------------------------------------------------------------
-   VERIFY FACULTY ACCESS CODE
-------------------------------------------------------------- */
-export const verifyFacultyAccessCode = (code: string): boolean => {
-  // TODO: ⚠️ SECURITY — move SECRET_KEY to a secure environment config
-  //       (e.g. react-native-config or Firebase Remote Config).
-  //       Hardcoding secrets in source exposes them in version control.
-  const SECRET_KEY = '12345678';
-  return code.trim().toUpperCase() === SECRET_KEY;
 };
 
 /* -------------------------------------------------------------
@@ -323,31 +240,16 @@ export const getUserProfile = async (
   uid: string,
 ): Promise<UserDocument | null> => {
   try {
-    // FIX: was doc(collection(db, 'users'), uid) — deprecated in v22
-    const docSnap = await getDoc(doc(db, 'users', uid));
-    if (!docSnap.exists()) return null;
+    const userRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(userRef);
+
+    if (!docSnap.exists()) {
+      return null;
+    }
+
     return docSnap.data() as UserDocument;
   } catch (error: any) {
     throw new Error(`Error getting user profile: ${error.message}`);
-  }
-};
-
-/* -------------------------------------------------------------
-   UPDATE USER PROFILE
-------------------------------------------------------------- */
-export const updateUserProfile = async (
-  uid: string,
-  updates: Partial<UserDocument>,
-) => {
-  try {
-    // FIX: was doc(collection(db, 'users'), uid) — deprecated in v22
-    await updateDoc(doc(db, 'users', uid), {
-      ...updates,
-      updatedAt: serverTimestamp(),
-    });
-    return { success: true };
-  } catch (error: any) {
-    throw new Error('Profile update failed: ' + error.message);
   }
 };
 
@@ -356,14 +258,15 @@ export const updateUserProfile = async (
 ------------------------------------------------------------- */
 export const joinClass = async (studentId: string, joinClassCode: string) => {
   try {
-    const querySnapshot = await getDocs(
-      query(
-        collection(db, 'classes'),
-        where('classCode', '==', joinClassCode),
-        where('isActive', '==', true),
-        limit(1),
-      ),
+    // Search class by code - MODULAR API
+    const classesRef = collection(db, 'classes');
+    const classQuery = query(
+      classesRef,
+      where('classCode', '==', joinClassCode.toUpperCase()),
+      limit(1),
     );
+
+    const querySnapshot = await getDocs(classQuery);
 
     if (querySnapshot.empty) throw new Error('Invalid or inactive class code');
 
@@ -371,85 +274,59 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     const classData = classDoc.data() as ClassDocument;
     const classId = classData.classId;
 
+    // Already enrolled?
     if (classData.studentIds.includes(studentId))
       throw new Error('Already enrolled in this class');
 
-    // Validate grade level match
-    const studentProfile = await getUserProfile(studentId);
-    if (studentProfile?.studentData?.gradeLevel !== classData.gradeLevel) {
-      console.warn(
-        `Grade mismatch: Student grade ${studentProfile?.studentData?.gradeLevel} vs Class grade ${classData.gradeLevel}`,
-      );
-    }
-
-    // FIX: was doc(collection(db, 'classes'), classId) — deprecated in v22
-    await updateDoc(doc(db, 'classes', classId), {
+    // Add student to class - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await updateDoc(classRef, {
       studentIds: arrayUnion(studentId),
       updatedAt: serverTimestamp(),
     });
 
-    // FIX: was doc(collection(db, 'users'), studentId) — deprecated in v22
-    await updateDoc(doc(db, 'users', studentId), {
-      'studentData.classCode': joinClassCode,
+    // Update student's classCode - MODULAR API
+    const studentRef = doc(db, 'users', studentId);
+    await updateDoc(studentRef, {
+      'studentData.classCode': joinClassCode.toUpperCase(),
       updatedAt: serverTimestamp(),
     });
 
-    console.log('Successfully joined class:', { classId, classCode: joinClassCode });
     return { success: true, classId, className: classData.className };
   } catch (error: any) {
-    console.error('Join class error:', error.message);
     throw new Error('Failed to join class: ' + error.message);
   }
 };
 
 /* -------------------------------------------------------------
-   CREATE MISCUE REPORT
+   LEAVE CLASS
 ------------------------------------------------------------- */
-export const createMiscueReport = async (
-  reportData: Omit<MiscueReportDocument, 'reportId' | 'timestamp'>,
-) => {
+export const leaveClass = async (studentId: string, classId: string) => {
   try {
-    // auto-ID doc — doc(collection(...)) with no ID is the correct v22 pattern here
-    const reportRef = doc(collection(db, 'miscueReports'));
-    const report: MiscueReportDocument = {
-      ...reportData,
-      reportId: reportRef.id,
-      timestamp: serverTimestamp(),
-    };
+    // Get current class data to find classCode
+    const classRef = doc(db, 'classes', classId);
+    const classSnap = await getDoc(classRef);
+    let classCode = '';
+    if (classSnap.exists()) {
+      classCode = classSnap.data().classCode || '';
+    }
 
-    await setDoc(reportRef, report);
-    return { success: true, reportId: reportRef.id };
+    // Remove student from class - MODULAR API
+    await updateDoc(classRef, {
+      studentIds: arrayRemove(studentId),
+      updatedAt: serverTimestamp(),
+    });
+
+    // Update student's classCode to empty - MODULAR API
+    const studentRef = doc(db, 'users', studentId);
+    await updateDoc(studentRef, {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp(),
+    });
+
+    return { success: true };
   } catch (error: any) {
-    throw new Error('Failed to store Miscue Report');
-  }
-};
-
-/* -------------------------------------------------------------
-   GET STUDENT CURRENT CLASS
-------------------------------------------------------------- */
-export const getStudentClass = async (studentId: string) => {
-  try {
-    // FIX: was doc(collection(db, 'users'), studentId) — deprecated in v22
-    const studentSnap = await getDoc(doc(db, 'users', studentId));
-    if (!studentSnap.exists()) return null;
-
-    const studentData = studentSnap.data() as UserDocument;
-    const classCode = studentData?.studentData?.classCode;
-    if (!classCode) return null;
-
-    const querySnapshot = await getDocs(
-      query(
-        collection(db, 'classes'),
-        where('classCode', '==', classCode),
-        where('isActive', '==', true),
-        limit(1),
-      ),
-    );
-
-    if (querySnapshot.empty) return null;
-    return querySnapshot.docs[0].data() as ClassDocument;
-  } catch (error: any) {
-    throw new Error('Failed to get student class: ' + error.message);
+    throw new Error('Failed to leave class: ' + error.message);
   }
 };
 
@@ -458,108 +335,42 @@ export const getStudentClass = async (studentId: string) => {
 ------------------------------------------------------------- */
 export const loginUser = async (email: string, password: string) => {
   try {
-    const trimmedEmail = email.trim();
-    const trimmedPass = password.trim();
-
-    // TODO: ⚠️ SECURITY — move ADMIN_EMAIL and ADMIN_PASS to a secure
-    //       environment config (e.g. react-native-config or Firebase Remote Config).
-    //       Hardcoding credentials in source exposes them in version control.
-    const ADMIN_EMAIL = 'admin@marungko.com';
-    const ADMIN_PASS = '12345678';
-
-    // ── Admin login path ──────────────────────────────────────
-    if (
-      trimmedEmail.toLowerCase() === ADMIN_EMAIL &&
-      trimmedPass === ADMIN_PASS
-    ) {
-      try {
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          trimmedEmail,
-          trimmedPass,
-        );
-        const user = userCredential.user;
-
-        // FIX: was doc(collection(db, 'users'), user.uid) — deprecated in v22
-        const adminDoc = await getDoc(doc(db, 'users', user.uid));
-        if (!adminDoc.exists()) {
-          await setDoc(doc(db, 'users', user.uid), {
-            uid: user.uid,
-            email: trimmedEmail,
-            role: 'admin',
-            firstName: 'System',
-            lastName: 'Administrator',
-            sex: 'N/A',
-            createdAt: serverTimestamp(),
-          });
-        } else if (
-          (adminDoc.data() as UserDocument | undefined)?.role !== 'admin'
-        ) {
-          await updateDoc(doc(db, 'users', user.uid), {
-            role: 'admin',
-            updatedAt: serverTimestamp(),
-          });
-        }
-
-        return { success: true, user, uid: user.uid };
-      } catch (e: any) {
-        // Admin account doesn't exist yet — create it
-        if (
-          e.code === 'auth/user-not-found' ||
-          e.code === 'user-not-found' ||
-          e.code === 'auth/invalid-credential'
-        ) {
-          const userCredential = await createUserWithEmailAndPassword(
-            auth,
-            trimmedEmail,
-            trimmedPass,
-          );
-          const user = userCredential.user;
-
-          // FIX: was doc(collection(db, 'users'), user.uid) — deprecated in v22
-          await setDoc(doc(db, 'users', user.uid), {
-            uid: user.uid,
-            email: trimmedEmail,
-            role: 'admin',
-            firstName: 'Admin',
-            lastName: '',
-            sex: 'N/A',
-            createdAt: serverTimestamp(),
-          });
-
-          return { success: true, user, uid: user.uid };
-        }
-        throw e;
-      }
-    }
-
-    // ── Regular login path ────────────────────────────────────
+    // Sign in with email and password - MODULAR API
     const userCredential = await signInWithEmailAndPassword(
       auth,
-      trimmedEmail,
-      trimmedPass,
+      email,
+      password,
     );
+    const user = userCredential.user;
+
     return {
       success: true,
-      user: userCredential.user,
-      uid: userCredential.user.uid,
+      user,
+      uid: user.uid,
     };
   } catch (error: any) {
-    const code = error.code;
     let errorMessage = 'Login failed. Please try again.';
 
-    if (code === 'auth/invalid-email') errorMessage = 'Invalid email address.';
-    else if (code === 'auth/user-not-found' || code === 'user-not-found')
-      errorMessage = 'No account found with this email.';
-    else if (code === 'auth/wrong-password' || code === 'wrong-password')
-      errorMessage = 'Incorrect password. Please try again.';
-    else if (code === 'auth/invalid-credential')
-      errorMessage = 'Invalid email or password.';
-    else if (code === 'auth/too-many-requests')
-      errorMessage = 'Too many failed attempts. Please try again later.';
-    else if (code === 'auth/user-disabled')
-      errorMessage = 'This account has been disabled.';
-    else errorMessage = error.message || 'Login failed. Please try again.';
+    // Handle specific Firebase errors
+    switch (error.code) {
+      case 'auth/invalid-email':
+        errorMessage = 'Invalid email address.';
+        break;
+      case 'auth/user-not-found':
+        errorMessage = 'No account found with this email.';
+        break;
+      case 'auth/wrong-password':
+        errorMessage = 'Incorrect password. Please try again.';
+        break;
+      case 'auth/too-many-requests':
+        errorMessage = 'Too many failed attempts. Please try again later.';
+        break;
+      case 'auth/user-disabled':
+        errorMessage = 'This account has been disabled.';
+        break;
+      default:
+        errorMessage = error.message || 'Login failed. Please try again.';
+    }
 
     throw new Error(errorMessage);
   }
@@ -585,38 +396,58 @@ export const logoutUser = async () => {
 };
 
 /* -------------------------------------------------------------
-   SEND PASSWORD RESET EMAIL
+   SEND PASSWORD RESET
 ------------------------------------------------------------- */
-export const sendPasswordReset = async (email: string) => {
+export const sendPasswordReset = async (email: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail)
-      throw new Error('Please enter your email address first.');
-
-    await sendPasswordResetEmail(auth, trimmedEmail);
+    await auth.sendPasswordResetEmail(email);
     return { success: true };
   } catch (error: any) {
-    const code = error.code;
-    let errorMessage = 'Failed to send reset email.';
+    let errorMessage = 'Failed to send password reset email.';
 
-    if (code === 'auth/invalid-email') errorMessage = 'Invalid email address.';
-    else if (code === 'auth/user-not-found' || code === 'user-not-found')
-      errorMessage = 'No account found with this email.';
-    else errorMessage = error.message || 'Failed to send reset email.';
+    switch (error.code) {
+      case 'auth/invalid-email':
+        errorMessage = 'Invalid email address.';
+        break;
+      case 'auth/user-not-found':
+        errorMessage = 'No account found with this email.';
+        break;
+      default:
+        errorMessage = error.message || 'Failed to send password reset email.';
+    }
 
-    throw new Error(errorMessage);
+    return { success: false, error: errorMessage };
   }
 };
 
 /* -------------------------------------------------------------
-   DELETE USER DOCUMENT (ADMIN ONLY)
+   VERIFY FACULTY ACCESS CODE
 ------------------------------------------------------------- */
-export const deleteUserDocument = async (uid: string) => {
+export const verifyFacultyAccessCode = (code: string): boolean => {
+  const validCodes = ['FACULTY2024', 'TEACHER2024', 'EDUCATOR2024'];
+  return validCodes.includes(code.trim().toUpperCase());
+};
+
+/* -------------------------------------------------------------
+   VALIDATE CLASS CODE
+------------------------------------------------------------- */
+export const validateClassCode = async (classCode: string): Promise<{ valid: boolean; message: string }> => {
+  if (!classCode.trim()) {
+    return { valid: false, message: 'Class code is required' };
+  }
+
   try {
-    // FIX: was doc(collection(db, 'users'), uid) — deprecated in v22
-    await deleteDoc(doc(db, 'users', uid));
-    return { success: true };
+    const classData = await getClassByCode(classCode.trim().toUpperCase());
+    if (!classData) {
+      return { valid: false, message: 'Invalid or inactive class code' };
+    }
+
+    if (!classData.isActive) {
+      return { valid: false, message: 'This class is no longer active' };
+    }
+
+    return { valid: true, message: `Found class: ${classData.className || classData.classCode}` };
   } catch (error: any) {
-    throw new Error('Failed to delete user profile: ' + error.message);
+    return { valid: false, message: 'Failed to validate class code' };
   }
 };

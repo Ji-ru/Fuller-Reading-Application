@@ -12,13 +12,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { BookOpenIcon } from '../../Components/GlobalUse/Icons';
-import { getCurrentUser, getUserProfile, getClassByCode, joinClass, validateClassCode } from '../../Controller/AuthenticationController';
+import { getCurrentUser, getUserProfile, getClassByCode, joinClass, validateClassCode, leaveClass } from '../../Controller/AuthenticationController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
-import { updateDoc, doc, serverTimestamp, arrayRemove } from '@react-native-firebase/firestore';
 
 function BackArrow({ color = C.ink }: { color?: string }) {
   return (
@@ -73,17 +72,8 @@ export default function Student_Classes() {
        const user = getCurrentUser();
        if (!user || !classData) return;
 
-       // Remove student from class
-       await updateDoc(doc(db, 'classes', classData.classId), {
-         studentIds: arrayRemove(user.uid),
-         updatedAt: serverTimestamp(),
-       });
-
-       // Clear class code from user
-       await updateDoc(doc(db, 'users', user.uid), {
-         'studentData.classCode': '',
-         updatedAt: serverTimestamp(),
-       });
+       // Leave the class using the controller function
+       await leaveClass(user.uid, classData.classId);
 
        // Reset state
        setClassData(null);
@@ -251,32 +241,32 @@ export default function Student_Classes() {
               <View style={S.joinCard}>
                 <Text style={S.joinLabel}>Code ng Klase</Text>
                 
-                <View style={S.joinInputRow}>
-                  <TextInput
-                    style={[S.joinInput, { flex: 1 }]}
-                    placeholder="Ilagay ang code"
-                    value={joiningCode}
-                    onChangeText={(text) => {
-                      setJoiningCode(text);
-                      setClassCodeValidation(null);
-                    }}
-                    autoCapitalize="characters"
-                    maxLength={6}
-                    editable={!validatingClassCode}
-                  />
-                  <TouchableOpacity 
-                    style={[S.verifyBtn, validatingClassCode && { opacity: 0.6 }]} 
-                    onPress={handleValidateClassCode}
-                    disabled={validatingClassCode}
-                    activeOpacity={0.7}
-                  >
-                    {validatingClassCode ? (
-                      <ActivityIndicator size="small" color={C.white} />
-                    ) : (
-                      <Text style={S.verifyBtnText}>E-verify</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
+<View style={S.joinInputRow}>
+                   <TextInput
+                     style={[S.joinInput, { flex: 2 }]}
+                     placeholder="Ilagay ang code"
+                     value={joiningCode}
+                     onChangeText={(text) => {
+                       setJoiningCode(text);
+                       setClassCodeValidation(null);
+                     }}
+                     autoCapitalize="characters"
+                     maxLength={6}
+                     editable={!validatingClassCode}
+                   />
+                   <TouchableOpacity 
+                     style={[S.verifyBtn, validatingClassCode && { opacity: 0.6 }]} 
+                     onPress={handleValidateClassCode}
+                     disabled={validatingClassCode}
+                     activeOpacity={0.7}
+                   >
+                     {validatingClassCode ? (
+                       <ActivityIndicator size="small" color={C.white} />
+                     ) : (
+                       <Text style={S.verifyBtnText}>E-verify</Text>
+                     )}
+                   </TouchableOpacity>
+                 </View>
                 
                 {classCodeValidation && (
                   <Text style={[
@@ -462,38 +452,42 @@ const S = StyleSheet.create({
     marginBottom: 10,
     alignSelf: 'flex-start',
   },
-  joinInputRow: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'center',
-    marginBottom: 8,
-    width: '100%',
+joinInputRow: {
+     flexDirection: 'row',
+     gap: 10,
+     alignItems: 'center',
+     marginBottom: 8,
+     width: '100%',
+   },
+  joinInput: {
+   backgroundColor: C.bg,
+   borderRadius: 12,
+   paddingHorizontal: 16,
+   height: 46,
+   fontSize: 18,
+   fontFamily: 'Andika-Bold',
+   color: C.ink,
+   textAlign: 'center',
+   borderWidth: 1,
+   borderColor: C.slate + '20',
+   flex: 2,
   },
-joinInput: {
-  backgroundColor: C.bg,
-  borderRadius: 12,
-  paddingHorizontal: 16,
-  height: 46,
-  fontSize: 18,
-  fontFamily: 'Andika-Bold',
-  color: C.ink,
-  textAlign: 'center',
-  borderWidth: 1,
-  borderColor: C.slate + '20',
-},
 verifyBtn: {
-  height: 46,
-  borderRadius: 17,
-  backgroundColor: C.green,
-  justifyContent: 'center',
-  alignItems: 'center',
-  ...Shadows.button,
-},
-  verifyBtnText: {
-    fontSize: 13,
-    fontFamily: 'Andika-Bold',
-    color: C.white,
-  },
+   height: 46,
+   borderRadius: 17,
+   backgroundColor: C.green,
+   justifyContent: 'center',
+   alignItems: 'center',
+   ...Shadows.button,
+   minWidth: 100,
+   paddingHorizontal: 20,
+ },
+verifyBtnText: {
+     fontSize: 14,
+     fontFamily: 'Andika-Bold',
+     color: C.white,
+     paddingHorizontal: 4,
+   },
   validationMessage: {
     fontSize: 12,
     fontFamily: 'Andika-Regular',

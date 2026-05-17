@@ -139,22 +139,26 @@ export default function SignUpOneScreen() {
     return `${day} ${month} ${year}`;
   };
 
-  const handleValidateClassCode = async () => {
-    if (!classCode.trim()) {
-      setClassCodeValidation({ valid: false, message: 'Pakilagay ang class code' });
-      return;
-    }
+   const handleValidateClassCode = async () => {
+     if (!classCode.trim()) {
+       setClassCodeValidation({ valid: false, message: 'Pakilagay ang class code' });
+       return;
+     }
 
-    setValidatingClassCode(true);
-    try {
-      const result = await validateClassCode(classCode.trim().toUpperCase());
-      setClassCodeValidation(result);
-    } catch (error: any) {
-      setClassCodeValidation({ valid: false, message: 'Failed to validate class code' });
-    } finally {
-      setValidatingClassCode(false);
-    }
-  };
+     setValidatingClassCode(true);
+     try {
+       const result = await validateClassCode(classCode.trim().toUpperCase());
+       setClassCodeValidation(result);
+     } catch (error: any) {
+       if (error.message === 'FIRESTORE_PERMISSION_DENIED') {
+         setClassCodeValidation({ valid: false, message: 'Hindi ma-access ang klase. Pakipag-usapan ang iyong guro.' });
+       } else {
+         setClassCodeValidation({ valid: false, message: 'Failed to validate class code' });
+       }
+     } finally {
+       setValidatingClassCode(false);
+     }
+   };
 
   return (
     <SafeAreaView style={signup.container}>

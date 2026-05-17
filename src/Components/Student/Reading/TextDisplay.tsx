@@ -97,24 +97,18 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         let wordColor = '#1c2833'; // Default black (during reading)
 
         if (showFeedback) {
-          const noAudio = !spokenText || spokenText.trim() === '';
-          if (noAudio) {
-            // No audio detected — all words red
-            wordColor = '#eb5c6c';
-} else {
-             const posData = miscuesByPosition.get(globalWordIndex);
-              if (posData?.substitution) {
+            const posData = miscuesByPosition.get(globalWordIndex);
+            if (posData?.substitution) {
                 wordColor = '#eb5c6c'; // Pagpapalit (Red)
-              } else if (posData?.omission) {
+            } else if (posData?.omission) {
                 wordColor = '#f39c12'; // Pagkakaltas (Orange)
-              } else if (posData?.insertion) {
+            } else if (posData?.insertion) {
                 wordColor = '#3498db'; // Pagdaragdag (Blue)
-              } else if (posData?.repetition) {
+            } else if (posData?.repetition) {
                 wordColor = '#9b59b6'; // Pag-uulit (Purple)
-             } else {
-               wordColor = '#1a7a45'; // Correct (Green)
-             }
-           }
+            } else {
+                wordColor = '#1a7a45'; // Correct (Green)
+            }
         }
 
         renderedWords.push(
