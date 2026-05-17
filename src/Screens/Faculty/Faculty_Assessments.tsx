@@ -723,8 +723,8 @@ const S = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
     marginBottom: 20, ...Shadows.cardLift 
   },
-  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4 },
-  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white },
+  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4, fontFamily: 'Andika-Regular' },
+  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white, fontFamily: 'Andika-Bold' },
   
   createBtn: { 
     flexDirection: 'row', alignItems: 'center', backgroundColor: F.white, 
@@ -734,11 +734,11 @@ const S = StyleSheet.create({
     width: 40, height: 40, borderRadius: 12, backgroundColor: F.primary, 
     justifyContent: 'center', alignItems: 'center', marginRight: 16 
   },
-  createBtnText: { fontSize: 15, fontWeight: '800', color: F.ink },
+  createBtnText: { fontSize: 15, fontWeight: '800', color: F.ink, fontFamily: 'Andika-Bold' },
   
   listLabel: { 
     fontSize: 13, fontWeight: '800', color: F.slate, letterSpacing: 1, 
-    marginBottom: 16, textTransform: 'uppercase' 
+    marginBottom: 16, textTransform: 'uppercase', fontFamily: 'Andika-Bold'
   },
   
   filterBar: { 
@@ -755,18 +755,18 @@ const S = StyleSheet.create({
     width: 32, height: 32, borderRadius: 8, backgroundColor: F.primary + '15', 
     justifyContent: 'center', alignItems: 'center', marginRight: 12 
   },
-  dropdownValue: { fontSize: 15, fontWeight: '700', color: F.ink },
+  dropdownValue: { fontSize: 15, fontWeight: '700', color: F.ink, fontFamily: 'Andika-Bold' },
   
   filterOption: {
     paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
   },
   filterOptionActive: { borderBottomColor: F.primary + '20' },
-  filterOptionText: { fontSize: 16, fontWeight: '600', color: F.ink },
-  filterOptionTextActive: { color: F.primary, fontWeight: '800' },
-  filterOptionSub: { fontSize: 12, color: F.slate, marginTop: 2 },
+  filterOptionText: { fontSize: 16, fontWeight: '600', color: F.ink, fontFamily: 'Andika-Regular' },
+  filterOptionTextActive: { color: F.primary, fontWeight: '800', fontFamily: 'Andika-Bold' },
+  filterOptionSub: { fontSize: 12, color: F.slate, marginTop: 2, fontFamily: 'Andika-Regular' },
   activeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: F.primary },
-  modalTitle: { fontSize: 20, fontWeight: '900', color: F.ink, textAlign: 'center', marginVertical: 20 },
+  modalTitle: { fontSize: 20, fontWeight: '900', color: F.ink, textAlign: 'center', marginVertical: 20, fontFamily: 'Andika-Bold' },
   
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
   
@@ -775,22 +775,22 @@ const S = StyleSheet.create({
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   cardIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: F.primary + '15', justifyContent: 'center', alignItems: 'center' },
   cardTitleArea: { flex: 1, marginLeft: 16 },
-  cardTitle: { fontSize: 17, fontWeight: '800', color: F.ink },
-  cardMeta: { fontSize: 12, color: F.slate, marginTop: 2, fontWeight: '600' },
+  cardTitle: { fontSize: 17, fontWeight: '800', color: F.ink, fontFamily: 'Andika-Bold' },
+  cardMeta: { fontSize: 12, color: F.slate, marginTop: 2, fontWeight: '600', fontFamily: 'Andika-Regular' },
   
   cardFooter: { 
     marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#f1f1f1',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
   },
   codeBadge: { flexDirection: 'row', alignItems: 'center' },
-  codeLabel: { fontSize: 12, color: F.slate, fontWeight: '600' },
-  codeVal: { fontSize: 13, fontWeight: '800', color: F.primaryDeep, marginLeft: 6, textTransform: 'uppercase' },
+  codeLabel: { fontSize: 12, color: F.slate, fontWeight: '600', fontFamily: 'Andika-Regular' },
+  codeVal: { fontSize: 13, fontWeight: '800', color: F.primaryDeep, marginLeft: 6, textTransform: 'uppercase', fontFamily: 'Andika-Bold' },
   actionBtn: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', ...Shadows.subtle },
-
+  
   emptyState: { alignItems: 'center', marginTop: 40, opacity: 0.5 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: F.ink, marginTop: 16 },
-  emptyDesc: { fontSize: 14, color: F.slate, textAlign: 'center', marginTop: 8 },
-
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: F.ink, marginTop: 16, fontFamily: 'Andika-Bold' },
+  emptyDesc: { fontSize: 14, color: F.slate, textAlign: 'center', marginTop: 8, fontFamily: 'Andika-Regular' },
+  
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContainer: { 
     backgroundColor: F.white, 
@@ -804,38 +804,38 @@ const S = StyleSheet.create({
   dismissHandle: { width: 40, height: 5, borderRadius: 2.5, backgroundColor: '#e0e0e0', marginBottom: 5 },
   modalScroll: { flex: 1, paddingHorizontal: 20 },
   
-  previewTitle: { fontSize: 24, fontWeight: '900', color: F.ink, marginBottom: 12, textAlign: 'center' },
+  previewTitle: { fontSize: 24, fontWeight: '900', color: F.ink, marginBottom: 12, textAlign: 'center', fontFamily: 'Andika-Bold' },
   tabBar: { flexDirection: 'row', backgroundColor: F.slate + '10', borderRadius: 12, padding: 4, marginBottom: 15 },
   tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   tabActive: { backgroundColor: F.white, ...Shadows.subtle },
-  tabText: { fontSize: 13, fontWeight: '700', color: F.slate },
-  tabTextActive: { color: F.primaryDeep, fontWeight: '800' },
-
+  tabText: { fontSize: 13, fontWeight: '700', color: F.slate, fontFamily: 'Andika-Regular' },
+  tabTextActive: { color: F.primaryDeep, fontWeight: '800', fontFamily: 'Andika-Bold' },
+  
   resultsContainer: { flex: 1 },
   loadingArea: { padding: 40, alignItems: 'center' },
-  loadingText: { fontSize: 13, color: F.slate, marginTop: 10, fontWeight: '600' },
+  loadingText: { fontSize: 13, color: F.slate, marginTop: 10, fontWeight: '600', fontFamily: 'Andika-Regular' },
   resultItem: { 
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
     backgroundColor: F.white, padding: 16, borderRadius: 16, marginBottom: 10,
     borderWidth: 1, borderColor: '#f0f0f0'
   },
   resultInfo: { flex: 1 },
-  resultName: { fontSize: 16, fontWeight: '800', color: F.inkDeep },
-  resultDate: { fontSize: 12, color: F.slate, marginTop: 2 },
+  resultName: { fontSize: 16, fontWeight: '800', color: F.inkDeep, fontFamily: 'Andika-Bold' },
+  resultDate: { fontSize: 12, color: F.slate, marginTop: 2, fontFamily: 'Andika-Regular' },
   resultScoreBox: { alignItems: 'flex-end' },
-  resultScore: { fontSize: 17, fontWeight: '900' },
-  resultPercent: { fontSize: 11, fontWeight: '700', color: F.slate, marginTop: 2 },
+  resultScore: { fontSize: 17, fontWeight: '900', fontFamily: 'Andika-Bold' },
+  resultPercent: { fontSize: 11, fontWeight: '700', color: F.slate, marginTop: 2, fontFamily: 'Andika-Regular' },
   emptyResults: { padding: 40, alignItems: 'center' },
-  emptyResultsText: { fontSize: 14, color: F.slate, fontStyle: 'italic', textAlign: 'center' },
-
+  emptyResultsText: { fontSize: 14, color: F.slate, fontStyle: 'italic', textAlign: 'center', fontFamily: 'Andika-Regular' },
+  
   analyticsContainer: { backgroundColor: F.primary + '05', padding: 16, borderRadius: 16, marginBottom: 20, borderWidth: 1, borderColor: F.primary + '20' },
-  analyticsHeader: { fontSize: 16, fontWeight: '800', color: F.inkDeep, marginBottom: 12 },
+  analyticsHeader: { fontSize: 16, fontWeight: '800', color: F.inkDeep, marginBottom: 12, fontFamily: 'Andika-Bold' },
   analyticsBlock: { marginBottom: 12 },
-  analyticsSubheader: { fontSize: 12, fontWeight: '800', color: F.slate, marginBottom: 8, textTransform: 'uppercase' },
+  analyticsSubheader: { fontSize: 12, fontWeight: '800', color: F.slate, marginBottom: 8, textTransform: 'uppercase', fontFamily: 'Andika-Bold' },
   statRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)' },
-  statLabel: { fontSize: 14, fontWeight: '700', color: F.ink, fontStyle: 'italic' },
-  statValue: { fontSize: 13, fontWeight: '800' },
-
+  statLabel: { fontSize: 14, fontWeight: '700', color: F.ink, fontStyle: 'italic', fontFamily: 'Andika-Regular' },
+  statValue: { fontSize: 13, fontWeight: '800', fontFamily: 'Andika-Bold' },
+  
   previewCardContainer: { flex: 1, marginVertical: 20, alignItems: 'center', justifyContent: 'center' },
   largePreviewCard: {
     width: '90%', height: 230, borderRadius: Radii.xl, padding: 10,
@@ -845,22 +845,22 @@ const S = StyleSheet.create({
     justifyContent: 'center', alignSelf: 'center'
   },
   largeCardBody: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
-  largeCardText: { fontSize: 44, fontWeight: '900', textAlign: 'center' },
+  largeCardText: { fontSize: 44, fontWeight: '900', textAlign: 'center', fontFamily: 'Andika-Bold' },
   
   miniCardTop: { position: 'absolute', top: 12, left: 14, zIndex: 10 },
   miniCardType: { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  miniCardTypeText: { fontSize: 9, fontWeight: '800', color: F.white, letterSpacing: 0.5 },
+  miniCardTypeText: { fontSize: 9, fontWeight: '800', color: F.white, letterSpacing: 0.5, fontFamily: 'Andika-Bold' },
   
   cardCounterBox: { position: 'absolute', bottom: 12, right: 14, backgroundColor: F.slate + '10', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  cardCounterText: { fontSize: 10, fontWeight: '800', color: F.slate, letterSpacing: 0.5 },
-
+  cardCounterText: { fontSize: 10, fontWeight: '800', color: F.slate, letterSpacing: 0.5, fontFamily: 'Andika-Bold' },
+  
   tileShine: { position: 'absolute', top: 5, right: 6, width: 15, height: 15, borderRadius: 7.5, backgroundColor: 'rgba(255,255,255,0.25)' },
   tileShine2: { position: 'absolute', top: 12, right: 18, width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)' },
-
+  
   deckWrapper: { flexDirection: 'row', alignItems: 'center', width: '100%', marginVertical: 10, justifyContent: 'center' },
   scrollArrow: { width: 44, height: 44, borderRadius: 22, backgroundColor: F.white, justifyContent: 'center', alignItems: 'center', ...Shadows.card, zIndex: 10 },
   paginationDots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 15 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#eee', marginHorizontal: 3 },
   dotActive: { backgroundColor: F.primary, width: 14 },
-  moreDots: { fontSize: 10, color: F.slate, marginLeft: 2 },
+  moreDots: { fontSize: 10, color: F.slate, marginLeft: 2, fontFamily: 'Andika-Regular' },
 });

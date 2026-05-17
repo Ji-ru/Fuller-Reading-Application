@@ -43,6 +43,7 @@ export type RootStackParamList = {
   MyClasses: undefined;
   ChooseRole: undefined;
   Profile: undefined;
+  Tungkol: undefined;
 
   // FACULTY NAVIGATION
   FacultyDashboard: undefined;

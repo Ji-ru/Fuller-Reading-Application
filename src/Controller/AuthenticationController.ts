@@ -126,15 +126,19 @@ export const SignUpUserCredentials = async (
     }
 
     // 6. Auto-enroll student
+    let enrollmentResult = { success: false, message: '' };
     if (userData.role === 'student' && userData.classCode) {
       try {
         await joinClass(user.uid, userData.classCode);
-      } catch (e) {
-        console.log('Auto-enrollment failed (invalid code):', e);
+        enrollmentResult = { success: true, message: 'Successfully enrolled in class' };
+        console.log('Auto-enrollment successful:', userData.classCode);
+      } catch (e: any) {
+        enrollmentResult = { success: false, message: e.message };
+        console.error('Auto-enrollment failed:', e.message);
       }
     }
 
-    return { success: true, user };
+    return { success: true, user, enrollment: enrollmentResult };
   } catch (error: any) {
     throw new Error(`Registration Failed: ${error.message}`);
   }
@@ -282,6 +286,26 @@ export const getAllActiveClasses = async () => {
 };
 
 /* -------------------------------------------------------------
+   VALIDATE CLASS CODE
+------------------------------------------------------------- */
+export const validateClassCode = async (classCode: string): Promise<{ valid: boolean; message: string }> => {
+  try {
+    if (!classCode.trim()) {
+      return { valid: false, message: 'Class code is required' };
+    }
+
+    const classData = await getClassByCode(classCode.trim().toUpperCase());
+    if (!classData) {
+      return { valid: false, message: 'Invalid or inactive class code' };
+    }
+
+    return { valid: true, message: `Found class: ${classData.className}` };
+  } catch (error: any) {
+    return { valid: false, message: error.message || 'Failed to validate class code' };
+  }
+};
+
+/* -------------------------------------------------------------
    VERIFY FACULTY ACCESS CODE
 ------------------------------------------------------------- */
 export const verifyFacultyAccessCode = (code: string): boolean => {
@@ -350,6 +374,14 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     if (classData.studentIds.includes(studentId))
       throw new Error('Already enrolled in this class');
 
+    // Validate grade level match
+    const studentProfile = await getUserProfile(studentId);
+    if (studentProfile?.studentData?.gradeLevel !== classData.gradeLevel) {
+      console.warn(
+        `Grade mismatch: Student grade ${studentProfile?.studentData?.gradeLevel} vs Class grade ${classData.gradeLevel}`,
+      );
+    }
+
     // FIX: was doc(collection(db, 'classes'), classId) — deprecated in v22
     await updateDoc(doc(db, 'classes', classId), {
       studentIds: arrayUnion(studentId),
@@ -362,8 +394,10 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
       updatedAt: serverTimestamp(),
     });
 
+    console.log('Successfully joined class:', { classId, classCode: joinClassCode });
     return { success: true, classId, className: classData.className };
   } catch (error: any) {
+    console.error('Join class error:', error.message);
     throw new Error('Failed to join class: ' + error.message);
   }
 };

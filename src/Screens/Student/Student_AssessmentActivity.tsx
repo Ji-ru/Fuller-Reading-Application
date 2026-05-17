@@ -425,30 +425,41 @@ export default function StudentAssessmentActivity() {
           {isProcessed && miscues.length > 0 && (
             <BounceIn delay={200} style={S.miscueReportContainer}>
               <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
-              <View style={S.miscueTypesRow}>
-                {(() => {
-                  const typeCounts = {
-                    omission: miscues.filter(m => m.type === 'omission').length,
-                    substitution: miscues.filter(m => m.type === 'substitution').length,
-                    insertion: miscues.filter(m => m.type === 'insertion').length,
-                    repetition: miscues.filter(m => m.type === 'repetition').length,
-                  };
-                  return [
-                    { type: 'omission', fil: 'Kaligtaan', color: C.orange, count: typeCounts.omission },
-                    { type: 'substitution', fil: 'Pagpapalit', color: C.red, count: typeCounts.substitution },
-                    { type: 'insertion', fil: 'Pagsingit', color: C.yellow, count: typeCounts.insertion },
-                    { type: 'repetition', fil: 'Pag-uulit', color: C.teal, count: typeCounts.repetition },
-                  ].map((m) => (
-                    m.count > 0 ? (
-                      <View key={m.type} style={[S.miscueTypeChip, { backgroundColor: m.color + '20', borderColor: m.color }]}>
-                        <Text style={[S.miscueTypeChipText, { color: m.color }]}>
-                          {m.fil} ({m.count})
-                        </Text>
+              {(() => {
+                const typeCounts = {
+                  omission: miscues.filter(m => m.type === 'omission').length,
+                  substitution: miscues.filter(m => m.type === 'substitution').length,
+                  insertion: miscues.filter(m => m.type === 'insertion').length,
+                  repetition: miscues.filter(m => m.type === 'repetition').length,
+                };
+                const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
+                const max = Math.max(...Object.values(typeCounts), 1);
+                const colors = {
+                  omission: { bar: '#f39c12', bg: '#FFF3E0', label: 'Kaligtaan' },
+                  substitution: { bar: '#eb5c6c', bg: '#FFEBEE', label: 'Pagpapalit' },
+                  insertion: { bar: '#42A5F5', bg: '#E3F2FD', label: 'Pagdaragdag' },
+                  repetition: { bar: '#AB47BC', bg: '#F3E5F5', label: 'Pag-uulit' },
+                };
+                return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
+                  const pct = (count / max) * 100;
+                  const c = colors[type as keyof typeof colors];
+                  return (
+                    <View key={type} style={S.miscueBarRow}>
+                      <View style={S.miscueBarHeader}>
+                        <View style={[S.miscueBarDot, { backgroundColor: c.bar }]} />
+                        <Text style={S.miscueBarLabel}>{c.label}</Text>
+                        <Text style={S.miscueBarPct}>{total > 0 ? Math.round((count / total) * 100) : 0}%</Text>
                       </View>
-                    ) : null
-                  ));
-                })()}
-              </View>
+                      <View style={S.miscueBarTrackContainer}>
+                        <View style={[S.miscueBarTrack, { backgroundColor: c.bg }]}>
+                          <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
+                        </View>
+                        <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
+                      </View>
+                    </View>
+                  );
+                });
+              })()}
             </BounceIn>
           )}
 
@@ -615,7 +626,7 @@ const S = StyleSheet.create({
   },
 
   miscueReportContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: 16,
     backgroundColor: C.white,
     padding: 16,
@@ -633,22 +644,55 @@ const S = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  miscueTypesRow: {
+  miscueBarRow: {
+    width: '100%',
+    gap: 4,
+    marginBottom: 8,
+  },
+  miscueBarHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: 6,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
   },
-  miscueTypeChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
+  miscueBarDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  miscueTypeChipText: {
+  miscueBarLabel: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.ink,
+    fontFamily: 'Andika-Regular',
+  },
+  miscueBarPct: {
     fontSize: 12,
-    fontFamily: 'Andika-Bold',
+    fontWeight: '800',
+    color: C.slate,
+    fontFamily: 'Andika-Regular',
+  },
+  miscueBarTrackContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: 14,
+  },
+  miscueBarTrack: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  miscueBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  miscueBarCount: {
+    minWidth: 28,
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'right',
   },
   actionButtonsContainer: {
     marginTop: 20,

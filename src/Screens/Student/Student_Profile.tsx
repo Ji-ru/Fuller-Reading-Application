@@ -12,6 +12,7 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import bubbles from '../../UI_Designs/BubblesDesign';
@@ -33,7 +34,7 @@ import {
   TargetIcon, ZapIcon, AlertTriangleIcon,
   TypeIcon, BookOpenIcon,
   TrophyIcon, ThumbsUpIcon, FlexIcon, SproutIcon, RocketIcon, StarIcon,
-  LogoutIcon, BurgerIcon
+  LogoutIcon, BurgerIcon, CakeIcon, GenderIcon
 } from '../../Components/GlobalUse/Icons';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 
@@ -216,16 +217,16 @@ function InfoPill({
     <View style={S.infoPill}>
       <View style={{ flex: 1 }}>
         <Text style={S.infoPillLabel}>{label}</Text>
-{editing && onChangeText ? (
-           <TextInput
-             style={S.infoPillInput}
-             value={value}
-             onChangeText={onChangeText}
-             placeholderTextColor={C.slate + '80'}
-           />
-         ) : (
-           <Text style={S.infoPillValue} numberOfLines={1}>{value}</Text>
-         )}
+        {editing && onChangeText ? (
+          <TextInput
+            style={S.infoPillInput}
+            value={value}
+            onChangeText={onChangeText}
+            placeholderTextColor={C.slate + '80'}
+          />
+        ) : (
+          <Text style={S.infoPillValue} numberOfLines={1}>{value}</Text>
+        )}
       </View>
     </View>
   );
@@ -819,6 +820,7 @@ const S = StyleSheet.create({
   infoIconBox:  { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   infoTextBox:  { flex: 1 },
   infoPill:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.greenPale, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, flex: 1 },
+  infoPillInput: { fontSize: 15, fontWeight: '700', color: C.ink, flex: 1 },
 
   infoPillLabel: { fontSize: 11, color: C.slate, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   infoPillValue: { fontSize: 15, fontWeight: '700', color: C.ink, marginTop: 1 },

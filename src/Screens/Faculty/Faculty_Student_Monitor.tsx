@@ -97,7 +97,7 @@ function ReadingLevelBadge({ level }: { level: string }) {
 const SB = StyleSheet.create({
     badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
     dot: { width: 6, height: 6, borderRadius: 3, marginRight: 5 },
-    label: { fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
+    label: { fontSize: 11, fontWeight: '800', textTransform: 'capitalize', fontFamily: 'Andika-Bold' },
 });
 
 // ─── Aralin Mastery Card ─────────────────────────────────────────────────────
@@ -349,9 +349,9 @@ export default function FacultyStudentMonitor() {
             <SafeAreaView style={S.bg}>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <LoadingDots />
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: F.slate, marginTop: 12 }}>
-                        Kinukuha ang datos ng mag-aaral...
-                    </Text>
+<Text style={{ fontSize: 15, fontWeight: '700', color: F.slate, marginTop: 12, fontFamily: 'Andika-Regular' }}>
+                                 Kinukuha ang datos ng mag-aaral...
+                             </Text>
                 </View>
             </SafeAreaView>
         );
@@ -604,6 +604,7 @@ const S = StyleSheet.create({
         fontSize: 22,
         fontWeight: '900',
         color: F.primaryDeep,
+        fontFamily: 'Andika-Bold',
     },
     studentBannerInfo: {
         flex: 1,
@@ -615,12 +616,14 @@ const S = StyleSheet.create({
         color: F.slate,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
+        fontFamily: 'Andika-Regular',
     },
     studentBannerName: {
         fontSize: 17,
         fontWeight: '900',
         color: F.ink,
         marginBottom: 4,
+        fontFamily: 'Andika-Bold',
     },
     bannerStats: {
         flexDirection: 'row',
@@ -635,6 +638,7 @@ const S = StyleSheet.create({
         fontSize: 18,
         fontWeight: '900',
         color: F.primaryDeep,
+        fontFamily: 'Andika-Bold',
     },
     bannerStatLabel: {
         fontSize: 10,
@@ -642,6 +646,7 @@ const S = StyleSheet.create({
         color: F.slate,
         textTransform: 'uppercase',
         marginTop: 2,
+        fontFamily: 'Andika-Regular',
     },
     bannerStatDivider: {
         width: 1,
@@ -678,10 +683,12 @@ const S = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
         color: F.slate,
+        fontFamily: 'Andika-Regular',
     },
     tabTextActive: {
         color: F.primaryDeep,
         fontWeight: '900',
+        fontFamily: 'Andika-Bold',
     },
 
     // ── Hero Banner ──────────────────────────────────────────────────────────────
@@ -696,6 +703,7 @@ const S = StyleSheet.create({
     heroSub: {
         fontSize: 13,
         fontWeight: '600',
+        fontFamily: 'Andika-Regular',
     },
     heroTitle: {
         fontSize: 22,
@@ -703,6 +711,7 @@ const S = StyleSheet.create({
         lineHeight: 28,
         marginTop: 2,
         marginBottom: 12,
+        fontFamily: 'Andika-Bold',
     },
     heroStatsBoxWrapper: {
         backgroundColor: 'rgba(255,255,255,0.15)',
@@ -718,12 +727,14 @@ const S = StyleSheet.create({
         color: 'rgba(255,255,255,0.9)',
         fontWeight: '700',
         textTransform: 'uppercase',
+        fontFamily: 'Andika-Bold',
     },
     heroStatVal: {
         fontSize: 20,
         fontWeight: '900',
         color: F.white,
         marginTop: 2,
+        fontFamily: 'Andika-Bold',
     },
 
     // ── Aralin Mastery Card ──────────────────────────────────────────────────────
@@ -744,9 +755,9 @@ const S = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    aralinLetter: { fontSize: 28, fontWeight: '900', textTransform: 'uppercase' },
-    aralinLabelText: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.5 },
-    aralinTitleText: { fontSize: 22, fontWeight: '900', color: C.ink },
+    aralinLetter: { fontSize: 28, fontWeight: '900', textTransform: 'uppercase', fontFamily: 'Andika-Bold' },
+    aralinLabelText: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: 'Andika-Bold' },
+    aralinTitleText: { fontSize: 22, fontWeight: '900', color: C.ink, fontFamily: 'Andika-Bold' },
 
     aralinProgressWrapper: {
         marginTop: 18,
@@ -760,8 +771,8 @@ const S = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 8,
     },
-    progLabel: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
-    progVal: { fontSize: 13, fontWeight: '900' },
+    progLabel: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'Andika-Bold' },
+    progVal: { fontSize: 13, fontWeight: '900', fontFamily: 'Andika-Bold' },
     progTrack: { height: 8, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 4, overflow: 'hidden' },
     progFill: { height: '100%', borderRadius: 4 },
 
@@ -781,6 +792,7 @@ const S = StyleSheet.create({
         fontWeight: '900',
         color: C.white,
         textTransform: 'uppercase',
+        fontFamily: 'Andika-Bold',
     },
 
     // ── Empty State ──────────────────────────────────────────────────────────────
@@ -796,11 +808,13 @@ const S = StyleSheet.create({
         textAlign: 'center',
         marginTop: 20,
         marginBottom: 8,
+        fontFamily: 'Andika-Bold',
     },
     emptyHint: {
         fontSize: 14,
         color: F.slate,
         textAlign: 'center',
         lineHeight: 21,
+        fontFamily: 'Andika-Regular',
     },
 });

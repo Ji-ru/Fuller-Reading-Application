@@ -24,7 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlertTriangleIcon } from '../../Components/GlobalUse/Icons';
 import GenderSelection from '../../Components/SignUp/Buttons/GenderRadioButton';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
-import { getClassByCode, verifyFacultyAccessCode } from '../../Controller/AuthenticationController';
+import { getClassByCode, verifyFacultyAccessCode, validateClassCode } from '../../Controller/AuthenticationController';
 import { RootStackParamList, useNavigationHelper } from '../../Controller/NavigationController';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import buttons from '../../UI_Designs/ButtonStyles';
@@ -66,6 +66,8 @@ export default function SignUpOneScreen() {
 
   // Validation State
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [classCodeValidation, setClassCodeValidation] = useState<{ valid: boolean; message: string } | null>(null);
+  const [validatingClassCode, setValidatingClassCode] = useState(false);
 
   const onChange = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
@@ -135,6 +137,23 @@ export default function SignUpOneScreen() {
     const month = tagalogMonths[dateObj.getMonth()];
     const year = dateObj.getFullYear();
     return `${day} ${month} ${year}`;
+  };
+
+  const handleValidateClassCode = async () => {
+    if (!classCode.trim()) {
+      setClassCodeValidation({ valid: false, message: 'Pakilagay ang class code' });
+      return;
+    }
+
+    setValidatingClassCode(true);
+    try {
+      const result = await validateClassCode(classCode.trim().toUpperCase());
+      setClassCodeValidation(result);
+    } catch (error: any) {
+      setClassCodeValidation({ valid: false, message: 'Failed to validate class code' });
+    } finally {
+      setValidatingClassCode(false);
+    }
   };
 
   return (
@@ -323,16 +342,47 @@ export default function SignUpOneScreen() {
               {role === 'student' && (
                 <>
                   <Text style={signup.textform}>Class Code (Opsyonal)</Text>
-                  <TextInput
-                    style={signup.textInputForm}
-                    placeholder="Ilagay ang class code"
-                    value={classCode}
-                    onChangeText={setClassCode}
-                    autoCapitalize="characters"
-                  />
-                  <Text style={localStyles.requirementInfo}>
-                    * Maaari itong i-skip at ilagay mamaya.
-                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                    <TextInput
+                      style={[signup.textInputForm, { flex: 1 }]}
+                      placeholder="Ilagay ang code"
+                      value={classCode}
+                      onChangeText={(text) => {
+                        setClassCode(text);
+                        setClassCodeValidation(null);
+                      }}
+                      autoCapitalize="characters"
+                      editable={!validatingClassCode}
+                    />
+                    <TouchableOpacity
+                      style={[
+                        localStyles.validateBtn,
+                        validatingClassCode && { opacity: 0.6 }
+                      ]}
+                      onPress={handleValidateClassCode}
+                      disabled={validatingClassCode}
+                      activeOpacity={0.7}
+                    >
+                      {validatingClassCode ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text style={localStyles.validateBtnText}>Verify</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  {classCodeValidation && (
+                    <Text style={[
+                      localStyles.requirementInfo,
+                      { color: classCodeValidation.valid ? '#27ae60' : '#e74c3c' }
+                    ]}>
+                      {classCodeValidation.valid ? '✓ ' : '✗ '}{classCodeValidation.message}
+                    </Text>
+                  )}
+                  {!classCodeValidation && (
+                    <Text style={localStyles.requirementInfo}>
+                      * Maaari itong i-skip at ilagay mamaya.
+                    </Text>
+                  )}
                 </>
               )}
 
@@ -703,5 +753,24 @@ const localStyles = StyleSheet.create({
     marginTop: -4,
     marginBottom: 8,
     fontFamily: 'Andika-Regular',
+  },
+  validateBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#3d71d9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 48,
+    shadowColor: '#3d71d9',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  validateBtnText: {
+    fontSize: 13,
+    fontFamily: 'Andika-Bold',
+    color: '#fff',
   },
 });

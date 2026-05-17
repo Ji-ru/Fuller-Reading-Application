@@ -47,6 +47,7 @@ export default function SignUpTwoScreen() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [modalType, setModalType] = useState<'loading' | 'success'>('loading');
   const [modalMessage, setModalMessage] = useState('');
+  const [enrollmentMessage, setEnrollmentMessage] = useState('');
 
   // Ref for Lottie animation
   const congratulationsRef = useRef<LottieView>(null);
@@ -76,10 +77,11 @@ export default function SignUpTwoScreen() {
       setModalVisible(true);
 
       // Call with correct parameters - using non-null assertion since we validated above
+      let result: any = null;
       if (personalInfo.role! === 'student') {
         const classCode = (personalInfo as any).classCode;
 
-        await SignUpUserCredentials(email, password, {
+        result = await SignUpUserCredentials(email, password, {
           role: personalInfo.role!,
           firstName: personalInfo.firstName!,
           middleName: personalInfo.middleName,
@@ -97,7 +99,7 @@ export default function SignUpTwoScreen() {
            return Alert.alert('Access Denied', 'Invalid Faculty Access Code. Please contact your administrator.');
         }
 
-        await SignUpUserCredentials(email, password, {
+        result = await SignUpUserCredentials(email, password, {
           role: personalInfo.role!,
           firstName: personalInfo.firstName!,
           middleName: personalInfo.middleName,
@@ -106,6 +108,15 @@ export default function SignUpTwoScreen() {
           profileImageUrl: personalInfo?.profileImageUrl,
           assignedGradeLevels: (personalInfo as any).assignedGradeLevels || [],
         });  
+      }
+
+      // Set enrollment message if available
+      if (result?.enrollment) {
+        if (result.enrollment.success) {
+          setEnrollmentMessage('✓ Successfully enrolled in class');
+        } else {
+          setEnrollmentMessage(`⚠ ${result.enrollment.message || 'Could not auto-enroll'}`);
+        }
       }
 
       // Switch to success modal
@@ -330,6 +341,11 @@ export default function SignUpTwoScreen() {
                 <Text style={[signup.modalText, signup.successText]}>
                   {modalMessage}
                 </Text>
+                {enrollmentMessage && (
+                  <Text style={[signup.modalText, { fontSize: 13, marginTop: 8, color: '#8fafa0' }]}>
+                    {enrollmentMessage}
+                  </Text>
+                )}
               </>
             )}
           </View>

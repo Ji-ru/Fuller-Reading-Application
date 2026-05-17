@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BounceIn, FloatingImage } from '../../Components/GlobalUse/Animations';
 import {
   BookIcon, UserProfileIcon, LogoutIcon,
-  BurgerIcon, ChevronRightIcon, UsersIcon, HistoryIcon,
+  BurgerIcon, ChevronRightIcon, UsersIcon, HistoryIcon, InfoIcon,
 } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { getCurrentUser, getUserProfile } from '../../Controller/AuthenticationController';
@@ -135,6 +135,19 @@ export default function UserHomeScreen() {
           />
           <View style={S.dropdown}>
             <TouchableOpacity
+              onPress={() => { setMenuVisible(false); handleNextStep('Tungkol'); }}
+              style={S.dropdownItem}
+              activeOpacity={0.75}
+            >
+              <View style={[S.dropdownIconBox, { backgroundColor: C.green + '15' }]}>
+                <InfoIcon size={18} color={C.green} />
+              </View>
+              <Text style={[S.dropdownText, { color: C.green }]}>Tungkol</Text>
+            </TouchableOpacity>
+
+            <View style={S.dropdownDivider} />
+
+            <TouchableOpacity
               onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
               style={S.dropdownItem}
               activeOpacity={0.75}
@@ -192,7 +205,7 @@ export default function UserHomeScreen() {
             <Animated.View style={[S.primaryCard, { transform: [{ scale: cardScale1 }] }]}>
               <View style={S.primaryCardGlow} />
               <View style={S.primaryIconBox}>
-                <BookIcon size={32} color={C.white} />
+                <BookIcon size={30} color={C.white} />
               </View>
               <View style={S.primaryTextBox}>
                 <Text style={S.primaryLabel}>Pagbasa</Text>
@@ -212,7 +225,7 @@ export default function UserHomeScreen() {
             <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
               <View style={S.secondaryCardGlow} />
               <View style={S.secondaryIconBox}>
-                <HistoryIcon size={32} color={C.green} />
+                <HistoryIcon size={30} color={C.green} />
               </View>
               <View style={S.secondaryTextBox}>
                 <Text style={S.secondaryLabel}>Kasaysayan</Text>
@@ -233,7 +246,7 @@ export default function UserHomeScreen() {
     <View style={S.secondaryCardGlow} />
 
     <View style={[S.secondaryIconBox, { backgroundColor: C.sky + '15' }]}>
-      <UsersIcon size={32} color={C.sky} />
+      <UsersIcon size={30} color={C.sky} />
     </View>
 
     <View style={S.secondaryTextBox}>
@@ -256,7 +269,7 @@ export default function UserHomeScreen() {
             <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
               <View style={S.secondaryCardGlow} />
               <View style={[S.secondaryIconBox, { backgroundColor: C.green + '15' }]}>
-                <UserProfileIcon size={32} color={C.green} />
+                <UserProfileIcon size={30} color={C.green} />
               </View>
               <View style={S.secondaryTextBox}>
                 <Text style={S.secondaryLabel}>Aking Profile</Text>
@@ -412,8 +425,8 @@ const S = StyleSheet.create({
     borderRadius: Radii.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     gap: 14,
     overflow: 'hidden',
     ...Shadows.button,
@@ -430,8 +443,8 @@ const S = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   primaryIconBox: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
@@ -453,15 +466,15 @@ const S = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // ── Secondary Cards ─────────────────────────────────────────────────────
+// ── Secondary Cards ─────────────────────────────────────────────────────
   secondaryCard: {
     marginTop: 12,
     backgroundColor: C.white,
     borderRadius: Radii.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     gap: 14,
     ...Shadows.card,
     position: 'relative',
@@ -477,8 +490,8 @@ const S = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   secondaryIconBox: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 18,

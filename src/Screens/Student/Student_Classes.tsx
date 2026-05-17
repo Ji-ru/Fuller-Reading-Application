@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { BookOpenIcon } from '../../Components/GlobalUse/Icons';
-import { getCurrentUser, getUserProfile, getClassByCode, joinClass } from '../../Controller/AuthenticationController';
+import { getCurrentUser, getUserProfile, getClassByCode, joinClass, validateClassCode } from '../../Controller/AuthenticationController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
@@ -32,6 +32,8 @@ export default function Student_Classes() {
   const [leaveModalVisible, setLeaveModalVisible] = useState(false);
   const [joiningCode, setJoiningCode] = useState('');
   const [joining, setJoining] = useState(false);
+  const [classCodeValidation, setClassCodeValidation] = useState<{ valid: boolean; message: string } | null>(null);
+  const [validatingClassCode, setValidatingClassCode] = useState(false);
   const { handleBackStep } = useNavigationHelper();
 
   useEffect(() => {
@@ -68,6 +70,23 @@ export default function Student_Classes() {
     console.log('Leave class pressed');
   };
 
+  const handleValidateClassCode = async () => {
+    if (!joiningCode.trim()) {
+      setClassCodeValidation({ valid: false, message: 'Pakilagay ang class code' });
+      return;
+    }
+
+    setValidatingClassCode(true);
+    try {
+      const result = await validateClassCode(joiningCode.trim().toUpperCase());
+      setClassCodeValidation(result);
+    } catch (error: any) {
+      setClassCodeValidation({ valid: false, message: 'Hindi tama ang class code' });
+    } finally {
+      setValidatingClassCode(false);
+    }
+  };
+
   const handleJoinClass = async () => {
     if (!joiningCode.trim()) {
       Alert.alert('Error', 'Pakilagay ang class code.');
@@ -79,13 +98,31 @@ export default function Student_Classes() {
       const user = getCurrentUser();
       if (!user) return;
 
-      await joinClass(user.uid, joiningCode.trim().toUpperCase());
-      Alert.alert('Tagumpay!', 'Matagumpay kang nakasali sa klase.');
-      
-      // Refresh class data
-      const cls = await getClassByCode(joiningCode.trim().toUpperCase());
+      // Save code to temp variable before any state changes
+      const codeToJoin = joiningCode.trim().toUpperCase();
+
+      // Step 1: Join the class
+      console.log('Joining class with code:', codeToJoin);
+      await joinClass(user.uid, codeToJoin);
+      console.log('Successfully joined class');
+
+      // Step 2: Fetch and display class data
+      console.log('Fetching class data...');
+      const cls = await getClassByCode(codeToJoin);
+      if (!cls) {
+        throw new Error('Hindi makikita ang class information. Sigurado ba ang code?');
+      }
+      console.log('Class data loaded:', cls.className);
       setClassData(cls);
+
+      // Step 3: Clear input and validation only after everything succeeds
+      setJoiningCode('');
+      setClassCodeValidation(null);
+
+      // Show success message
+      Alert.alert('Tagumpay!', `Nagsali ka sa ${cls.className}!`);
     } catch (e: any) {
+      console.error('Join class error:', e.message);
       Alert.alert('Error', e.message || 'Hindi nakasali sa klase.');
     } finally {
       setJoining(false);
@@ -186,19 +223,48 @@ export default function Student_Classes() {
               </View>
               
               <View style={S.joinCard}>
-                <Text style={S.joinLabel}>Class Code</Text>
-                <TextInput
-                  style={S.joinInput}
-                  placeholder="I-type ang Class Code rito"
-                  value={joiningCode}
-                  onChangeText={setJoiningCode}
-                  autoCapitalize="characters"
-                  maxLength={6}
-                />
+                <Text style={S.joinLabel}>Code ng Klase</Text>
+                
+                <View style={S.joinInputRow}>
+                  <TextInput
+                    style={[S.joinInput, { flex: 1 }]}
+                    placeholder="Ilagay ang code"
+                    value={joiningCode}
+                    onChangeText={(text) => {
+                      setJoiningCode(text);
+                      setClassCodeValidation(null);
+                    }}
+                    autoCapitalize="characters"
+                    maxLength={6}
+                    editable={!validatingClassCode}
+                  />
+                  <TouchableOpacity 
+                    style={[S.verifyBtn, validatingClassCode && { opacity: 0.6 }]} 
+                    onPress={handleValidateClassCode}
+                    disabled={validatingClassCode}
+                    activeOpacity={0.7}
+                  >
+                    {validatingClassCode ? (
+                      <ActivityIndicator size="small" color={C.white} />
+                    ) : (
+                      <Text style={S.verifyBtnText}>E Verify ito</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+                
+                {classCodeValidation && (
+                  <Text style={[
+                    S.validationMessage,
+                    { color: classCodeValidation.valid ? '#27ae60' : '#e74c3c' }
+                  ]}>
+                    {classCodeValidation.valid ? '✓ ' : '✗ '}{classCodeValidation.message}
+                  </Text>
+                )}
+                
                 <TouchableOpacity 
                   style={[S.joinBtn, joining && { opacity: 0.7 }]} 
                   onPress={handleJoinClass}
-                  disabled={joining}
+                  disabled={joining || !joiningCode.trim()}
                 >
                   {joining ? (
                     <ActivityIndicator color={C.white} />
@@ -362,7 +428,6 @@ const S = StyleSheet.create({
     borderRadius: Radii.lg,
     padding: 20,
     ...Shadows.card,
-    alignItems: 'center',
   },
   joinLabel: {
     fontSize: 14,
@@ -371,8 +436,14 @@ const S = StyleSheet.create({
     marginBottom: 10,
     alignSelf: 'flex-start',
   },
-  joinInput: {
+  joinInputRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+    marginBottom: 8,
     width: '100%',
+  },
+  joinInput: {
     backgroundColor: C.bg,
     borderRadius: 12,
     paddingHorizontal: 16,
@@ -381,9 +452,30 @@ const S = StyleSheet.create({
     fontFamily: 'Andika-Bold',
     color: C.ink,
     textAlign: 'center',
-    marginBottom: 16,
     borderWidth: 1,
     borderColor: C.slate + '20',
+  },
+  verifyBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: C.green,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 48,
+    ...Shadows.button,
+  },
+  verifyBtnText: {
+    fontSize: 13,
+    fontFamily: 'Andika-Bold',
+    color: C.white,
+  },
+  validationMessage: {
+    fontSize: 12,
+    fontFamily: 'Andika-Regular',
+    marginBottom: 12,
+    marginTop: 4,
+    paddingHorizontal: 4,
   },
   joinBtn: {
     width: '100%',

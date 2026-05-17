@@ -15,8 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
 import MonthlyActivityHeatmap from '../../Components/Faculty/Dashboard/MonthlyActivityHeatmap';
-import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
-import PassageDifficultyRanking from '../../Components/Student/Performance/PassageDifficultyRanking';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import {
@@ -36,7 +34,7 @@ import { getUserProfile } from '../../Controller/AuthenticationController';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { useStudentMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
-import { ClassDocument, MiscueReportDocument } from '../../Interfaces/dataInterfaces';
+import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { FilterOptions } from '../../Interfaces/miscue';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
@@ -68,8 +66,6 @@ export default function FacultyDashboard() {
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [showYearDropdown, setShowYearDropdown] = useState<boolean>(false);
   const [showClassDropdown, setShowClassDropdown] = useState<boolean>(false);
-  const [passageReports, setPassageReports] = useState<MiscueReportDocument[]>([]);
-  const [passageLoading, setPassageLoading] = useState<boolean>(false);
   // ========================================================================
   // HOOKS
   // ========================================================================
@@ -165,37 +161,8 @@ export default function FacultyDashboard() {
       }
     };
 
-    fetchParticipation();
-  }, [auth.currentUser?.uid, selectedClassId, getClassParticipationRate]);
-
-  useEffect(() => {
-    const fetchPassageReports = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      setPassageLoading(true);
-      try {
-        const scopedClasses = selectedAcademicYear
-          ? classes.filter(c => c.acadYear === selectedAcademicYear)
-          : classes;
-        const selectedClass = scopedClasses.find(c => c.classId === selectedClassId);
-        const studentIds = selectedClass
-          ? selectedClass.studentIds || []
-          : scopedClasses.flatMap(c => c.studentIds || []);
-        const uniqueStudentIds = Array.from(new Set(studentIds));
-        const reportsByStudent = await Promise.all(
-          uniqueStudentIds.map(id => MiscueReportController.getStudentReports(id)),
-        );
-        setPassageReports(reportsByStudent.flat());
-      } catch (error: any) {
-        console.log('Passage reports error:', error);
-        setPassageReports([]);
-      } finally {
-        setPassageLoading(false);
-      }
-    };
-
-    fetchPassageReports();
-  }, [auth.currentUser?.uid, classes, selectedAcademicYear, selectedClassId]);
+fetchParticipation();
+   }, [auth.currentUser?.uid, selectedClassId, getClassParticipationRate]);
 
   // ========================================================================
   // EVENT HANDLERS
@@ -333,16 +300,7 @@ export default function FacultyDashboard() {
               {renderStatsSection()}
             </View>
 
-            <View style={{ marginBottom: 20 }}>
-              <Text style={S.sectionLabel}>Reading Health Status</Text>
-              <ClassReadingStatus
-                facultyId={auth.currentUser?.uid || ''}
-                selectedAcademicYear={selectedAcademicYear}
-                selectedClassId={selectedClassId}
-              />
-            </View>
-
-            <View style={{ marginBottom: 20 }}>
+<View style={{ marginBottom: 20 }}>
               <Text style={S.sectionLabel}>Academic Filters</Text>
               <View style={S.filterCard}>
                 <View style={S.filterRow}>
@@ -521,21 +479,7 @@ export default function FacultyDashboard() {
               />
             </View>
 
-            <View style={{ marginBottom: 30 }}>
-              <Text style={S.sectionLabel}>Passage Difficulty</Text>
-              <View style={S.analyticsCard}>
-                {passageLoading ? (
-                  <View style={S.analyticsLoading}>
-                    <ActivityIndicator size="small" color={F.primary} />
-                    <Text style={S.analyticsLoadingText}>Loading passages...</Text>
-                  </View>
-                ) : (
-                  <PassageDifficultyRanking reports={passageReports} />
-                )}
-              </View>
-            </View>
-
-            <View style={{ marginBottom: 30 }}>
+<View style={{ marginBottom: 30 }}>
               <Text style={S.sectionLabel}>Miscue Insights</Text>
               <MiscueAnalytics
                 facultyId={auth.currentUser?.uid || null}
@@ -573,18 +517,18 @@ const S = StyleSheet.create({
     alignItems: 'center', justifyContent: 'space-between',
     ...Shadows.cardLift
   },
-  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4 },
-  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white },
+  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4, fontFamily: 'Andika-Regular' },
+  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white, fontFamily: 'Andika-Bold' },
 
-  sectionLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, marginLeft: 4 },
+  sectionLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, marginLeft: 4, fontFamily: 'Andika-Bold' },
 
   summaryGrid: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   sumCard: {
     flex: 1, minWidth: '45%', backgroundColor: F.white, borderRadius: Radii.lg,
     padding: 16, alignItems: 'center', ...Shadows.card, marginBottom: 10
   },
-  sumVal: { fontSize: 22, fontWeight: '900', color: F.ink, marginVertical: 4 },
-  sumLabel: { fontSize: 11, fontWeight: '700', color: F.slate, textTransform: 'uppercase' },
+  sumVal: { fontSize: 22, fontWeight: '900', color: F.ink, marginVertical: 4, fontFamily: 'Andika-Bold' },
+  sumLabel: { fontSize: 11, fontWeight: '700', color: F.slate, textTransform: 'uppercase', fontFamily: 'Andika-Regular' },
 
   classSelectBtn: {
     backgroundColor: F.white, borderRadius: Radii.lg, padding: 16,
@@ -614,8 +558,8 @@ const S = StyleSheet.create({
     width: 54, height: 54, borderRadius: 18,
     justifyContent: 'center', alignItems: 'center', marginBottom: 14
   },
-  actionLabel: { fontSize: 15, fontWeight: '900', color: F.ink, marginBottom: 4 },
-  actionSub: { fontSize: 10, color: F.slate, fontWeight: '600', textAlign: 'center', lineHeight: 14 },
+  actionLabel: { fontSize: 15, fontWeight: '900', color: F.ink, marginBottom: 4, fontFamily: 'Andika-Bold' },
+  actionSub: { fontSize: 10, color: F.slate, fontWeight: '600', textAlign: 'center', lineHeight: 14, fontFamily: 'Andika-Regular' },
 
   participationCard: {
     backgroundColor: F.white,
@@ -634,11 +578,11 @@ const S = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  participationTitle: { fontSize: 12, fontWeight: '800', color: F.slate, textTransform: 'uppercase', letterSpacing: 0.8 },
-  participationValue: { fontSize: 28, fontWeight: '900', color: F.ink, marginBottom: 4 },
-  participationSub: { fontSize: 12, fontWeight: '700', color: F.slate, marginBottom: 10 },
+  participationTitle: { fontSize: 12, fontWeight: '800', color: F.slate, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: 'Andika-Bold' },
+  participationValue: { fontSize: 28, fontWeight: '900', color: F.ink, marginBottom: 4, fontFamily: 'Andika-Bold' },
+  participationSub: { fontSize: 12, fontWeight: '700', color: F.slate, marginBottom: 10, fontFamily: 'Andika-Regular' },
   participationTrendRow: { flexDirection: 'row', alignItems: 'center' },
-  participationTrend: { fontSize: 12, fontWeight: '800' },
+  participationTrend: { fontSize: 12, fontWeight: '800', fontFamily: 'Andika-Bold' },
   participationTrendUp: { color: F.teal },
   participationTrendDown: { color: F.red },
 
@@ -659,6 +603,7 @@ const S = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
+    fontFamily: 'Andika-Bold',
   },
   filterButton: {
     backgroundColor: F.white,
@@ -672,8 +617,8 @@ const S = StyleSheet.create({
     alignItems: 'center',
   },
   filterButtonActive: { borderColor: F.primary },
-  filterButtonText: { fontSize: 13, fontWeight: '700', color: F.ink },
-  filterButtonIcon: { fontSize: 11, fontWeight: '900', color: F.slate },
+  filterButtonText: { fontSize: 13, fontWeight: '700', color: F.ink, fontFamily: 'Andika-Regular' },
+  filterButtonIcon: { fontSize: 11, fontWeight: '900', color: F.slate, fontFamily: 'Andika-Bold' },
   filterDropdownMenu: {
     marginTop: 8,
     backgroundColor: F.white,
@@ -686,9 +631,9 @@ const S = StyleSheet.create({
   filterDropdownOption: { paddingVertical: 10, paddingHorizontal: 12 },
   filterDropdownOptionLast: { borderBottomWidth: 0 },
   filterDropdownOptionActive: { backgroundColor: F.primary + '12' },
-  filterDropdownOptionText: { fontSize: 13, fontWeight: '700', color: F.slate },
-  filterDropdownOptionTextActive: { color: F.primary, fontWeight: '800' },
-  filterDropdownEmpty: { fontSize: 12, fontWeight: '700', color: F.slate, padding: 12 },
+  filterDropdownOptionText: { fontSize: 13, fontWeight: '700', color: F.slate, fontFamily: 'Andika-Regular' },
+  filterDropdownOptionTextActive: { color: F.primary, fontWeight: '800', fontFamily: 'Andika-Bold' },
+  filterDropdownEmpty: { fontSize: 12, fontWeight: '700', color: F.slate, padding: 12, fontFamily: 'Andika-Regular' },
 
   analyticsCard: {
     backgroundColor: F.white,
@@ -699,5 +644,5 @@ const S = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.03)',
   },
   analyticsLoading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  analyticsLoadingText: { fontSize: 12, fontWeight: '700', color: F.slate },
+  analyticsLoadingText: { fontSize: 12, fontWeight: '700', color: F.slate, fontFamily: 'Andika-Regular' },
 });

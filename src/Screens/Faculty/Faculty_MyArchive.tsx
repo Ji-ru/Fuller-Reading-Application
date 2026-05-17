@@ -189,10 +189,10 @@ const S = StyleSheet.create({
     alignItems: 'center', justifyContent: 'space-between',
     ...Shadows.cardLift
   },
-  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4 },
-  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white },
+  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4, fontFamily: 'Andika-Regular' },
+  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white, fontFamily: 'Andika-Bold' },
 
-  listLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', marginBottom: 16, marginLeft: 4, paddingHorizontal: 20 },
+  listLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', marginBottom: 16, marginLeft: 4, paddingHorizontal: 20, fontFamily: 'Andika-Bold' },
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
   classCard: {
@@ -200,13 +200,13 @@ const S = StyleSheet.create({
   },
   classCardTop: { flexDirection: 'row', alignItems: 'center' },
   iconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#f1f1f1', justifyContent: 'center', alignItems: 'center' },
-  className: { fontSize: 18, fontWeight: '900', color: F.ink },
-  classYear: { fontSize: 13, color: F.slate, fontWeight: '600' },
+  className: { fontSize: 18, fontWeight: '900', color: F.ink, fontFamily: 'Andika-Bold' },
+  classYear: { fontSize: 13, color: F.slate, fontWeight: '600', fontFamily: 'Andika-Regular' },
   restoreBtn: { backgroundColor: F.primary + '15', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
-  restoreText: { fontSize: 12, fontWeight: '800', color: F.primaryDeep },
+  restoreText: { fontSize: 12, fontWeight: '800', color: F.primaryDeep, fontFamily: 'Andika-Bold' },
 
   loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 16, color: F.slate, fontWeight: '600' },
+  loadingText: { marginTop: 16, color: F.slate, fontWeight: '600', fontFamily: 'Andika-Regular' },
 
   emptyBox: { alignItems: 'center', marginTop: 40 },
   emptyIconArea: { 
@@ -214,6 +214,6 @@ const S = StyleSheet.create({
     backgroundColor: F.white, justifyContent: 'center', 
     alignItems: 'center', ...Shadows.card, marginBottom: 24
   },
-  emptyTitle: { fontSize: 20, fontWeight: '900', color: F.ink, marginBottom: 12 },
-  emptySub: { fontSize: 14, color: F.slate, textAlign: 'center', lineHeight: 22, fontWeight: '600' },
+  emptyTitle: { fontSize: 20, fontWeight: '900', color: F.ink, marginBottom: 12, fontFamily: 'Andika-Bold' },
+  emptySub: { fontSize: 14, color: F.slate, textAlign: 'center', lineHeight: 22, fontWeight: '600', fontFamily: 'Andika-Regular' },
 });

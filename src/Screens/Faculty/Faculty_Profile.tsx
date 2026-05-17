@@ -189,7 +189,7 @@ const S = StyleSheet.create({
   },
 
   loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 16, fontSize: 13, fontWeight: '700', color: F.slate },
+  loadingText: { marginTop: 16, fontSize: 13, fontWeight: '700', color: F.slate, fontFamily: 'Andika-Regular' },
 
   content: { padding: 20 },
   heroCard: {
@@ -202,25 +202,25 @@ const S = StyleSheet.create({
   },
   avatar: { width: '100%', height: '100%', borderRadius: 50 },
   heroInfo: { alignItems: 'center' },
-  heroName: { fontSize: 22, fontWeight: '900', color: F.ink, marginBottom: 8 },
+  heroName: { fontSize: 22, fontWeight: '900', color: F.ink, marginBottom: 8, fontFamily: 'Andika-Bold' },
   roleBadge: { backgroundColor: F.primary + '15', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
-  roleText: { fontSize: 10, fontWeight: '800', color: F.primaryDeep, letterSpacing: 1 },
+  roleText: { fontSize: 10, fontWeight: '800', color: F.primaryDeep, letterSpacing: 1, fontFamily: 'Andika-Bold' },
 
   statsGrid: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   statItem: {
     flex: 1, backgroundColor: F.white, padding: 16, borderRadius: Radii.lg,
     alignItems: 'center', ...Shadows.card
   },
-  statVal: { fontSize: 18, fontWeight: '900', color: F.ink, marginVertical: 4 },
-  statLab: { fontSize: 10, fontWeight: '700', color: F.slate, textTransform: 'uppercase' },
+  statVal: { fontSize: 18, fontWeight: '900', color: F.ink, marginVertical: 4, fontFamily: 'Andika-Bold' },
+  statLab: { fontSize: 10, fontWeight: '700', color: F.slate, textTransform: 'uppercase', fontFamily: 'Andika-Regular' },
 
-  sectionLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, marginLeft: 4 },
+  sectionLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, marginLeft: 4, fontFamily: 'Andika-Bold' },
   infoRow: { 
     flexDirection: 'row', alignItems: 'center', padding: 16, 
     marginBottom: 12, backgroundColor: F.white, borderRadius: Radii.lg, ...Shadows.subtle
   },
   smallIconBox: { width: 34, height: 34, borderRadius: 10, backgroundColor: F.bg, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-  infoLabel: { fontSize: 10, fontWeight: '800', color: F.slate, textTransform: 'uppercase' },
-  infoVal: { fontSize: 14, fontWeight: '800', color: F.ink, marginTop: 1 },
+  infoLabel: { fontSize: 10, fontWeight: '800', color: F.slate, textTransform: 'uppercase', fontFamily: 'Andika-Bold' },
+  infoVal: { fontSize: 14, fontWeight: '800', color: F.ink, marginTop: 1, fontFamily: 'Andika-Bold' },
 
 });

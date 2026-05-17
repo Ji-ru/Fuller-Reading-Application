@@ -25,6 +25,7 @@ import ReadingActivityScreenPage from './src/Screens/Student/Student_Reading_Act
 import ReadingHistoryScreen from './src/Screens/Student/Student_History';
 import StudentProfile from './src/Screens/Student/Student_Profile';
 import StudentClasses from './src/Screens/Student/Student_Classes';
+import StudentTungkol from './src/Screens/Student/Student_Tungkol';
 // import FacultyStack from './FacultyStack';
 
 // FACULTY PAGE
@@ -74,9 +75,10 @@ function App() {
             <Stack.Screen name="ReadingActivity" component={ReadingActivityScreenPage} />
             <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
             <Stack.Screen name="MyClasses" component={StudentClasses} />
-            {/* <Stack.Screen name="StudentAssessments" component={StudentAssessments} />
+            <Stack.Screen name="Tungkol" component={StudentTungkol} />
+            <Stack.Screen name="StudentAssessments" component={StudentAssessments} />
             <Stack.Screen name="StudentAssessmentActivity" component={StudentAssessmentActivity} />
-            <Stack.Screen name="StudentAssessmentReview" component={StudentAssessmentReview} /> */}
+            <Stack.Screen name="StudentAssessmentReview" component={StudentAssessmentReview} />
 
             {/* FACULTY PAGES */}
             <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />

@@ -254,32 +254,32 @@ const S = StyleSheet.create({
     marginBottom: 20, ...Shadows.cardLift
   },
   heroLeft: { flex: 1, marginRight: 16 },
-  heroLabel: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4 },
-  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white, marginBottom: 12 },
+  heroLabel: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 4, fontFamily: 'Andika-Regular' },
+  heroTitle: { fontSize: 24, fontWeight: '900', color: F.white, marginBottom: 12, fontFamily: 'Andika-Bold' },
   heroCodeBox: { flexDirection: 'row', alignItems: 'center', opacity: 0.9 },
-  heroCodeLabel: { fontSize: 12, color: F.white, fontWeight: '600' },
-  heroCodeVal: { fontSize: 13, color: F.white, fontWeight: '900', marginLeft: 6, textTransform: 'uppercase' },
+  heroCodeLabel: { fontSize: 12, color: F.white, fontWeight: '600', fontFamily: 'Andika-Regular' },
+  heroCodeVal: { fontSize: 13, color: F.white, fontWeight: '900', marginLeft: 6, textTransform: 'uppercase', fontFamily: 'Andika-Bold' },
 
   searchBox: {
     backgroundColor: F.white, borderRadius: Radii.lg, paddingHorizontal: 16,
     height: 56, flexDirection: 'row', alignItems: 'center', marginBottom: 24, ...Shadows.card
   },
-  searchInput: { flex: 1, marginLeft: 12, fontSize: 16, color: F.ink, fontWeight: '600' },
+  searchInput: { flex: 1, marginLeft: 12, fontSize: 16, color: F.ink, fontWeight: '600', fontFamily: 'Andika-Regular' },
 
   listHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingHorizontal: 4 },
-  listLabel: { fontSize: 13, fontWeight: '800', color: F.slate, letterSpacing: 1 },
-  yearText: { fontSize: 12, fontWeight: '700', color: F.primaryDeep, backgroundColor: F.primary + '15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  listLabel: { fontSize: 13, fontWeight: '800', color: F.slate, letterSpacing: 1, fontFamily: 'Andika-Bold' },
+  yearText: { fontSize: 12, fontWeight: '700', color: F.primaryDeep, backgroundColor: F.primary + '15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, fontFamily: 'Andika-Regular' },
 
   studentCard: {
     backgroundColor: F.white, borderRadius: Radii.xl, padding: 16, marginBottom: 12, ...Shadows.card
   },
   cardMain: { flexDirection: 'row', alignItems: 'center' },
   avatarBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: F.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  avatarText: { fontSize: 18, fontWeight: '900', color: F.primaryDeep },
+  avatarText: { fontSize: 18, fontWeight: '900', color: F.primaryDeep, fontFamily: 'Andika-Bold' },
   studentInfo: { flex: 1 },
-  studentName: { fontSize: 17, fontWeight: '800', color: F.ink, marginBottom: 4 },
+  studentName: { fontSize: 17, fontWeight: '800', color: F.ink, marginBottom: 4, fontFamily: 'Andika-Bold' },
   levelBadge: { backgroundColor: F.primary + '10', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, alignSelf: 'flex-start' },
-  levelText: { fontSize: 11, fontWeight: '700', color: F.primaryDeep, textTransform: 'capitalize' },
+  levelText: { fontSize: 11, fontWeight: '700', color: F.primaryDeep, textTransform: 'capitalize', fontFamily: 'Andika-Regular' },
 
   trendPill: {
     flexDirection: 'row',
@@ -299,12 +299,13 @@ const S = StyleSheet.create({
   trendText: {
     fontSize: 11,
     fontWeight: '800',
+    fontFamily: 'Andika-Bold',
   },
 
   loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 16, color: F.slate, fontWeight: '600' },
+  loadingText: { marginTop: 16, color: F.slate, fontWeight: '600', fontFamily: 'Andika-Regular' },
 
   emptyBox: { alignItems: 'center', marginTop: 60, opacity: 0.5 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: F.ink, marginTop: 16 },
-  emptySub: { fontSize: 14, color: F.slate, textAlign: 'center', marginTop: 8 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: F.ink, marginTop: 16, fontFamily: 'Andika-Bold' },
+  emptySub: { fontSize: 14, color: F.slate, textAlign: 'center', marginTop: 8, fontFamily: 'Andika-Regular' },
 });

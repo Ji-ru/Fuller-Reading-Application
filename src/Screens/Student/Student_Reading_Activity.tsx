@@ -398,7 +398,10 @@ export default function ReadingActivityScreenPage() {
       } catch (e) {
         console.error('Fallback analysis error:', e);
       }
-      setIsReadingCompleted(true);
+setIsReadingCompleted(true);
+    }
+    }, [targetText, getSimulatedResponse, analyzeReadingRef, transcribeAudioAPI, getSimulatedResponse, setIsTranscribing, setFinalTagalogText, setSpokenText, analyzeReadingRef, setIsReadingCompleted]);
+
   const handleRetry = () => {
     setIsReadingCompleted(false);
     setIsCorrectAttempt(false);
@@ -515,33 +518,45 @@ export default function ReadingActivityScreenPage() {
                   </Text>
                 </BounceIn>
 
-                {type === 'passage' && miscues.length > 0 && (
-                  <BounceIn delay={200} style={S.miscueReportContainer}>
+{type === 'passage' && miscues.length > 0 && (
+                  <BounceIn delay={200} style={S.miscueReportContainerNew}>
                     <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
-                    <View style={S.miscueTypesRow}>
-                      {(() => {
-                        const typeCounts = {
-                          omission: miscues.filter(m => m.type === 'omission').length,
-                          substitution: miscues.filter(m => m.type === 'substitution').length,
-                          insertion: miscues.filter(m => m.type === 'insertion').length,
-                          repetition: miscues.filter(m => m.type === 'repetition').length,
-                        };
-                        return [
-                          { type: 'omission', fil: 'Kaligtaan', color: '#f39c12', count: typeCounts.omission },
-                          { type: 'substitution', fil: 'Pagpapalit', color: '#eb5c6c', count: typeCounts.substitution },
-                          { type: 'insertion', fil: 'Pagsingit', color: '#3d71d9', count: typeCounts.insertion },
-                          { type: 'repetition', fil: 'Pag-uulit', color: '#9b59b6', count: typeCounts.repetition },
-                        ].map((m) => (
-                          m.count > 0 ? (
-                            <View key={m.type} style={[S.miscueTypeChip, { backgroundColor: m.color + '15', borderColor: m.color }]}>
-                              <Text style={[S.miscueTypeChipText, { color: m.color }]}>
-                                {m.fil} ({m.count})
-                              </Text>
-                            </View>
-                          ) : null
-                        ));
-                      })()}
-                    </View>
+                    
+{(() => {
+                       const typeCounts = {
+                         omission: miscues.filter(m => m.type === 'omission').length,
+                         substitution: miscues.filter(m => m.type === 'substitution').length,
+                         insertion: miscues.filter(m => m.type === 'insertion').length,
+                         repetition: miscues.filter(m => m.type === 'repetition').length,
+                       };
+                       const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
+                       const max = Math.max(...Object.values(typeCounts), 1);
+                       const colors = {
+                         omission: { bar: '#FF9800', bg: '#FFF3E0', label: 'Kaligtaan' },
+                         substitution: { bar: '#eb5c6c', bg: '#FFEBEE', label: 'Pagpapalit' },
+                         insertion: { bar: '#42A5F5', bg: '#E3F2FD', label: 'Pagdaragdag' },
+                         repetition: { bar: '#AB47BC', bg: '#F3E5F5', label: 'Pag-uulit' },
+                       };
+                       return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
+                         const pct = (count / max) * 100;
+                         const c = colors[type as keyof typeof colors];
+                         return (
+                           <View key={type} style={S.miscueBarRow}>
+                             <View style={S.miscueBarHeader}>
+                               <View style={[S.miscueBarDot, { backgroundColor: c.bar }]} />
+                               <Text style={S.miscueBarLabel}>{c.label}</Text>
+                               <Text style={S.miscueBarPct}>{total > 0 ? Math.round((count / total) * 100) : 0}%</Text>
+                             </View>
+                             <View style={S.miscueBarTrackContainer}>
+                               <View style={[S.miscueBarTrack, { backgroundColor: c.bg }]}>
+                                 <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
+                               </View>
+                               <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
+                             </View>
+                           </View>
+                         );
+                       });
+                     })()}
                   </BounceIn>
                 )}
 
@@ -635,6 +650,72 @@ const S = StyleSheet.create({
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    fontFamily: 'Andika-Bold',
+  },
+  miscueReportContainerNew: {
+    alignItems: 'flex-start',
+    marginTop: 16,
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d6eaf8',
+    width: '95%',
+    shadowColor: '#154360',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  miscueBarRow: {
+    width: '100%',
+    gap: 4,
+    marginBottom: 8,
+  },
+  miscueBarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  miscueBarDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  miscueBarLabel: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1c2833',
+    fontFamily: 'Andika-Regular',
+  },
+  miscueBarPct: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#859dab',
+    fontFamily: 'Andika-Regular',
+  },
+  miscueBarTrackContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: 14,
+  },
+  miscueBarTrack: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  miscueBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  miscueBarCount: {
+    minWidth: 28,
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'right',
     fontFamily: 'Andika-Bold',
   },
   miscueTypesRow: {

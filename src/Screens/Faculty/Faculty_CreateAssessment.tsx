@@ -409,18 +409,18 @@ const S = StyleSheet.create({
     borderColor: F.primaryDeep, transform: [{ rotate: '-45deg' }],
     marginLeft: 4
   },
-  headerTitle: { fontSize: 18, fontWeight: '900', color: F.ink, flex: 1, textAlign: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '900', color: F.ink, flex: 1, textAlign: 'center', fontFamily: 'Andika-Bold' },
   saveBtn: { backgroundColor: F.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, ...Shadows.subtle },
-  saveBtnText: { color: F.white, fontWeight: '800', fontSize: 13 },
+  saveBtnText: { color: F.white, fontWeight: '800', fontSize: 13, fontFamily: 'Andika-Bold' },
 
   scrollContent: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 30 },
   section: { marginBottom: 16 },
-  sectionLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', marginBottom: 12, letterSpacing: 0.5 },
-  subLabel: { fontSize: 12, color: F.slate, marginBottom: 8, fontWeight: '700' },
+  sectionLabel: { fontSize: 13, fontWeight: '800', color: F.slate, textTransform: 'uppercase', marginBottom: 12, letterSpacing: 0.5, fontFamily: 'Andika-Bold' },
+  subLabel: { fontSize: 12, color: F.slate, marginBottom: 8, fontWeight: '700', fontFamily: 'Andika-Regular' },
   
   input: {
     backgroundColor: F.white, borderRadius: 12, padding: 14, fontSize: 15, 
-    color: F.ink, ...Shadows.subtle, fontWeight: '600'
+    color: F.ink, ...Shadows.subtle, fontWeight: '600', fontFamily: 'Andika-Regular'
   },
   formGroup: { marginBottom: 20 },
   row: { flexDirection: 'row', alignItems: 'flex-end' },
@@ -431,7 +431,7 @@ const S = StyleSheet.create({
     marginRight: 8, borderWidth: 1, borderColor: '#eee'
   },
   chipActive: { backgroundColor: F.primary, borderColor: F.primary },
-  chipText: { fontSize: 14, color: F.slate, fontWeight: '700' },
+  chipText: { fontSize: 14, color: F.slate, fontWeight: '700', fontFamily: 'Andika-Regular' },
   chipTextActive: { color: F.white },
 
   aralinRow: { marginBottom: 10 },
@@ -441,18 +441,18 @@ const S = StyleSheet.create({
     borderWidth: 2, borderColor: 'transparent'
   },
   aralinChipActive: { borderColor: F.primary, backgroundColor: F.primary + '05' },
-  aralinChipText: { fontSize: 22, fontWeight: '900', color: F.ink },
+  aralinChipText: { fontSize: 22, fontWeight: '900', color: F.ink, fontFamily: 'Andika-Bold' },
   aralinChipTextActive: { color: F.primary },
-  aralinChipSub: { fontSize: 10, fontWeight: '800', color: F.slate },
+  aralinChipSub: { fontSize: 10, fontWeight: '800', color: F.slate, fontFamily: 'Andika-Bold' },
   aralinChipSubActive: { color: F.primary },
 
-  groupLabel: { fontSize: 14, fontWeight: '800', color: F.ink, marginBottom: 12 },
+  groupLabel: { fontSize: 14, fontWeight: '800', color: F.ink, marginBottom: 12, fontFamily: 'Andika-Bold' },
   itemCard: {
     backgroundColor: F.white, borderRadius: 12, padding: 14, marginBottom: 8,
     flexDirection: 'row', alignItems: 'center', ...Shadows.subtle
   },
   itemCardActive: { backgroundColor: F.primary },
-  itemText: { flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '700', color: F.ink },
+  itemText: { flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '700', color: F.ink, fontFamily: 'Andika-Regular' },
   itemTextActive: { color: F.white },
 
   wordGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -461,7 +461,7 @@ const S = StyleSheet.create({
     borderWidth: 1, borderColor: '#eee', ...Shadows.subtle
   },
   wordChipActive: { backgroundColor: F.primary, borderColor: F.primary },
-  wordChipText: { fontSize: 14, fontWeight: '700', color: F.slate },
+  wordChipText: { fontSize: 14, fontWeight: '700', color: F.slate, fontFamily: 'Andika-Regular' },
   wordChipTextActive: { color: F.white },
 
   nextBtn: {
@@ -469,11 +469,11 @@ const S = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: 20, ...Shadows.card
   },
-  nextBtnText: { color: F.white, fontSize: 16, fontWeight: '800' },
+  nextBtnText: { color: F.white, fontSize: 16, fontWeight: '800', fontFamily: 'Andika-Bold' },
 
   prevStepBtn: { padding: 20, alignItems: 'center' },
-  prevStepText: { color: F.slate, fontWeight: '700', textDecorationLine: 'underline' },
-  emptyInfoText: { fontSize: 13, color: F.slate, fontStyle: 'italic', paddingVertical: 10 },
+  prevStepText: { color: F.slate, fontWeight: '700', textDecorationLine: 'underline', fontFamily: 'Andika-Regular' },
+  emptyInfoText: { fontSize: 13, color: F.slate, fontStyle: 'italic', paddingVertical: 10, fontFamily: 'Andika-Regular' },
 
   aralinGridContainer: { 
     flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between' 
@@ -491,14 +491,14 @@ const S = StyleSheet.create({
   tileLetter: {
     fontSize: 22, fontWeight: '900', color: F.white,
     textShadowColor: 'rgba(0,0,0,0.15)', textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2
+    textShadowRadius: 2, fontFamily: 'Andika-Bold'
   },
   tileRibbon: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(0,0,0,0.12)', paddingVertical: 2, alignItems: 'center'
   },
   tileRibbonText: {
-    fontSize: 7, fontWeight: '800', color: F.white, letterSpacing: 0.3
+    fontSize: 7, fontWeight: '800', color: F.white, letterSpacing: 0.3, fontFamily: 'Andika-Bold'
   },
   selectionOverlay: {
     position: 'absolute', top: 2, left: 2,
@@ -509,11 +509,11 @@ const S = StyleSheet.create({
     backgroundColor: F.primary + '10', padding: 16, borderRadius: 12, marginBottom: 20,
     borderLeftWidth: 4, borderLeftColor: F.primary
   },
-  selectedAralinText: { fontSize: 16, fontWeight: '800', color: F.primary },
+  selectedAralinText: { fontSize: 16, fontWeight: '800', color: F.primary, fontFamily: 'Andika-Bold' },
 
   stepHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   countBadge: { backgroundColor: F.primaryDeep, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  countBadgeText: { color: F.white, fontSize: 11, fontWeight: '800' },
+  countBadgeText: { color: F.white, fontSize: 11, fontWeight: '800', fontFamily: 'Andika-Bold' },
 
   selectedAralinHero: {
     backgroundColor: F.primary, borderRadius: 16, padding: 20, marginBottom: 24,
@@ -521,19 +521,19 @@ const S = StyleSheet.create({
     ...Shadows.cardLift, overflow: 'hidden', position: 'relative'
   },
   heroCircle: { position: 'absolute', borderRadius: 999 },
-  heroLabel: { fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '700', textTransform: 'uppercase' },
-  heroValue: { fontSize: 18, fontWeight: '900', color: F.white, marginTop: 2 },
+  heroLabel: { fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '700', textTransform: 'uppercase', fontFamily: 'Andika-Bold' },
+  heroValue: { fontSize: 18, fontWeight: '900', color: F.white, marginTop: 2, fontFamily: 'Andika-Bold' },
 
   materialSection: { marginBottom: 24 },
   materialHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#f1f1f1', paddingBottom: 8 },
-  materialTitle: { fontSize: 15, fontWeight: '800', color: F.ink },
+  materialTitle: { fontSize: 15, fontWeight: '800', color: F.ink, fontFamily: 'Andika-Bold' },
 
   iconBox: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  iconText: { fontSize: 18, fontWeight: '900', color: F.primary },
+  iconText: { fontSize: 18, fontWeight: '900', color: F.primary, fontFamily: 'Andika-Bold' },
 
   footerActions: { flexDirection: 'row', gap: 12, marginTop: 2, paddingBottom: 20 },
   primaryBtn: { flex: 2, backgroundColor: F.primary, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, alignItems: 'center', ...Shadows.card },
-  primaryBtnText: { color: F.white, fontSize: 14, fontWeight: '800' },
+  primaryBtnText: { color: F.white, fontSize: 14, fontWeight: '800', fontFamily: 'Andika-Bold' },
   secondaryBtn: { flex: 1, backgroundColor: F.white, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, alignItems: 'center', ...Shadows.subtle, borderWidth: 1, borderColor: '#eee' },
-  secondaryBtnText: { color: F.slate, fontSize: 14, fontWeight: '700' },
+  secondaryBtnText: { color: F.slate, fontSize: 14, fontWeight: '700', fontFamily: 'Andika-Regular' },
 });
