@@ -18,6 +18,7 @@ import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
+import { updateDoc, doc, serverTimestamp, arrayRemove } from '@react-native-firebase/firestore';
 
 function BackArrow({ color = C.ink }: { color?: string }) {
   return (
@@ -65,10 +66,35 @@ export default function Student_Classes() {
     setLeaveModalVisible(true);
   };
 
-  const confirmLeaveClass = () => {
-    setLeaveModalVisible(false);
-    console.log('Leave class pressed');
-  };
+   const confirmLeaveClass = async () => {
+     setLeaveModalVisible(false);
+     
+     try {
+       const user = getCurrentUser();
+       if (!user || !classData) return;
+
+       // Remove student from class
+       await updateDoc(doc(db, 'classes', classData.classId), {
+         studentIds: arrayRemove(user.uid),
+         updatedAt: serverTimestamp(),
+       });
+
+       // Clear class code from user
+       await updateDoc(doc(db, 'users', user.uid), {
+         'studentData.classCode': '',
+         updatedAt: serverTimestamp(),
+       });
+
+       // Reset state
+       setClassData(null);
+       setFirstName('Mag-aaral');
+
+       Alert.alert('Tagumpay!', 'Naiwan ka na sa klase.');
+     } catch (error: any) {
+       console.error('Leave class error:', error.message);
+       Alert.alert('Error', error.message || 'Hindi makaiwan sa klase.');
+     }
+   };
 
   const handleValidateClassCode = async () => {
     if (!joiningCode.trim()) {
@@ -443,28 +469,26 @@ const S = StyleSheet.create({
     marginBottom: 8,
     width: '100%',
   },
-  joinInput: {
-    backgroundColor: C.bg,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 18,
-    fontFamily: 'Andika-Bold',
-    color: C.ink,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: C.slate + '20',
-  },
-  verifyBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: C.green,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 48,
-    ...Shadows.button,
-  },
+joinInput: {
+  backgroundColor: C.bg,
+  borderRadius: 12,
+  paddingHorizontal: 16,
+  height: 46,
+  fontSize: 18,
+  fontFamily: 'Andika-Bold',
+  color: C.ink,
+  textAlign: 'center',
+  borderWidth: 1,
+  borderColor: C.slate + '20',
+},
+verifyBtn: {
+  height: 46,
+  borderRadius: 17,
+  backgroundColor: C.green,
+  justifyContent: 'center',
+  alignItems: 'center',
+  ...Shadows.button,
+},
   verifyBtnText: {
     fontSize: 13,
     fontFamily: 'Andika-Bold',

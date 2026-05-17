@@ -197,12 +197,13 @@ const readingStyles = StyleSheet.create({
     fontFamily: 'Andika-Regular',
   },
 
-  highlightedLetter: {
-    color: '#154360',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-    fontSize: scaleFont(22),
-  },
+   highlightedLetter: {
+     color: '#154360',
+     fontWeight: 'bold',
+     textDecorationLine: 'underline',
+     fontSize: scaleFont(22),
+     fontFamily: 'Andika-Bold',
+   },
 
   // ── Word Card ───────────────────────────────────────────────────────────
   wordCardContainer: {
@@ -352,10 +353,11 @@ const readingStyles = StyleSheet.create({
     color: '#1c2833',
   },
 
-  successText: {
-    color: '#154360',
-    fontWeight: 'bold',
-  },
+   successText: {
+     color: '#154360',
+     fontWeight: 'bold',
+     fontFamily: 'Andika-Bold',
+   },
 
   errorText: {
     color: '#e74c3c',

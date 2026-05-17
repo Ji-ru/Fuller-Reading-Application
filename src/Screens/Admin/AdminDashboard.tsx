@@ -28,39 +28,42 @@ export default function AdminDashboard() {
   const [logoutVisible, setLogoutVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [userName, setUserName] = useState<string>('Admin');
-  const [stats, setStats] = useState<{
-    studentCount: number;
-    facultyCount: number;
-    classCount: number;
-    activityCount: number;
-  }>({ studentCount: 0, facultyCount: 0, classCount: 0, activityCount: 0 });
+const [stats, setStats] = useState<{
+  studentCount: number;
+  facultyCount: number;
+  classCount: number;
+}>({ studentCount: 0, facultyCount: 0, classCount: 0 });
   const { handleLogout, handleTabNavigation, handleNavigateStep } = useNavigationHelper();
   const route = useRoute();
   const { getTotals } = useAdminStats();
 
-  const fetchStats = async () => {
-    try {
-      const currentUser = auth().currentUser;
-      if (!currentUser) throw new Error('No authenticated user found');
+   const fetchStats = async () => {
+     try {
+       const currentUser = auth().currentUser;
+       if (!currentUser) throw new Error('No authenticated user found');
 
-      // Fetch Profile for name
-      try {
-        const profile = await getUserProfile(currentUser.uid);
-        if (profile?.firstName) {
-          setUserName(profile.firstName);
-        }
-      } catch (err) {
-        console.log('Name fetch error:', err);
-      }
+       // Fetch Profile for name
+       try {
+         const profile = await getUserProfile(currentUser.uid);
+         if (profile?.firstName) {
+           setUserName(profile.firstName);
+         }
+       } catch (err) {
+         console.log('Name fetch error:', err);
+       }
 
-      const totals = await getTotals(undefined);
-      setStats(totals);
-    } catch (error: any) {
-      console.log('Stats error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+       const totals = await getTotals(undefined);
+       setStats({
+         studentCount: totals.studentCount,
+         facultyCount: totals.facultyCount,
+         classCount: totals.classCount,
+       });
+     } catch (error: any) {
+       console.log('Stats error:', error);
+     } finally {
+       setLoading(false);
+     }
+   };
 
   useEffect(() => {
     fetchStats();
@@ -84,41 +87,36 @@ export default function AdminDashboard() {
     setLogoutVisible(false);
   };
 
-  const renderStatsSection = () => {
-    if (loading) {
-      return (
-        <View style={facultyDashboard.loadingContainer}>
-          <ActivityIndicator size="large" color="#4ECDC4" />
-          <Text style={facultyDashboard.loadingText}>Loading system data...</Text>
-        </View>
-      );
-    }
+   const renderStatsSection = () => {
+     if (loading) {
+       return (
+         <View style={facultyDashboard.loadingContainer}>
+           <ActivityIndicator size="large" color="#4ECDC4" />
+           <Text style={facultyDashboard.loadingText}>Loading system data...</Text>
+         </View>
+       );
+     }
 
-    return (
-      <View style={S.summaryGrid}>
-        <View style={S.sumCard}>
-          <UsersIcon size={20} color={F.primary} />
-          <Text style={S.sumVal}>{stats.studentCount}</Text>
-          <Text style={S.sumLabel}>Mga Mag-aaral</Text>
-        </View>
-        <View style={S.sumCard}>
-          <BriefcaseIcon size={20} color={F.primary} />
-          <Text style={S.sumVal}>{stats.facultyCount}</Text>
-          <Text style={S.sumLabel}>Mga Guro</Text>
-        </View>
-        <View style={S.sumCard}>
-          <BookOpenIcon size={20} color={F.primary} />
-          <Text style={S.sumVal}>{stats.classCount}</Text>
-          <Text style={S.sumLabel}>Aktibong Klase</Text>
-        </View>
-        <View style={S.sumCard}>
-          <ClipboardListIcon size={20} color={F.primary} />
-          <Text style={S.sumVal}>{stats.activityCount}</Text>
-          <Text style={S.sumLabel}>Mga Pagsusulit</Text>
-        </View>
-      </View>
-    );
-  };
+     return (
+       <View style={S.summaryGrid}>
+         <View style={S.sumCard}>
+           <UsersIcon size={20} color={F.primary} />
+           <Text style={S.sumVal}>{stats.studentCount}</Text>
+           <Text style={S.sumLabel}>Mga Mag-aaral</Text>
+         </View>
+         <View style={S.sumCard}>
+           <BriefcaseIcon size={20} color={F.primary} />
+           <Text style={S.sumVal}>{stats.facultyCount}</Text>
+           <Text style={S.sumLabel}>Mga Guro</Text>
+         </View>
+         <View style={S.sumCard}>
+           <BookOpenIcon size={20} color={F.primary} />
+           <Text style={S.sumVal}>{stats.classCount}</Text>
+           <Text style={S.sumLabel}>Aktibong Klase</Text>
+         </View>
+       </View>
+     );
+   };
 
   return (
     <SafeAreaView style={facultyDashboard.safeArea}>

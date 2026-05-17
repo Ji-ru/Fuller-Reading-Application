@@ -342,9 +342,9 @@ export default function SignUpOneScreen() {
               {role === 'student' && (
                 <>
                   <Text style={signup.textform}>Class Code (Opsyonal)</Text>
-                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                   <View style={{ width: '90%', maxWidth: 360, alignSelf: 'center', flexDirection: 'row', gap: 8, marginBottom: 8 }}>
 <TextInput
-  style={[signup.textInputForm, { flex: 3 }]}
+  style={[signup.textInputForm, { width: 'auto', maxWidth: 'none', flex: 1 }]}
   placeholder="Ilagay ang code"
   value={classCode}
   onChangeText={(text) => {
@@ -367,7 +367,7 @@ export default function SignUpOneScreen() {
   {validatingClassCode ? (
     <ActivityIndicator size="small" color="#fff" />
   ) : (
-    <Text style={localStyles.validateBtnText}>Verify</Text>
+    <Text style={localStyles.validateBtnText}>E-verify</Text>
   )}
 </TouchableOpacity>
                   </View>
@@ -755,20 +755,18 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
     fontFamily: 'Andika-Regular',
   },
-  validateBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#3d71d9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 48,
-    shadowColor: '#3d71d9',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
+validateBtn: {
+  height: 46,
+  borderRadius: 12,
+  backgroundColor: '#3d71d9',
+  justifyContent: 'center',
+  alignItems: 'center',
+  shadowColor: '#3d71d9',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.2,
+  shadowRadius: 8,
+  elevation: 3,
+},
   validateBtnText: {
     fontSize: 13,
     fontFamily: 'Andika-Bold',
