@@ -1,0 +1,23 @@
+﻿Starting a Gradle Daemon, 7 busy Daemons could not be reused, use --status for details
+
+> Task :help
+
+Welcome to Gradle 9.0.0.
+
+Directory 'D:\CAPS\Fuller-Reading-Application' does not contain a Gradle build.
+
+To create a new build in this directory, run gradlew init
+
+For more detail on the 'init' task, see https://docs.gradle.org/9.0.0/userguide/build_init_plugin.html
+
+For more detail on creating a Gradle build, see https://docs.gradle.org/9.0.0/userguide/tutorial_using_tasks.html
+
+To see a list of command-line options, run gradlew --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.0.0/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 12s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.0.0/userguide/configuration_cache_enabling.html
