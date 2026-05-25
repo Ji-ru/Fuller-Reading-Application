@@ -11,21 +11,23 @@ interface ClassesPerGradeChartProps {
   acadYear?: string;
 }
 
+import { FacultyColors } from '../../Utilities/Theme';
+
 const COLORS = {
-  primary: '#45B7D1',
-  cardBackground: '#FFFFFF',
-  textPrimary: '#2D3436',
-  textSecondary: '#636E72',
-  error: '#FF7675',
+  primary: FacultyColors.primaryLight,
+  cardBackground: FacultyColors.white,
+  textPrimary: FacultyColors.ink,
+  textSecondary: FacultyColors.slate,
+  error: FacultyColors.red,
 };
 
 const chartConfig = {
-  backgroundColor: '#FFFFFF',
-  backgroundGradientFrom: '#FFFFFF',
+  backgroundColor: FacultyColors.white,
+  backgroundGradientFrom: FacultyColors.white,
   backgroundGradientTo: '#F8F9FA',
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(69, 183, 209, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(45, 52, 54, ${opacity})`,
+  color: (opacity = 1) => `rgba(44, 169, 106, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(27, 43, 34, ${opacity})`,
   style: { borderRadius: 16 },
   barPercentage: sw(0.6),
   propsForBackgroundLines: {
@@ -135,17 +137,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: sf(18),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Medium',
     color: COLORS.textSecondary,
   },
   description: {
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Regular',
     color: '#7F8C8D',
     marginTop: sh(4),
   },
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Medium',
     marginTop: sh(10),
   },
 });

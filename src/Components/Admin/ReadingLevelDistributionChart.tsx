@@ -17,16 +17,18 @@ const chartConfig = {
   useShadowColorFromDataset: false,
 };
 
+import { FacultyColors } from '../../Utilities/Theme';
+
 const COLORS = {
-  beginner: '#4ECDC4',
-  intermediate: '#45B7D1',
-  advanced: '#FFE66D',
-  cardBackground: '#FFFFFF',
-  textPrimary: '#2D3436',
-  textSecondary: '#636E72',
-  error: '#FF7675',
+  beginner: FacultyColors.primary,
+  intermediate: FacultyColors.teal,
+  advanced: FacultyColors.orange,
+  cardBackground: FacultyColors.white,
+  textPrimary: FacultyColors.ink,
+  textSecondary: FacultyColors.slate,
+  error: FacultyColors.red,
   border: '#F1F2F6',
-  primaryDim: '#E8F8F7',
+  primaryDim: 'rgba(0, 132, 67, 0.08)',
 };
 
 /**
@@ -304,17 +306,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: sf(18),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Medium',
     color: COLORS.textSecondary,
   },
   description: {
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Regular',
     color: '#7F8C8D',
     marginTop: sh(4),
   },
@@ -331,7 +333,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: sf(11),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: COLORS.textSecondary,
     marginBottom: sh(6),
     textTransform: 'uppercase',
@@ -350,7 +352,7 @@ const styles = StyleSheet.create({
   },
   filterButtonText: {
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
     flex: 1,
     marginRight: sw(4),
@@ -386,12 +388,12 @@ const styles = StyleSheet.create({
   },
   dropdownOptionText: {
     fontSize: sf(13),
-    color: '#2D3436',
-    fontFamily: 'Comfortaa-Regular',
+    color: COLORS.textPrimary,
+    fontFamily: 'Satoshi-Regular',
   },
   dropdownOptionTextActive: {
     color: COLORS.beginner,
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Satoshi-Bold',
   },
   chartWrapper: {
     alignItems: 'center',
@@ -405,13 +407,13 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Regular',
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Medium',
     marginTop: sh(10),
   },
 });

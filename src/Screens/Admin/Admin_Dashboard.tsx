@@ -1,24 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
-  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getAuth } from '@react-native-firebase/auth';
 import { useNavigationHelper } from '../../Controller/NavigationController';
-import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-import upperNav from '../../UI_Designs/UpperNavigation';
+import { getUserProfile } from '../../Controller/AuthenticationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import adminDashboard from '../../UI_Designs/AdminDashboardStyles';
 import Sidebar from '../../Components/GlobalUse/Sidebar';
+import adminDashboard from '../../UI_Designs/AdminDashboardStyles';
+import { FacultyColors } from '../../Utilities/Theme';
+import { Icon, IconName } from '../../Components/GlobalUse/Icon';
+import { useUserAnalytics } from '../../Hooks/Admin/useUserAnalytics';
+import { useClassMetrics } from '../../Hooks/Admin/useClassMetrics';
 import {
   getCurrentAcademicYear,
   getAcademicYearOptions,
   formatAcademicYear,
 } from '../../Utilities/acadYearUtils';
+import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import { buildAdminMenuItems } from '../../Utilities/adminMenuItems';
 
 // Chart components
 import UsersByRoleChart from '../../Components/Admin/UsersByRoleChart';
@@ -26,58 +30,74 @@ import UsersRegisteredChart from '../../Components/Admin/UsersRegisteredChart';
 import ClassStatusChart from '../../Components/Admin/ClassStatusChart';
 import ClassesPerGradeChart from '../../Components/Admin/ClassesPerGradeChart';
 import ReadingLevelDistributionChart from '../../Components/Admin/ReadingLevelDistributionChart';
-import { FullerProgressionFunnelChart } from '../../Components/Admin/FullerProgressionFunnelChart';
 
-import { sw, sh, sf } from '../../Utils/responsive';
+// KPI Card Component
+const KPICard = ({ icon, label, value, color }: { icon: IconName; label: string; value: number | string; color: string }) => (
+  <View style={adminDashboard.kpiCard}>
+    <View style={[adminDashboard.kpiIconContainer, { backgroundColor: `${color}20` }]}>
+      <Icon name={icon} size={18} color={color} />
+    </View>
+    <Text style={adminDashboard.kpiValue} numberOfLines={1}>{value}</Text>
+    <Text style={adminDashboard.kpiLabel} numberOfLines={1}>{label}</Text>
+  </View>
+);
 
-const COLORS = {
-  textPrimary: '#2D3436',
-  textSecondary: '#636E72',
-  primary: '#4ECDC4',
-  border: '#E9ECEF',
-  background: '#F8F9FA',
-};
+// Hamburger icon — mirrors Faculty dashboard
+function MenuBars() {
+  return (
+    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
+      <View style={{ width: 22, height: 2.5, borderRadius: 6, backgroundColor: FacultyColors.primary }} />
+      <View style={{ width: 12, height: 2.5, borderRadius: 6, backgroundColor: FacultyColors.primary }} />
+      <View style={{ width: 18, height: 2.5, borderRadius: 6, backgroundColor: FacultyColors.primary }} />
+    </View>
+  );
+}
+
+const SectionDivider = ({ label }: { label: string }) => (
+  <View style={adminDashboard.sectionDivider}>
+    <Text style={adminDashboard.sectionDividerLabel}>{label}</Text>
+    <View style={adminDashboard.sectionDividerLine} />
+  </View>
+);
 
 export default function AdminDashboard() {
   const [sidebarVisible, setSidebarVisible] = useState<boolean>(false);
   const [logoutVisible, setLogoutVisible] = useState<boolean>(false);
   const [selectedAcadYear, setSelectedAcadYear] = useState<string>(getCurrentAcademicYear());
   const [showYearDropdown, setShowYearDropdown] = useState<boolean>(false);
+  const [firstName, setFirstName] = useState<string>('Admin');
 
   const { handleLogout, handleReplaceStep } = useNavigationHelper();
+  const auth = getAuth();
+
+  // Current academic year — KPI cards are always locked to this, ignoring the chart filter
+  const currentAcadYear = getCurrentAcademicYear();
+
+  // KPI Data — always for the current school year only
+  const { roleCounts } = useUserAnalytics(currentAcadYear);
+  const { activeClassCount } = useClassMetrics(currentAcadYear);
+
+  useEffect(() => {
+    const loadName = async () => {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+      try {
+        const profile = await getUserProfile(uid);
+        if (profile?.firstName) setFirstName(profile.firstName);
+      } catch (err) {
+        console.warn('Failed to load admin profile name', err);
+      }
+    };
+    loadName();
+  }, [auth.currentUser?.uid]);
+
+  const menuItems = buildAdminMenuItems(handleReplaceStep);
 
   // Generate year options (most recent first)
   const academicYearOptions = getAcademicYearOptions(); // e.g., ["2025-2026", "2024-2025"]
   const allOptions = ['All Years', ...academicYearOptions];
 
-  const menuItems = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: require('../../../assets/icons/Dashboard-icon.png'),
-      onPress: () => handleReplaceStep('AdminDashboard'),
-    },
-    {
-      id: 'user-management',
-      label: 'User Management',
-      icon: require('../../../assets/icons/UserManagement-icon.png'),
-      onPress: () => handleReplaceStep('AdminUserManagement'),
-    },
-    {
-      id: 'activity-logs',
-      label: 'Activity Logs',
-      icon: require('../../../assets/icons/Logs-icon.png'),
-      onPress: () => { },
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: require('../../../assets/icons/Settings-icon.png'),
-      onPress: () => { },
-    },
-  ];
-
-  const toggleMenu = () => setSidebarVisible(!sidebarVisible);
+  const toggleMenu = () => setSidebarVisible(prev => !prev);
   const handleLogoutPress = () => {
     setSidebarVisible(false);
     setLogoutVisible(true);
@@ -88,27 +108,36 @@ export default function AdminDashboard() {
   };
   const cancelLogout = () => setLogoutVisible(false);
 
+  const acadYearParam = selectedAcadYear === 'All Years' ? undefined : selectedAcadYear;
+
   return (
     <SafeAreaView style={adminDashboard.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={adminDashboard.container}>
           <BubbleBackground />
-
-          {/* Header */}
-          <View style={upperNav.header}>
-            {/* <Image
-              style={upperNav.ciscLogo}
-              source={require('../../../assets/images/cisckids.png')}
-            /> */}
-            <TouchableOpacity style={upperNav.touchable} onPress={toggleMenu}>
-              <Image
-                style={upperNav.menuIcon}
-                source={require('../../../assets/icons/Menu-icon.png')}
-              />
+          {/* TOP BAR — menu button (Faculty-style design) */}
+          <View style={adminDashboard.topBar}>
+            <TouchableOpacity
+              style={adminDashboard.menuBtn}
+              onPress={toggleMenu}
+              activeOpacity={0.7}
+            >
+              <MenuBars />
             </TouchableOpacity>
           </View>
 
-          {/* Sidebar */}
+          {/* HERO HEADER CARD */}
+          <View style={adminDashboard.heroCard}>
+            <View style={adminDashboard.heroCardLeft}>
+              <Text style={adminDashboard.heroGreeting}>Good Day, {firstName}!</Text>
+              <Text style={adminDashboard.heroTitle}>Admin Dashboard</Text>
+            </View>
+            <View style={adminDashboard.heroIconWrap}>
+              <Icon name="adminBadge" size={28} color="#FFFFFF" filled />
+            </View>
+          </View>
+
+          {/* Sidebar navigation */}
           <Sidebar
             visible={sidebarVisible}
             onClose={() => setSidebarVisible(false)}
@@ -124,191 +153,90 @@ export default function AdminDashboard() {
             onConfirm={confirmLogout}
           />
 
-          {/* Main Dashboard Content */}
-          <View style={[adminDashboard.content, { paddingHorizontal: sw(20) }]}>
-            <View style={styles.headerTitleSection}>
-              <Text style={styles.sectionTitle}>Admin Dashboard</Text>
-              <Text style={styles.sectionSubtitle}>
-                {selectedAcadYear === 'All Years'
-                  ? 'Analytics for all academic years'
-                  : `Analytics for ${formatAcademicYear(selectedAcadYear)}`}
-              </Text>
+          <View style={adminDashboard.content}>
+            {/* KPI STRIP — current school year only */}
+            <View style={adminDashboard.kpiStripContainer}>
+              <View style={adminDashboard.kpiStrip}>
+                <View style={adminDashboard.kpiRow}>
+                  <KPICard icon="students" label={`Total Students\n${formatAcademicYear(currentAcadYear)}`} value={roleCounts.students} color={FacultyColors.primary} />
+                  <KPICard icon="teacher" label={`Total Teachers\n${formatAcademicYear(currentAcadYear)}`} value={roleCounts.faculty} color={FacultyColors.primary} />
+                </View>
+                <View style={adminDashboard.kpiRowCentered}>
+                  <View style={adminDashboard.kpiCardHalf}>
+                    <KPICard icon="myclass" label={`Active Classes\n${formatAcademicYear(currentAcadYear)}`} value={activeClassCount} color={FacultyColors.primaryLight} />
+                  </View>
+                </View>
+              </View>
             </View>
 
-            {/* Academic Year Dropdown */}
-            <View style={styles.filterSection}>
-              <Text style={styles.filterLabel}>Select Academic Year</Text>
+            {/* YEAR FILTER DROPDOWN */}
+            {/* <View style={adminDashboard.yearFilterContainer}>
+              <Text style={adminDashboard.yearFilterLabel}>Filter Charts by Academic Year</Text>
               <TouchableOpacity
-                style={styles.filterButton}
-                onPress={() => setShowYearDropdown(!showYearDropdown)}
+                style={adminDashboard.filterDropdownButton}
+                onPress={() => setShowYearDropdown(prev => !prev)}
                 activeOpacity={0.7}
               >
-                <View style={styles.filterButtonContent}>
-                  <Text style={styles.filterButtonText}>
-                    {selectedAcadYear === 'All Years'
-                      ? 'All Academic Years'
-                      : formatAcademicYear(selectedAcadYear)}
-                  </Text>
-                  <Text style={styles.dropdownArrow}>
-                    {showYearDropdown ? '▲' : '▼'}
-                  </Text>
+                <Text style={adminDashboard.filterDropdownButtonText}>
+                  {selectedAcadYear === 'All Years' ? 'All Academic Years' : formatAcademicYear(selectedAcadYear)}
+                </Text>
+                <View style={adminDashboard.filterDropdownChevron}>
+                  <Icon name="chevron-right"
+                    size={16}
+                    color={FacultyColors.slate}
+                  />
                 </View>
               </TouchableOpacity>
 
               {showYearDropdown && (
-                <View style={styles.filterDropdownMenu}>
-                  <ScrollView>
-                    {allOptions.map((year) => (
+                <View style={adminDashboard.filterDropdownMenu}>
+                  {allOptions.map(year => {
+                    const isSelected = selectedAcadYear === year;
+                    return (
                       <TouchableOpacity
                         key={year}
-                        style={[
-                          styles.filterDropdownItem,
-                          selectedAcadYear === year && styles.filterDropdownItemSelected,
-                        ]}
+                        style={[adminDashboard.filterDropdownItem, isSelected && adminDashboard.filterDropdownItemSelected]}
                         onPress={() => {
                           setSelectedAcadYear(year);
                           setShowYearDropdown(false);
                         }}
+                        activeOpacity={0.7}
                       >
-                        <Text
-                          style={[
-                            styles.filterDropdownItemText,
-                            selectedAcadYear === year && styles.filterDropdownItemTextSelected,
-                          ]}
-                        >
-                          {year === 'All Years' ? 'All Years' : formatAcademicYear(year)}
+                        <Text style={[adminDashboard.filterDropdownItemText, isSelected && adminDashboard.filterDropdownItemTextSelected]}>
+                          {year === 'All Years' ? 'All Academic Years' : formatAcademicYear(year)}
                         </Text>
                       </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+                    );
+                  })}
                 </View>
               )}
+            </View> */}
+
+            {/* CHARTS SECTION */}
+            <View style={adminDashboard.chartsContainer}>
+              {/* <SectionDivider label="Users" /> */}
+              {/* <View style={adminDashboard.chartWrapper}>
+                <ReadingLevelDistributionChart acadYear={acadYearParam} />
+              </View> */}
+              {/* <View style={adminDashboard.chartWrapper}>
+                <UsersByRoleChart acadYear={acadYearParam} />
+              </View> */}
+              {/* <View style={adminDashboard.chartWrapper}>
+                <UsersRegisteredChart acadYear={acadYearParam} />
+              </View> */}
+
+              {/* <SectionDivider label="Classes" /> */}
+              {/* <View style={adminDashboard.chartWrapper}>
+                <ClassStatusChart acadYear={acadYearParam} />
+              </View> */}
+              {/* <View style={adminDashboard.chartWrapper}>
+                <ClassesPerGradeChart acadYear={acadYearParam} />
+              </View> */}
             </View>
 
-            {/* Charts Section */}
-            <View style={styles.chartsGrid}>
-              <ReadingLevelDistributionChart
-                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-              />
-              <UsersByRoleChart
-                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-              />
-              <UsersRegisteredChart
-                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-              />
-              <ClassStatusChart
-                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-              />
-              <ClassesPerGradeChart
-                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-              />
-              <FullerProgressionFunnelChart
-                acadYear={selectedAcadYear === 'All Years' ? undefined : selectedAcadYear}
-              />
-            </View>
-
-            <View style={{ height: sh(40) }} />
           </View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  headerTitleSection: {
-    marginTop: sh(10),
-    marginBottom: sh(25),
-  },
-  sectionTitle: {
-    fontSize: sf(30),
-    fontFamily: 'Comfortaa-Bold',
-    color: COLORS.textPrimary,
-    marginBottom: sh(6),
-  },
-  sectionSubtitle: {
-    fontSize: sf(15),
-    fontFamily: 'Comfortaa-Regular',
-    color: COLORS.textSecondary,
-    lineHeight: sf(20),
-  },
-  filterSection: {
-    marginBottom: sh(30),
-    position: 'relative',
-    zIndex: 100,
-  },
-  filterLabel: {
-    fontSize: sf(12),
-    fontFamily: 'Comfortaa-Bold',
-    color: COLORS.textSecondary,
-    marginBottom: sh(8),
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  filterButton: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: sw(18),
-    paddingVertical: sh(14),
-    borderRadius: sw(16),
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.05,
-    shadowRadius: sw(8),
-    elevation: 2,
-  },
-  filterButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  filterButtonText: {
-    fontSize: sf(15),
-    fontFamily: 'Comfortaa-Bold',
-    color: COLORS.textPrimary,
-  },
-  dropdownArrow: {
-    fontSize: sf(12),
-    color: COLORS.textSecondary,
-  },
-  filterDropdownMenu: {
-    position: 'absolute',
-    top: sh(85),
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderRadius: sw(16),
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    maxHeight: sh(250),
-    zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(10) },
-    shadowOpacity: 0.12,
-    shadowRadius: sw(15),
-    elevation: 10,
-    overflow: 'hidden',
-  },
-  filterDropdownItem: {
-    paddingVertical: sh(15),
-    paddingHorizontal: sw(20),
-    borderBottomWidth: 1,
-    borderBottomColor: '#F8F9FA',
-  },
-  filterDropdownItemSelected: {
-    backgroundColor: '#E8F8F7',
-  },
-  filterDropdownItemText: {
-    fontSize: sf(15),
-    fontFamily: 'Comfortaa-Regular',
-    color: COLORS.textPrimary,
-  },
-  filterDropdownItemTextSelected: {
-    color: COLORS.primary,
-    fontFamily: 'Comfortaa-Bold',
-  },
-  chartsGrid: {
-    gap: sh(10), // This adds spacing between chart components
-  },
-});

@@ -958,6 +958,37 @@ export function buildWordChapterProgress(
     chapterMap.get(chapterId)!.lessons.push(lesson);
   }
 
+  // Include every chapter/lesson from the curriculum JSON that had no sessions.
+  // Without this, chapters the student has never attempted are invisible in the UI.
+  for (const [metaKey, meta] of lessonMeta.entries()) {
+    if (agg.has(metaKey)) continue;
+
+    const untriedLesson: WordLessonProgress = {
+      chapter: String(meta.chapterId),
+      lesson: `${meta.chapterId}-${meta.lessonId}`,
+      lessonIpa: meta.letter ? `/${meta.letter.toLowerCase()}/` : '',
+      lessonDisplayName: meta.lessonTitle,
+      totalWords: meta.words.length,
+      masteredWords: [],
+      missedWords: [],
+      untriedWords: [...meta.words],
+      attempted: 0,
+      correct: 0,
+      latestAccuracy: null,
+      sessionCount: 0,
+      lastPlayedDate: '',
+    };
+
+    if (!chapterMap.has(meta.chapterId)) {
+      chapterMap.set(meta.chapterId, {
+        chapterId: meta.chapterId,
+        chapterTitle: meta.chapterTitle,
+        lessons: [],
+      });
+    }
+    chapterMap.get(meta.chapterId)!.lessons.push(untriedLesson);
+  }
+
   return Array.from(chapterMap.values())
     .map(({ chapterId, chapterTitle, lessons }) => {
       lessons.sort((a, b) => {

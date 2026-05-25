@@ -81,6 +81,12 @@ const headerStyles = StyleSheet.create({
   },
   dropdownIcon: { width: 20, height: 20, marginRight: 12, tintColor: C.coral },
   dropdownText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.coral },
+  aboutRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14,
+  },
+  aboutText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.slate, marginLeft: 12 },
+  dropdownDivider: { height: 1, marginHorizontal: 12, backgroundColor: '#E3F0E7' },
 });
 
 // ─── BounceIn ─────────────────────────────────────────────────────────────────
@@ -541,11 +547,13 @@ export default function PageSelectionScreen() {
                 setMenuVisible(false);
                 handleNextStep('About');
               }}
-              style={upperNav.logoutButton}
+              style={headerStyles.aboutRow}
+              activeOpacity={0.75}
             >
-              <Text style={upperNav.logoutText}>About</Text>
+              <Icon name="info" size={20} color={C.slate} filled />
+              <Text style={headerStyles.aboutText}>About</Text>
             </TouchableOpacity>
-
+            <View style={headerStyles.dropdownDivider} />
             <TouchableOpacity onPress={handleLogoutPress} style={headerStyles.dropdownItem} activeOpacity={0.75}>
               <Image
                 source={require('../../../assets/icons/Logout-icon.png')}

@@ -7,31 +7,25 @@ interface GradeLevelDropDownSelectionProps {
   onSelect?: (value: number) => void;
 }
 export default function GradeLevelDropDownSelection({ onSelect }: GradeLevelDropDownSelectionProps): ReactElement {
-  const [selectedIndex, setSelectedIndex] = useState<IndexPath>(
-    new IndexPath(0),
-  );
+  const [selectedIndex, setSelectedIndex] = useState<IndexPath>(new IndexPath(0));
 
   const gradeLevel = ['Grade 1', 'Grade 2', 'Grade 3'];
-
-  React.useEffect(() => {
-    const selectedGrade = gradeLevel[selectedIndex.row];
-    const selectedGradeNumber = parseInt(selectedGrade.replace(/\D/g, ''), 10);
-
-    if (onSelect && !isNaN(selectedGradeNumber)) {
-      onSelect(selectedGradeNumber);
-    }
-  }, [selectedIndex, onSelect]);
 
   const handleSelect = (index: IndexPath | IndexPath[]) => {
     const actualIndex = Array.isArray(index) ? index[0] : index;
     setSelectedIndex(actualIndex);
+    const grade = gradeLevel[actualIndex.row];
+    const gradeNumber = parseInt(grade.replace(/\D/g, ''), 10);
+    if (onSelect && !isNaN(gradeNumber)) {
+      onSelect(gradeNumber);
+    }
   };
 
   const displayValue = Array.isArray(selectedIndex)
     ? gradeLevel[selectedIndex[0]?.row] || gradeLevel[0]
     : gradeLevel[selectedIndex.row] || gradeLevel[0];
 
-  const renderIcon = (props: any) => (
+  const renderIcon = (_props: any) => (
     <Image
       source={require('../../../../assets/icons/Edit-icon.png')}
       style={[signup.inputIcon, { marginTop: 0 }]}

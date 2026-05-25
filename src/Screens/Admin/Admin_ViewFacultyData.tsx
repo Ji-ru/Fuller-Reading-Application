@@ -21,6 +21,7 @@ import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/Numbe
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
 import ClassWordMastery from '../../Components/Faculty/Dashboard/ClassWordMastery';
+import { buildAdminMenuItems } from '../../Utilities/adminMenuItems';
 
 /**
  * BASIC INFORMATION
@@ -75,36 +76,7 @@ export default function AdminViewFacultyData() {
     const { handleLogout, handleBackStep, handleReplaceStep } = useNavigationHelper();
     const { getNumberOfClasses, getNumbersOfAllStudents } = getForStudentsMiscueStats();
 
-    // SIDEBAR MENU ITEMS
-    const menuItems = [
-        {
-            id: 'dashboard',
-            label: 'Dashboard',
-            icon: require('../../../assets/icons/Dashboard-icon.png'), // Add your icon
-            onPress: () => handleReplaceStep('AdminDashboard'),
-        },
-        {
-            id: 'user-management',
-            label: 'User Management',
-            icon: require('../../../assets/icons/UserManagement-icon.png'), // Add your icon
-            onPress: () => handleReplaceStep('AdminUserManagement'),
-            // onPress: () => { }
-        },
-        {
-            id: 'activity-logs',
-            label: 'Activity Logs',
-            icon: require('../../../assets/icons/Logs-icon.png'), // Add your icon
-            // onPress: () => handleReplaceStep('ActivityLogs'),
-            onPress: () => { }
-        },
-        {
-            id: 'settings',
-            label: 'Settings',
-            icon: require('../../../assets/icons/Settings-icon.png'), // Add your icon
-            // onPress: () => handleReplaceStep('Settings'),
-            onPress: () => { }
-        },
-    ];
+    const menuItems = buildAdminMenuItems(handleReplaceStep);
 
     // ========================================================================
     // DATA FETCHING
@@ -195,7 +167,7 @@ export default function AdminViewFacultyData() {
                         visible={sidebarVisible}
                         onClose={() => setSidebarVisible(false)}
                         onLogout={handleLogoutPress}
-                        currentRoute="dashboard"
+                        currentRoute="user-management"
                         menuItems={menuItems}
                     />
 

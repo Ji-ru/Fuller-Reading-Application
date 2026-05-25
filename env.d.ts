@@ -3,4 +3,6 @@ declare module '@env' {
   // Add other env variables here if you create more later
   export const DEEPGRAM_API: string;
   export const WEBCLIENT_API: string;
+  export const APPS_SCRIPT_URL: string;
+  export const UPLOAD_SECRET: string;
 }

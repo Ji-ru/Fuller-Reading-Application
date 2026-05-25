@@ -20,24 +20,24 @@ const { width: SW } = Dimensions.get('window');
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  green:      '#2ca96a',
-  greenDark:  '#008443',
-  greenDeep:  '#005028',
+  green: '#2ca96a',
+  greenDark: '#008443',
+  greenDeep: '#005028',
   greenLight: '#c0e8f2',
-  greenPale:  '#E8F5E9',
-  bg:         '#F1FBF4',
-  white:      '#ffffff',
-  ink:        '#1B2B22',
-  inkLight:   '#6B8E6B',
-  slate:      '#A5B8A7',
-  border:     '#C8E6C9',
+  greenPale: '#E8F5E9',
+  bg: '#F1FBF4',
+  white: '#ffffff',
+  ink: '#1B2B22',
+  inkLight: '#6B8E6B',
+  slate: '#A5B8A7',
+  border: '#C8E6C9',
 };
 
 // ─── Team members ─────────────────────────────────────────────────────────────
 const TEAM = [
-  { name: 'Jibril Leander Paul M. Rubi',    role: 'Lead Developer',       emoji: '🧑' },
-  { name: 'Arth Luije S. Bancat',      role: 'Software Developer',       emoji: '🧑' },
-  { name: 'Erwin Leonardia',       role: 'AI/ML Developer',    emoji: '🧑' },
+  { name: 'Jibril Leander Paul M. Rubi', role: 'Lead Developer', emoji: '🧑' },
+  { name: 'Arth Luije S. Bancat', role: 'Software Developer', emoji: '🧑' },
+  { name: 'Erwin Leonardia', role: 'AI/ML Developer', emoji: '🧑' },
 ];
 
 // ─── STT model (currently active) ────────────────────────────────────────────
@@ -64,14 +64,14 @@ function FadeSlideIn({
   delay?: number;
 }) {
   const translateY = useRef(new Animated.Value(24)).current;
-  const opacity    = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
       Animated.delay(delay),
       Animated.parallel([
         Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 55, friction: 8 }),
-        Animated.timing(opacity,    { toValue: 1, duration: 280,         useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 280, useNativeDriver: true }),
       ]),
     ]).start();
   }, []);
@@ -168,15 +168,15 @@ export default function AboutScreen() {
               time.
             </Text>
             <Text style={[S.bodyText, { marginTop: sh(10) }]}>
-              The app supports three reading modes — alphabet recognition, word
-              pronunciation, and passage reading — each with automatic accuracy
+              The app supports three reading modes — word
+              pronunciation and passage reading — each with automatic accuracy
               scoring and miscue analysis (substitution, omission, insertion,
               and repetition).
             </Text>
 
             {/* Feature chips */}
             <View style={S.chipRow}>
-              {['Oral Fluency', 'Miscue Analysis', 'Progress Tracking', 'Grade 1–3', 'Filipino'].map(f => (
+              {['Oral Fluency', 'Miscue Analysis', 'Progress Tracking', 'Grade 1–3', 'English Language'].map(f => (
                 <View key={f} style={S.chip}>
                   <Text style={S.chipText}>{f}</Text>
                 </View>
@@ -249,10 +249,10 @@ export default function AboutScreen() {
             <SectionHeading emoji="🔧" title="Built With" />
             <View style={S.techRow}>
               {[
-                { label: 'React Native',  emoji: '⚛️'  },
-                { label: 'Firebase',      emoji: '🔥'  },
-                { label: 'Deepgram Nova3',   emoji: '🎙'  },
-                { label: 'TypeScript',   emoji: '📘'  },
+                { label: 'React Native', emoji: '⚛️' },
+                { label: 'Firebase', emoji: '🔥' },
+                { label: 'Deepgram Nova3', emoji: '🎙' },
+                { label: 'TypeScript', emoji: '📘' },
               ].map(t => (
                 <View key={t.label} style={S.techChip}>
                   <Text style={S.techEmoji}>{t.emoji}</Text>
@@ -513,7 +513,7 @@ const S = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: sw(4),
   },
-  memberEmoji:  { fontSize: sf(26) },
+  memberEmoji: { fontSize: sf(26) },
   memberName: {
     fontSize: sf(13),
     fontFamily: 'Nunito-ExtraBold',

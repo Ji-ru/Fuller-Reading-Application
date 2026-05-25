@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { sw, sh, sf } from '../Utils/responsive';
+import { FacultyColors, Radii, Shadows } from '../Utilities/Theme';
 
 const myStudents = StyleSheet.create({
   container: {
@@ -29,45 +30,51 @@ const myStudents = StyleSheet.create({
 
   // CLASS INFO HEADER
   classInfoHeader: {
-    backgroundColor: '#fff',
+    backgroundColor: FacultyColors.white,
     borderRadius: sw(16),
-    padding: sw(20),
-    marginTop: sh(16),
-    marginBottom: sh(16),
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.05,
-    shadowRadius: sw(8),
+    overflow: 'hidden',
+    marginTop: sh(12),
+    marginBottom: sh(14),
+    ...Shadows.subtle,
   },
-  classInfoMain: {
-    gap: sh(12),
+  classInfoColorStrip: {
+    height: sh(6),
+    backgroundColor: FacultyColors.primary,
+  },
+  classInfoBody: {
+    padding: sw(18),
+    gap: sh(10),
   },
   className: {
-    fontSize: sf(24),
-    fontFamily: 'Satoshi-Bold',
-    color: '#1A1A1A',
-    lineHeight: sf(30),
+    fontSize: sf(20),
+    fontFamily: 'Satoshi-Black',
+    color: FacultyColors.ink,
+    lineHeight: sf(26),
   },
   classMetaRow: {
     flexDirection: 'row',
-    gap: sw(16),
+    gap: sw(10),
     flexWrap: 'wrap',
+    alignItems: 'center',
   },
-  classMetaItem: {
-    gap: sh(4),
+  classMetaChip: {
+    backgroundColor: 'rgba(0,132,67,0.08)',
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(5),
+    borderRadius: Radii.pill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(4),
   },
   classMetaLabel: {
-    fontSize: sf(12),
+    fontSize: sf(11),
     fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: FacultyColors.inkLight,
   },
   classMetaValue: {
-    fontSize: sf(14),
+    fontSize: sf(12),
     fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    color: FacultyColors.primary,
   },
 
   // SEARCH BAR
@@ -128,15 +135,14 @@ const myStudents = StyleSheet.create({
   },
   listContent: {
     paddingBottom: sh(24),
+    gap: sh(10),
   },
   studentCard: {
-    backgroundColor: '#fff',
-    borderRadius: sw(14),
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.06,
-    shadowRadius: sw(8),
+    backgroundColor: FacultyColors.white,
+    borderRadius: sw(16),
+    borderLeftWidth: sw(4),
+    borderLeftColor: FacultyColors.primaryLight,
+    ...Shadows.subtle,
     overflow: 'hidden',
   },
   studentCardContent: {
@@ -145,22 +151,21 @@ const myStudents = StyleSheet.create({
     padding: sw(16),
   },
   profileImage: {
-    width: sw(56),
-    height: sw(56),
-    borderRadius: sw(28),
+    width: sw(48),
+    height: sw(48),
+    borderRadius: sw(24),
     backgroundColor: '#E5E7EB',
   },
   defaultProfile: {
-    width: sw(56),
-    height: sw(56),
-    borderRadius: sw(28),
-    backgroundColor: '#4CAF50',
+    width: sw(48),
+    height: sw(48),
+    borderRadius: sw(24),
     justifyContent: 'center',
     alignItems: 'center',
   },
   defaultProfileText: {
     color: '#fff',
-    fontSize: sf(20),
+    fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
   },
   studentInfo: {
@@ -171,7 +176,7 @@ const myStudents = StyleSheet.create({
   studentName: {
     fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
-    color: '#1F2937',
+    color: FacultyColors.ink,
     lineHeight: sf(22),
   },
   detailsRow: {
@@ -180,36 +185,36 @@ const myStudents = StyleSheet.create({
     flexWrap: 'wrap',
   },
   detailChip: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(0,132,67,0.08)',
     paddingHorizontal: sw(10),
-    paddingVertical: sh(4),
-    borderRadius: sw(8),
+    paddingVertical: sh(3),
+    borderRadius: Radii.pill,
     flexDirection: 'row',
     alignItems: 'center',
     gap: sw(4),
   },
   detailLabel: {
-    fontSize: sf(11),
+    fontSize: sf(10),
     fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    color: FacultyColors.inkLight,
   },
   detailValue: {
-    fontSize: sf(12),
+    fontSize: sf(11),
     fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    color: FacultyColors.primary,
   },
   arrowContainer: {
-    width: sw(32),
-    height: sw(32),
-    borderRadius: sw(16),
-    backgroundColor: '#E8F5E9',
+    width: sw(30),
+    height: sw(30),
+    borderRadius: sw(15),
+    backgroundColor: 'rgba(0,132,67,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: sw(8),
   },
   arrowIcon: {
-    fontSize: sf(24),
-    color: '#4CAF50',
+    fontSize: sf(22),
+    color: FacultyColors.primary,
     fontFamily: 'Satoshi-Bold',
   },
 

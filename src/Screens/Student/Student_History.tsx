@@ -32,6 +32,7 @@ import StudentCompletionProgress from '../../Components/Faculty/StudentView_Stat
 import { Icon, IconName } from '../../Components/GlobalUse/Icon';
 import ExportPdf from '../../Components/GlobalUse/ExportPdf';
 import { sw, sh, sf } from '../../Utils/responsive';
+import { StudentColors } from '../../Utilities/Theme';
 
 const auth = getAuth();
 
@@ -70,6 +71,18 @@ const headerStyles = StyleSheet.create({
   backArrowText: {
     fontSize: 40, fontFamily: 'Nunito-Bold',
     color: C.white, lineHeight: 28, marginLeft: -2, paddingBottom: 2
+  },
+  aboutRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: sw(16), paddingVertical: sh(14),
+  },
+  aboutText: {
+    fontSize: sf(15), fontFamily: 'Nunito-Bold',
+    color: StudentColors.slate, marginLeft: sw(12),
+  },
+  dropdownDivider: {
+    height: 1, marginHorizontal: sw(12),
+    backgroundColor: '#E3F0E7',
   },
 });
 
@@ -493,10 +506,13 @@ export default function ReadingHistoryScreen() {
               setMenuVisible(false);
               handleNextStep('About');
             }}
-            style={upperNav.logoutButton}
+            style={headerStyles.aboutRow}
+            activeOpacity={0.75}
           >
-            <Text style={upperNav.logoutText}>About</Text>
+            <Icon name="info" size={sw(20)} color={StudentColors.slate} filled />
+            <Text style={headerStyles.aboutText}>About</Text>
           </TouchableOpacity>
+          <View style={headerStyles.dropdownDivider} />
           <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
             <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
             <Text style={upperNav.logoutText}>Logout</Text>
@@ -538,7 +554,7 @@ export default function ReadingHistoryScreen() {
           <Header />
 
           {/* ── EXPORT BUTTON ───────────────────────────────────────────────── */}
-          <FadeSlideIn delay={40}>
+          {/* <FadeSlideIn delay={40}>
             <View style={tabStyles.exportRow}>
               <ExportPdf
                 studentId={uid}
@@ -554,17 +570,17 @@ export default function ReadingHistoryScreen() {
                 gradeLevel={gradeLevel}
               />
             </View>
-          </FadeSlideIn>
+          </FadeSlideIn> */}
 
           {/* ── TAB BAR ────────────────────────────────────────────────────── */}
           <FadeSlideIn delay={60}>
             <View style={tabStyles.tabGrid}>
               {(
                 [
-                  { key: 'completion',  icon: 'progress',  label: 'Progress' },
-                  { key: 'sessions',    icon: 'sessions',  label: 'Sessions' },
+                  { key: 'completion', icon: 'progress', label: 'Progress' },
+                  { key: 'sessions', icon: 'sessions', label: 'Sessions' },
                   { key: 'performance', icon: 'analytics', label: 'Analytics' },
-                  { key: 'history',     icon: 'history',   label: 'History' },
+                  { key: 'history', icon: 'history', label: 'History' },
                 ] as { key: ActiveTab; icon: IconName; label: string }[]
               ).map(tab => {
                 const isActive = activeTab === tab.key;
@@ -728,16 +744,6 @@ export default function ReadingHistoryScreen() {
                       <View style={historyStyles.statItem}>
                         <Text style={historyStyles.statValue}>{getTotalAttempts()}</Text>
                         <Text style={historyStyles.statLabel}>Attempts</Text>
-                      </View>
-                      <View style={historyStyles.statDivider} />
-                      <View style={historyStyles.statItem}>
-                        <Text style={historyStyles.statValue}>{getAverageAccuracy()}%</Text>
-                        <Text style={historyStyles.statLabel}>Avg. Accuracy</Text>
-                      </View>
-                      <View style={historyStyles.statDivider} />
-                      <View style={historyStyles.statItem}>
-                        <Text style={historyStyles.statValue}>{getBestWPM()}</Text>
-                        <Text style={historyStyles.statLabel}>Best WPM</Text>
                       </View>
                     </View>
                   </FadeSlideIn>
@@ -930,7 +936,7 @@ export default function ReadingHistoryScreen() {
               {/* Shared performance filter bar */}
               <FadeSlideIn delay={60}>
                 <View style={tabStyles.section}>
-                  <Text style={tabStyles.sectionTitle}>Performance Analytics</Text>
+                  {/* <Text style={tabStyles.sectionTitle}>Performance Analytics</Text> */}
                   <View style={filterStyles.rangeBar}>
                     {(['week', 'month', 'year'] as const).map(range => (
                       <TouchableOpacity
@@ -1071,7 +1077,7 @@ export default function ReadingHistoryScreen() {
 
               <FadeSlideIn delay={80}>
                 <View style={tabStyles.section}>
-                  <StudentAccuracyTrendsChart studentId={uid} role="student" gradeLevel={gradeLevel} timeRange={perfTimeRange} anchor={perfAnchor} startDate={perfDateBounds.start} endDate={perfDateBounds.end} />
+                  <StudentAccuracyTrendsChart studentId={uid} role="student" timeRange={perfTimeRange} anchor={perfAnchor} startDate={perfDateBounds.start} endDate={perfDateBounds.end} />
                 </View>
               </FadeSlideIn>
               <FadeSlideIn delay={160}>
@@ -1334,5 +1340,5 @@ const filterStyles = StyleSheet.create({
   weekChipTextActive: {
     color: '#ffffff',
   },
-  
+
 });

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, Image, TextInput, TouchableOpacity,
   Modal, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Keyboard,
+  StyleSheet,
 } from 'react-native';
 import signup from '../../UI_Designs/SignUpStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -24,6 +25,23 @@ import ActionSheetModal from '../../Components/GlobalUse/Modal/ActionSheetModal'
 import DatePicker from 'react-native-date-picker';
 import GenderSelection from '../../Components/SignUp/Buttons/GenderRadioButton';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
+
+const C = {
+  greenDark: '#008443',
+  white:     '#ffffff',
+};
+
+const H = StyleSheet.create({
+  backBtn: {
+    width: 45, height: 45, borderRadius: 10,
+    backgroundColor: C.greenDark,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  backArrowText: {
+    fontSize: 40, fontFamily: 'Nunito-Bold',
+    color: C.white, lineHeight: 28, marginLeft: -2, paddingBottom: 2,
+  },
+});
 
 type SignUpTwoRouteProp = RouteProp<RootStackParamList, 'SignUpTwo'>;
 
@@ -150,7 +168,7 @@ export default function SignUpTwoScreen() {
         middleName: middleName.trim(),
         lastName: lastName.trim(),
         sex: gender,
-        profileImageUrl: profileImage || undefined,
+        profileImageUrl: profileImage || '',
         gradeLevel: role === 'student' ? gradeLevel : undefined,
         dateOfBirth: formatDateToReadable(date),
         assignedGradeLevels: role === 'faculty' ? [gradeLevel] : undefined,
@@ -194,9 +212,9 @@ export default function SignUpTwoScreen() {
       <BubbleBackground />
 
       {/* Header / Back Button */}
-      <View style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }}>
-        <TouchableOpacity style={upperNav.touchable} onPress={() => handleBackStep()}>
-          <Image style={upperNav.backButtonIcon} source={require('../../../assets/icons/BackButton-icon.png')} />
+      <View style={upperNav.header}>
+        <TouchableOpacity style={H.backBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
+          <Text style={H.backArrowText}>‹</Text>
         </TouchableOpacity>
       </View>
 
@@ -369,4 +387,4 @@ export default function SignUpTwoScreen() {
       </Modal>
     </SafeAreaView>
   );
-}
+}

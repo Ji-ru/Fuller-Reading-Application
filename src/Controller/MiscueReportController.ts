@@ -768,6 +768,7 @@ export const MiscueReportController = {
         orderBy('createdAt', 'asc')
       );
       return onSnapshot(alphabetQuery, snapshot => {
+        if (!snapshot) return;
         const alphabets = snapshot.docs.map(
           (doc: QueryDocumentSnapshot<DocumentData>) => ({
             ...doc.data(),
@@ -776,6 +777,8 @@ export const MiscueReportController = {
         ) as AlphabetReportDocument[];
         console.log('Alphebet objects retrieved: ' + JSON.stringify(alphabets));
         onUpdate(alphabets);
+      }, (error: any) => {
+        console.log('Failed to retrieved alphabets data: ' + error.message);
       });
     } catch (error: any) {
       console.log('Failed to retrieved alphabets data: ' + error.any);
@@ -801,143 +804,22 @@ export const MiscueReportController = {
         orderBy('createdAt', 'asc')
       );
       return onSnapshot(wordQuery, snapshot => {
+        if (!snapshot) return;
         const words = snapshot.docs.map(
           (doc: QueryDocumentSnapshot<DocumentData>) => ({
             ...doc.data(),
             alphabetId: doc.id,
           }),
         ) as WordReportDocument[];
-        console.log('Words objects retrieved: ' + words);
         onUpdate(words);
+      }, (error: any) => {
+        console.log('Failed to retrieved words data: ' + error.message);
       });
     } catch (error: any) {
       console.log('Failed to retrieved words data: ' + error.any);
       throw new Error('Failed to retrieved words data: ' + error.any);
     }
   },
-
-  /**
-   * ==========================================================================
-   * GET PASSAGE REPORTS
-   * ==========================================================================
-   * Retrieves reports for a specific passage, optionally filtered by student.
-   *
-   * @param passageTitle - Title of the passage
-   * @param studentId - Optional: filter by specific student
-   * @returns Array of MiscueReportDocument objects
-   * ==========================================================================
-   */
-  // async getPassageReports(
-  //   passageTitle: string,
-  //   studentId?: string,
-  // ): Promise<MiscueReportDocument[]> {
-  //   try {
-  //     let query = firestore()
-  //       .collection('miscueReports')
-  //       .where('passageTitle', '==', passageTitle);
-
-  //     if (studentId) {
-  //       query = query.where('studentId', '==', studentId);
-  //     }
-
-  //     const snapshot = await query.orderBy('timestamp', 'desc').get();
-
-  //     return snapshot.docs.map(
-  //       doc =>
-  //         ({
-  //           reportId: doc.id,
-  //           ...doc.data(),
-  //         } as MiscueReportDocument),
-  //     );
-  //   } catch (error: any) {
-  //     console.error('Failed to fetch passage reports:', error);
-  //     throw new Error(`Failed to fetch passage reports: ${error.message}`);
-  //   }
-  // },
-
-  /**
-   * ==========================================================================
-   * GET REPORT BY ID
-   * ==========================================================================
-   * Retrieves a single report by its document ID.
-   *
-   * @param reportId - Firestore document ID
-   * @returns MiscueReportDocument or null if not found
-   * ==========================================================================
-   */
-  // async getReportById(reportId: string): Promise<MiscueReportDocument | null> {
-  //   try {
-  //     const doc = await firestore()
-  //       .collection('miscueReports')
-  //       .doc(reportId)
-  //       .get();
-
-  //     if (!doc.exists) {
-  //       return null;
-  //     }
-
-  //     return {
-  //       reportId: doc.id,
-  //       ...doc.data(),
-  //     } as MiscueReportDocument;
-  //   } catch (error: any) {
-  //     console.error('Failed to fetch report by ID:', error);
-  //     throw new Error(`Failed to fetch report: ${error.message}`);
-  //   }
-  // },
-
-  /**
-   * ==========================================================================
-   * DELETE REPORT
-   * ==========================================================================
-   * Permanently deletes a report from Firestore.
-   *
-   * @param reportId - Document ID to delete
-   * @throws Error - If Firestore operation fails
-   * ==========================================================================
-   */
-  // async deleteReport(reportId: string): Promise<void> {
-  //   try {
-  //     await firestore().collection('miscueReports').doc(reportId).delete();
-
-  //     console.log(`âœ… Report ${reportId} deleted successfully`);
-  //   } catch (error: any) {
-  //     console.error('Failed to delete report:', error);
-  //     throw new Error(`Failed to delete report: ${error.message}`);
-  //   }
-  // },
-
-  /**
-   * ==========================================================================
-   * UPDATE REPORT
-   * ==========================================================================
-   * Updates an existing report with new data.
-   *
-   * @param reportId - Document ID to update
-   * @param updates - Partial data to update
-   * @throws Error - If Firestore operation fails
-   * ==========================================================================
-   */
-  // async updateReport(
-  //   reportId: string,
-  //   updates: Partial<Omit<MiscueReportDocument, 'reportId' | 'timestamp'>>,
-  // ): Promise<void> {
-  //   try {
-  //     await firestore()
-  //       .collection('miscueReports')
-  //       .doc(reportId)
-  //       .update({
-  //         ...updates,
-  //         updatedAt: firestore.FieldValue.serverTimestamp(),
-  //       });
-
-  //     console.log(`âœ… Report ${reportId} updated successfully`);
-  //   } catch (error: any) {
-  //     console.error('Failed to update report:', error);
-  //     throw new Error(`Failed to update report: ${error.message}`);
-  //   }
-  // },
-  // =====================================
 
   // Add these functions to your DatabaseController
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, ActivityIndicator, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Alert, ActivityIndicator, FlatList, StyleSheet, Dimensions } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import upperNav from '../../UI_Designs/UpperNavigation';
@@ -11,6 +11,10 @@ import { unarchiveClass } from '../../Controller/AuthenticationController';
 import myClass from '../../UI_Designs/MyClassStyles';
 import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import Svg, { Text as SvgText } from 'react-native-svg';
+import { Icon } from '../../Components/GlobalUse/Icon';
+import { sw } from '../../Utils/responsive';
+import { FacultyColors } from '../../Utilities/Theme';
 
 export default function MyArchive() {
   // ========================================================================
@@ -24,7 +28,7 @@ export default function MyArchive() {
   const [selectedClass, setSelectedClass] = useState<ClassDocument | null>(null);
   const [isUnarchiving, setIsUnarchiving] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const { handleLogout, handleClassStudents } = useNavigationHelper();
+  const { handleLogout, handleClassStudents, handleNextStep } = useNavigationHelper();
   const ignoreNextTouchRef = useRef(false);
   const currentUser = getAuth().currentUser;
 
@@ -89,8 +93,10 @@ export default function MyArchive() {
         px: number,
         py: number,
       ) => {
+        const screenWidth = Dimensions.get('window').width;
         setMenuPosition({
-          x: px - 100,
+          // Anchor right edge of menu to right edge of ellipsis button
+          x: screenWidth - (px + width),
           y: py + height,
         });
         setSelectedClass(item);
@@ -140,7 +146,6 @@ export default function MyArchive() {
       style={[
         myClass.classCard,
         myClass.archivedClassCard, // Add archived card style
-        { marginTop: index === 0 ? 0 : 12 }
       ]}
       onPress={() => {
         if (ellipsisVisible) {
@@ -242,9 +247,35 @@ export default function MyArchive() {
         <BubbleBackground />
 
 
-        {/* HEADER */}
+        {/* UNIFIED HEADER ROW: spacer | SVG title | menu button */}
         <View style={facultyDashboard.header}>
-          <Text style={facultyDashboard.headerLogo}>CISC KIDS</Text>
+          {/* Left spacer balances the menu button so title is truly centered */}
+          <View style={{ width: 44 }} />
+
+          {/* SVG outlined title */}
+          <Svg height={56} width={220}>
+            {/* Stroke layer — outline effect */}
+            <SvgText
+              x={110} y={38} fontSize={24}
+              fontFamily="Satoshi-Black" textAnchor="middle"
+              fill="none"
+              stroke="#E8F5EE"
+              strokeWidth={8}
+              strokeLinejoin="round"
+            >
+              My Archive
+            </SvgText>
+            {/* Fill layer — drawn on top */}
+            <SvgText
+              x={110} y={38} fontSize={24}
+              fontFamily="Satoshi-Black" textAnchor="middle"
+              fill="#1B2B22"
+            >
+              My Archive
+            </SvgText>
+          </Svg>
+
+          {/* Right: hamburger menu button */}
           <TouchableOpacity
             style={facultyDashboard.menuBtn}
             onPress={() => setMenuVisible(v => !v)}
@@ -263,6 +294,15 @@ export default function MyArchive() {
               activeOpacity={1}
             />
             <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); handleNextStep('About'); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Icon name="info" size={sw(20)} color={FacultyColors.slate} filled />
+                <Text style={facultyDashboard.dropdownTextAbout}>About</Text>
+              </TouchableOpacity>
+              <View style={facultyDashboard.dropdownDivider} />
               <TouchableOpacity
                 onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
                 style={facultyDashboard.dropdownItem}
@@ -296,7 +336,7 @@ export default function MyArchive() {
               <View
                 style={[
                   myClass.contextMenu,
-                  { top: menuPosition.y, left: menuPosition.x },
+                  { top: menuPosition.y, right: menuPosition.x },
                 ]}
                 pointerEvents="box-none"
               >
@@ -335,13 +375,6 @@ export default function MyArchive() {
             </>
           )}
 
-          {/* HEADER SECTION */}
-          <View style={myClass.headerSection}>
-            <Text style={myClass.pageTitle}>My Archive</Text>
-            <Text style={myClass.pageSubtitle}>
-              Manage and organize your archived classes
-            </Text>
-          </View>
 
           {/* CLASS COUNT */}
           {classes.length > 0 && (

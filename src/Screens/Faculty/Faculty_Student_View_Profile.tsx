@@ -287,8 +287,15 @@ export default function StudentViewProfile() {
           {/* TAB SWITCHER (Reused from Student_History) */}
           <FadeSlideIn delay={60}>
             <View style={tabStyles.exportRow}>
-              <ExportExcel studentName="Student" />
-              <ExportPdf studentId={studentId} gradeLevel={gradeLevel} />
+              {/* <ExportExcel studentName="Student" /> */}
+              <ExportPdf
+                studentId={studentId}
+                gradeLevel={gradeLevel}
+                historyFilter={historyBounds?.range ?? 'week'}
+                historyAnchor={historyBounds?.start ?? new Date()}
+                perfTimeRange={perfBounds?.range ?? 'week'}
+                perfAnchor={perfBounds?.start ?? new Date()}
+              />
             </View>
             {/* <View style={tabStyles.tabGrid}></View> */}
             <View style={tabStyles.tabGrid}>
@@ -339,12 +346,12 @@ export default function StudentViewProfile() {
             {/* --- SESSIONS TAB --- */}
             {activeTab === 'sessions' && (
               <>
-                <FadeSlideIn delay={80}>
+                {/* <FadeSlideIn delay={80}>
                   <View style={tabStyles.section}>
                     <Text style={tabStyles.sectionTitle}>Total Activity Today</Text>
                     <StudentTotalActivityToday studentId={studentId} />
                   </View>
-                </FadeSlideIn>
+                </FadeSlideIn> */}
                 {/* <FadeSlideIn delay={160}>
                   <View style={tabStyles.section}>
                     <Text style={tabStyles.sectionTitle}>Alphabet Mastery</Text>
@@ -353,7 +360,7 @@ export default function StudentViewProfile() {
                 </FadeSlideIn> */}
                 <FadeSlideIn delay={240}>
                   <View style={tabStyles.section}>
-                    <Text style={tabStyles.sectionTitle}>Word Mastery</Text>
+                    <Text style={tabStyles.sectionTitle}>Words Completed Today</Text>
                     <StudentWordMastery studentId={studentId} />
                   </View>
                 </FadeSlideIn>
@@ -365,7 +372,7 @@ export default function StudentViewProfile() {
               <>
                 <FadeSlideIn delay={60}>
                   <View style={tabStyles.section}>
-                    <Text style={tabStyles.sectionTitle}>Performance Analytics</Text>
+                    <Text style={tabStyles.sectionTitle}>Date Filter</Text>
                     <DateRangeFilter onRangeChange={setPerfBounds} />
                   </View>
                 </FadeSlideIn>
@@ -376,7 +383,7 @@ export default function StudentViewProfile() {
                 </FadeSlideIn>
                 <FadeSlideIn delay={180}>
                   <View style={tabStyles.section}>
-                    <StudentAccuracyTrendsChart studentId={studentId} gradeLevel={gradeLevel} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} />
+                    <StudentAccuracyTrendsChart studentId={studentId} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} />
                   </View>
                 </FadeSlideIn>
               </>
@@ -387,7 +394,7 @@ export default function StudentViewProfile() {
               <>
                 <FadeSlideIn delay={60}>
                   <View style={tabStyles.section}>
-                    <Text style={tabStyles.sectionTitle}>Reading History Filter</Text>
+                    <Text style={tabStyles.sectionTitle}>Date Filter</Text>
                     <DateRangeFilter onRangeChange={setHistoryBounds} />
                   </View>
                 </FadeSlideIn>
@@ -426,16 +433,6 @@ export default function StudentViewProfile() {
                         <View style={historyTabStyles.statItem}>
                           <Text style={historyTabStyles.statValue}>{getTotalAttempts()}</Text>
                           <Text style={historyTabStyles.statLabel}>Attempts</Text>
-                        </View>
-                        <View style={historyTabStyles.statDivider} />
-                        <View style={historyTabStyles.statItem}>
-                          <Text style={historyTabStyles.statValue}>{getAverageAccuracy()}%</Text>
-                          <Text style={historyTabStyles.statLabel}>Avg. Accuracy</Text>
-                        </View>
-                        <View style={historyTabStyles.statDivider} />
-                        <View style={historyTabStyles.statItem}>
-                          <Text style={historyTabStyles.statValue}>{getBestWPM()}</Text>
-                          <Text style={historyTabStyles.statLabel}>Best WPM</Text>
                         </View>
                       </View>
                     </FadeSlideIn>
@@ -607,11 +604,11 @@ const tabStyles = StyleSheet.create({
   sectionTitle: {
     fontSize: sf(15), fontFamily: 'Nunito-Bold', color: '#1B5E20', marginBottom: sh(10),
   },
-     exportRow: {
+  exportRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginHorizontal: sw(16),
-    gap: sw(8), 
+    gap: sw(8),
     marginTop: sh(10),
     marginBottom: sh(4),
   },
@@ -677,5 +674,5 @@ const historyTabStyles = StyleSheet.create({
   perfectBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: sw(10), padding: sw(10), gap: sw(8), borderWidth: 1, borderColor: '#BBF7D0' },
   perfectIcon: { fontSize: sf(16) },
   perfectText: { fontSize: sf(12), fontFamily: 'Nunito-Bold', color: '#15803D', flex: 1 },
-  
+
 });

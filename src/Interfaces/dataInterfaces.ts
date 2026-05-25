@@ -78,7 +78,6 @@ export interface ClassDocument {
   // References
   facultyId: string; // Reference to the faculty document (UID)
   studentIds: string[]; // Reference to the student documents (UIDs)
-
   status: 'active' | 'archived';
 
   archivedAt?: Timestamp;
@@ -88,6 +87,55 @@ export interface ClassDocument {
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }
+
+// ─── Added for student acceptance or rejection to a class by faculty ───────────
+/**
+ * ENROLLMENT REQUEST STATUSES
+ *  - pending:   student submitted; awaiting faculty decision
+ *  - accepted:  faculty approved; student is enrolled in the class
+ *  - rejected:  faculty declined; reason may be attached
+ *  - cancelled: student withdrew their own pending request
+ */
+export type EnrollmentRequestStatus =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'cancelled';
+
+/**
+ * ENROLLMENT REQUEST DOCUMENT
+ *  - Top-level collection: enrollmentRequests/{requestId}
+ *  - One doc per join attempt, preserved for audit / history.
+ *  - facultyId & studentName are denormalized so that:
+ *      • security rules can check ownership without an extra get()
+ *      • faculty UI renders the pending list without N extra reads
+ */
+export interface EnrollmentRequestDocument {
+  requestId: string;
+  studentId: string;
+  studentName: string;
+  classId: string;
+  classCode: string;
+  facultyId: string;
+  status: EnrollmentRequestStatus;
+  requestedAt: Timestamp;
+  decidedAt?: Timestamp;
+  decidedBy?: string;
+  acknowledgedByStudent?: boolean;
+}
+
+/**
+ * STUDENT CLASS STATE
+ *  - Discriminated union returned by resolveStudentClassState().
+ *  - Lets Student_MyClass.tsx render from a single source of truth.
+ */
+export type StudentClassState =
+  | { kind: 'pending'; request: EnrollmentRequestDocument }
+  | { kind: 'just_accepted'; request: EnrollmentRequestDocument; class: ClassDocument | null }
+  | { kind: 'rejected'; request: EnrollmentRequestDocument }
+  | { kind: 'active'; class: ClassDocument }
+  | { kind: 'none' };
+// ─── End — student acceptance or rejection to a class by faculty ───────────────
 
 /**
  * MISCUE REPORT DOCUMENT INTERFACE

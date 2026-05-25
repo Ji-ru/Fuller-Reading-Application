@@ -20,6 +20,7 @@ import { RecordingControls } from '../../Components/Student/Reading/RecordingCon
 import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
 import { Miscue } from '../../Interfaces/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
+import { uploadRecording } from '../../Controller/DriveUploadController';
 import { /* isAlphabet, */ isPassage, isWords } from '../../Interfaces/passage';
 // import { makeTodayKey } from '../../Utilities/currentDateUtils';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
@@ -139,7 +140,7 @@ export default function ReadingActivityScreenPage() {
   }, []);
 
   // Navigation
-  const { handleLogout, handleBackStep, handleReplaceStep } = useNavigationHelper();
+  const { handleLogout, handleBackStep, handleReplaceStep, handleNextStep } = useNavigationHelper();
 
   const wordPositionInfo = useMemo(() => {
     if (type === 'word' && wordContext && isWords(readingMaterial)) {
@@ -432,14 +433,14 @@ export default function ReadingActivityScreenPage() {
       // const transcription = await processAudioWithWav2Vec2(audioFile);
       // const transcription = await processAudioWithHubert(audioFile);
       // const transcription = await processAudioWithWhisper(audioFile);
-      setSpokenText(transcription);
+      setSpokenText(transcription.toLowerCase());
       console.log('THIS IS THE SPOKEN: ' + transcription);
       // console.log('THIS IS THE UTTERANCES: ' + transcription);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      await analyzeReading(transcription, duration);
+      await analyzeReading(transcription, duration, audioFile);
       setIsReadingCompleted(true);
     } catch (error) {
       // Fallback on error: 0% accuracy instead of 100% simulated response
@@ -447,7 +448,7 @@ export default function ReadingActivityScreenPage() {
       setSpokenText('');
       setRecordingDuration(duration);
       // Send an empty string to trigger 0% accuracy analysis
-      await analyzeReading('', duration);
+      await analyzeReading('', duration, audioFile);
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
@@ -626,7 +627,7 @@ export default function ReadingActivityScreenPage() {
    * @param transcription - The transcription of spoken audio
    * @param duration - Recording duration (in seconds)
    */
-  const analyzeReading = async (transcription: string, duration: number) => {
+  const analyzeReading = async (transcription: string, duration: number, audioFile: string) => {
     let accuracyNum = 0;
     let isWordAlphabetCorrect = false; // Track correct status locally
     console.log("This is transcribed alphabet: " + transcription);
@@ -740,9 +741,18 @@ export default function ReadingActivityScreenPage() {
       setWordCorrectPerMin(wcpm);
 
       console.log('This is WPM: ' + wpm + ' | WCPM: ' + wcpm);
-      // To avoid duplication it needs to check if it was already stored 
+      // To avoid duplication it needs to check if it was already stored
       if (!hasStoredReport && duration > 0) {
         await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm, wcpm);
+      }
+
+      if (audioFile && duration >= 1) {
+        uploadRecording(audioFile, {
+          kind: 'passage',
+          passageTitle: getTitle(),
+          miscueCount: detectedMiscues.length,
+          accuracyRate: accuracyNum,
+        });
       }
     }
 
@@ -847,6 +857,17 @@ export default function ReadingActivityScreenPage() {
           setHasStoredCorrectAttempt(true);
           setAlreadyCompleted(true);
         }
+      }
+
+      if (audioFile && duration >= 1) {
+        uploadRecording(audioFile, {
+          kind: 'word',
+          chapterId: wordContext?.chapterId || 0,
+          lessonId: wordContext?.lessonId || 0,
+          targetWord: targetText,
+          miscueCount: correct ? 0 : 1,
+          accuracyRate: accuracyNum,
+        });
       }
     }
 
@@ -964,6 +985,7 @@ export default function ReadingActivityScreenPage() {
                 onBack={handleBackStep}
                 onMenuToggle={toggleMenu}
                 onLogout={handleLogout}
+                onAbout={() => handleNextStep('About')}
                 menuVisible={menuVisible}
               />
 

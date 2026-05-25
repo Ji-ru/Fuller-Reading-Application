@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
+import { Icon } from '../../Components/GlobalUse/Icon';
+import { sw } from '../../Utils/responsive';
 import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
 import { getAuth } from '@react-native-firebase/auth';
 import { getUserProfile } from '../../Controller/AuthenticationController';
@@ -16,6 +18,7 @@ import PassageDifficultyRanking from '../../Components/Faculty/Dashboard/Passage
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { useFetchClassReadingHealth } from '../../Hooks/use_ReadingStudentStats';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
+import { FacultyColors } from '../../Utilities/Theme';
 
 export type ClassViewFilter = 'overall' | string;
 
@@ -42,7 +45,7 @@ export default function FacultyDashboard() {
   const [firstName, setFirstName] = useState<string>('Faculty');
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
-  const { handleLogout } = useNavigationHelper();
+  const { handleLogout, handleNextStep } = useNavigationHelper();
   const auth = getAuth();
   const { getNumberOfClasses, getNumbersOfAllStudents } = getForStudentsMiscueStats();
 
@@ -160,7 +163,7 @@ export default function FacultyDashboard() {
   return (
     <SafeAreaView style={facultyDashboard.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
-          <BubbleBackground />
+        <BubbleBackground />
 
         {/* ── Top bar: menu button ── */}
         <View style={facultyDashboard.topBar}>
@@ -182,6 +185,15 @@ export default function FacultyDashboard() {
               activeOpacity={1}
             />
             <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); handleNextStep('About'); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Icon name="info" size={sw(20)} color={FacultyColors.slate} filled />
+                <Text style={facultyDashboard.dropdownTextAbout}>About</Text>
+              </TouchableOpacity>
+              <View style={facultyDashboard.dropdownDivider} />
               <TouchableOpacity
                 onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
                 style={facultyDashboard.dropdownItem}
@@ -331,12 +343,12 @@ export default function FacultyDashboard() {
           </View>
 
           {/* 3. READING HEALTH — broad snapshot of who is fluent / at-risk */}
-          <SectionLabel label="Reading Health" />
-          <ClassReadingStatus
+          {/* <SectionLabel label="Reading Health" /> */}
+          {/* <ClassReadingStatus
             facultyId={auth.currentUser?.uid || ''}
             filter={readingStatusFilter}
             onFilterChange={handleReadingFilterChange}
-          />
+          /> */}
 
           {/* 4. CLASS PARTICIPATION — are students actually reading this week? */}
           <SectionLabel label="Class Participation" />
@@ -364,12 +376,12 @@ export default function FacultyDashboard() {
           />
 
           {/* 7. PASSAGE DIFFICULTY — which passages are causing the most trouble */}
-          <SectionLabel label="Passage Difficulty Ranking" />
+          {/* <SectionLabel label="Passage Difficulty Ranking" />
           <PassageDifficultyRanking
             facultyId={auth.currentUser?.uid}
             filter={readingStatusFilter}
             className={selectedClassLabel}
-          />
+          /> */}
 
           {/* 8. MISCUE ANALYSIS — deepest diagnostic: error types and problem words */}
           <SectionLabel label="Miscue Analysis" />
@@ -406,9 +418,9 @@ function SectionLabel({ label }: { label: string }) {
 function MenuBars() {
   return (
     <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
-      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
-      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
-      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: '#1B2B22' }} />
+      <View style={{ width: 22, height: 2.5, borderRadius: 6, backgroundColor: FacultyColors.primary }} />
+      <View style={{ width: 12, height: 2.5, borderRadius: 6, backgroundColor: FacultyColors.primary }} />
+      <View style={{ width: 18, height: 2.5, borderRadius: 6, backgroundColor: FacultyColors.primary }} />
     </View>
   );
 }

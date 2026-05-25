@@ -50,7 +50,7 @@ const extractTranscript = (data: any): string => {
 // I recommend moving query params into a URLSearchParams object for readability
 const getDeepgramUrl = () => {
   const params = new URLSearchParams({
-    model: 'nova-2', // Nova-2 is currently the fastest/most accurate
+    model: 'nova-3',
     smart_format: 'true',
     punctuate: 'true',
     utterances: 'true',
@@ -297,7 +297,7 @@ export const useSpeechToText = () => {
         const transcript = extractTranscript(data);
 
         if (!transcript?.trim()) {
-          throw new Error('Walang natukoy na pagbigkas!');
+          throw new Error(' ');
         }
 
         return transcript;
@@ -368,7 +368,7 @@ export const useSpeechToText = () => {
         const transcript = extractTranscript(data);
 
         if (!transcript?.trim()) {
-          throw new Error('Walang natukoy na pagbigkas!');
+          throw new Error(' ');
         }
 
         return transcript;

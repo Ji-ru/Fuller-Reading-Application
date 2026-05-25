@@ -15,6 +15,7 @@ export const useAudioRecording = () => {
   const [hasPermission, setHasPermission] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
   const [audioPath, setAudioPath] = useState('');
+  const currentWavFileRef = useRef<string>('');
 
   // useRef: Persist mutable values across renders without causing re-render. Useful for values like intervals.
   // const recordingIntervalRef = useRef<number>(0);
@@ -61,16 +62,6 @@ export const useAudioRecording = () => {
   const initializeAudio = useCallback(async () => {
     try {
       await requestPermission();
-
-      const options = {
-        sampleRate: 16000,
-        channels: 1,
-        bitsPerSample: 16,
-        audioSource: 6,
-        wavFile: 'reading_test.wav',
-      };
-
-      AudioRecord.init(options);
     } catch (error) {
       Alert.alert('Error', 'Failed to initialize audio recording');
     }
@@ -121,6 +112,16 @@ export const useAudioRecording = () => {
         setIsRecording(true);
         setRecordTime(0);
         setAudioPath('');
+
+        const wavFile = `rec_${Date.now()}.wav`;
+        currentWavFileRef.current = wavFile;
+        AudioRecord.init({
+          sampleRate: 16000,
+          channels: 1,
+          bitsPerSample: 16,
+          audioSource: 6,
+          wavFile,
+        });
 
         AudioRecord.start();
           

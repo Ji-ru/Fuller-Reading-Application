@@ -30,7 +30,24 @@ export type IconName =
   | 'tap'
   | 'inbox'
   | 'star'
-  | 'info';
+  | 'info'
+  // Admin actions
+  | 'edit'
+  | 'trash'
+  // General UI
+  | 'chevron-right'
+  | 'chevron-down'
+  | 'menu'
+  | 'plus'
+  | 'search'
+  | 'x'
+  | 'users'
+  | 'students'
+  | 'teacher'
+  | 'adminBadge'
+  | 'download'
+  | 'eye'
+  | 'eye-off';
 
 interface IconProps {
   name: IconName;
@@ -506,6 +523,248 @@ const InfoIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ 
   </Svg>
 );
 
+// Edit — pencil (admin action)
+const EditIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4 16.5V20h3.5L19 8.5l-3.5-3.5L4 16.5z"
+      fill={filled ? `${color}30` : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M13.5 5.5l3 3"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+// Trash — delete (admin action)
+const TrashIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect
+      x="5" y="7" width="14" height="13" rx="2"
+      fill={filled ? `${color}20` : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+    />
+    <Path
+      d="M9 7V5.5h6V7"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+    <Line x1="10" y1="11" x2="10" y2="17" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    <Line x1="14" y1="11" x2="14" y2="17" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+  </Svg>
+);
+
+// ─── General UI Icons ──────────────────────────────────────────────────────────
+
+const ChevronRightIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Polyline
+      points="9 18 15 12 9 6"
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const ChevronDownIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Polyline
+      points="6 9 12 15 18 9"
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const MenuIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Line x1="3" y1="12" x2="21" y2="12" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    <Line x1="3" y1="6" x2="21" y2="6" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    <Line x1="3" y1="18" x2="21" y2="18" stroke={color} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);
+
+const PlusIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Line x1="12" y1="5" x2="12" y2="19" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    <Line x1="5" y1="12" x2="19" y2="12" stroke={color} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);
+
+const SearchIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="11" cy="11" r="8" stroke={color} strokeWidth={2} />
+    <Line x1="21" y1="21" x2="16.65" y2="16.65" stroke={color} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);
+
+const XIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Line x1="18" y1="6" x2="6" y2="18" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    <Line x1="6" y1="6" x2="18" y2="18" stroke={color} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);
+
+const UsersIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    <Circle cx="9" cy="7" r="4" stroke={color} strokeWidth={2} />
+    <Path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    <Path d="M16 3.13a4 4 0 0 1 0 7.75" stroke={color} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);
+
+// Students — person with a backpack strap (distinct from generic `users`)
+const StudentsIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    {/* Head */}
+    <Circle
+      cx="12" cy="7" r="3.2"
+      fill={filled ? color : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+    />
+    {/* Body / shoulders */}
+    <Path
+      d="M5 20c0-3.6 3.1-6.2 7-6.2s7 2.6 7 6.2"
+      fill={filled ? `${color}40` : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+    {/* Backpack strap */}
+    <Path
+      d="M9 13.5v5"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+    {/* Book held under arm */}
+    <Rect
+      x="13.5" y="13.5" width="4.5" height="3.2" rx="0.6"
+      fill={filled ? color : 'none'}
+      stroke={color}
+      strokeWidth={1.6}
+    />
+  </Svg>
+);
+
+// Teacher — person in front of a chalkboard
+const TeacherIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    {/* Chalkboard behind */}
+    <Rect
+      x="3" y="3" width="18" height="11" rx="1.5"
+      fill={filled ? `${color}25` : 'none'}
+      stroke={color}
+      strokeWidth={1.7}
+    />
+    {/* Board text line */}
+    <Line x1="6" y1="6.5" x2="12" y2="6.5" stroke={color} strokeWidth={1.4} strokeLinecap="round" opacity={filled ? 0.7 : 1} />
+    <Line x1="6" y1="9" x2="10" y2="9" stroke={color} strokeWidth={1.4} strokeLinecap="round" opacity={filled ? 0.7 : 1} />
+    {/* Teacher head */}
+    <Circle
+      cx="12" cy="16.5" r="2.2"
+      fill={filled ? color : 'none'}
+      stroke={color}
+      strokeWidth={1.7}
+    />
+    {/* Shoulders */}
+    <Path
+      d="M7.5 21.5c0-2 2-3.2 4.5-3.2s4.5 1.2 4.5 3.2"
+      fill={filled ? `${color}40` : 'none'}
+      stroke={color}
+      strokeWidth={1.7}
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+// Admin Badge — shield with check mark
+const AdminBadgeIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    {/* Shield */}
+    <Path
+      d="M12 3l8 3v5.5c0 4.5-3.4 8.4-8 9.5-4.6-1.1-8-5-8-9.5V6l8-3z"
+      fill={filled ? color : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+    />
+    {/* Check inside */}
+    <Polyline
+      points="8.5,12 11,14.5 15.5,9.5"
+      fill="none"
+      stroke={filled ? '#FFFFFF' : color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+// Eye — password visibility (visible)
+const EyeIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"
+      fill={filled ? `${color}25` : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+    />
+    <Circle
+      cx="12" cy="12" r="3"
+      fill={filled ? color : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+    />
+  </Svg>
+);
+
+// Eye Off — password visibility (hidden) with diagonal slash
+const EyeOffIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"
+      fill={filled ? `${color}25` : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+    />
+    <Circle
+      cx="12" cy="12" r="3"
+      fill="none"
+      stroke={color}
+      strokeWidth={1.8}
+    />
+    {/* Diagonal slash */}
+    <Line x1="4" y1="4" x2="20" y2="20" stroke={color} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);
+
+const DownloadIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    <Polyline points="7 10 12 15 17 10" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="12" y1="15" x2="12" y2="3" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
 // ─── Icon Router ──────────────────────────────────────────────────────────────
 
 export const Icon: React.FC<IconProps> = ({
@@ -531,6 +790,21 @@ export const Icon: React.FC<IconProps> = ({
     case 'inbox':     return <InboxIcon     size={size} color={color} filled={filled} />;
     case 'star':      return <StarIcon      size={size} color={color} filled={filled} />;
     case 'info':      return <InfoIcon      size={size} color={color} filled={filled} />;
+    case 'edit':      return <EditIcon      size={size} color={color} filled={filled} />;
+    case 'trash':     return <TrashIcon     size={size} color={color} filled={filled} />;
+    case 'chevron-right': return <ChevronRightIcon size={size} color={color} filled={filled} />;
+    case 'chevron-down':  return <ChevronDownIcon  size={size} color={color} filled={filled} />;
+    case 'menu':      return <MenuIcon      size={size} color={color} filled={filled} />;
+    case 'plus':      return <PlusIcon      size={size} color={color} filled={filled} />;
+    case 'search':    return <SearchIcon    size={size} color={color} filled={filled} />;
+    case 'x':         return <XIcon         size={size} color={color} filled={filled} />;
+    case 'users':     return <UsersIcon     size={size} color={color} filled={filled} />;
+    case 'students':  return <StudentsIcon  size={size} color={color} filled={filled} />;
+    case 'teacher':   return <TeacherIcon   size={size} color={color} filled={filled} />;
+    case 'adminBadge':return <AdminBadgeIcon size={size} color={color} filled={filled} />;
+    case 'download':  return <DownloadIcon  size={size} color={color} filled={filled} />;
+    case 'eye':       return <EyeIcon       size={size} color={color} filled={filled} />;
+    case 'eye-off':   return <EyeOffIcon    size={size} color={color} filled={filled} />;
     default:          return null;
   }
 };

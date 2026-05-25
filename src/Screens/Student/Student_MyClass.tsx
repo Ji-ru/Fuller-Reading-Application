@@ -14,12 +14,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Text as SvgText } from 'react-native-svg';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getAuth } from '@react-native-firebase/auth';
-import { joinClass, getStudentClass, leaveClass } from '../../Controller/AuthenticationController';
+import {
+    joinClass,
+    leaveClass,
+    verifyCurrentUserPassword,
+    // ─── Added for student acceptance or rejection to a class by faculty ───
+    resolveStudentClassState,
+    cancelEnrollmentRequest,
+    acknowledgeRejection,
+    // ─── End ──────────────────────────────────────────────────────────────
+} from '../../Controller/AuthenticationController';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import { ClassDocument } from '../../Interfaces/dataInterfaces';
+import {
+    ClassDocument,
+    // ─── Added for student acceptance or rejection to a class by faculty ───
+    StudentClassState,
+    // ─── End ──────────────────────────────────────────────────────────────
+} from '../../Interfaces/dataInterfaces';
 import { sw, sh, sf } from '../../Utils/responsive';
+import { Icon } from '../../Components/GlobalUse/Icon';
+import { StudentColors } from '../../Utilities/Theme';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -80,6 +96,18 @@ const headerStyles = StyleSheet.create({
     backArrowText: {
         fontSize: 40, fontFamily: 'Nunito-Bold',
         color: C.white, lineHeight: 28, marginLeft: -2, paddingBottom: 2,
+    },
+    aboutRow: {
+        flexDirection: 'row', alignItems: 'center',
+        paddingHorizontal: sw(16), paddingVertical: sh(14),
+    },
+    aboutText: {
+        fontSize: sf(15), fontFamily: 'Nunito-Bold',
+        color: StudentColors.slate, marginLeft: sw(12),
+    },
+    dropdownDivider: {
+        height: 1, marginHorizontal: sw(12),
+        backgroundColor: '#E3F0E7',
     },
 });
 
@@ -142,31 +170,36 @@ interface JoinSuccessPopupProps {
     onClose: () => void;
 }
 
+// ─── Modified for student acceptance or rejection to a class by faculty ───
+// Copy now reflects the new approval workflow: joining only SENDS a request;
+// the student is not yet enrolled until the faculty accepts.
 const JoinSuccessPopup: React.FC<JoinSuccessPopupProps> = ({ visible, className, onClose }) => (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
         <View style={popupStyles.overlay}>
             <View style={popupStyles.card}>
-                <View style={[popupStyles.iconCircle, popupStyles.iconCircleSuccess]}>
-                    <Text style={popupStyles.iconEmoji}>🎉</Text>
+                <View style={[popupStyles.iconCircle, popupStyles.iconCircleWarning]}>
+                    <Text style={popupStyles.iconEmoji}>📨</Text>
                 </View>
-                <Text style={popupStyles.title}>You're In!</Text>
+                <Text style={popupStyles.title}>Request Sent!</Text>
                 <Text style={popupStyles.body}>
-                    You have successfully joined{'\n'}
-                    <Text style={popupStyles.bodyBold}>{className}</Text>.
+                    Your request to join{'\n'}
+                    <Text style={popupStyles.bodyBold}>{className}</Text>{'\n'}
+                    has been sent to your teacher.
                     {'\n\n'}
-                    Your teacher can now see you in the class list.
+                    You'll see the class once your teacher approves you.
                 </Text>
                 <TouchableOpacity
-                    style={[popupStyles.actionButton, popupStyles.actionButtonSuccess]}
+                    style={[popupStyles.actionButton, popupStyles.actionButtonWarning]}
                     onPress={onClose}
                     activeOpacity={0.82}
                 >
-                    <Text style={popupStyles.actionButtonText}>Let's Go!</Text>
+                    <Text style={popupStyles.actionButtonText}>OK</Text>
                 </TouchableOpacity>
             </View>
         </View>
     </Modal>
 );
+// ─── End ──────────────────────────────────────────────────────────────────
 
 // ─── LeaveClassPopup ─────────────────────────────────────────────────────────
 
@@ -219,17 +252,100 @@ const LeaveClassPopup: React.FC<LeaveClassPopupProps> = ({ visible, className, l
     </Modal>
 );
 
+// ─── PasswordVerificationPopup ───────────────────────────────────────────────
+
+interface PasswordVerificationPopupProps {
+    visible: boolean;
+    verifying: boolean;
+    error: string;
+    passwordValue: string;
+    onChangePassword: (text: string) => void;
+    onClose: () => void;
+    onConfirm: () => void;
+}
+
+const PasswordVerificationPopup: React.FC<PasswordVerificationPopupProps> = ({
+    visible,
+    verifying,
+    error,
+    passwordValue,
+    onChangePassword,
+    onClose,
+    onConfirm,
+}) => (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+        <View style={popupStyles.overlay}>
+            <View style={popupStyles.card}>
+                <View style={[popupStyles.iconCircle, popupStyles.iconCircleWarning]}>
+                    <Text style={popupStyles.iconEmoji}>🔐</Text>
+                </View>
+                <Text style={popupStyles.title}>Verify Password</Text>
+                <Text style={popupStyles.body}>
+                    Please enter your account password to confirm you want to leave the class.
+                </Text>
+
+                <View style={[styles.codeInputWrapper, error ? styles.codeInputError : null, { width: '100%', marginBottom: sh(16), backgroundColor: '#FAFAFA' }]}>
+                    <TextInput
+                        style={[styles.codeInput, { letterSpacing: sf(1), fontSize: sf(16), textAlign: 'left' }]}
+                        placeholder="Enter your password"
+                        placeholderTextColor={COLORS.textMuted}
+                        value={passwordValue}
+                        onChangeText={onChangePassword}
+                        secureTextEntry
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                    />
+                </View>
+                {error ? (
+                    <View style={[styles.inlineErrorBox, { width: '100%' }]}>
+                        <Text style={styles.inlineErrorText}>{error}</Text>
+                    </View>
+                ) : null}
+
+                <View style={popupStyles.buttonRow}>
+                    <TouchableOpacity
+                        style={[popupStyles.actionButton, popupStyles.actionButtonCancel, { flex: 1, marginRight: sw(8) }]}
+                        onPress={onClose}
+                        disabled={verifying}
+                        activeOpacity={0.82}
+                    >
+                        <Text style={popupStyles.actionButtonCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[popupStyles.actionButton, popupStyles.actionButtonDanger, { flex: 1, marginLeft: sw(8) }]}
+                        onPress={onConfirm}
+                        disabled={verifying}
+                        activeOpacity={0.82}
+                    >
+                        {verifying ? (
+                            <ActivityIndicator size="small" color="#FFF" />
+                        ) : (
+                            <Text style={popupStyles.actionButtonText}>Verify</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+    </Modal>
+);
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function StudentMyClass() {
     const currentUser = getAuth().currentUser;
     const studentId = currentUser?.uid || '';
+    const isPasswordUser = currentUser?.providerData.some(p => p.providerId === 'password');
 
     const { handleLogout, handleBackStep, handleNextStep } = useNavigationHelper();
     const [menuVisible, setMenuVisible] = useState(false);
     const [logoutVisible, setLogoutVisible] = useState(false);
 
-    const [enrolledClass, setEnrolledClass] = useState<ClassDocument | null>(null);
+    // ─── Added for student acceptance or rejection to a class by faculty ───
+    // classState is the single source of truth: pending | just_accepted | rejected | active | none
+    const [classState, setClassState] = useState<StudentClassState>({ kind: 'none' });
+    const [cancellingRequest, setCancellingRequest] = useState(false);
+    const [acknowledgingRejection, setAcknowledgingRejection] = useState(false);
+    // ─── End ──────────────────────────────────────────────────────────────
     const [loadingClass, setLoadingClass] = useState(true);
     const [classError, setClassError] = useState('');
 
@@ -245,26 +361,45 @@ export default function StudentMyClass() {
     const [leaveModalVisible, setLeaveModalVisible] = useState(false);
     const [leaving, setLeaving] = useState(false);
 
-    const fetchEnrolledClass = async () => {
+    const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+    const [passwordInput, setPasswordInput] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [verifyingPassword, setVerifyingPassword] = useState(false);
+
+    // Convenience accessor: the currently-enrolled class (active OR freshly-accepted)
+    const enrolledClass: ClassDocument | null =
+        classState.kind === 'active'
+            ? classState.class
+            : classState.kind === 'just_accepted'
+                ? classState.class
+                : null;
+
+    // ─── Added for student acceptance or rejection to a class by faculty ───
+    const fetchClassState = async () => {
         if (!studentId) return;
         try {
             setLoadingClass(true);
             setClassError('');
-            const classData = await getStudentClass(studentId);
-            setEnrolledClass(classData);
+            const state = await resolveStudentClassState(studentId);
+            setClassState(state);
         } catch (error) {
-            console.error('Error fetching enrolled class:', error);
+            console.error('Error resolving class state:', error);
             setClassError('Failed to load your class. Please try again.');
-            setEnrolledClass(null);
+            setClassState({ kind: 'none' });
         } finally {
             setLoadingClass(false);
         }
     };
+    // ─── End ──────────────────────────────────────────────────────────────
 
-    useEffect(() => { fetchEnrolledClass(); }, [studentId]);
+    useEffect(() => { fetchClassState(); }, [studentId]);
 
     const handleJoinPress = () => {
-        if (enrolledClass) { setAlreadyEnrolledVisible(true); return; }
+        // Block if already enrolled OR if a pending request exists
+        if (enrolledClass || classState.kind === 'pending') {
+            setAlreadyEnrolledVisible(true);
+            return;
+        }
         setJoinModalVisible(true);
     };
 
@@ -278,7 +413,7 @@ export default function StudentMyClass() {
             setJoinCode('');
             setJoinedClassName(result.className || '');
             setSuccessPopupVisible(true);
-            await fetchEnrolledClass();
+            await fetchClassState();
         } catch (error: any) {
             setJoinError(error.message);
         } finally {
@@ -286,17 +421,74 @@ export default function StudentMyClass() {
         }
     };
 
+    // ─── Added for student acceptance or rejection to a class by faculty ───
+    const handleCancelRequest = async () => {
+        if (classState.kind !== 'pending' || cancellingRequest) return;
+        setCancellingRequest(true);
+        try {
+            await cancelEnrollmentRequest(classState.request.requestId);
+            await fetchClassState();
+        } catch (error: any) {
+            console.error('Cancel request failed:', error);
+        } finally {
+            setCancellingRequest(false);
+        }
+    };
+
+    const handleAcknowledgeRejection = async () => {
+        if (classState.kind !== 'rejected' || acknowledgingRejection) return;
+        setAcknowledgingRejection(true);
+        try {
+            await acknowledgeRejection(classState.request.requestId);
+            await fetchClassState();
+        } catch (error: any) {
+            console.error('Acknowledge rejection failed:', error);
+        } finally {
+            setAcknowledgingRejection(false);
+        }
+    };
+    // ─── End ──────────────────────────────────────────────────────────────
+
     const closeJoinModal = () => { setJoinModalVisible(false); setJoinCode(''); setJoinError(''); };
 
     const handleLeavePress = () => setLeaveModalVisible(true);
 
-    const handleLeaveClass = async () => {
+    const handleConfirmLeave = () => {
+        setLeaveModalVisible(false);
+        if (isPasswordUser) {
+            setPasswordModalVisible(true);
+            setPasswordInput('');
+            setPasswordError('');
+        } else {
+            proceedToLeaveClass();
+        }
+    };
+
+    const handleVerifyPassword = async () => {
+        if (!passwordInput.trim()) {
+            setPasswordError('Please enter your password.');
+            return;
+        }
+        setVerifyingPassword(true);
+        setPasswordError('');
+        try {
+            await verifyCurrentUserPassword(passwordInput);
+            setPasswordModalVisible(false);
+            setPasswordInput('');
+            await proceedToLeaveClass();
+        } catch (error: any) {
+            setPasswordError(error.message);
+        } finally {
+            setVerifyingPassword(false);
+        }
+    };
+
+    const proceedToLeaveClass = async () => {
         if (!enrolledClass || !studentId) return;
         setLeaving(true);
         try {
             await leaveClass(studentId, enrolledClass.classId);
-            setEnrolledClass(null);
-            setLeaveModalVisible(false);
+            setClassState({ kind: 'none' });
         } catch (error: any) {
             console.error('Error leaving class:', error);
             // Optionally, we could show a toast or error message here
@@ -348,10 +540,13 @@ export default function StudentMyClass() {
                             setMenuVisible(false);
                             handleNextStep('About');
                         }}
-                        style={upperNav.logoutButton}
-                        >
-                        <Text style={upperNav.logoutText}>About</Text>
+                        style={headerStyles.aboutRow}
+                        activeOpacity={0.75}
+                    >
+                        <Icon name="info" size={sw(20)} color={StudentColors.slate} filled />
+                        <Text style={headerStyles.aboutText}>About</Text>
                     </TouchableOpacity>
+                    <View style={headerStyles.dropdownDivider} />
                     <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
                         <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
                         <Text style={upperNav.logoutText}>Logout</Text>
@@ -382,13 +577,66 @@ export default function StudentMyClass() {
                     <View style={[styles.stateBox, styles.errorBox]}>
                         <Text style={styles.errorIcon}>⚠</Text>
                         <Text style={styles.errorText}>{classError}</Text>
-                        <TouchableOpacity style={styles.retryButton} onPress={fetchEnrolledClass}>
+                        <TouchableOpacity style={styles.retryButton} onPress={fetchClassState}>
                             <Text style={styles.retryText}>Try Again</Text>
                         </TouchableOpacity>
                     </View>
                 ) : null}
 
-                {!loadingClass && !classError && !enrolledClass && (
+                {/* ─── Added for student acceptance or rejection to a class by faculty ─── */}
+                {!loadingClass && !classError && classState.kind === 'pending' && (
+                    <View style={styles.pendingCard}>
+                        <View style={styles.pendingIconCircle}>
+                            <Text style={styles.pendingIconText}>⏳</Text>
+                        </View>
+                        <Text style={styles.pendingTitle}>Waiting for Approval</Text>
+                        <Text style={styles.pendingBody}>
+                            Your request to join{' '}
+                            <Text style={styles.pendingBodyBold}>{classState.request.classCode}</Text>{' '}
+                            has been sent. Your teacher will review it shortly.
+                        </Text>
+                        <TouchableOpacity
+                            style={[styles.pendingCancelButton, cancellingRequest && styles.pendingCancelBusy]}
+                            onPress={handleCancelRequest}
+                            disabled={cancellingRequest}
+                            activeOpacity={0.82}
+                        >
+                            {cancellingRequest ? (
+                                <ActivityIndicator size="small" color={COLORS.danger} />
+                            ) : (
+                                <Text style={styles.pendingCancelText}>Cancel Request</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {!loadingClass && !classError && classState.kind === 'rejected' && (
+                    <View style={styles.rejectedCard}>
+                        <View style={styles.rejectedIconCircle}>
+                            <Text style={styles.rejectedIconText}>✕</Text>
+                        </View>
+                        <Text style={styles.rejectedTitle}>Request Declined</Text>
+                        <Text style={styles.rejectedBody}>
+                            Your teacher declined your request to join{' '}
+                            <Text style={styles.rejectedBodyBold}>{classState.request.classCode}</Text>.
+                        </Text>
+                        <TouchableOpacity
+                            style={[styles.rejectedAckButton, acknowledgingRejection && styles.rejectedAckBusy]}
+                            onPress={handleAcknowledgeRejection}
+                            disabled={acknowledgingRejection}
+                            activeOpacity={0.82}
+                        >
+                            {acknowledgingRejection ? (
+                                <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                                <Text style={styles.rejectedAckText}>OK, Got It</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                )}
+                {/* ─── End ──────────────────────────────────────────────────────────── */}
+
+                {!loadingClass && !classError && classState.kind === 'none' && (
                     <View style={styles.emptyCard}>
                         <View style={styles.emptyIconCircle}>
                             <Image
@@ -444,7 +692,7 @@ export default function StudentMyClass() {
                             <Text style={styles.codeCardHint}>Share this code with classmates</Text>
                         </View>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.leaveClassButton}
                             onPress={handleLeavePress}
                             activeOpacity={0.7}
@@ -455,13 +703,15 @@ export default function StudentMyClass() {
                 )}
             </ScrollView>
 
-            {/* Floating Join button */}
+            {/* Floating Join button — disabled while already enrolled OR waiting on a pending request */}
             {!loadingClass && (
                 <View style={styles.fabContainer}>
                     <TouchableOpacity
                         style={[
                             styles.fabButton,
-                            enrolledClass ? styles.fabButtonDisabled : styles.fabButtonActive,
+                            (enrolledClass || classState.kind === 'pending')
+                                ? styles.fabButtonDisabled
+                                : styles.fabButtonActive,
                         ]}
                         onPress={handleJoinPress}
                         activeOpacity={0.82}
@@ -521,12 +771,21 @@ export default function StudentMyClass() {
 
             <AlreadyEnrolledPopup visible={alreadyEnrolledVisible} onClose={() => setAlreadyEnrolledVisible(false)} />
             <JoinSuccessPopup visible={successPopupVisible} className={joinedClassName} onClose={() => setSuccessPopupVisible(false)} />
-            <LeaveClassPopup 
-                visible={leaveModalVisible} 
-                className={enrolledClass?.className || ''} 
-                leaving={leaving} 
-                onClose={() => setLeaveModalVisible(false)} 
-                onConfirm={handleLeaveClass} 
+            <LeaveClassPopup
+                visible={leaveModalVisible}
+                className={enrolledClass?.className || ''}
+                leaving={leaving}
+                onClose={() => setLeaveModalVisible(false)}
+                onConfirm={handleConfirmLeave}
+            />
+            <PasswordVerificationPopup
+                visible={passwordModalVisible}
+                verifying={verifyingPassword}
+                error={passwordError}
+                passwordValue={passwordInput}
+                onChangePassword={(text) => { setPasswordInput(text); if (passwordError) setPasswordError(''); }}
+                onClose={() => { setPasswordModalVisible(false); setPasswordInput(''); setPasswordError(''); }}
+                onConfirm={handleVerifyPassword}
             />
         </SafeAreaView>
     );
@@ -640,6 +899,69 @@ const styles = StyleSheet.create({
 
     leaveClassButton: { marginHorizontal: sw(20), marginBottom: sh(24), alignItems: 'center', paddingVertical: sh(12), backgroundColor: '#FFF0F0', borderRadius: sw(12) },
     leaveClassText: { fontSize: sf(14), fontFamily: 'Andika-Bold', color: COLORS.danger },
+
+    // ─── Added for student acceptance or rejection to a class by faculty ───
+    pendingCard: {
+        backgroundColor: COLORS.surface, borderRadius: sw(20), padding: sw(28),
+        alignItems: 'center', elevation: 3,
+        shadowColor: '#000', shadowOffset: { width: 0, height: sw(3) },
+        shadowOpacity: 0.08, shadowRadius: sw(10),
+        borderWidth: 1, borderColor: COLORS.warningBorder,
+    },
+    pendingIconCircle: {
+        width: sw(80), height: sw(80), borderRadius: sw(40),
+        backgroundColor: COLORS.warningLight, alignItems: 'center', justifyContent: 'center',
+        marginBottom: sh(20), borderWidth: 2, borderColor: COLORS.warningBorder,
+    },
+    pendingIconText: { fontSize: sf(38) },
+    pendingTitle: {
+        fontSize: sf(22), fontFamily: 'Andika-Bold', color: COLORS.text,
+        marginBottom: sh(10), textAlign: 'center',
+    },
+    pendingBody: {
+        fontSize: sf(14), fontFamily: 'Andika-Regular', color: COLORS.textSecondary,
+        textAlign: 'center', lineHeight: sf(22), marginBottom: sh(22),
+    },
+    pendingBodyBold: { fontFamily: 'Andika-Bold', color: COLORS.warning, letterSpacing: sf(1) },
+    pendingCancelButton: {
+        width: '100%', paddingVertical: sh(14), borderRadius: sw(12),
+        alignItems: 'center', backgroundColor: COLORS.dangerLight,
+        borderWidth: 1, borderColor: '#FECACA',
+    },
+    pendingCancelBusy: { opacity: 0.7 },
+    pendingCancelText: { fontSize: sf(15), fontFamily: 'Andika-Bold', color: COLORS.danger },
+
+    rejectedCard: {
+        backgroundColor: COLORS.surface, borderRadius: sw(20), padding: sw(28),
+        alignItems: 'center', elevation: 3,
+        shadowColor: '#000', shadowOffset: { width: 0, height: sw(3) },
+        shadowOpacity: 0.08, shadowRadius: sw(10),
+        borderWidth: 1, borderColor: '#FECACA',
+    },
+    rejectedIconCircle: {
+        width: sw(80), height: sw(80), borderRadius: sw(40),
+        backgroundColor: COLORS.dangerLight, alignItems: 'center', justifyContent: 'center',
+        marginBottom: sh(20), borderWidth: 2, borderColor: '#FECACA',
+    },
+    rejectedIconText: { fontSize: sf(36), fontFamily: 'Andika-Bold', color: COLORS.danger },
+    rejectedTitle: {
+        fontSize: sf(22), fontFamily: 'Andika-Bold', color: COLORS.text,
+        marginBottom: sh(10), textAlign: 'center',
+    },
+    rejectedBody: {
+        fontSize: sf(14), fontFamily: 'Andika-Regular', color: COLORS.textSecondary,
+        textAlign: 'center', lineHeight: sf(22), marginBottom: sh(16),
+    },
+    rejectedBodyBold: { fontFamily: 'Andika-Bold', color: COLORS.danger, letterSpacing: sf(1) },
+    rejectedAckButton: {
+        width: '100%', paddingVertical: sh(14), borderRadius: sw(12),
+        alignItems: 'center', backgroundColor: COLORS.teal,
+        elevation: 2, shadowColor: COLORS.tealDark,
+        shadowOffset: { width: 0, height: sw(2) }, shadowOpacity: 0.2, shadowRadius: sw(5),
+    },
+    rejectedAckBusy: { opacity: 0.7 },
+    rejectedAckText: { fontSize: sf(15), fontFamily: 'Andika-Bold', color: '#FFF' },
+    // ─── End ──────────────────────────────────────────────────────────────
 
     fabContainer: { position: 'absolute', bottom: sh(28), left: sw(20), right: sw(20) },
     fabButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: sh(16), borderRadius: sw(18), gap: sw(8), elevation: 6, shadowColor: COLORS.tealDark, shadowOffset: { width: 0, height: sw(4) }, shadowOpacity: 0.25, shadowRadius: sw(10) },

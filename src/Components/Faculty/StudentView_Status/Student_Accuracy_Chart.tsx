@@ -36,8 +36,6 @@ type TimeRange = 'week' | 'month' | 'year';
 interface AccuracyTrendsChartProps {
   studentId: string;
   role?: 'faculty' | 'student';
-  /** Numeric grade level (1, 2, 3). When provided, renders a grade-level benchmark card. */
-  gradeLevel?: number;
   /** When provided externally, the component hides its own filter bar and uses this value. */
   timeRange?: TimeRange;
   /** Anchor date for period navigation. When provided, data is filtered relative to this date. */
@@ -48,47 +46,18 @@ interface AccuracyTrendsChartProps {
   endDate?: Date;
 }
 
-// ─── Grade-level benchmarks ───────────────────────────────────────────────────
-// WPM: Hasbrouck & Tindal (2017), Spring 50th percentile
-// Accuracy: Widely accepted instructional/independent reading thresholds
-type BenchmarkStatus = 'below' | 'at' | 'above';
-
-interface GradeBenchmark {
-  grade: number;
-  label: string;
-  wpmMin: number;  // lower bound of on-grade range
-  wpmMax: number;  // upper bound of on-grade range
-  accMin: number;  // lower bound of on-grade accuracy range (%)
-  accMax: number;  // upper bound of on-grade accuracy range (%)
-}
-
-const GRADE_BENCHMARKS: GradeBenchmark[] = [
-  { grade: 1, label: 'Grade 1', wpmMin: 53,  wpmMax: 82,  accMin: 90, accMax: 100 },
-  { grade: 2, label: 'Grade 2', wpmMin: 89,  wpmMax: 120, accMin: 92, accMax: 100 },
-  { grade: 3, label: 'Grade 3', wpmMin: 107, wpmMax: 140, accMin: 94, accMax: 100 },
-];
-
-const getBenchmarkStatus = (
-  value: number,
-  min: number,
-  max: number,
-): BenchmarkStatus => {
-  if (value >= min && value <= max) return 'at';
-  if (value > max) return 'above';
-  return 'below';
-};
-
-const BENCHMARK_CONFIG: Record<BenchmarkStatus, { label: string; color: string; bg: string; icon: string }> = {
-  below: { label: 'Below Grade Level', color: '#EF4444', bg: '#FEE2E2', icon: '▼' },
-  at:    { label: 'At Grade Level',    color: '#F59E0B', bg: '#FEF3C7', icon: '●' },
-  above: { label: 'Above Grade Level', color: '#10B981', bg: '#D1FAE5', icon: '▲' },
-};
-
-const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studentId, role = 'faculty', gradeLevel, timeRange: externalTimeRange, anchor, startDate, endDate }) => {
+const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studentId, role = 'faculty', timeRange: externalTimeRange, anchor, startDate, endDate }) => {
   const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>('week');
   const timeRange = externalTimeRange ?? internalTimeRange;
 
-  const { chartData: rawData, loading, error } = useStudentAccuracyTrends(studentId, timeRange, anchor, startDate, endDate);
+  const {
+    chartData: rawData,
+    loading,
+    error,
+    grandTotalWords,
+    grandAccuracySum,
+    grandTotalMinutes,
+  } = useStudentAccuracyTrends(studentId, timeRange, anchor, startDate, endDate);
 
   // ── Normalized data ────────────────────────────────────────────────────────
   const chartData = useMemo(
@@ -104,33 +73,43 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
   const calc = useMemo(() => {
     if (!hasData) return null;
 
-    const avgAccuracy = accuracyValues.reduce((s, v) => s + v, 0) / accuracyValues.length;
-    const avgWpm = wpmValues.length > 0 ? wpmValues.reduce((s, v) => s + v, 0) / wpmValues.length : 0;
+    // B6: words-weighted grand averages — consistent with per-bucket computation
+    const avgAccuracy = grandTotalWords > 0
+      ? Math.min(100, Math.max(0, grandAccuracySum / grandTotalWords))
+      : 0;
+    const avgWpm = grandTotalMinutes > 0
+      ? grandTotalWords / grandTotalMinutes
+      : 0;
     const maxWpm = Math.max(...wpmValues, 1);
 
-    // Trend
+    // B4: robust trend — first-half vs second-half average when ≥4 valid points,
+    // otherwise first-vs-last.
     const validAcc = chartData.filter(d => d.accuracy > 0);
-    const accDelta = (validAcc.at(-1)?.accuracy ?? 0) - (validAcc[0]?.accuracy ?? 0);
-    const accPct = validAcc[0]?.accuracy ? ((accDelta / validAcc[0].accuracy) * 100) : 0;
-    const accDir: 'up' | 'down' | 'same' = accDelta > 0 ? 'up' : accDelta < 0 ? 'down' : 'same';
+    let accDelta = 0;
+    if (validAcc.length >= 4) {
+      const mid = Math.floor(validAcc.length / 2);
+      const avgFirst  = validAcc.slice(0, mid).reduce((s, d) => s + d.accuracy, 0) / mid;
+      const avgSecond = validAcc.slice(mid).reduce((s, d) => s + d.accuracy, 0) / (validAcc.length - mid);
+      accDelta = avgSecond - avgFirst;
+    } else if (validAcc.length >= 2) {
+      accDelta = (validAcc.at(-1)?.accuracy ?? 0) - (validAcc[0]?.accuracy ?? 0);
+    }
+    // B5: ±1 percentage-point threshold matches the unit shown
+    const accDir: 'up' | 'down' | 'same' =
+      accDelta > 1 ? 'up' : accDelta < -1 ? 'down' : 'same';
 
-    // Peak accuracy index
     const peakAccIdx = chartData.reduce(
       (maxI, item, i, arr) => (item.accuracy > arr[maxI].accuracy ? i : maxI), 0,
     );
 
-    return { avgAccuracy, avgWpm, maxWpm, accDir, accPct, peakAccIdx };
-  }, [chartData, accuracyValues, wpmValues, hasData]);
+    return { avgAccuracy, avgWpm, maxWpm, accDir, accDelta, peakAccIdx };
+  }, [chartData, wpmValues, hasData, grandTotalWords, grandAccuracySum, grandTotalMinutes]);
 
-  // ── Benchmark lookup ────────────────────────────────────────────────────────
-  const benchmark = gradeLevel
-    ? GRADE_BENCHMARKS.find(b => b.grade === gradeLevel) ?? null
-    : null;
   const insight = useMemo(() => {
     if (!calc) return '';
-    const pct = Math.abs(calc.accPct).toFixed(1);
-    if (calc.accDir === 'up') return `Accuracy improved by ${pct}% over this period.`;
-    if (calc.accDir === 'down') return `Accuracy dropped by ${pct}%. Consider reviewing reading exercises.`;
+    const pts = Math.abs(calc.accDelta).toFixed(1);
+    if (calc.accDir === 'up') return `Accuracy improved by ${pts} pts over this period.`;
+    if (calc.accDir === 'down') return `Accuracy dropped by ${pts} pts. Consider reviewing reading exercises.`;
     return 'Reading accuracy remained consistent over this period.';
   }, [calc]);
 
@@ -198,13 +177,13 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
               <Text style={S.summaryValue}>{calc!.avgWpm.toFixed(0)}</Text>
               <Text style={S.summaryLabel}>Avg WPM</Text>
             </View>
-            <View style={S.summaryDivider} />
+            {/* <View style={S.summaryDivider} />
             <View style={S.summaryItem}>
               <Text style={[S.summaryValue, { color: trendColor }]}>
-                {trendIcon} {Math.abs(calc!.accPct).toFixed(1)}%
+                {trendIcon} {Math.abs(calc!.accDelta).toFixed(1)} pts
               </Text>
               <Text style={S.summaryLabel}>Trend</Text>
-            </View>
+            </View> */}
           </View>
 
           {/* Legend */}
@@ -218,60 +197,6 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
               <Text style={S.legendText}>Speed (WPM)</Text>
             </View>
           </View>
-
-          {/* Grade-level benchmark card */}
-          {benchmark && calc && hasData && (() => {
-            const wpmStatus  = getBenchmarkStatus(calc.avgWpm,      benchmark.wpmMin, benchmark.wpmMax);
-            const accStatus  = getBenchmarkStatus(calc.avgAccuracy, benchmark.accMin, benchmark.accMax);
-            const wpmCfg  = BENCHMARK_CONFIG[wpmStatus];
-            const accCfg  = BENCHMARK_CONFIG[accStatus];
-            return (
-              <View style={S.benchmarkCard}>
-                {/* Header */}
-                <View style={S.benchmarkHeader}>
-                  <Text style={S.benchmarkTitle}>Grade-Level Benchmark</Text>
-                  <View style={S.benchmarkGradePill}>
-                    <Text style={S.benchmarkGradeText}>{benchmark.label}</Text>
-                  </View>
-                </View>
-
-                {/* Expected ranges row */}
-                <Text style={S.benchmarkRangeHint}>
-                  Expected range — Accuracy: {benchmark.accMin}–{benchmark.accMax}%  ·  WPM: {benchmark.wpmMin}–{benchmark.wpmMax}
-                </Text>
-
-                {/* Accuracy indicator */}
-                <View style={[S.benchmarkRow, { backgroundColor: accCfg.bg }]}>
-                  <View style={S.benchmarkMeta}>
-                    <Text style={S.benchmarkMetric}>Accuracy</Text>
-                    <Text style={[S.benchmarkValue, { color: C.primary }]}>
-                      {calc.avgAccuracy.toFixed(1)}%
-                    </Text>
-                  </View>
-                  <View style={[S.benchmarkBadge, { backgroundColor: accCfg.color }]}>
-                    <Text style={S.benchmarkBadgeIcon}>{accCfg.icon}</Text>
-                    <Text style={S.benchmarkBadgeText}>{accCfg.label}</Text>
-                  </View>
-                </View>
-
-                {/* WPM indicator */}
-                <View style={[S.benchmarkRow, { backgroundColor: wpmCfg.bg, marginTop: sh(6) }]}>
-                  <View style={S.benchmarkMeta}>
-                    <Text style={S.benchmarkMetric}>
-                      {role === 'student' ? 'Reading Speed' : 'WPM'}
-                    </Text>
-                    <Text style={[S.benchmarkValue, { color: C.amber }]}>
-                      {calc.avgWpm.toFixed(0)} wpm
-                    </Text>
-                  </View>
-                  <View style={[S.benchmarkBadge, { backgroundColor: wpmCfg.color }]}>
-                    <Text style={S.benchmarkBadgeIcon}>{wpmCfg.icon}</Text>
-                    <Text style={S.benchmarkBadgeText}>{wpmCfg.label}</Text>
-                  </View>
-                </View>
-              </View>
-            );
-          })()}
 
           {/* Bar breakdown */}
           <View style={S.breakdownCard}>
@@ -331,7 +256,7 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
           </View>
 
           {/* Insight */}
-          <View style={[
+          {/* <View style={[
             S.insightBar,
             calc!.accDir === 'up' ? { backgroundColor: C.greenBg }
               : calc!.accDir === 'down' ? { backgroundColor: C.coralBg }
@@ -346,7 +271,7 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
             ]}>
               {insight}
             </Text>
-          </View>
+          </View> */}
         </>
       )}
     </View>
@@ -492,83 +417,6 @@ const S = StyleSheet.create({
     fontSize: sf(12),
     fontFamily: 'Nunito-Medium',
     color: C.inkLight,
-  },
-
-  // Benchmark card
-  benchmarkCard: {
-    backgroundColor: C.card,
-    borderRadius: sw(14),
-    padding: sw(14),
-    borderWidth: 1,
-    borderColor: C.primaryLight,
-    marginBottom: sh(12),
-  },
-  benchmarkHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: sh(4),
-  },
-  benchmarkTitle: {
-    fontSize: sf(13),
-    fontFamily: 'Nunito-Bold',
-    color: C.ink,
-  },
-  benchmarkGradePill: {
-    backgroundColor: C.primaryLight,
-    paddingHorizontal: sw(10),
-    paddingVertical: sh(3),
-    borderRadius: sw(20),
-  },
-  benchmarkGradeText: {
-    fontSize: sf(11),
-    fontFamily: 'Nunito-Bold',
-    color: C.primary,
-  },
-  benchmarkRangeHint: {
-    fontSize: sf(10),
-    fontFamily: 'Nunito-Regular',
-    color: C.slate,
-    marginBottom: sh(10),
-  },
-  benchmarkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: sw(10),
-    paddingVertical: sh(10),
-    paddingHorizontal: sw(12),
-  },
-  benchmarkMeta: {
-    gap: sh(2),
-  },
-  benchmarkMetric: {
-    fontSize: sf(11),
-    fontFamily: 'Nunito-Medium',
-    color: C.inkLight,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  benchmarkValue: {
-    fontSize: sf(20),
-    fontFamily: 'Nunito-Bold',
-  },
-  benchmarkBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sw(10),
-    paddingVertical: sh(6),
-    borderRadius: sw(8),
-    gap: sw(4),
-  },
-  benchmarkBadgeIcon: {
-    fontSize: sf(10),
-    color: '#ffffff',
-  },
-  benchmarkBadgeText: {
-    fontSize: sf(11),
-    fontFamily: 'Nunito-Bold',
-    color: '#ffffff',
   },
 
   // Breakdown card

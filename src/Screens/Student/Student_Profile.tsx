@@ -26,6 +26,8 @@ import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { sw, sh, sf } from '../../Utils/responsive';
 import Svg, { Text as SvgText } from 'react-native-svg';
+import { Icon } from '../../Components/GlobalUse/Icon';
+import { StudentColors } from '../../Utilities/Theme';
 
 // ─── Palette (aligned with Reading Selection blue/cyan theme) ─────────────────
 const C = {
@@ -92,6 +94,18 @@ const headerStyles = StyleSheet.create({
   backArrowText: {
     fontSize: 40, fontFamily: 'Nunito-Bold',
     color: C.card, lineHeight: 28, marginLeft: -2, paddingBottom: 2
+  },
+  aboutRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: sw(16), paddingVertical: sh(14),
+  },
+  aboutText: {
+    fontSize: sf(15), fontFamily: 'Nunito-Bold',
+    color: StudentColors.slate, marginLeft: sw(12),
+  },
+  dropdownDivider: {
+    height: 1, marginHorizontal: sw(12),
+    backgroundColor: '#E3F0E7',
   },
 });
 
@@ -325,10 +339,13 @@ export default function Profile() {
                 setMenuVisible(false);
                 handleNextStep('About');
               }}
-              style={upperNav.logoutButton}
+              style={headerStyles.aboutRow}
+              activeOpacity={0.75}
             >
-              <Text style={upperNav.logoutText}>About</Text>
+              <Icon name="info" size={sw(20)} color={StudentColors.slate} filled />
+              <Text style={headerStyles.aboutText}>About</Text>
             </TouchableOpacity>
+            <View style={headerStyles.dropdownDivider} />
             <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
               <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
               <Text style={upperNav.logoutText}>Logout</Text>

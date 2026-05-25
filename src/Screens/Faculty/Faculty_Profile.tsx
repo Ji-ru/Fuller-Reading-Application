@@ -10,6 +10,9 @@ import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { getCurrentUser, getUserProfile, updateFacultyProfile } from '../../Controller/AuthenticationController';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
+import { Icon } from '../../Components/GlobalUse/Icon';
+import { sw } from '../../Utils/responsive';
+import { FacultyColors } from '../../Utilities/Theme';
 
 export default function FacultyProfile() {
   // ========================================================================
@@ -44,7 +47,7 @@ export default function FacultyProfile() {
   // HOOKS  
   // ========================================================================
 
-  const { handleBackStep, handleLogout } = useNavigationHelper();
+  const { handleBackStep, handleLogout, handleNextStep } = useNavigationHelper();
 
   useEffect(() => {
     fetchProfileData();
@@ -299,6 +302,15 @@ export default function FacultyProfile() {
               activeOpacity={1}
             />
             <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); handleNextStep('About'); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Icon name="info" size={sw(20)} color={FacultyColors.slate} filled />
+                <Text style={facultyDashboard.dropdownTextAbout}>About</Text>
+              </TouchableOpacity>
+              <View style={facultyDashboard.dropdownDivider} />
               <TouchableOpacity
                 onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
                 style={facultyDashboard.dropdownItem}

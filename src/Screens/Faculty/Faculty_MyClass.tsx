@@ -25,6 +25,10 @@ import { archiveClass, createCustomClass } from '../../Controller/Authentication
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
 import { getAcademicYearOptions } from '../../Utilities/acadYearUtils';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import Svg, { Text as SvgText } from 'react-native-svg';
+import { Icon } from '../../Components/GlobalUse/Icon';
+import { sw } from '../../Utils/responsive';
+import { FacultyColors } from '../../Utilities/Theme';
 
 export default function MyClass() {
   // ========================================================================
@@ -55,7 +59,7 @@ export default function MyClass() {
   // ========================================================================
   // HOOKS
   // ========================================================================
-  const { handleLogout, handleClassStudents } = useNavigationHelper();
+  const { handleLogout, handleClassStudents, handleNextStep } = useNavigationHelper();
 
   // ========================================================================
   // FETCH CLASSES
@@ -275,7 +279,7 @@ export default function MyClass() {
     index: number;
   }) => (
     <TouchableOpacity
-      style={[myClass.classCard, { marginTop: index === 0 ? 0 : 12 }]}
+      style={myClass.classCard}
       onPress={() => {
         if (ellipsisVisible) {
           setEllipsisVisible(false);
@@ -344,9 +348,35 @@ export default function MyClass() {
         <BubbleBackground />
 
 
-        {/* HEADER */}
+        {/* UNIFIED HEADER ROW: spacer | SVG title | menu button */}
         <View style={facultyDashboard.header}>
-          <Text style={facultyDashboard.headerLogo}>CISC KIDS</Text>
+          {/* Left spacer balances the menu button so title is truly centered */}
+          <View style={{ width: 44 }} />
+
+          {/* SVG outlined title */}
+          <Svg height={56} width={220}>
+            {/* Stroke layer — outline effect */}
+            <SvgText
+              x={110} y={38} fontSize={24}
+              fontFamily="Satoshi-Black" textAnchor="middle"
+              fill="none"
+              stroke="#E8F5EE"
+              strokeWidth={8}
+              strokeLinejoin="round"
+            >
+              My Classes
+            </SvgText>
+            {/* Fill layer — drawn on top */}
+            <SvgText
+              x={110} y={38} fontSize={24}
+              fontFamily="Satoshi-Black" textAnchor="middle"
+              fill="#1B2B22"
+            >
+              My Classes
+            </SvgText>
+          </Svg>
+
+          {/* Right: hamburger menu button */}
           <TouchableOpacity
             style={facultyDashboard.menuBtn}
             onPress={() => setMenuVisible(v => !v)}
@@ -365,6 +395,15 @@ export default function MyClass() {
               activeOpacity={1}
             />
             <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); handleNextStep('About'); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Icon name="info" size={sw(20)} color={FacultyColors.slate} filled />
+                <Text style={facultyDashboard.dropdownTextAbout}>About</Text>
+              </TouchableOpacity>
+              <View style={facultyDashboard.dropdownDivider} />
               <TouchableOpacity
                 onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
                 style={facultyDashboard.dropdownItem}
@@ -449,14 +488,6 @@ export default function MyClass() {
               </View>
             </>
           )}
-
-          {/* HEADER SECTION */}
-          <View style={myClass.headerSection}>
-            <Text style={myClass.pageTitle}>My Classes</Text>
-            <Text style={myClass.pageSubtitle}>
-              Manage and organize your classes
-            </Text>
-          </View>
 
           {/* CREATE NEW CLASS BUTTON */}
           <TouchableOpacity

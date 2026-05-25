@@ -306,7 +306,7 @@ export const FullerProgressionFunnelChart: React.FC<
                     style: { borderRadius: 12 },
                     propsForLabels: {
                         fontSize: 11,
-                        fontWeight: '600',
+                        fontFamily: 'Satoshi-Bold',
                     },
                     barPercentage: 0.6,
                 }}
@@ -379,11 +379,12 @@ const styles = StyleSheet.create({
     },
     cardTitle: {
         fontSize: 16,
-        fontWeight: '700',
+        fontFamily: 'Satoshi-Bold',
         color: '#1A1A2E',
     },
     cardSubtitle: {
         fontSize: 12,
+        fontFamily: 'Satoshi-Medium',
         color: '#888',
         marginTop: 3,
     },
@@ -407,7 +408,7 @@ const styles = StyleSheet.create({
     legendLabel: {
         fontSize: 11,
         color: '#555',
-        fontWeight: '500',
+        fontFamily: 'Satoshi-Medium',
     },
 
     // ── Chart ──────────────────────────────────────────────────────────────────
@@ -421,6 +422,7 @@ const styles = StyleSheet.create({
         textAlign: 'right',
         marginTop: -4,
         marginBottom: 4,
+        fontFamily: 'Satoshi-Regular',
     },
 
     // ── Divider ────────────────────────────────────────────────────────────────
@@ -433,7 +435,7 @@ const styles = StyleSheet.create({
     // ── Grade Cards ────────────────────────────────────────────────────────────
     sectionLabel: {
         fontSize: 11,
-        fontWeight: '700',
+        fontFamily: 'Satoshi-Bold',
         color: '#888',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -460,19 +462,21 @@ const styles = StyleSheet.create({
     },
     gradeCardTitle: {
         fontSize: 13,
-        fontWeight: '700',
+        fontFamily: 'Satoshi-Bold',
         color: '#1A1A2E',
     },
     gradeCardCount: {
         fontSize: 10,
         color: '#888',
         marginTop: 1,
+        fontFamily: 'Satoshi-Regular',
     },
     gradeCardEmpty: {
         fontSize: 11,
         color: '#AAA',
         fontStyle: 'italic',
         marginBottom: 6,
+        fontFamily: 'Satoshi-Regular',
     },
 
     // ── Stage Row (inside grade card) ──────────────────────────────────────────
@@ -502,7 +506,7 @@ const styles = StyleSheet.create({
     stageName: {
         fontSize: 10,
         color: '#444',
-        fontWeight: '500',
+        fontFamily: 'Satoshi-Medium',
         flexShrink: 1,
     },
     stageRowRight: {
@@ -510,12 +514,13 @@ const styles = StyleSheet.create({
     },
     stageCount: {
         fontSize: 11,
-        fontWeight: '700',
+        fontFamily: 'Satoshi-Bold',
         color: '#1A1A2E',
     },
     stagePercentage: {
         fontSize: 9,
         color: '#888',
+        fontFamily: 'Satoshi-Regular',
     },
 
     // ── Bottleneck / On-track badges ───────────────────────────────────────────
@@ -529,7 +534,7 @@ const styles = StyleSheet.create({
     },
     bottleneckBadgeText: {
         fontSize: 9,
-        fontWeight: '700',
+        fontFamily: 'Satoshi-Bold',
     },
     onTrackBadge: {
         marginTop: 8,
@@ -537,7 +542,7 @@ const styles = StyleSheet.create({
     onTrackBadgeText: {
         fontSize: 9,
         color: '#4ECDC4',
-        fontWeight: '700',
+        fontFamily: 'Satoshi-Bold',
     },
 
     // ── Insight Banner ─────────────────────────────────────────────────────────
@@ -554,13 +559,14 @@ const styles = StyleSheet.create({
     },
     insightBannerTitle: {
         fontSize: 12,
-        fontWeight: '700',
+        fontFamily: 'Satoshi-Bold',
         color: '#B7570A',
     },
     insightBannerText: {
         fontSize: 12,
         color: '#7A5000',
         lineHeight: 18,
+        fontFamily: 'Satoshi-Regular',
     },
 
     // ── State containers (loading / error / empty) ─────────────────────────────
@@ -572,20 +578,23 @@ const styles = StyleSheet.create({
     stateText: {
         fontSize: 13,
         color: '#888',
+        fontFamily: 'Satoshi-Medium',
     },
     stateSubText: {
         fontSize: 12,
         color: '#AAA',
+        fontFamily: 'Satoshi-Regular',
     },
     errorText: {
         fontSize: 14,
-        fontWeight: '700',
+        fontFamily: 'Satoshi-Bold',
         color: '#C0392B',
     },
     errorSubText: {
         fontSize: 12,
         color: '#888',
         textAlign: 'center',
+        fontFamily: 'Satoshi-Regular',
     },
     retryButton: {
         marginTop: 4,
@@ -597,6 +606,6 @@ const styles = StyleSheet.create({
     retryButtonText: {
         color: '#FFF',
         fontSize: 13,
-        fontWeight: '600',
+        fontFamily: 'Satoshi-Bold',
     },
 });

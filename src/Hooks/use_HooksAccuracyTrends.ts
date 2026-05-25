@@ -17,7 +17,10 @@ export const useAccuracyTrends = (
     filterType: 'overall',
   },
 ) => {
-  const [chartData, setChartData] = useState<ProgressData[]>([]);
+  const [chartData, setChartData]             = useState<ProgressData[]>([]);
+  const [grandTotalWords, setGrandTotalWords]     = useState(0);
+  const [grandAccuracySum, setGrandAccuracySum]   = useState(0);
+  const [grandTotalMinutes, setGrandTotalMinutes] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,13 +54,17 @@ export const useAccuracyTrends = (
             ? { type: 'class' as const, classId: normalizedOptions.classId, acadYear: normalizedOptions.academicYear }
             : { type: 'overall' as const, acadYear: normalizedOptions.academicYear };
 
-        const data = await getStudentsAccuracy(
-          facultyId,
-          normalizedOptions.timeRange,
-          filter,
-        );
+        const { progressData, grandTotalWords: gtw, grandAccuracySum: gas, grandTotalMinutes: gtm } =
+          await getStudentsAccuracy(
+            facultyId,
+            normalizedOptions.timeRange,
+            filter,
+          );
 
-        setChartData(data);
+        setChartData(progressData);
+        setGrandTotalWords(gtw);
+        setGrandAccuracySum(gas);
+        setGrandTotalMinutes(gtm);
       } catch (err: any) {
         console.error('Error fetching accuracy trends:', err);
         setError(err.message || 'Failed to fetch accuracy trends');
@@ -76,5 +83,5 @@ export const useAccuracyTrends = (
     normalizedOptions.academicYear,
   ]);
 
-  return { chartData, loading, error };
+  return { chartData, loading, error, grandTotalWords, grandAccuracySum, grandTotalMinutes };
 };

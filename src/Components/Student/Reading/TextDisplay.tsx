@@ -368,7 +368,10 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
 
     const renderedWords: JSX.Element[] = [];
     let keyCounter = 0;
-    const errorFont = type === 'passage' ? 'Nunito-Bold' : 'DynaPuff-Bold';
+    const passageBaseFont = 'Andika-Bold';
+    const passageEmphasisFont = 'Andika-Bold';
+    const baseFont = type === 'passage' ? passageBaseFont : passageBaseFont;
+    const errorFont = type === 'passage' ? passageEmphasisFont : passageBaseFont;
 
     originalWords.forEach((originalWord, index) => {
       const { word: cleanWord, punctuation } = extractPunctuation(originalWord);
@@ -384,11 +387,11 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       if (posData?.repetition) {
         renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#BF00DD', fontFamily: errorFont, fontWeight: 'bold' }}>{posData.repetition.spoken}</Text>{punctuation && <Text style={{ fontFamily: errorFont }}>{punctuation}</Text>}</Text>);
       } else if (posData?.substitution) {
-        renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#FF2726', fontFamily: errorFont, fontWeight: 'bold' }}>{cleanWord}</Text>{punctuation && <Text style={{ fontFamily: errorFont }}>{punctuation}</Text>}</Text>);
+        renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#FF2726', fontFamily: errorFont, fontWeight: 'bold' }}>{posData.substitution.spoken}</Text>{punctuation && <Text style={{ fontFamily: errorFont }}>{punctuation}</Text>}</Text>);
       } else if (posData?.omission) {
         renderedWords.push(<Text key={`w-${index}`}><Text style={{ color: '#FF941A', fontFamily: errorFont, fontWeight: 'bold' }}>{cleanWord}</Text>{punctuation && <Text style={{ fontFamily: errorFont }}>{punctuation}</Text>}</Text>);
       } else {
-        renderedWords.push(<Text key={`w-${index}`} style={{ fontFamily: errorFont }}>{originalWord}</Text>);
+        renderedWords.push(<Text key={`w-${index}`} style={{ fontFamily: baseFont }}>{originalWord}</Text>);
       }
 
       if (index < originalWords.length - 1) {
@@ -396,7 +399,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       }
     });
 
-    return <Text style={[readingStyles.textLine, { fontFamily: type === 'passage' ? 'Nunito-Bold' : 'DynaPuff-Bold' }]}>{renderedWords}</Text>;
+    return <Text style={[readingStyles.textLine, { fontFamily: baseFont }]}>{renderedWords}</Text>;
   };
 
   const renderTextContent = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Animated } from 'react-native';
 import { Miscue } from '../../../Interfaces/miscue';
 import { MiscueAnalysisService } from '../../../Controller/MiscueAnalysisServiceController';
 import Svg, { Text as SvgText } from 'react-native-svg';
@@ -95,7 +95,7 @@ const S = StyleSheet.create({
   },
   feedbackText: {
     fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Regular',
     color: C.ink,
     textAlign: 'center',
     lineHeight: sf(22),
@@ -149,9 +149,56 @@ const S = StyleSheet.create({
   // Alphabet / Word specifics
   largeText: {
     fontSize: sf(60),
-    fontFamily: 'Andika-Black',
+    fontFamily: 'Andika-Bold',
     color: C.primary,
     marginBottom: sh(8),
+  },
+  flipCardTouchable: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: sh(10),
+  },
+  flipCard: {
+    width: '100%',
+    minHeight: sh(90),
+    borderRadius: sw(16),
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  flipSide: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backfaceVisibility: 'hidden',
+    paddingHorizontal: sw(8),
+  },
+  flipText: {
+    marginBottom: 0,
+    textAlign: 'center',
+    lineHeight: sf(60),
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  flipTextBack: {
+    color: C.accent,
+  },
+  flipTextBackWarning: {
+    color: C.warning,
+  },
+  flipTextFrontWarning: {
+    color: C.error,
+  },
+  flipHintText: {
+    fontSize: sf(12),
+    fontFamily: 'Andika-Regular',
+    color: C.inkLight,
+    marginBottom: sh(6),
   },
   statusBadge: {
     paddingHorizontal: sw(16),
@@ -161,7 +208,7 @@ const S = StyleSheet.create({
   },
   statusText: {
     fontSize: sf(14),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.white,
   },
 
@@ -248,6 +295,8 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
 }) => {
 
   const hasNoTranscription = !spokenText || spokenText.trim() === '';
+  const flipAnim = React.useRef(new Animated.Value(0)).current;
+  const [isFlipped, setIsFlipped] = React.useState(false);
 
   const renderButtons = () => (
     <View style={S.buttonContainer}>
@@ -292,6 +341,28 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
       (isTextCorrect ? '100' : '0')
     );
     const isCorrect = accuracy === '100';
+    const flipFrontRotation = flipAnim.interpolate({
+      inputRange: [0, 180],
+      outputRange: ['0deg', '180deg'],
+    });
+    const flipBackRotation = flipAnim.interpolate({
+      inputRange: [0, 180],
+      outputRange: ['180deg', '360deg'],
+    });
+    const sanitizedSpokenWord = spokenText ? spokenText.replace(/\./g, '').trim() : '';
+    const spokenWord = sanitizedSpokenWord !== '' ? sanitizedSpokenWord : ' ';
+
+    const handleFlip = () => {
+      setIsFlipped(prev => {
+        const toValue = prev ? 0 : 180;
+        Animated.timing(flipAnim, {
+          toValue,
+          duration: 350,
+          useNativeDriver: true,
+        }).start();
+        return !prev;
+      });
+    };
 
     return (
       <View style={S.container}>
@@ -317,9 +388,42 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           </View>
 
           <View style={S.scoreSection}>
-            <Text style={S.largeText}>
-              {/* type === 'alphabet' ? targetText.toUpperCase() : */ targetText}
-            </Text>
+            <TouchableOpacity
+              style={S.flipCardTouchable}
+              onPress={handleFlip}
+              activeOpacity={0.85}
+            >
+              <View style={S.flipCard}>
+                <Animated.View
+                  style={[
+                    S.flipSide,
+                    { transform: [{ perspective: 1000 }, { rotateY: flipFrontRotation }] },
+                  ]}
+                >
+                  <Text style={[S.largeText, S.flipText, !isCorrect && S.flipTextFrontWarning]}>
+                    {targetText}
+                  </Text>
+                </Animated.View>
+                <Animated.View
+                  style={[
+                    S.flipSide,
+                    { transform: [{ perspective: 1000 }, { rotateY: flipBackRotation }] },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      S.largeText,
+                      S.flipText,
+                      S.flipTextBack,
+                      !isCorrect && S.flipTextBackWarning,
+                    ]}
+                  >
+                    {spokenWord}
+                  </Text>
+                </Animated.View>
+              </View>
+            </TouchableOpacity>
+            <Text style={S.flipHintText}>Tap the word to see what you said.</Text>
             <View style={[S.statusBadge, { backgroundColor: isCorrect ? C.success : C.warning }]}>
               <Text style={S.statusText}>
                 {isCorrect ? 'CORRECT' : 'INCORRECT'}

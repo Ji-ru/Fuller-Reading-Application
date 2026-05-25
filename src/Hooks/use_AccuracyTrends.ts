@@ -1,15 +1,10 @@
-// use_HooksAccuracyTrends.ts
+// use_AccuracyTrends.ts
 import { useState, useEffect, useCallback } from 'react';
 import { FilterOptions, ProgressData } from '../Interfaces/miscue';
 import { getFacultyClasses_Student } from './use_FacultyClasses_Students';
 import { MiscueReportController } from '../Controller/MiscueReportController';
-import { 
-  getDateRangeForTimeFilter, 
-} from '../Utilities/dateRange';
-
+import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
 import { getPeriodLabels, getLabelForDate } from '../Utilities/activityGroupingDate';
-
-
 
 interface UseAccuracyTrendsParams {
   timeRange: 'week' | 'month' | 'year';
@@ -18,7 +13,7 @@ interface UseAccuracyTrendsParams {
   academicYear?: string;
 }
 
-interface BucketData {
+export interface BucketData {
   accuracySum: number;
   totalWords: number;
   totalMinutes: number;
@@ -26,46 +21,168 @@ interface BucketData {
   studentSet: Set<string>;
 }
 
+export interface AccuracyTrendsGrandTotals {
+  grandTotalWords: number;
+  grandAccuracySum: number;
+  grandTotalMinutes: number;
+}
+
+// ─── Shared helpers (used by both the hook and the standalone factory) ─────────
+
+/**
+ * Parses recordingDuration into decimal minutes.
+ * Handles: number (seconds), "HH:MM:SS", "MM:SS", plain seconds string.
+ */
+export const parseDuration = (duration: any): number => {
+  if (!duration) return 0;
+
+  if (typeof duration === 'number') {
+    return duration / 60;
+  }
+
+  if (typeof duration === 'string') {
+    if (duration.includes(':')) {
+      const parts = duration.split(':');
+      if (parts.length === 2) {
+        // MM:SS
+        const mins = parseInt(parts[0], 10) || 0;
+        const secs = parseInt(parts[1], 10) || 0;
+        return mins + secs / 60;
+      }
+      if (parts.length === 3) {
+        // HH:MM:SS
+        const hours = parseInt(parts[0], 10) || 0;
+        const mins  = parseInt(parts[1], 10) || 0;
+        const secs  = parseInt(parts[2], 10) || 0;
+        return hours * 60 + mins + secs / 60;
+      }
+    } else {
+      const seconds = parseFloat(duration);
+      if (!isNaN(seconds)) return seconds / 60;
+    }
+  }
+
+  return 0;
+};
+
+export const parseReportDate = (createdAt: any): Date | null => {
+  try {
+    if (!createdAt) return null;
+    if (createdAt.toDate && typeof createdAt.toDate === 'function') return createdAt.toDate();
+    if (typeof createdAt === 'object' && createdAt.seconds) return new Date(createdAt.seconds * 1000);
+    if (typeof createdAt === 'string') return new Date(createdAt);
+    if (createdAt instanceof Date) return createdAt;
+  } catch {
+    // fall through
+  }
+  return null;
+};
+
+export const buildTotals = (periodLabels: string[]): Record<string, BucketData> => {
+  const totals: Record<string, BucketData> = {};
+  periodLabels.forEach(label => {
+    totals[label] = { accuracySum: 0, totalWords: 0, totalMinutes: 0, reportCount: 0, studentSet: new Set() };
+  });
+  return totals;
+};
+
+/**
+ * Bins a single report into the appropriate period bucket.
+ * Phase 2: uses inferred elapsed minutes instead of a fake "1 minute" fallback.
+ * Phase 3: wpm=0 (aborted session) is skipped; accuracy=0 is valid and counted.
+ */
+export const processReportIntoBucket = (
+  report: any,
+  timeRange: 'week' | 'month' | 'year',
+  dateRange: { start: Date; end: Date },
+  totals: Record<string, BucketData>,
+  studentId: string,
+) => {
+  const reportDate = parseReportDate(report.createdAt);
+  if (!reportDate) return;
+  if (reportDate < dateRange.start || reportDate > dateRange.end) return;
+
+  const wpm = report.wordPerMin || 0;
+  if (wpm <= 0) return; // aborted / no timing data
+
+  // accuracy=0 is a valid result (student read but scored 0%)
+  const accuracy = report.accuracyRate ?? 0;
+
+  const periodLabel = getLabelForDate(reportDate, timeRange);
+  if (!periodLabel || !totals[periodLabel]) return;
+
+  const minutes = parseDuration(report.recordingDuration);
+  // Primary: reconstruct words from real duration. Fallback: use stored totalWords.
+  const wordsRead = minutes > 0 ? wpm * minutes : report.totalWords || 0;
+  if (wordsRead <= 0) return;
+
+  // Infer elapsed minutes from stored values rather than assuming 1 minute.
+  // WPM = words / min  →  min = words / WPM
+  const elapsedMinutes = minutes > 0 ? minutes : wordsRead / wpm;
+  if (elapsedMinutes <= 0) return;
+
+  const bucket = totals[periodLabel];
+  bucket.reportCount++;
+  bucket.accuracySum  += accuracy * wordsRead; // words-weighted accuracy sum
+  bucket.totalWords   += wordsRead;
+  bucket.totalMinutes += elapsedMinutes;
+  bucket.studentSet.add(studentId);
+};
+
+/**
+ * Converts bucket totals into ProgressData[] and computes grand totals
+ * needed for a correctly weighted summary average in the component.
+ */
+export const bucketsToResult = (
+  periodLabels: string[],
+  totals: Record<string, BucketData>,
+): { progressData: ProgressData[] } & AccuracyTrendsGrandTotals => {
+  let grandTotalWords = 0;
+  let grandAccuracySum = 0;
+  let grandTotalMinutes = 0;
+
+  const progressData: ProgressData[] = periodLabels.map(label => {
+    const t = totals[label] ?? { accuracySum: 0, totalWords: 0, totalMinutes: 0, reportCount: 0, studentSet: new Set() };
+    grandTotalWords   += t.totalWords;
+    grandAccuracySum  += t.accuracySum;
+    grandTotalMinutes += t.totalMinutes;
+
+    const accuracy = t.totalWords > 0
+      ? Math.min(100, Math.max(0, t.accuracySum / t.totalWords))
+      : 0;
+    const avgWpm = t.totalMinutes > 0
+      ? t.totalWords / t.totalMinutes
+      : 0;
+
+    return {
+      date: label,
+      accuracy: parseFloat(accuracy.toFixed(2)),
+      wpm: parseFloat(avgWpm.toFixed(2)),
+      wcpm: 0,
+    };
+  });
+
+  return { progressData, grandTotalWords, grandAccuracySum, grandTotalMinutes };
+};
+
+export const emptyPeriods = (timeRange: 'week' | 'month' | 'year'): ProgressData[] =>
+  getPeriodLabels(timeRange).map(label => ({ date: label, accuracy: 0, wpm: 0, wcpm: 0 }));
+
+// ─── Hook export ──────────────────────────────────────────────────────────────
+
 export const useAccuracyTrends = (
   facultyId: string | null | undefined,
   params: UseAccuracyTrendsParams
 ) => {
-  const [chartData, setChartData] = useState<ProgressData[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [chartData, setChartData]             = useState<ProgressData[]>([]);
+  const [grandTotalWords, setGrandTotalWords]     = useState(0);
+  const [grandAccuracySum, setGrandAccuracySum]   = useState(0);
+  const [grandTotalMinutes, setGrandTotalMinutes] = useState(0);
+  const [loading, setLoading]   = useState<boolean>(false);
+  const [error, setError]       = useState<string | null>(null);
 
   const { getFilteredStudentIds } = getFacultyClasses_Student;
-  const { getStudentReports } = MiscueReportController;
-
-  // Helper function to parse recording duration
-  const parseRecordingDuration = useCallback((duration: any): number => {
-    if (!duration) return 0;
-    
-    if (typeof duration === 'number') {
-      return duration / 60; // Convert seconds to minutes
-    }
-    
-    if (typeof duration === 'string') {
-      // Handle "HH:MM:SS" format or seconds string
-      if (duration.includes(':')) {
-        const parts = duration.split(':');
-        if (parts.length === 3) {
-          const hours = parseInt(parts[0]) || 0;
-          const minutes = parseInt(parts[1]) || 0;
-          const seconds = parseInt(parts[2]) || 0;
-          return hours * 60 + minutes + seconds / 60;
-        }
-      } else {
-        // Try parsing as seconds
-        const seconds = parseFloat(duration);
-        if (!isNaN(seconds)) {
-          return seconds / 60;
-        }
-      }
-    }
-    
-    return 0;
-  }, []);
+  const { getStudentReports }     = MiscueReportController;
 
   const fetchAccuracyData = useCallback(async () => {
     if (!facultyId) {
@@ -78,204 +195,56 @@ export const useAccuracyTrends = (
 
     try {
       console.log(`Fetching accuracy trends for faculty: ${facultyId}, params:`, params);
-      
-      // Build filter options for student filtering
+
       const filterOptions: FilterOptions = {
         type: params.filterType,
-        ...(params.filterType === 'class' && params.classId && {
-          classId: params.classId
-        }),
-        ...(params.academicYear && {
-          academicYear: params.academicYear
-        })
+        ...(params.filterType === 'class' && params.classId && { classId: params.classId }),
+        ...(params.academicYear && { academicYear: params.academicYear }),
       };
 
-      // Get filtered student IDs based on filter options
-      const { studentIds } = await getFilteredStudentIds(
-        facultyId,
-        filterOptions
-      );
-
+      const { studentIds } = await getFilteredStudentIds(facultyId, filterOptions);
       console.log(`Found ${studentIds?.length || 0} students`);
-      
+
       if (!studentIds || studentIds.length === 0) {
-        // Return empty data with proper period labels
-        const emptyLabels = getPeriodLabels(params.timeRange);
-        const emptyData: ProgressData[] = emptyLabels.map((label: string) => ({
-          date: label,
-          accuracy: 0,
-          wpm: 0,
-        }));
-        setChartData(emptyData);
+        setChartData(emptyPeriods(params.timeRange));
+        setGrandTotalWords(0); setGrandAccuracySum(0); setGrandTotalMinutes(0);
         setLoading(false);
         return;
       }
 
-      // Get date range
-      const { start, end } = getDateRangeForTimeFilter(params.timeRange);
-      console.log(`Date range: ${start.toDateString()} to ${end.toDateString()}`);
-      
-      // Get all period labels for the time range
+      const dateRange    = getDateRangeForTimeFilter(params.timeRange);
       const periodLabels = getPeriodLabels(params.timeRange);
-      
-      // Initialize totals for each period
-      const totals: Record<string, BucketData> = {};
+      const totals       = buildTotals(periodLabels);
 
-      periodLabels.forEach((label: string) => {
-        totals[label] = { 
-          accuracySum: 0, 
-          totalWords: 0, 
-          totalMinutes: 0, 
-          reportCount: 0,
-          studentSet: new Set<string>() 
-        };
+      // Phase 7: fetch all students' reports in parallel
+      const allReports = await Promise.all(
+        studentIds.map(id => getStudentReports(id).catch(() => []))
+      );
+
+      allReports.forEach((reports, si) => {
+        if (!reports || reports.length === 0) return;
+        reports.forEach(report =>
+          processReportIntoBucket(report, params.timeRange, dateRange, totals, studentIds[si])
+        );
       });
 
-      let totalReportsProcessed = 0;
-      let totalReportsSkipped = 0;
-
-      // Process each student
-      for (const studentId of studentIds) {
-        try {
-          const reports = await getStudentReports(studentId);
-          
-          if (!reports || reports.length === 0) {
-            continue;
-          }
-
-          for (const report of reports) {
-            totalReportsProcessed++;
-            
-            // Parse report date
-            let reportDate: Date | null = null;
-            
-            try {
-              if (report.createdAt) {
-                if (report.createdAt.toDate && typeof report.createdAt.toDate === 'function') {
-                  reportDate = report.createdAt.toDate();
-                } else if (typeof report.createdAt === 'object' && report.createdAt.seconds) {
-                  // Firestore timestamp object
-                  reportDate = new Date(report.createdAt.seconds * 1000);
-                } else if (typeof report.createdAt === 'string') {
-                  reportDate = new Date(report.createdAt);
-                } else if (report.createdAt instanceof Date) {
-                  reportDate = report.createdAt;
-                }
-              }
-            } catch (dateError) {
-              totalReportsSkipped++;
-              continue;
-            }
-
-            if (!reportDate) {
-              totalReportsSkipped++;
-              continue;
-            }
-
-            // Check if report is within date range
-            if (reportDate < start || reportDate > end) {
-              continue;
-            }
-
-            // Get accuracy and WPM values
-            const accuracy = report.accuracyRate || 0;
-            const wpm = report.wordPerMin || 0;
-            
-            if (accuracy <= 0 || wpm <= 0) {
-              continue;
-            }
-
-            // Get the period label for this date
-            const periodLabel = getLabelForDate(reportDate, params.timeRange);
-            
-            if (!periodLabel || !totals[periodLabel]) {
-              continue;
-            }
-
-            // Calculate reading minutes from recording duration
-            const minutes = parseRecordingDuration(report.recordingDuration);
-            
-            let wordsRead = 0;
-            
-            if (minutes > 0) {
-              // Calculate words read based on WPM and minutes
-              wordsRead = wpm * minutes;
-            } else {
-              // Fallback: Use totalWords if available
-              wordsRead = report.totalWords || 0;
-              
-              // If no totalWords, estimate from WPM (assuming 1 minute)
-              if (wordsRead === 0) {
-                wordsRead = wpm; // 1 minute equivalent
-              }
-            }
-
-            // Skip if no valid words read
-            if (wordsRead <= 0) {
-              continue;
-            }
-
-            // Add to bucket aggregates
-            const bucketData = totals[periodLabel];
-            bucketData.reportCount++;
-            bucketData.accuracySum += accuracy * wordsRead; // Weight accuracy by words read
-            bucketData.totalWords += wordsRead;
-            bucketData.totalMinutes += minutes || 1; // Use 1 minute as default if no duration
-            bucketData.studentSet.add(studentId);
-          }
-        } catch (error) {
-          console.error(`Error processing reports for student ${studentId}:`, error);
-          continue;
-        }
-      }
-
-      console.log(`Total reports processed: ${totalReportsProcessed}, skipped: ${totalReportsSkipped}`);
-
-      // Convert to ProgressData array, maintaining the order of periodLabels
-      const progressData: ProgressData[] = periodLabels.map((label: string) => {
-        const t = totals[label] || {
-          accuracySum: 0,
-          totalWords: 0,
-          totalMinutes: 0,
-          reportCount: 0,
-          studentSet: new Set<string>()
-        };
-        
-        // Calculate weighted average accuracy
-        const accuracy = t.totalWords > 0 
-          ? Math.min(100, Math.max(0, t.accuracySum / t.totalWords))
-          : 0;
-        
-        // Calculate average WPM (total words / total minutes)
-        const averageWpm = t.totalMinutes > 0 
-          ? t.totalWords / t.totalMinutes
-          : 0;
-        
-        return {
-          date: label,
-          accuracy: parseFloat(accuracy.toFixed(2)),
-          wpm: parseFloat(averageWpm.toFixed(2)),
-        };
-      });
+      const { progressData, grandTotalWords: gtw, grandAccuracySum: gas, grandTotalMinutes: gtm } =
+        bucketsToResult(periodLabels, totals);
 
       console.log('Final accuracy trends data:', progressData);
       setChartData(progressData);
-    } catch (error: any) {
-      console.error('Error in useAccuracyTrends:', error);
-      setError(error.message || 'Failed to fetch accuracy trends');
-      
-      // On error, set empty data with proper labels
-      const emptyLabels = getPeriodLabels(params.timeRange);
-      const emptyData: ProgressData[] = emptyLabels.map((label: string) => ({
-        date: label,
-        accuracy: 0,
-        wpm: 0,
-      }));
-      setChartData(emptyData);
+      setGrandTotalWords(gtw);
+      setGrandAccuracySum(gas);
+      setGrandTotalMinutes(gtm);
+    } catch (err: any) {
+      console.error('Error in useAccuracyTrends:', err);
+      setError(err.message || 'Failed to fetch accuracy trends');
+      setChartData(emptyPeriods(params.timeRange));
+      setGrandTotalWords(0); setGrandAccuracySum(0); setGrandTotalMinutes(0);
     } finally {
       setLoading(false);
     }
-  }, [facultyId, params, getFilteredStudentIds, getStudentReports, parseRecordingDuration]);
+  }, [facultyId, params, getFilteredStudentIds, getStudentReports]);
 
   useEffect(() => {
     fetchAccuracyData();
@@ -290,206 +259,65 @@ export const useAccuracyTrends = (
     loading,
     error,
     refetch,
+    grandTotalWords,
+    grandAccuracySum,
+    grandTotalMinutes,
   };
 };
 
-// Export the standalone function for use in other contexts if needed
+// ─── Standalone factory (used by use_HooksAccuracyTrends.ts) ──────────────────
+
 export const getAccuracyTrends = () => {
   const { getFilteredStudentIds } = getFacultyClasses_Student;
-  const { getStudentReports } = MiscueReportController;
-
-  const parseRecordingDuration = (duration: any): number => {
-    if (!duration) return 0;
-    
-    if (typeof duration === 'number') {
-      return duration / 60;
-    }
-    
-    if (typeof duration === 'string') {
-      if (duration.includes(':')) {
-        const parts = duration.split(':');
-        if (parts.length === 3) {
-          const hours = parseInt(parts[0]) || 0;
-          const minutes = parseInt(parts[1]) || 0;
-          const seconds = parseInt(parts[2]) || 0;
-          return hours * 60 + minutes + seconds / 60;
-        }
-      } else {
-        const seconds = parseFloat(duration);
-        if (!isNaN(seconds)) {
-          return seconds / 60;
-        }
-      }
-    }
-    
-    return 0;
-  };
+  const { getStudentReports }     = MiscueReportController;
 
   const getStudentsAccuracy = async (
     facultyId: string,
     timeRange: 'week' | 'month' | 'year' = 'week',
     filter?: FilterOptions,
-  ): Promise<ProgressData[]> => {
+  ): Promise<{ progressData: ProgressData[] } & AccuracyTrendsGrandTotals> => {
     try {
       console.log(`Fetching accuracy trends for faculty: ${facultyId}, timeRange: ${timeRange}`);
-      
+
       const { studentIds } = await getFilteredStudentIds(
         facultyId,
         filter || { type: 'overall' },
       );
-
       console.log(`Found ${studentIds?.length || 0} students`);
-      
+
       if (!studentIds || studentIds.length === 0) {
-        // Return empty data with proper period labels
-        const emptyLabels = getPeriodLabels(timeRange);
-        return emptyLabels.map((label: string): ProgressData => ({
-          date: label,
-          accuracy: 0,
-          wpm: 0,
-        }));
-      }
-
-      // Get date range
-      const { start, end } = getDateRangeForTimeFilter(timeRange);
-      
-      // Get all period labels for the time range
-      const periodLabels = getPeriodLabels(timeRange);
-      
-      // Initialize totals for each period
-      const totals: Record<string, BucketData> = {};
-
-      periodLabels.forEach((label: string) => {
-        totals[label] = { 
-          accuracySum: 0, 
-          totalWords: 0, 
-          totalMinutes: 0, 
-          reportCount: 0,
-          studentSet: new Set<string>() 
-        };
-      });
-
-      // Process each student
-      for (const studentId of studentIds) {
-        try {
-          const reports = await getStudentReports(studentId);
-          
-          if (!reports || reports.length === 0) {
-            continue;
-          }
-          
-          for (const report of reports) {
-            // Parse report date
-            let reportDate: Date | null = null;
-            
-            try {
-              if (report.createdAt) {
-                if (report.createdAt.toDate && typeof report.createdAt.toDate === 'function') {
-                  reportDate = report.createdAt.toDate();
-                } else if (typeof report.createdAt === 'object' && report.createdAt.seconds) {
-                  reportDate = new Date(report.createdAt.seconds * 1000);
-                } else if (typeof report.createdAt === 'string') {
-                  reportDate = new Date(report.createdAt);
-                } else if (report.createdAt instanceof Date) {
-                  reportDate = report.createdAt;
-                }
-              }
-            } catch (dateError) {
-              continue;
-            }
-
-            if (!reportDate) {
-              continue;
-            }
-
-            // Check if report is within date range
-            if (reportDate < start || reportDate > end) {
-              continue;
-            }
-
-            // Get accuracy and WPM values
-            const accuracy = report.accuracyRate || 0;
-            const wpm = report.wordPerMin || 0;
-            
-            if (accuracy <= 0 || wpm <= 0) {
-              continue;
-            }
-
-            // Get the period label for this date
-            const periodLabel = getLabelForDate(reportDate, timeRange);
-            
-            if (!periodLabel || !totals[periodLabel]) {
-              continue;
-            }
-
-            // Calculate reading minutes from recording duration
-            const minutes = parseRecordingDuration(report.recordingDuration);
-            
-            let wordsRead = 0;
-            
-            if (minutes > 0) {
-              wordsRead = wpm * minutes;
-            } else {
-              wordsRead = report.totalWords || 0;
-              if (wordsRead === 0) {
-                wordsRead = wpm;
-              }
-            }
-
-            if (wordsRead <= 0) {
-              continue;
-            }
-
-            // Add to bucket aggregates
-            const bucketData = totals[periodLabel];
-            bucketData.reportCount++;
-            bucketData.accuracySum += accuracy * wordsRead;
-            bucketData.totalWords += wordsRead;
-            bucketData.totalMinutes += minutes || 1;
-            bucketData.studentSet.add(studentId);
-          }
-        } catch (error) {
-          console.error(`Error processing reports for student ${studentId}:`, error);
-          continue;
-        }
-      }
-
-      // Convert to ProgressData array, maintaining the order of periodLabels
-      const progressData: ProgressData[] = periodLabels.map((label: string) => {
-        const t = totals[label] || {
-          accuracySum: 0,
-          totalWords: 0,
-          totalMinutes: 0,
-          reportCount: 0,
-          studentSet: new Set<string>()
-        };
-        
-        const accuracy = t.totalWords > 0 
-          ? Math.min(100, Math.max(0, t.accuracySum / t.totalWords))
-          : 0;
-        
-        const averageWpm = t.totalMinutes > 0 
-          ? t.totalWords / t.totalMinutes
-          : 0;
-        
         return {
-          date: label,
-          accuracy: parseFloat(accuracy.toFixed(2)),
-          wpm: parseFloat(averageWpm.toFixed(2)),
+          progressData: emptyPeriods(timeRange),
+          grandTotalWords: 0,
+          grandAccuracySum: 0,
+          grandTotalMinutes: 0,
         };
+      }
+
+      const dateRange    = getDateRangeForTimeFilter(timeRange);
+      const periodLabels = getPeriodLabels(timeRange);
+      const totals       = buildTotals(periodLabels);
+
+      // Phase 7: fetch all students' reports in parallel
+      const allReports = await Promise.all(
+        studentIds.map(id => getStudentReports(id).catch(() => []))
+      );
+
+      allReports.forEach((reports, si) => {
+        if (!reports || reports.length === 0) return;
+        reports.forEach(report =>
+          processReportIntoBucket(report, timeRange, dateRange, totals, studentIds[si])
+        );
       });
 
-      console.log('Final accuracy trends data:', progressData);
-      return progressData;
+      const result = bucketsToResult(periodLabels, totals);
+      console.log('Final accuracy trends data:', result.progressData);
+      return result;
     } catch (error: any) {
       console.error('Error in getStudentsAccuracy:', error);
-      throw new Error(
-        'Failed to get students accuracy trends: ' + error.message,
-      );
+      throw new Error('Failed to get students accuracy trends: ' + error.message);
     }
   };
-  
-  return {
-    getStudentsAccuracy,
-  };
+
+  return { getStudentsAccuracy };
 };

@@ -359,6 +359,163 @@ function buildAccuracyBarsSvg(items: { label: string; value: number | null }[]):
 </svg>`;
 }
 
+/** Horizontal bar chart — one row per chapter showing completion percentage. */
+function buildChapterProgressChartSvg(
+  chapters: { title: string; done: number; total: number; pct: number }[],
+): string {
+  if (chapters.length === 0) return '';
+  const W = 500;
+  const rowH = 32;
+  const padL = 160, padR = 56, padT = 8, padB = 8;
+  const H = padT + chapters.length * rowH + padB;
+  const barMaxW = W - padL - padR;
+
+  const colorFor = (pct: number) =>
+    pct >= 100 ? '#2CA96A' : pct >= 50 ? '#F59E0B' : pct > 0 ? '#EF4444' : '#D1D5DB';
+
+  const rows = chapters.map((ch, i) => {
+    const y = padT + i * rowH;
+    const barY = y + 8;
+    const barH = 14;
+    const barW = Math.max((ch.pct / 100) * barMaxW, 0);
+    const c = colorFor(ch.pct);
+    const shortTitle = ch.title.length > 22 ? ch.title.slice(0, 21) + '…' : ch.title;
+    return `
+    <text x="${padL - 8}" y="${barY + 10}" text-anchor="end" font-size="10" fill="#374151" font-family="Arial" font-weight="500">${esc(shortTitle)}</text>
+    <rect x="${padL}" y="${barY}" width="${barMaxW}" height="${barH}" fill="#EEF2FF" rx="4"/>
+    <rect x="${padL}" y="${barY}" width="${barW.toFixed(1)}" height="${barH}" fill="${c}" rx="4"/>
+    <text x="${padL + barMaxW + 6}" y="${barY + 11}" font-size="10" fill="${c}" font-family="Arial" font-weight="bold">${ch.pct.toFixed(0)}%</text>
+    <text x="${padL + barMaxW + 36}" y="${barY + 11}" font-size="8" fill="#9CA3AF" font-family="Arial">${ch.done}/${ch.total}</text>`;
+  }).join('\n');
+
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  ${rows}
+</svg>`;
+}
+
+/** Dual-line area chart for accuracy (blue) & WPM (amber) over time. */
+function buildAccuracyLineChartSvg(
+  data: { date: string; accuracy: number; wpm: number }[],
+  gradeLevel?: number,
+): string {
+  const valid = data.filter(d => d.accuracy > 0 || d.wpm > 0);
+  if (valid.length < 2) return ''; // need at least 2 points for a line
+
+  const W = 500, H = 200;
+  const padL = 40, padR = 16, padT = 16, padB = 40;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const n = valid.length;
+  const maxWpm = Math.max(...valid.map(d => d.wpm), 1);
+  const wpmCeil = Math.ceil(maxWpm / 10) * 10; // round up to nearest 10
+
+  const xAt = (i: number) => padL + (i / (n - 1)) * chartW;
+  const yAcc = (v: number) => padT + chartH - (v / 100) * chartH;
+  const yWpm = (v: number) => padT + chartH - (v / wpmCeil) * chartH;
+
+  // Grid lines for accuracy (0-100)
+  const gridLines = [0, 25, 50, 75, 100].map(v => {
+    const y = yAcc(v);
+    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="#EEF2F7" stroke-width="1"/>
+    <text x="${(padL - 6).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="8" fill="#9CA3AF" font-family="Arial">${v}%</text>`;
+  }).join('\n');
+
+  // Grade benchmark dashed line
+  const benchmark = gradeLevel
+    ? GRADE_BENCHMARKS.find(b => b.grade === gradeLevel)
+    : undefined;
+  const benchLine = benchmark ? `
+    <line x1="${padL}" y1="${yAcc(benchmark.accMin).toFixed(1)}" x2="${W - padR}" y2="${yAcc(benchmark.accMin).toFixed(1)}" stroke="#10B981" stroke-width="1" stroke-dasharray="6,3"/>
+    <text x="${W - padR}" y="${(yAcc(benchmark.accMin) - 4).toFixed(1)}" text-anchor="end" font-size="8" fill="#10B981" font-family="Arial">Grade ${gradeLevel} min (${benchmark.accMin}%)</text>` : '';
+
+  // Accuracy line + fill
+  const accPoints = valid.map((d, i) => `${xAt(i).toFixed(1)},${yAcc(d.accuracy).toFixed(1)}`).join(' ');
+  const accFill = `${xAt(0).toFixed(1)},${yAcc(0).toFixed(1)} ${accPoints} ${xAt(n - 1).toFixed(1)},${yAcc(0).toFixed(1)}`;
+
+  // WPM line
+  const wpmPoints = valid.map((d, i) => `${xAt(i).toFixed(1)},${yWpm(d.wpm).toFixed(1)}`).join(' ');
+
+  // Dots + value labels for accuracy
+  const accDots = valid.map((d, i) => {
+    const x = xAt(i), y = yAcc(d.accuracy);
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#3B7FC9" stroke="white" stroke-width="1.5"/>
+    <text x="${x.toFixed(1)}" y="${(y - 7).toFixed(1)}" text-anchor="middle" font-size="8" fill="#3B7FC9" font-family="Arial" font-weight="bold">${d.accuracy.toFixed(0)}%</text>`;
+  }).join('\n');
+
+  // Dots for WPM
+  const wpmDots = valid.map((d, i) => {
+    const x = xAt(i), y = yWpm(d.wpm);
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#F59E0B" stroke="white" stroke-width="1.5"/>`;
+  }).join('\n');
+
+  // X-axis labels
+  const xLabels = valid.map((d, i) => {
+    const x = xAt(i);
+    const shortLabel = d.date.length > 6 ? d.date.slice(0, 6) : d.date;
+    return `<text x="${x.toFixed(1)}" y="${H - padB + 14}" text-anchor="middle" font-size="8" fill="#9CA3AF" font-family="Arial">${esc(shortLabel)}</text>`;
+  }).join('\n');
+
+  // Legend
+  const legendY = H - 8;
+  const legend = `
+    <rect x="${padL}" y="${legendY - 8}" width="10" height="3" fill="#3B7FC9" rx="1"/>
+    <text x="${padL + 14}" y="${legendY - 3}" font-size="8" fill="#374151" font-family="Arial">Accuracy</text>
+    <rect x="${padL + 75}" y="${legendY - 8}" width="10" height="3" fill="#F59E0B" rx="1"/>
+    <text x="${padL + 89}" y="${legendY - 3}" font-size="8" fill="#374151" font-family="Arial">WPM</text>
+    ${benchmark ? `<line x1="${padL + 130}" y1="${legendY - 6}" x2="${padL + 145}" y2="${legendY - 6}" stroke="#10B981" stroke-width="1" stroke-dasharray="4,2"/>
+    <text x="${padL + 149}" y="${legendY - 3}" font-size="8" fill="#10B981" font-family="Arial">Grade Benchmark</text>` : ''}`;
+
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  ${gridLines}
+  ${benchLine}
+  <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#D1D5DB" stroke-width="1"/>
+  <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#D1D5DB" stroke-width="1"/>
+  <polygon points="${accFill}" fill="rgba(59,127,201,0.08)"/>
+  <polyline points="${accPoints}" fill="none" stroke="#3B7FC9" stroke-width="2" stroke-linejoin="round"/>
+  <polyline points="${wpmPoints}" fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="4,3"/>
+  ${accDots}
+  ${wpmDots}
+  ${xLabels}
+  ${legend}
+</svg>`;
+}
+
+/** Small sparkline SVG showing accuracy trend across multiple attempts for one passage. */
+function buildPassageSparklineSvg(
+  accuracyValues: number[],
+): string {
+  if (accuracyValues.length < 2) return '';
+  const W = 180, H = 44;
+  const padL = 4, padR = 4, padT = 6, padB = 6;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const n = accuracyValues.length;
+
+  const minV = Math.min(...accuracyValues, 0);
+  const maxV = Math.max(...accuracyValues, 100);
+  const range = Math.max(maxV - minV, 1);
+
+  const xAt = (i: number) => padL + (i / (n - 1)) * chartW;
+  const yAt = (v: number) => padT + chartH - ((v - minV) / range) * chartH;
+
+  const points = accuracyValues.map((v, i) => `${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`).join(' ');
+  const fillPoints = `${xAt(0).toFixed(1)},${yAt(minV).toFixed(1)} ${points} ${xAt(n - 1).toFixed(1)},${yAt(minV).toFixed(1)}`;
+
+  // Start and end dots
+  const first = accuracyValues[0], last = accuracyValues[n - 1];
+  const trendUp = last >= first;
+  const lineColor = trendUp ? '#2CA96A' : '#EF4444';
+  const fillColor = trendUp ? 'rgba(44,169,106,0.12)' : 'rgba(239,68,68,0.10)';
+
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <polygon points="${fillPoints}" fill="${fillColor}"/>
+  <polyline points="${points}" fill="none" stroke="${lineColor}" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="${xAt(0).toFixed(1)}" cy="${yAt(first).toFixed(1)}" r="2.5" fill="#9CA3AF"/>
+  <circle cx="${xAt(n - 1).toFixed(1)}" cy="${yAt(last).toFixed(1)}" r="3" fill="${lineColor}" stroke="white" stroke-width="1"/>
+  <text x="${xAt(n - 1).toFixed(1)}" y="${(yAt(last) - 5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${lineColor}" font-family="Arial" font-weight="bold">${last.toFixed(0)}%</text>
+</svg>`;
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // Per-section HTML builders
 // ═════════════════════════════════════════════════════════════════════════════
@@ -432,6 +589,9 @@ function buildProgressSectionHtml(
     </div>`;
   }).join('');
 
+  const chapterChartData = chapters.map(ch => ({ title: ch.title, done: ch.done, total: ch.total, pct: ch.pct }));
+  const chapterChart = buildChapterProgressChartSvg(chapterChartData);
+
   return `
   <h2 class="tab-title">📈 Progress</h2>
 
@@ -446,6 +606,13 @@ function buildProgressSectionHtml(
     <div class="bar-track">
       <div class="bar-fill" style="width:${wordPct.toFixed(1)}%;background:${statusColor(wordPct)}"></div>
     </div>
+
+    ${chapterChart ? `
+    <div class="chart-box" style="margin-top:12px">
+      <div class="chart-label">Chapter Completion Overview</div>
+      ${chapterChart}
+    </div>` : ''}
+
     ${chapterCards || '<div class="empty-mini">No chapter data available.</div>'}
   </div>`;
 }
@@ -646,6 +813,8 @@ function buildAccuracyTrendsSectionHtml(
     </div>`;
   }).join('');
 
+  const lineChart = buildAccuracyLineChartSvg(chartData, gradeLevel);
+
   return `
   <div class="sub-section">
     <h3 class="sub-title">Accuracy &amp; Speed</h3>
@@ -655,6 +824,12 @@ function buildAccuracyTrendsSectionHtml(
       <div class="mini-stat"><div class="mini-val">${avgWpm.toFixed(0)}</div><div class="mini-lbl">Avg WPM</div></div>
       <div class="mini-stat"><div class="mini-val" style="color:${trendColor}">${trendIcon} ${Math.abs(accPct).toFixed(1)}%</div><div class="mini-lbl">Trend</div></div>
     </div>
+
+    ${lineChart ? `
+    <div class="chart-box" style="margin:10px 0">
+      <div class="chart-label">Accuracy &amp; Reading Speed Trend</div>
+      ${lineChart}
+    </div>` : ''}
 
     <div class="legend-row centered">
       <span><i class="dot" style="background:#3B7FC9"></i>Accuracy (%)</span>
@@ -886,6 +1061,10 @@ function buildHistorySectionHtml(
       </div>`;
     }).join('');
 
+    const sparkline = group.reports.length > 1
+      ? buildPassageSparklineSvg(group.reports.map(r => r.accuracyRate))
+      : '';
+
     return `
     <div class="passage-card">
       <div class="passage-head">
@@ -894,6 +1073,7 @@ function buildHistorySectionHtml(
           <div class="passage-title">${esc(group.passageTitle)}</div>
           <div class="passage-attempts">${attemptsText}</div>
         </div>
+        ${sparkline ? `<div style="margin-left:auto">${sparkline}</div>` : ''}
       </div>
       <div class="report-list">${sessionRows}</div>
     </div>`;
@@ -903,6 +1083,18 @@ function buildHistorySectionHtml(
   if (selectedDay !== null) filterNotes.push('day filter active');
   if (selectedWeekOfMonth !== null) filterNotes.push(`Week ${selectedWeekOfMonth} filter active`);
   const filterSuffix = filterNotes.length > 0 ? ` · ${filterNotes.join(' · ')}` : '';
+
+  // Build an overall accuracy line chart from all sessions in chronological order
+  const allSessionsSorted = allReports
+    .map(r => {
+      let d: Date;
+      try { d = r.timestamp?.toDate?.() ?? new Date(r.timestamp); } catch { d = new Date(0); }
+      return { date: `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`, accuracy: r.accuracyRate, wpm: r.wordPerMin || 0, ts: d.getTime() };
+    })
+    .sort((a, b) => a.ts - b.ts);
+  const overallLineChart = allSessionsSorted.length >= 2
+    ? buildAccuracyLineChartSvg(allSessionsSorted)
+    : '';
 
   return {
     stats: { passages, attempts, avgAcc, bestWpm },
@@ -919,6 +1111,12 @@ function buildHistorySectionHtml(
       <div class="hs-sep"></div>
       <div class="hs"><div class="hs-val">${bestWpm}</div><div class="hs-lbl">Best WPM</div></div>
     </div>
+
+    ${overallLineChart ? `
+    <div class="chart-box" style="margin-bottom:14px">
+      <div class="chart-label">Accuracy &amp; Speed Across All Sessions</div>
+      ${overallLineChart}
+    </div>` : ''}
 
     ${passageCards}`,
   };
@@ -1336,10 +1534,11 @@ function buildPdfHtml(opts: BuildOpts): string {
   <div class="report-header">
     <div>
       <h1>📚 Reading Assessment Report</h1>
-      <p>Progress · Sessions · Analytics · History</p>
+      <p>${opts.role === 'faculty' ? 'Student Progress Report — For Teacher Review' : 'Progress · Sessions · Analytics · History'}</p>
     </div>
     <div class="badge">
       <strong>${esc(opts.studentName)}</strong>
+      ${opts.gradeLevel ? `Grade ${opts.gradeLevel}<br/>` : ''}
       Generated: ${esc(opts.generatedAt)}
     </div>
   </div>

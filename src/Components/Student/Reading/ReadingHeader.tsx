@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import LogoutModal from '../../GlobalUse/Logout_Modal';
 import upperNav from '../../../UI_Designs/UpperNavigation';
+import { Icon } from '../../GlobalUse/Icon';
+import { StudentColors } from '../../../Utilities/Theme';
 
 interface ReadingHeaderProps {
   onBack: () => void;
   onMenuToggle: () => void;
   onLogout: () => void;
+  onAbout?: () => void;
   menuVisible: boolean;
 }
 
@@ -46,12 +49,24 @@ const headerStyles = StyleSheet.create({
     fontSize: 40, fontFamily: 'Nunito-Bold',
     color: C.white, lineHeight: 28, marginLeft: -2, paddingBottom: 2
   },
+  aboutRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14,
+  },
+  aboutText: {
+    fontSize: 15, fontFamily: 'Nunito-Bold',
+    color: StudentColors.slate, marginLeft: 12,
+  },
+  dropdownDivider: {
+    height: 1, marginHorizontal: 12, backgroundColor: '#E3F0E7',
+  },
 });
 
 export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
   onBack,
   onMenuToggle,
   onLogout,
+  onAbout,
   menuVisible,
 }) => {
 
@@ -62,9 +77,14 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
     setLogoutModalVisible(true);
   };
 
+  const handleAboutPress = () => {
+    onMenuToggle();
+    onAbout?.();
+  };
+
   const confirmLogout = () => {
     setLogoutModalVisible(false);
-    onLogout(); 
+    onLogout();
   };
 
   const cancelLogout = () => {
@@ -78,11 +98,6 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
           <Text style={headerStyles.backArrowText}>‹</Text>
         </TouchableOpacity>
 
-        <Image
-          style={upperNav.ciscLogo}
-          source={require('../../../../assets/images/cisckids.png')}
-        />
-
         <TouchableOpacity style={headerStyles.menuBtn} onPress={onMenuToggle} activeOpacity={0.7}>
           <MenuBars />
         </TouchableOpacity>
@@ -90,6 +105,19 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
 
       {menuVisible && (
         <View style={upperNav.dropdownMenu}>
+          {onAbout && (
+            <>
+              <TouchableOpacity
+                onPress={handleAboutPress}
+                style={headerStyles.aboutRow}
+                activeOpacity={0.75}
+              >
+                <Icon name="info" size={20} color={StudentColors.slate} filled />
+                <Text style={headerStyles.aboutText}>About</Text>
+              </TouchableOpacity>
+              <View style={headerStyles.dropdownDivider} />
+            </>
+          )}
           <TouchableOpacity
             onPress={handleLogoutPress}
             style={upperNav.logoutButton}
@@ -110,7 +138,7 @@ export const ReadingHeader: React.FC<ReadingHeaderProps> = ({
           activeOpacity={1}
         />
       )}
-      
+
       {/* Logout Modal */}
       <LogoutModal
         visible={logoutVisible}

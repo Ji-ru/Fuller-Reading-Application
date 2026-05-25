@@ -5,7 +5,7 @@ import { FacultyColors } from '../Utilities/Theme';
 const facultyDashboard = StyleSheet.create({
     safeArea: {
       flex: 1,
-      backgroundColor: '#f2f8f4',
+      backgroundColor: FacultyColors.bg,
     },
     container: {
       flex: 1,
@@ -107,12 +107,23 @@ const facultyDashboard = StyleSheet.create({
       width: sw(20),
       height: sw(20),
       marginRight: sw(12),
-      tintColor: '#FF7043',
+      tintColor: FacultyColors.primary,
     },
     dropdownText: {
       fontSize: sf(15),
-      fontFamily: 'Nunito-Bold',
-      color: '#FF7043',
+      fontFamily: 'Satoshi-Bold',
+      color: FacultyColors.primary,
+    },
+    dropdownTextAbout: {
+      fontSize: sf(15),
+      fontFamily: 'Satoshi-Bold',
+      color: FacultyColors.slate,
+      marginLeft: sw(12),
+    },
+    dropdownDivider: {
+      height: 1,
+      marginHorizontal: sw(12),
+      backgroundColor: '#E3F0E7',
     },
 
     // ─── Section Label ───────────────────────────────────────────────────────────

@@ -177,7 +177,7 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
       ) : (
         <>
           {/* ── Section 1: Average Stats (New Layout) ───────────────── */}
-          <View style={S.sectionCard}>
+          {/* <View style={S.sectionCard}>
             <Text style={S.sectionTitle}>
               {isOverall ? 'Overall' : (className || 'Class')} Reading Statistics
             </Text>
@@ -206,7 +206,7 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
                 <Text style={S.statLabel}>Students</Text>
               </View>
             </View>
-          </View>
+          </View> */}
 
           {/* ── Section 2: Miscue Type Breakdown ────────────────────── */}
           <View style={S.sectionCard}>
@@ -290,14 +290,14 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
                     : null;
                   const studentColor =
                     studentPct === null ? C.inkLight
-                    : studentPct > 0.5 ? C.coral
-                    : studentPct > 0.25 ? C.omission
-                    : C.inkLight;
+                      : studentPct > 0.5 ? C.coral
+                        : studentPct > 0.25 ? C.omission
+                          : C.inkLight;
                   const studentBg =
                     studentPct === null ? C.inputBg
-                    : studentPct > 0.5 ? C.substitutionBg
-                    : studentPct > 0.25 ? C.omissionBg
-                    : C.inputBg;
+                      : studentPct > 0.5 ? C.substitutionBg
+                        : studentPct > 0.25 ? C.omissionBg
+                          : C.inputBg;
                   return (
                     <View key={index} style={[S.wordRow, index === words.length - 1 && S.wordRowLast]}>
                       <View style={S.wordRank}>

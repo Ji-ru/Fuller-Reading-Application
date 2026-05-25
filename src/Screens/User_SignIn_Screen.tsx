@@ -144,27 +144,20 @@ export default function LoginScreen() {
     } catch (error: any) {
       if (!isMounted.current) return;
 
-      let errorMessage = 'Login failed. Please try again.';
       const newAttempts = failedAttempts + 1;
-
       setFailedAttempts(newAttempts);
-      if (newAttempts >= 3) {
-        setLockoutTimer(15); // 15-second lockout
-      }
 
-      const rawMsg = error.message.toLowerCase();
-      if (rawMsg.includes('user-not-found')) errorMessage = 'No account found with this email.';
-      else if (rawMsg.includes('wrong-password')) errorMessage = 'Incorrect password. Please try again.';
-      else if (rawMsg.includes('too-many-requests')) {
-        errorMessage = 'Too many failed attempts. Please try again later.';
-        if (newAttempts < 3) { setFailedAttempts(3); setLockoutTimer(30); } // Harder lockout if Firebase triggers
+      let errorMessage = error.message || 'Login failed. Please try again.';
+
+      if (error.message?.includes('timeout-error')) {
+        errorMessage = 'Connection timed out. Please check your internet connection and try again.';
+      } else if (error.code === 'auth/too-many-requests') {
+        setFailedAttempts(Math.max(newAttempts, 3));
+        setLockoutTimer(30);
+      } else if (newAttempts >= 3) {
+        setLockoutTimer(15);
+        errorMessage = 'Too many failed attempts. Please wait 15 seconds before trying again.';
       }
-      else if (rawMsg.includes('user-disabled')) errorMessage = 'This account has been disabled.';
-      else if (rawMsg.includes('invalid-email')) errorMessage = 'Invalid email address.';
-      else if (rawMsg.includes('network-request-failed')) errorMessage = 'Network error. Please check your internet connection.';
-      else if (rawMsg.includes('invalid-credential')) errorMessage = 'Invalid email or password. Please try again.';
-      else if (rawMsg.includes('timeout-error')) errorMessage = 'Connection timed out. Please check your internet connection and try again.';
-      else errorMessage = error.message || 'Invalid email or password.';
 
       setAuthError(errorMessage);
     } finally {
@@ -331,7 +324,21 @@ export default function LoginScreen() {
                   </Text>
                 )}
               </TouchableOpacity>
-
+              {/* <TouchableOpacity
+                    style={login.signupwithgooglebutton}
+                    onPress={() => {
+                      dismissKeyboard();
+                      handleGoogleSignUp()
+                    }}
+                    activeOpacity={0.7}
+                    disabled={loading || googleLoading}
+                  >
+                    <Image
+                      style={login.googleimage}
+                      source={require('../../assets/images/Google-icon.png')}
+                    />
+                    <Text style={login.registerText}>Continue with Google</Text>
+                  </TouchableOpacity> */}
               {/* Divider */}
               <View style={login.dividerContainer}>
                 <View style={login.dividerLine} />
@@ -346,22 +353,6 @@ export default function LoginScreen() {
                 </Text>
 
                 <View style={login.registerButtonsContainer}>
-                  <TouchableOpacity
-                    style={login.signupwithgooglebutton}
-                    onPress={() => {
-                      dismissKeyboard();
-                      handleGoogleSignUp()
-                    }}
-                    activeOpacity={0.7}
-                    disabled={loading || googleLoading}
-                  >
-                    <Image
-                      style={login.googleimage}
-                      source={require('../../assets/images/Google-icon.png')}
-                    />
-                    <Text style={login.registerText}>Continue with Google</Text>
-                  </TouchableOpacity>
-
                   <TouchableOpacity
                     style={login.signupwithemailbutton}
                     onPress={() => {
