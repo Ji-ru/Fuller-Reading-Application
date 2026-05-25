@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
 import MonthlyActivityHeatmap from '../../Components/Faculty/Dashboard/MonthlyActivityHeatmap';
+import ClassAccuracySpeedChart from '../../Components/Faculty/Dashboard/ClassAccuracySpeedChart';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import {
@@ -479,7 +480,15 @@ fetchParticipation();
               />
             </View>
 
-<View style={{ marginBottom: 30 }}>
+            <View style={{ marginBottom: 30 }}>
+              <Text style={S.sectionLabel}>Class Accuracy at Bilis</Text>
+              <ClassAccuracySpeedChart
+                facultyId={auth.currentUser?.uid || null}
+                classId={selectedClassId || undefined}
+              />
+            </View>
+
+            <View style={{ marginBottom: 30 }}>
               <Text style={S.sectionLabel}>Miscue Insights</Text>
               <MiscueAnalytics
                 facultyId={auth.currentUser?.uid || null}

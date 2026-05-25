@@ -1,21 +1,23 @@
-import firestore from '@react-native-firebase/firestore';
+import { getFirestore, collection, getDocs, query, where } from '@react-native-firebase/firestore';
+import { ClassDocument } from '../Interfaces/dataInterfaces';
+
+const db = getFirestore();
 
 export const useAdminStats = () => {
   const getTotals = async (academicYear?: string) => {
     try {
-      // Fetch all classes for the year
-      let classesRef = firestore().collection('classes');
+      let classesRef = collection(db, 'classes');
       let querySnapshot;
       
       if (academicYear) {
-        querySnapshot = await classesRef.where('acadYear', '==', academicYear).get();
+        querySnapshot = await getDocs(query(classesRef, where('acadYear', '==', academicYear)));
       } else {
-        querySnapshot = await classesRef.get();
+        querySnapshot = await getDocs(classesRef);
       }
       
-      const activeClasses = querySnapshot.docs.map(doc => doc.data());
-      const activeStudentIds = new Set();
-      const activeFacultyIds = new Set();
+      const activeClasses = querySnapshot.docs.map(doc => doc.data()) as ClassDocument[];
+      const activeStudentIds = new Set<string>();
+      const activeFacultyIds = new Set<string>();
       
       activeClasses.forEach(cls => {
         if (cls.studentIds) {
@@ -27,12 +29,12 @@ export const useAdminStats = () => {
       });
 
       // Get Activity (Pagsusulit) Count
-      const activitiesSnapshot = await firestore().collection('activities').get();
+      const activitiesSnapshot = await getDocs(collection(db, 'activities'));
       const activityCount = activitiesSnapshot.size;
 
-      // Special case: if no academic year, we might want to count everyone
+      // Special case: if no academic year, count all users directly
       if (!academicYear) {
-        const usersSnapshot = await firestore().collection('users').get();
+        const usersSnapshot = await getDocs(collection(db, 'users'));
         let studentCount = 0;
         let facultyCount = 0;
 
@@ -69,12 +71,12 @@ export const useAdminStats = () => {
 
   const getAllUsers = async () => {
     try {
-      const snapshot = await firestore().collection('users').get();
+      const snapshot = await getDocs(collection(db, 'users'));
       return snapshot.docs.map(doc => ({
         uid: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching all users:', error);
       return [];
     }

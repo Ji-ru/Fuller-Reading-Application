@@ -79,19 +79,19 @@ export default function SignUpTwoScreen() {
       // Call with correct parameters - using non-null assertion since we validated above
       let result: any = null;
       if (personalInfo.role! === 'student') {
-        const classCode = (personalInfo as any).classCode;
+        const classCode = personalInfo?.studentData?.classCode ?? '';
 
         result = await SignUpUserCredentials(email, password, {
           role: personalInfo.role!,
           firstName: personalInfo.firstName!,
-          middleName: personalInfo.middleName,
+          middleName: personalInfo.middleName || '',
           lastName: personalInfo.lastName!,
           sex: personalInfo.sex!,
-          profileImageUrl: personalInfo?.profileImageUrl,
-          gradeLevel: (personalInfo as any).gradeLevel,
-          dateOfBirth: (personalInfo as any).dateOfBirth,
+          profileImageUrl: personalInfo?.profileImageUrl || '',
+          gradeLevel: personalInfo?.studentData?.gradeLevel ?? 1,
+          dateOfBirth: personalInfo?.studentData?.dateOfBirth || '',
           classCode: classCode || '',
-        });        
+        });                
       } else if (personalInfo.role! === 'faculty') {
         const fCode = (personalInfo as any).facultyCode;
         if (!verifyFacultyAccessCode(fCode)) {
@@ -102,11 +102,11 @@ export default function SignUpTwoScreen() {
         result = await SignUpUserCredentials(email, password, {
           role: personalInfo.role!,
           firstName: personalInfo.firstName!,
-          middleName: personalInfo.middleName,
+          middleName: personalInfo.middleName || '',
           lastName: personalInfo.lastName!,
           sex: personalInfo.sex!,
-          profileImageUrl: personalInfo?.profileImageUrl,
-          assignedGradeLevels: (personalInfo as any).assignedGradeLevels || [],
+          profileImageUrl: personalInfo?.profileImageUrl || '',
+          assignedGradeLevels: (personalInfo.facultyData as any)?.assignedGradeLevels || [],
         });  
       }
 

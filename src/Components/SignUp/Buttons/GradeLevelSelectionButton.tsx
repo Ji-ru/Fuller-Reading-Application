@@ -12,9 +12,14 @@ export default function GradeLevelDropDownSelection({ onSelect, transparent }: G
   const [selectedValue, setSelectedValue] = useState(gradeLevels[0]);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const onSelectRef = React.useRef(onSelect);
   React.useEffect(() => {
-    if (onSelect) {
-      onSelect(1);
+    onSelectRef.current = onSelect;
+  });
+
+  React.useEffect(() => {
+    if (onSelectRef.current) {
+      onSelectRef.current(1);
     }
   }, []);
 

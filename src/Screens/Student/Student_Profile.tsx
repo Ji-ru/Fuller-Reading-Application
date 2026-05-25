@@ -366,15 +366,17 @@ export default function Profile() {
     try {
       const cur = getCurrentUser();
       if (!cur) return;
-      
+
       await updateUserProfile(cur.uid, {
         firstName: editData.firstName,
         middleName: editData.middleName,
         lastName: editData.lastName,
         sex: editData.sex,
-        'studentData.dateOfBirth': editData.dateOfBirth,
-      } as any);
-      
+        studentData: {
+          dateOfBirth: editData.dateOfBirth,
+        },
+      });
+
       setEditingInfo(false);
       await fetchAll();
     } catch (e: any) {

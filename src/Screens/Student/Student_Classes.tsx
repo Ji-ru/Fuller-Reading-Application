@@ -8,16 +8,19 @@ import {
   ActivityIndicator,
   TextInput,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { BookOpenIcon } from '../../Components/GlobalUse/Icons';
-import { getCurrentUser, getUserProfile, getClassByCode, joinClass, validateClassCode, leaveClass } from '../../Controller/AuthenticationController';
+import { getCurrentUser, getUserProfile, getClassByCode, requestToJoinClass, validateClassCode, leaveClass, getStudentRequestStatus } from '../../Controller/AuthenticationController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
+// Import Firebase auth functions for password verification
+import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from '@react-native-firebase/auth';
 
 function BackArrow({ color = C.ink }: { color?: string }) {
   return (
@@ -26,15 +29,18 @@ function BackArrow({ color = C.ink }: { color?: string }) {
 }
 
 export default function Student_Classes() {
-  const [loading, setLoading] = useState(true);
-  const [classData, setClassData] = useState<ClassDocument | null>(null);
-  const [firstName, setFirstName] = useState('Mag-aaral');
-  const [leaveModalVisible, setLeaveModalVisible] = useState(false);
-  const [joiningCode, setJoiningCode] = useState('');
-  const [joining, setJoining] = useState(false);
-  const [classCodeValidation, setClassCodeValidation] = useState<{ valid: boolean; message: string } | null>(null);
-  const [validatingClassCode, setValidatingClassCode] = useState(false);
-  const { handleBackStep } = useNavigationHelper();
+   const [loading, setLoading] = useState(true);
+   const [classData, setClassData] = useState<ClassDocument | null>(null);
+   const [firstName, setFirstName] = useState('Mag-aaral');
+    const [leaveModalVisible, setLeaveModalVisible] = useState(false);
+    const [leavePasswordModalVisible, setLeavePasswordModalVisible] = useState(false);
+    const [leavePassword, setLeavePassword] = useState('');
+   const [joiningCode, setJoiningCode] = useState('');
+   const [joining, setJoining] = useState(false);
+   const [classCodeValidation, setClassCodeValidation] = useState<{ valid: boolean; message: string } | null>(null);
+   const [validatingClassCode, setValidatingClassCode] = useState(false);
+   const [joinRequestStatus, setJoinRequestStatus] = useState<'none' | 'pending' | 'approved'>('none');
+   const { handleBackStep } = useNavigationHelper();
 
   useEffect(() => {
     const fetchClass = async () => {
@@ -61,28 +67,53 @@ export default function Student_Classes() {
     fetchClass();
   }, []);
 
-  const handleLeaveClass = () => {
-    setLeaveModalVisible(true);
-  };
+   const handleLeaveClass = () => {
+     setLeaveModalVisible(true);
+   };
 
-   const confirmLeaveClass = async () => {
+   const confirmLeaveClass = () => {
      setLeaveModalVisible(false);
+     setLeavePasswordModalVisible(true);
+     setLeavePassword(''); // Clear password field
+   };
+
+   const confirmPasswordLeave = async () => {
+     if (!leavePassword.trim()) {
+       Alert.alert('Error', 'Pakilagay ang iyong password');
+       return;
+     }
+   
+     setLeavePasswordModalVisible(false);
      
      try {
        const user = getCurrentUser();
        if (!user || !classData) return;
-
+       
+       // Verify password before leaving class
+       const auth = getAuth();
+       const credential = EmailAuthProvider.credential(user.email, leavePassword);
+       await reauthenticateWithCredential(user, credential);
+       
        // Leave the class using the controller function
        await leaveClass(user.uid, classData.classId);
-
+       
        // Reset state
        setClassData(null);
        setFirstName('Mag-aaral');
+       setLeavePassword('');
 
        Alert.alert('Tagumpay!', 'Naiwan ka na sa klase.');
      } catch (error: any) {
-       console.error('Leave class error:', error.message);
-       Alert.alert('Error', error.message || 'Hindi makaiwan sa klase.');
+       // Password verification failed
+       if (error.code === 'auth/wrong-password') {
+         Alert.alert('Error', 'Maling password. Pakisubukan muli.');
+         // Show password modal again for retry
+         setLeavePasswordModalVisible(true);
+       } else {
+         console.error('Leave class error:', error.message);
+         Alert.alert('Error', error.message || 'Hindi makaiwan sa klase.');
+         setLeavePasswordModalVisible(true); // Show password modal again
+       }
      }
    };
 
@@ -103,47 +134,55 @@ export default function Student_Classes() {
     }
   };
 
-  const handleJoinClass = async () => {
-    if (!joiningCode.trim()) {
-      Alert.alert('Error', 'Pakilagay ang class code.');
-      return;
-    }
+const handleJoinClass = async () => {
+     if (!joiningCode.trim()) {
+       Alert.alert('Error', 'Pakilagay ang class code.');
+       return;
+     }
 
-    try {
-      setJoining(true);
-      const user = getCurrentUser();
-      if (!user) return;
+     try {
+       setJoining(true);
+       const user = getCurrentUser();
+       if (!user) return;
 
-      // Save code to temp variable before any state changes
-      const codeToJoin = joiningCode.trim().toUpperCase();
+       // Save code to temp variable before any state changes
+       const codeToJoin = joiningCode.trim().toUpperCase();
 
-      // Step 1: Join the class
-      console.log('Joining class with code:', codeToJoin);
-      await joinClass(user.uid, codeToJoin);
-      console.log('Successfully joined class');
+       // Step 1: Request to join the class (pending approval)
+       console.log('Requesting to join class with code:', codeToJoin);
+       const result = await requestToJoinClass(user.uid, codeToJoin);
+       console.log('Join request result:', result);
 
-      // Step 2: Fetch and display class data
-      console.log('Fetching class data...');
-      const cls = await getClassByCode(codeToJoin);
-      if (!cls) {
-        throw new Error('Hindi makikita ang class information. Sigurado ba ang code?');
-      }
-      console.log('Class data loaded:', cls.className);
-      setClassData(cls);
+       if (result.status === 'pending') {
+         // Set pending status
+         setJoinRequestStatus('pending');
+         setJoiningCode('');
+         setClassCodeValidation(null);
+         Alert.alert('Nakapag-request!', 'Nakapag-request ka na ng pagkakasali sa klase. Hiintayin ang approval ng guro.');
+       } else {
+         // Step 2: Fetch and display class data
+         console.log('Fetching class data...');
+         const cls = await getClassByCode(codeToJoin);
+         if (!cls) {
+           throw new Error('Hindi makikita ang class information. Sigurado ba ang code?');
+         }
+         console.log('Class data loaded:', cls.className);
+         setClassData(cls);
 
-      // Step 3: Clear input and validation only after everything succeeds
-      setJoiningCode('');
-      setClassCodeValidation(null);
+         // Step 3: Clear input and validation only after everything succeeds
+         setJoiningCode('');
+         setClassCodeValidation(null);
 
-      // Show success message
-      Alert.alert('Tagumpay!', `Nagsali ka sa ${cls.className}!`);
-    } catch (e: any) {
-      console.error('Join class error:', e.message);
-      Alert.alert('Error', e.message || 'Hindi nakasali sa klase.');
-    } finally {
-      setJoining(false);
-    }
-  };
+         // Show success message
+         Alert.alert('Tagumpay!', `Nagsali ka sa ${cls.className}!`);
+       }
+     } catch (e: any) {
+       console.error('Join class error:', e.message);
+       Alert.alert('Error', e.message || 'Hindi nakasali sa klase.');
+     } finally {
+       setJoining(false);
+     }
+   };
 
   if (loading) {
     return (
@@ -230,81 +269,155 @@ export default function Student_Classes() {
               </TouchableOpacity>
             </BounceIn>
           </>
-        ) : (
-          <BounceIn delay={72}>
-            <View style={S.section}>
-              <View style={S.sectionTitleRow}>
-                <BookOpenIcon size={16} color={C.green} />
-                <Text style={S.sectionTitle}>Sumali sa Klase</Text>
-              </View>
-              
-              <View style={S.joinCard}>
-                <Text style={S.joinLabel}>Code ng Klase</Text>
-                
-<View style={S.joinInputRow}>
-                   <TextInput
-                     style={[S.joinInput, { flex: 2 }]}
-                     placeholder="Ilagay ang code"
-                     value={joiningCode}
-                     onChangeText={(text) => {
-                       setJoiningCode(text);
-                       setClassCodeValidation(null);
-                     }}
-                     autoCapitalize="characters"
-                     maxLength={6}
-                     editable={!validatingClassCode}
-                   />
+) : (
+           <BounceIn delay={72}>
+             <View style={S.section}>
+               <View style={S.sectionTitleRow}>
+                 <BookOpenIcon size={16} color={C.green} />
+                 <Text style={S.sectionTitle}>Sumali sa Klase</Text>
+               </View>
+               
+               {joinRequestStatus === 'pending' ? (
+                 <View style={S.pendingCard}>
+                   <Text style={S.pendingTitle}>Nakapag-request na!</Text>
+                   <Text style={S.pendingMessage}>
+                     Nakapag-request ka na ng pagkakasali sa klase. 
+                     Hiintayin ang approval ng iyong guro.
+                   </Text>
+                   <View style={S.pendingBadge}>
+                     <Text style={S.pendingBadgeText}>Pending Approval</Text>
+                   </View>
+                 </View>
+               ) : (
+                 <View style={S.joinCard}>
+                   <Text style={S.joinLabel}>Code ng Klase</Text>
+                   
+                   <View style={S.joinInputRow}>
+                     <TextInput
+                       style={[S.joinInput, { flex: 2 }]}
+                       placeholder="Ilagay ang code"
+                       value={joiningCode}
+                       onChangeText={(text) => {
+                         setJoiningCode(text);
+                         setClassCodeValidation(null);
+                       }}
+                       autoCapitalize="characters"
+                       maxLength={6}
+                       editable={!validatingClassCode}
+                     />
+                     <TouchableOpacity 
+                       style={[S.verifyBtn, validatingClassCode && { opacity: 0.6 }]} 
+                       onPress={handleValidateClassCode}
+                       disabled={validatingClassCode}
+                       activeOpacity={0.7}
+                     >
+                       {validatingClassCode ? (
+                         <ActivityIndicator size="small" color={C.white} />
+                       ) : (
+                         <Text style={S.verifyBtnText}>E-verify</Text>
+                       )}
+                     </TouchableOpacity>
+                   </View>
+                   
+                   {classCodeValidation && (
+                     <Text style={[
+                       S.validationMessage,
+                       { color: classCodeValidation.valid ? '#27ae60' : '#e74c3c' }
+                     ]}>
+                       {classCodeValidation.valid ? '✓ ' : '✗ '}{classCodeValidation.message}
+                     </Text>
+                   )}
+                   
                    <TouchableOpacity 
-                     style={[S.verifyBtn, validatingClassCode && { opacity: 0.6 }]} 
-                     onPress={handleValidateClassCode}
-                     disabled={validatingClassCode}
-                     activeOpacity={0.7}
+                     style={[S.joinBtn, joining && { opacity: 0.7 }]} 
+                     onPress={handleJoinClass}
+                     disabled={joining || !joiningCode.trim()}
                    >
-                     {validatingClassCode ? (
-                       <ActivityIndicator size="small" color={C.white} />
+                     {joining ? (
+                       <ActivityIndicator color={C.white} />
                      ) : (
-                       <Text style={S.verifyBtnText}>E-verify</Text>
+                       <Text style={S.joinBtnText}>Sumali na!</Text>
                      )}
                    </TouchableOpacity>
+                   <Text style={S.joinHint}>Hingin ang Class Code sa iyong guro.</Text>
                  </View>
-                
-                {classCodeValidation && (
-                  <Text style={[
-                    S.validationMessage,
-                    { color: classCodeValidation.valid ? '#27ae60' : '#e74c3c' }
-                  ]}>
-                    {classCodeValidation.valid ? '✓ ' : '✗ '}{classCodeValidation.message}
-                  </Text>
-                )}
-                
-                <TouchableOpacity 
-                  style={[S.joinBtn, joining && { opacity: 0.7 }]} 
-                  onPress={handleJoinClass}
-                  disabled={joining || !joiningCode.trim()}
-                >
-                  {joining ? (
-                    <ActivityIndicator color={C.white} />
-                  ) : (
-                    <Text style={S.joinBtnText}>Sumali na!</Text>
-                  )}
-                </TouchableOpacity>
-                <Text style={S.joinHint}>Hingin ang Class Code sa iyong guro.</Text>
-              </View>
-            </View>
-          </BounceIn>
-        )}
+               )}
+             </View>
+           </BounceIn>
+         )}
       </View>
 
-      <ConfirmationModal
-        visible={leaveModalVisible}
-        onCancel={() => setLeaveModalVisible(false)}
-        onConfirm={confirmLeaveClass}
-        title="Umalis sa Klase?"
-        message="Sigurado ka bang gusto mong umalis sa klaseng ito?"
-        cancelText="Bumalik"
-        confirmText="Umalis"
-        type="danger"
-      />
+        {/*
+        <ConfirmationModal
+          visible={leaveModalVisible}
+          onCancel={() => setLeaveModalVisible(false)}
+          onConfirm={confirmLeaveClass}
+          title="Umalis sa Klase?"
+          message="Sigurado ka bang gusto mong umalis sa klaseng ito?"
+          cancelText="Bumalik"
+          confirmText="Umalis"
+          type="danger"
+        />
+        */}
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          visible={leaveModalVisible}
+          onCancel={() => setLeaveModalVisible(false)}
+          onConfirm={confirmLeaveClass}
+          title="Umalis sa Klase?"
+          message="Sigurado ka bang gusto mong umalis sa klaseng ito?"
+          cancelText="Bumalik"
+          confirmText="Umalis"
+          type="danger"
+        />
+        {/* Password Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={leavePasswordModalVisible}
+          onRequestClose={() => setLeavePasswordModalVisible(false)}
+        >
+          <View style={S.modalOverlay}>
+            <View style={S.modalContainer}>
+              {/* DECORATIVE TOP BAR */}
+              <View style={S.modalIndicator} />
+              
+              {/* ICON BOX */}
+              <View style={[S.modalIconBox, { backgroundColor: C.red + '12' }]}>
+                <BookOpenIcon size={32} color={C.red} />
+              </View>
+      
+              {/* TEXT CONTENT */}
+              <Text style={S.modalTitle}>Ilagay ang iyong password</Text>
+              <Text style={S.modalMessage}>Ilagay ang iyong password upang magtagumpay na umalis</Text>
+              
+              {/* PASSWORD INPUT */}
+              <TextInput
+                style={S.modalInput}
+                placeholder="Password"
+                placeholderTextColor={C.slate}
+                secureTextEntry={true}
+                value={leavePassword}
+                onChangeText={setLeavePassword}
+                autoCapitalize="none"
+              />
+              
+              {/* BUTTONS */}
+              <View style={S.modalButtonRow}>
+                <TouchableOpacity style={S.modalCancelBtn} onPress={() => setLeavePasswordModalVisible(false)} activeOpacity={0.6}>
+                  <Text style={S.modalCancelBtnText}>Bumalik</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[S.modalConfirmBtn, { backgroundColor: C.red }]} 
+                  onPress={confirmPasswordLeave}
+                  activeOpacity={0.8}
+                >
+                  <Text style={S.modalConfirmBtnText}>Umalis</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
     </SafeAreaView>
   );
 }
@@ -439,12 +552,46 @@ const S = StyleSheet.create({
     fontFamily: 'Andika-Bold',
   },
 
-  joinCard: {
-    backgroundColor: C.white,
-    borderRadius: Radii.lg,
-    padding: 20,
-    ...Shadows.card,
-  },
+joinCard: {
+     backgroundColor: C.white,
+     borderRadius: Radii.lg,
+     padding: 20,
+     ...Shadows.card,
+   },
+   pendingCard: {
+     backgroundColor: C.white,
+     borderRadius: Radii.lg,
+     padding: 20,
+     ...Shadows.card,
+     alignItems: 'center',
+   },
+   pendingTitle: {
+     fontSize: 18,
+     fontFamily: 'Andika-Bold',
+     color: C.ink,
+     marginBottom: 8,
+   },
+   pendingMessage: {
+     fontSize: 14,
+     fontFamily: 'Andika-Regular',
+     color: C.slate,
+     textAlign: 'center',
+     marginBottom: 16,
+     lineHeight: 20,
+   },
+   pendingBadge: {
+     backgroundColor: '#f39c12' + '20',
+     paddingHorizontal: 16,
+     paddingVertical: 8,
+     borderRadius: 12,
+     borderWidth: 1,
+     borderColor: '#f39c12' + '40',
+   },
+   pendingBadgeText: {
+     fontSize: 13,
+     fontFamily: 'Andika-Bold',
+     color: '#f39c12',
+   },
   joinLabel: {
     fontSize: 14,
     fontFamily: 'Andika-Bold',
@@ -515,4 +662,97 @@ verifyBtnText: {
     color: C.slate,
     textAlign: 'center',
   },
+  // Password Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20
+  },
+  modalContainer: {
+    backgroundColor: C.white,
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 32,
+    alignItems: 'center',
+    ...Shadows.cardLift
+  },
+  modalIndicator: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#F0F3F6',
+    borderRadius: 2,
+    marginBottom: 24
+  },
+  modalIconBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: 'Andika-Bold',
+    color: C.ink,
+    marginBottom: 10,
+    textAlign: 'center'
+  },
+  modalMessage: {
+    fontSize: 15,
+    fontFamily: 'Andika-Regular',
+    color: C.slate,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+    paddingHorizontal: 4
+  },
+  modalInput: {
+    width: '80%',
+    borderWidth: 1,
+    borderColor: C.slate + '20',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 48,
+    fontSize: 16,
+    fontFamily: 'Andika-Regular',
+    color: C.ink,
+    marginBottom: 24
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: C.slate,
+    borderRadius: 12
+  },
+  modalCancelBtnText: {
+    fontSize: 16,
+    fontFamily: 'Andika-Bold',
+    color: C.ink
+  },
+  modalConfirmBtn: {
+    flex: 1.6,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.button,
+    shadowOpacity: 0.15
+  },
+  modalConfirmBtnText: {
+    fontSize: 16,
+    fontFamily: 'Andika-Bold',
+    color: C.white,
+    letterSpacing: 0.3
+  }
 });

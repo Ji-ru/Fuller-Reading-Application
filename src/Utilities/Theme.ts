@@ -34,6 +34,12 @@ export const FacultyColors = {
   primaryLight: '#d4e6f1',
   primaryPale: '#eaf2f8',
 
+  // Green family
+  green: '#3d71d9',
+  greenDeep: '#154360',
+  greenLight: '#d4e6f1',
+  greenPale: '#e8f5e9',
+
   // Accent – same family, restrained
   teal: '#1a9985',
   orange: '#d4880e',
@@ -48,6 +54,7 @@ export const FacultyColors = {
   ink: '#1c2b24',
   inkLight: '#4f6259',
   slate: '#8ca69a',
+  slatePale: '#f0f4f8',
   bg: '#eaf2f8',
 } as const;
 

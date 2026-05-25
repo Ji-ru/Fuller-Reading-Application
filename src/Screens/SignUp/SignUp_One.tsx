@@ -1,7 +1,6 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -21,10 +20,9 @@ import {
   launchImageLibrary,
 } from 'react-native-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AlertTriangleIcon } from '../../Components/GlobalUse/Icons';
 import GenderSelection from '../../Components/SignUp/Buttons/GenderRadioButton';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
-import { getClassByCode, verifyFacultyAccessCode, validateClassCode } from '../../Controller/AuthenticationController';
+import { verifyFacultyAccessCode } from '../../Controller/AuthenticationController';
 import { RootStackParamList, useNavigationHelper } from '../../Controller/NavigationController';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import buttons from '../../UI_Designs/ButtonStyles';
@@ -55,19 +53,17 @@ export default function SignUpOneScreen() {
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
 
-  // Set user sex
-  const [gender, setGender] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [classCode, setClassCode] = useState('');
+// Set user sex
+   const [gender, setGender] = useState('');
+   const [verificationCode, setVerificationCode] = useState('');
 
-  // Cancel Modal State
+   // Cancel Modal State
 
   const [showImageSourceModal, setShowImageSourceModal] = useState(false);
 
-  // Validation State
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [classCodeValidation, setClassCodeValidation] = useState<{ valid: boolean; message: string } | null>(null);
-  const [validatingClassCode, setValidatingClassCode] = useState(false);
+// Validation State
+   const [isSubmitted, setIsSubmitted] = useState(false);
+   const [validatingClassCode, setValidatingClassCode] = useState(false);
 
   const onChange = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
@@ -131,36 +127,15 @@ export default function SignUpOneScreen() {
     return `${month} ${day}, ${year}`;
   };
 
-  // Helper function to format date as "7 Pebrero 2025"
-  const formatDateToReadable = (dateObj: Date): string => {
-    const day = dateObj.getDate();
-    const month = tagalogMonths[dateObj.getMonth()];
-    const year = dateObj.getFullYear();
-    return `${day} ${month} ${year}`;
-  };
-
-   const handleValidateClassCode = async () => {
-     if (!classCode.trim()) {
-       setClassCodeValidation({ valid: false, message: 'Pakilagay ang class code' });
-       return;
-     }
-
-     setValidatingClassCode(true);
-     try {
-       const result = await validateClassCode(classCode.trim().toUpperCase());
-       setClassCodeValidation(result);
-     } catch (error: any) {
-       if (error.message === 'FIRESTORE_PERMISSION_DENIED') {
-         setClassCodeValidation({ valid: false, message: 'Hindi ma-access ang klase. Pakipag-usapan ang iyong guro.' });
-       } else {
-         setClassCodeValidation({ valid: false, message: 'Failed to validate class code' });
-       }
-     } finally {
-       setValidatingClassCode(false);
-     }
+// Helper function to format date as "7 Pebrero 2025"
+   const formatDateToReadable = (dateObj: Date): string => {
+     const day = dateObj.getDate();
+     const month = tagalogMonths[dateObj.getMonth()];
+     const year = dateObj.getFullYear();
+     return `${day} ${month} ${year}`;
    };
 
-  return (
+   return (
     <SafeAreaView style={signup.container}>
       {/* BUBBLE DECORATIONS */}
       <View style={bubbles.bubblesContainer}>
@@ -342,55 +317,6 @@ export default function SignUpOneScreen() {
                 onSelect={value => setGradeLevel(value)}
               />
 
-              {/* CLASS CODE - Student Only */}
-              {role === 'student' && (
-                <>
-                  <Text style={signup.textform}>Class Code (Opsyonal)</Text>
-                   <View style={{ width: '90%', maxWidth: 360, alignSelf: 'center', flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-<TextInput
-  style={[signup.textInputForm, { width: 'auto', maxWidth: 'none', flex: 1 }]}
-  placeholder="Ilagay ang code"
-  value={classCode}
-  onChangeText={(text) => {
-    setClassCode(text);
-    setClassCodeValidation(null);
-  }}
-  autoCapitalize="characters"
-  editable={!validatingClassCode}
-/>
-<TouchableOpacity
-  style={[
-    localStyles.validateBtn,
-    { flex: 1 },
-    validatingClassCode && { opacity: 0.6 }
-  ]}
-  onPress={handleValidateClassCode}
-  disabled={validatingClassCode}
-  activeOpacity={0.7}
->
-  {validatingClassCode ? (
-    <ActivityIndicator size="small" color="#fff" />
-  ) : (
-    <Text style={localStyles.validateBtnText}>E-verify</Text>
-  )}
-</TouchableOpacity>
-                  </View>
-                  {classCodeValidation && (
-                    <Text style={[
-                      localStyles.requirementInfo,
-                      { color: classCodeValidation.valid ? '#27ae60' : '#e74c3c' }
-                    ]}>
-                      {classCodeValidation.valid ? '✓ ' : '✗ '}{classCodeValidation.message}
-                    </Text>
-                  )}
-                  {!classCodeValidation && (
-                    <Text style={localStyles.requirementInfo}>
-                      * Maaari itong i-skip at ilagay mamaya.
-                    </Text>
-                  )}
-                </>
-              )}
-
               {/* VERIFICATION CODE - Faculty Only */}
               {role === 'faculty' && (
                 <>
@@ -426,20 +352,19 @@ export default function SignUpOneScreen() {
                   return;
                 }
 
-                if (role === 'student') {
-                  handleSignUpNavigationWithData({
-                    profileImageUrl: profileImage || '',
-                    firstName: firstName.trim(),
-                    middleName: middleName.trim(),
-                    lastName: lastName.trim(),
-                    email: '',
-                    role,
-                    sex: gender,
-                    gradeLevel,
-                    dateOfBirth: formatDateToReadable(date),
-                    classCode: classCode.trim(),
-                  });
-                } else if (role === 'faculty') {
+if (role === 'student') {
+                   handleSignUpNavigationWithData({
+                     profileImageUrl: profileImage || '',
+                     firstName: firstName.trim(),
+                     middleName: middleName.trim(),
+                     lastName: lastName.trim(),
+                     email: '',
+                     role,
+                     sex: gender,
+                     gradeLevel: gradeLevel ?? 1,
+                     dateOfBirth: formatDateToReadable(date),
+                   });
+                 } else if (role === 'faculty') {
                   if (!verifyFacultyAccessCode(verificationCode.trim())) {
                     Alert.alert('Error', 'Invalid Faculty Access Code. Please contact your administrator.');
                     return;

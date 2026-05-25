@@ -13,6 +13,7 @@ import {
   doc,
   setDoc,
   updateDoc,
+  deleteDoc,
   getDoc,
   getDocs,
   query,
@@ -93,17 +94,17 @@ const createUserDocument = async (
     email,
     role: userData.role,
     firstName: userData.firstName,
-    middleName: userData.middleName,
+    middleName: userData.middleName || '',
     lastName: userData.lastName,
     sex: userData.sex,
-    profileImageUrl: userData.profileImageUrl,
+    profileImageUrl: userData.profileImageUrl || '',
     createdAt: serverTimestamp(),
   };
 
   if (userData.role === 'student') {
     userDocument.studentData = {
-      gradeLevel: userData.gradeLevel || 1,
-      dateOfBirth: userData.dateOfBirth,
+      gradeLevel: userData.gradeLevel ?? 1,
+      dateOfBirth: userData.dateOfBirth || '',
       classCode: userData.classCode || '',
       reading_Level: 'beginner',
     };
@@ -148,6 +149,100 @@ const createUserDocument = async (
   const userRef = doc(db, 'users', uid);
   await setDoc(userRef, userDocument);
 };
+
+/* -------------------------------------------------------------
+   UPDATE USER PROFILE
+------------------------------------------------------------- */
+export const updateUserProfile = async (
+  uid: string,
+  data: {
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    sex?: string;
+    email?: string;
+    studentData?: {
+      gradeLevel?: number;
+      dateOfBirth?: string;
+      classCode?: string;
+      reading_Level?: 'beginner' | 'intermediate' | 'advanced';
+    };
+facultyData?: {
+       assignedGradeLevels?: number[];
+       assignedClassIds?: string[];
+     };
+  },
+) => {
+  const userRef = doc(db, 'users', uid);
+  const update: Record<string, any> = { updatedAt: serverTimestamp() };
+
+  // Top-level base fields
+  if (data.firstName   !== undefined) update.firstName   = data.firstName;
+  if (data.middleName  !== undefined) update.middleName  = data.middleName;
+  if (data.lastName    !== undefined) update.lastName    = data.lastName;
+  if (data.sex         !== undefined) update.sex         = data.sex;
+  if (data.email       !== undefined) update.email       = data.email;
+
+  // Student-specific nested fields
+  if (data.studentData) {
+    const sd = data.studentData;
+    if (sd.gradeLevel !== undefined)     update['studentData.gradeLevel']     = sd.gradeLevel;
+    if (sd.dateOfBirth !== undefined)    update['studentData.dateOfBirth']    = sd.dateOfBirth;
+    if (sd.classCode !== undefined)      update['studentData.classCode']      = sd.classCode;
+    if (sd.reading_Level !== undefined)  update['studentData.reading_Level']  = sd.reading_Level;
+  }
+
+// Faculty-specific nested fields
+    if (data.facultyData) {
+      const fd = data.facultyData;
+      const assignedGradeLevels = fd.assignedGradeLevels;
+      const assignedClassIds = fd.assignedClassIds;
+      if (assignedGradeLevels !== undefined) {
+        update['facultyData.assignedGradeLevels'] = assignedGradeLevels;
+      }
+      if (assignedClassIds !== undefined) {
+        update['facultyData.assignedClassIds'] = assignedClassIds;
+      }
+    }
+
+   await updateDoc(userRef, update);
+};
+
+/* -------------------------------------------------------------
+   DELETE USER DOCUMENT
+------------------------------------------------------------- */
+export const deleteUserDocument = async (uid: string) => {
+  const userRef = doc(db, 'users', uid);
+  await deleteDoc(userRef);
+};
+
+/* -------------------------------------------------------------
+   UPDATE USER PASSWORD  (admin-initiated – no re-auth required
+   because the admin is updating THEIR OWN doc; use with caution)
+------------------------------------------------------------- */
+export const updateUserPassword = async (
+  uid: string,
+  newPassword: string,
+) => {
+  try {
+    const { sendPasswordResetEmail } = await import('@react-native-firebase/auth');
+    // Fetch user email from Firestore to send a reset link
+    const { getFirestore, doc, getDoc } = await import('@react-native-firebase/firestore');
+    const db = getFirestore();
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) throw new Error('User not found.');
+    const snapData = snap.data();
+    if (!snapData) throw new Error('User data not found.');
+    const data = snapData;
+    const email = data.email as string;
+     if (!email) throw new Error('User has no email on record.');
+    await sendPasswordResetEmail(auth, email);
+    return { success: true, message: 'Password reset link sent to user email.' };
+  } catch (error: any) {
+    throw new Error('Password reset failed: ' + error.message);
+  }
+};
+
 
 /* -------------------------------------------------------------
    CREATE CLASS
@@ -254,7 +349,102 @@ export const getUserProfile = async (
 };
 
 /* -------------------------------------------------------------
-   JOIN CLASS
+    REQUEST TO JOIN CLASS (Pending Approval Workflow)
+------------------------------------------------------------- */
+export const requestToJoinClass = async (studentId: string, joinClassCode: string) => {
+  try {
+    // Search class by code - MODULAR API
+    const classesRef = collection(db, 'classes');
+    const classQuery = query(
+      classesRef,
+      where('classCode', '==', joinClassCode.toUpperCase()),
+      limit(1),
+    );
+
+    const querySnapshot = await getDocs(classQuery);
+
+    if (querySnapshot.empty) throw new Error('Invalid or inactive class code');
+
+    const classDoc = querySnapshot.docs[0];
+    const classData = classDoc.data() as ClassDocument;
+    const classId = classData.classId;
+
+    // Already enrolled?
+    if (classData.studentIds.includes(studentId))
+      throw new Error('Already enrolled in this class');
+
+    // Already requested?
+    if (classData.pendingJoinRequests?.includes(studentId))
+      throw new Error('Join request already pending approval');
+
+    // Add student to pending join requests - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await updateDoc(classRef, {
+      pendingJoinRequests: arrayUnion(studentId),
+      updatedAt: serverTimestamp(),
+    });
+
+    // Update student's pending classCode - MODULAR API
+    const studentRef = doc(db, 'users', studentId);
+    await updateDoc(studentRef, {
+      'studentData.classCode': joinClassCode.toUpperCase(),
+      updatedAt: serverTimestamp(),
+    });
+
+    return { success: true, classId, className: classData.className, status: 'pending' };
+  } catch (error: any) {
+    throw new Error('Failed to request join class: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+    APPROVE STUDENT JOIN REQUEST
+------------------------------------------------------------- */
+export const approveStudentJoin = async (studentId: string, classId: string) => {
+  try {
+    const classRef = doc(db, 'classes', classId);
+    
+    // Move student from pending to enrolled
+    await updateDoc(classRef, {
+      studentIds: arrayUnion(studentId),
+      pendingJoinRequests: arrayRemove(studentId),
+      updatedAt: serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to approve student join: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+    REJECT STUDENT JOIN REQUEST
+------------------------------------------------------------- */
+export const rejectStudentJoin = async (studentId: string, classId: string) => {
+  try {
+    const classRef = doc(db, 'classes', classId);
+    
+    // Remove student from pending requests
+    await updateDoc(classRef, {
+      pendingJoinRequests: arrayRemove(studentId),
+      updatedAt: serverTimestamp(),
+    });
+
+    // Clear student's classCode
+    const studentRef = doc(db, 'users', studentId);
+    await updateDoc(studentRef, {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to reject student join: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+    JOIN CLASS (Direct enrollment - for backward compatibility)
 ------------------------------------------------------------- */
 export const joinClass = async (studentId: string, joinClassCode: string) => {
   try {
@@ -302,32 +492,66 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
    LEAVE CLASS
 ------------------------------------------------------------- */
 export const leaveClass = async (studentId: string, classId: string) => {
-  try {
-    // Get current class data to find classCode
-    const classRef = doc(db, 'classes', classId);
-    const classSnap = await getDoc(classRef);
-    let classCode = '';
-    if (classSnap.exists()) {
-      classCode = classSnap.data().classCode || '';
-    }
+   try {
+     // Get current class data to find classCode
+     const classRef = doc(db, 'classes', classId);
+     const classSnap = await getDoc(classRef);
+     let classCode = '';
+     if (classSnap.exists()) {
+       const snapData = classSnap.data();
+       if (snapData) {
+         classCode = snapData.classCode || '';
+       }
+     }
 
-    // Remove student from class - MODULAR API
-    await updateDoc(classRef, {
-      studentIds: arrayRemove(studentId),
-      updatedAt: serverTimestamp(),
-    });
+     // Remove student from class - MODULAR API
+     await updateDoc(classRef, {
+       studentIds: arrayRemove(studentId),
+       updatedAt: serverTimestamp(),
+     });
 
-    // Update student's classCode to empty - MODULAR API
-    const studentRef = doc(db, 'users', studentId);
-    await updateDoc(studentRef, {
-      'studentData.classCode': '',
-      updatedAt: serverTimestamp(),
-    });
+     // Update student's classCode to empty - MODULAR API
+     const studentRef = doc(db, 'users', studentId);
+     await updateDoc(studentRef, {
+       'studentData.classCode': '',
+       updatedAt: serverTimestamp(),
+     });
 
-    return { success: true };
-  } catch (error: any) {
-    throw new Error('Failed to leave class: ' + error.message);
-  }
+     return { success: true };
+   } catch (error: any) {
+     throw new Error('Failed to leave class: ' + error.message);
+   }
+ };
+
+/* -------------------------------------------------------------
+    GET STUDENT REQUEST STATUS
+------------------------------------------------------------- */
+export const getStudentRequestStatus = async (studentId: string, classId: string): Promise<{ status: 'none' | 'pending' | 'approved'; classId?: string }> => {
+   try {
+     const classRef = doc(db, 'classes', classId);
+     const classSnap = await getDoc(classRef);
+
+     if (!classSnap.exists()) {
+       return { status: 'none' };
+     }
+
+     const classData = classSnap.data() as ClassDocument;
+
+     // Check if student is already enrolled
+     if (classData.studentIds?.includes(studentId)) {
+       return { status: 'approved', classId };
+     }
+
+     // Check if student has pending request
+     if (classData.pendingJoinRequests?.includes(studentId)) {
+       return { status: 'pending', classId };
+     }
+
+     // No request found
+     return { status: 'none' };
+   } catch (error: any) {
+     throw new Error('Failed to get student request status: ' + error.message);
+   }
 };
 
 /* -------------------------------------------------------------

@@ -39,15 +39,27 @@ export default function UserManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
-  
-  // EDIT & DELETE STATE
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [editFirstName, setEditFirstName] = useState('');
-  const [editLastName, setEditLastName] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editLoading, setEditLoading] = useState(false);
+
+// EDIT & DELETE STATE
+   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+   const [editModalVisible, setEditModalVisible] = useState(false);
+   const [selectedUser, setSelectedUser] = useState<any>(null);
+   const [editFirstName, setEditFirstName] = useState('');
+   const [editMiddleName, setEditMiddleName] = useState('');
+   const [editLastName, setEditLastName] = useState('');
+   const [editEmail, setEditEmail] = useState('');
+   const [editSex, setEditSex] = useState('');
+   
+   // Student-specific fields
+   const [editGradeLevel, setEditGradeLevel] = useState(1);
+   const [editDateOfBirth, setEditDateOfBirth] = useState('');
+   const [editClassCode, setEditClassCode] = useState('');
+   const [editReadingLevel, setEditReadingLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
+   
+   // Faculty-specific fields
+   const [editAssignedGradeLevels, setEditAssignedGradeLevels] = useState<number[]>([]);
+   
+   const [editLoading, setEditLoading] = useState(false);
 
   const { getAllUsers } = useAdminStats();
   const { handleLogout, handleNavigateStep } = useNavigationHelper();
@@ -75,40 +87,78 @@ export default function UserManagement() {
     }
   };
 
-  const handleEditPress = (user: any) => {
-    setSelectedUser(user);
-    setEditFirstName(user.firstName || '');
-    setEditLastName(user.lastName || '');
-    setEditEmail(user.email || '');
-    setEditModalVisible(true);
-  };
+const handleEditPress = (user: any) => {
+     setSelectedUser(user);
+     setEditFirstName(user.firstName || '');
+     setEditMiddleName(user.middleName || '');
+     setEditLastName(user.lastName || '');
+     setEditEmail(user.email || '');
+     setEditSex(user.sex || '');
+     
+     // Student-specific fields
+     if (user.role === 'student' && user.studentData) {
+       setEditGradeLevel(user.studentData.gradeLevel || 1);
+       setEditDateOfBirth(user.studentData.dateOfBirth || '');
+       setEditClassCode(user.studentData.classCode || '');
+       setEditReadingLevel(user.studentData.reading_Level || 'beginner');
+     }
+     
+     // Faculty-specific fields
+     if (user.role === 'faculty' && user.facultyData) {
+       setEditAssignedGradeLevels(user.facultyData.assignedGradeLevels || []);
+     }
+     
+     setEditModalVisible(true);
+   };
 
   const handleDeletePress = (user: any) => {
     setSelectedUser(user);
     setDeleteModalVisible(true);
   };
 
-  const handleSaveEdit = async () => {
-    if (!editFirstName.trim() || !editLastName.trim() || !editEmail.trim()) {
-      Alert.alert('Maling Input', 'Punan ang lahat ng field.');
-      return;
-    }
-    
-    try {
-      setEditLoading(true);
-      await updateUserProfile(selectedUser.uid, {
-        firstName: editFirstName,
-        lastName: editLastName,
-        email: editEmail
-      } as any);
-      setEditModalVisible(false);
-      fetchUsers();
-    } catch (e: any) {
-      Alert.alert('Error', e.message);
-    } finally {
-      setEditLoading(false);
-    }
-  };
+const handleSaveEdit = async () => {
+     if (!editFirstName.trim() || !editLastName.trim() || !editEmail.trim()) {
+       Alert.alert('Maling Input', 'Punan ang lahat ng field.');
+       return;
+     }
+
+     try {
+       setEditLoading(true);
+       
+       const updateData: any = {
+         firstName: editFirstName,
+         middleName: editMiddleName,
+         lastName: editLastName,
+         email: editEmail,
+         sex: editSex,
+       };
+       
+       // Add student-specific fields
+       if (selectedUser.role === 'student') {
+         updateData.studentData = {
+           gradeLevel: editGradeLevel,
+           dateOfBirth: editDateOfBirth,
+           classCode: editClassCode,
+           reading_Level: editReadingLevel,
+         };
+       }
+       
+       // Add faculty-specific fields
+       if (selectedUser.role === 'faculty') {
+         updateData.facultyData = {
+           assignedGradeLevels: editAssignedGradeLevels,
+         };
+       }
+       
+       await updateUserProfile(selectedUser.uid, updateData);
+       setEditModalVisible(false);
+       fetchUsers();
+     } catch (e: any) {
+       Alert.alert('Error', e.message);
+     } finally {
+       setEditLoading(false);
+     }
+   };
 
   const handleConfirmDelete = async () => {
     try {
@@ -124,22 +174,22 @@ export default function UserManagement() {
 
   useEffect(() => {
     let result = users;
-    
+
     // Filter by Role
     if (activeRole !== 'all') {
       result = result.filter(u => u.role === activeRole);
     }
-    
+
     // Filter by Search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(u => 
+      result = result.filter(u =>
         (u.firstName || '').toLowerCase().includes(query) ||
         (u.lastName || '').toLowerCase().includes(query) ||
         (u.email || '').toLowerCase().includes(query)
       );
     }
-    
+
     setFilteredUsers(result);
   }, [activeRole, searchQuery, users]);
 
@@ -260,77 +310,151 @@ export default function UserManagement() {
         onConfirm={confirmLogout}
       />
 
-      {/* DELETE CONFIRMATION */}
-      <ConfirmationModal 
-        visible={deleteModalVisible}
-        type="danger"
-        title="Burahin ang User?"
-        message={
-          <Text>
-            Sigurado ka ba na gusto mong burahin si{" "}
-            <Text style={{ fontWeight: "900", color: F.ink }}>
-              {selectedUser?.firstName} {selectedUser?.lastName}
-            </Text>
-            ? Hindi na ito mababalik.
-          </Text>
-        }
-        confirmText="Burahin"
-        onCancel={() => setDeleteModalVisible(false)}
-        onConfirm={handleConfirmDelete}
-      />
+{/* DELETE CONFIRMATION */}
+        <ConfirmationModal
+          visible={deleteModalVisible}
+          type="danger"
+          title="Burahin ang User?"
+          message={selectedUser ? `Sigurado ka ba na gusto mong burahin si ${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}? Hindi na ito mababalik.` : 'Sigurado ka ba na gusto mong burahin si ? Hindi na ito mababalik.'}
+          confirmText="Burahin"
+          onCancel={() => setDeleteModalVisible(false)}
+          onConfirm={handleConfirmDelete}
+/>
 
-      {/* EDIT MODAL */}
-      <Modal visible={editModalVisible} transparent animationType="slide">
-        <View style={S.modalOverlay}>
-          <View style={S.editContainer}>
-            <View style={S.modalHeader}>
-              <Text style={S.modalTitle}>Ayusin ang Profile</Text>
-              <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-                <Text style={S.closeTxt}>✕</Text>
-              </TouchableOpacity>
-            </View>
+{/* EDIT MODAL */}
+       <Modal visible={editModalVisible} transparent animationType="slide">
+         <View style={S.modalOverlay}>
+           <View style={S.editContainer}>
+             <View style={S.modalHeader}>
+               <Text style={S.modalTitle}>Ayusin ang Profile</Text>
+               <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                 <Text style={S.closeTxt}>✕</Text>
+               </TouchableOpacity>
+             </View>
 
-            <View style={S.field}>
-              <Text style={S.fieldLabel}>Pangalan (First Name)</Text>
-              <TextInput 
-                style={S.modalInput}
-                value={editFirstName}
-                onChangeText={setEditFirstName}
-              />
-            </View>
+             {/* Basic Fields */}
+             <View style={S.field}>
+               <Text style={S.fieldLabel}>Pangalan (First Name)</Text>
+               <TextInput
+                 style={S.modalInput}
+                 value={editFirstName}
+                 onChangeText={setEditFirstName}
+               />
+             </View>
 
-            <View style={S.field}>
-              <Text style={S.fieldLabel}>Apelyido (Last Name)</Text>
-              <TextInput 
-                style={S.modalInput}
-                value={editLastName}
-                onChangeText={setEditLastName}
-              />
-            </View>
+             <View style={S.field}>
+               <Text style={S.fieldLabel}>Gitnang Pangalan (Middle Name)</Text>
+               <TextInput
+                 style={S.modalInput}
+                 value={editMiddleName}
+                 onChangeText={setEditMiddleName}
+               />
+             </View>
 
-            <View style={S.field}>
-              <Text style={S.fieldLabel}>Email Address</Text>
-              <TextInput 
-                style={S.modalInput}
-                value={editEmail}
-                onChangeText={setEditEmail}
-                keyboardType="email-address"
-              />
-            </View>
+             <View style={S.field}>
+               <Text style={S.fieldLabel}>Apelyido (Last Name)</Text>
+               <TextInput
+                 style={S.modalInput}
+                 value={editLastName}
+                 onChangeText={setEditLastName}
+               />
+             </View>
 
-            <TouchableOpacity 
-              style={[S.saveActionBtn, editLoading && { opacity: 0.7 }]} 
-              onPress={handleSaveEdit}
-              disabled={editLoading}
-            >
-              {editLoading ? <ActivityIndicator color={F.white} /> : <Text style={S.saveActionTxt}>I-update ang User</Text>}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
-  );
-}
+             <View style={S.field}>
+               <Text style={S.fieldLabel}>Email Address</Text>
+               <TextInput
+                 style={S.modalInput}
+                 value={editEmail}
+                 onChangeText={setEditEmail}
+                 keyboardType="email-address"
+               />
+             </View>
+
+             <View style={S.field}>
+               <Text style={S.fieldLabel}>Kasarian (Sex)</Text>
+               <TextInput
+                 style={S.modalInput}
+                 value={editSex}
+                 onChangeText={setEditSex}
+                 placeholder="Male / Female"
+               />
+             </View>
+
+             {/* Student-Specific Fields */}
+             {selectedUser?.role === 'student' && (
+               <>
+                 <View style={S.field}>
+                   <Text style={S.fieldLabel}>Antas ng Baitang (Grade Level)</Text>
+                   <TextInput
+                     style={S.modalInput}
+                     value={String(editGradeLevel)}
+                     onChangeText={(text) => setEditGradeLevel(Number(text) || 1)}
+                     keyboardType="numeric"
+                     placeholder="1-6"
+                   />
+                 </View>
+
+                 <View style={S.field}>
+                   <Text style={S.fieldLabel}>Petsa ng Kapanganakan (Date of Birth)</Text>
+                   <TextInput
+                     style={S.modalInput}
+                     value={editDateOfBirth}
+                     onChangeText={setEditDateOfBirth}
+                     placeholder="e.g. 7 Pebrero 2018"
+                   />
+                 </View>
+
+                 <View style={S.field}>
+                   <Text style={S.fieldLabel}>Code ng Klase (Class Code)</Text>
+                   <TextInput
+                     style={S.modalInput}
+                     value={editClassCode}
+                     onChangeText={setEditClassCode}
+                     placeholder="Optional"
+                   />
+                 </View>
+
+                 <View style={S.field}>
+                   <Text style={S.fieldLabel}>Antas ng Pagbabasa (Reading Level)</Text>
+                   <TextInput
+                     style={S.modalInput}
+                     value={editReadingLevel}
+                     onChangeText={(text) => setEditReadingLevel(text as any)}
+                     placeholder="beginner / intermediate / advanced"
+                   />
+                 </View>
+               </>
+             )}
+
+             {/* Faculty-Specific Fields */}
+             {selectedUser?.role === 'faculty' && (
+               <View style={S.field}>
+                 <Text style={S.fieldLabel}>Itinalagang Baitang (Assigned Grade Levels)</Text>
+                 <TextInput
+                   style={S.modalInput}
+                   value={editAssignedGradeLevels.join(', ')}
+                   onChangeText={(text) => {
+                     const levels = text.split(',').map(l => Number(l.trim())).filter(l => !isNaN(l));
+                     setEditAssignedGradeLevels(levels);
+                   }}
+                   placeholder="e.g. 1, 2, 3"
+                 />
+               </View>
+             )}
+
+             <TouchableOpacity
+               style={[S.saveActionBtn, editLoading && { opacity: 0.7 }]}
+               onPress={handleSaveEdit}
+               disabled={editLoading}
+             >
+               {editLoading ? <ActivityIndicator color={F.white} /> : <Text style={S.saveActionTxt}>I-update ang User</Text>}
+             </TouchableOpacity>
+           </View>
+         </View>
+       </Modal>
+     </SafeAreaView>
+   );
+ }
 
 const S = StyleSheet.create({
   container: { flex: 1, backgroundColor: F.bg },

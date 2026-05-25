@@ -58,13 +58,11 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
     const isCorrect = alphabetAccuracy == '100';
     
     return (
-      <View style={localStyles.container}>
-      </View>
+      <View style={localStyles.container} />
     );
   } else if (type === 'word') {
     return (
-      <View style={localStyles.container}>
-      </View>
+      <View style={localStyles.container} />
     );
   }
 

@@ -102,7 +102,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
                 wordColor = '#eb5c6c'; // Pagpapalit (Red)
             } else if (posData?.omission) {
                 wordColor = '#f39c12'; // Pagkakaltas (Orange)
-            } else if (posData?.insertion) {
+            } else if (posData?.insertions && posData.insertions.length > 0) {
                 wordColor = '#3498db'; // Pagdaragdag (Blue)
             } else if (posData?.repetition) {
                 wordColor = '#9b59b6'; // Pag-uulit (Purple)
