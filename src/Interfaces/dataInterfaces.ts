@@ -64,10 +64,10 @@ export interface ClassDocument {
   acadYear: string; // Ex. 2025-2026
   // term?: string; // For quarterly/semester systems
 
-
   // References
   facultyId: string; // Reference to the faculty document (UID)
   studentIds: string[]; // Reference to the student documents (UIDs)
+  pendingJoinRequests?: string[]; // Student UIDs waiting for approval
 
   // META
   isActive: boolean;

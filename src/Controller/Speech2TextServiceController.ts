@@ -1,24 +1,13 @@
-  /**
+/**
  * Speech2TextServiceController.ts
  * ─────────────────────────────────────────────────────────────────────────────
  * Custom hook for speech-to-text transcription.
  *
- * CURRENT:  OpenAI Whisper (large-v3) via Hugging Face Inference API
- *           → handles Filipino/Tagalog natively with `language: 'fil'`
- *           → free tier available, no credit card needed to start
+ * PROVIDERS:
+ *   - 'local'  → uses GGML model embedded in app (no internet required)
+ *   - 'custom' → your HF Space API endpoint
+ *   - 'whisper' → HuggingFace Inference API (legacy)
  *
- * LATER (when your custom model is ready):
- *   1. Host your model (Hugging Face Space / your own server)
- *   2. Change ONE constant:  ACTIVE_PROVIDER = 'custom'
- *   3. Fill in CUSTOM_MODEL_URL
- *   4. Adjust parseCustomResponse() if your response shape differs
- *   Done — everything else (recording, analysis, storage) stays the same.
- *
- * Setup (current pretrained):
- *   1. Create a free account at huggingface.co
- *   2. Generate a token at huggingface.co/settings/tokens (read-only is fine)
- *   3. Add to your .env:
- *        HUGGINGFACE_API_KEY=hf_xxxxxxxxxxxxxxxxxxxx
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -29,30 +18,24 @@ import { readFile } from 'react-native-fs';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDER SWITCH
-// Change this one constant when your custom model is ready.
 // ─────────────────────────────────────────────────────────────────────────────
 
-type Provider = 'whisper' | 'custom';
-const ACTIVE_PROVIDER = 'custom' as Provider;
+type Provider = 'local' | 'custom' | 'whisper';
+// Set to 'local' to use on-device Whisper (ggml-custom.bin)
+const ACTIVE_PROVIDER = 'local' as Provider;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ENDPOINT CONFIGURATION
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ENDPOINTS = {
-  /**
-   * Whisper large-v3 via HF Inference API.
-   * Docs: huggingface.co/openai/whisper-large-v3
-   */
   whisper: 'https://api-inference.huggingface.co/models/openai/whisper-large-v3',
-
-  /**
-   * YOUR CUSTOM MODEL — fill this in when it is deployed.
-   * Could be a HF Space URL, your own FastAPI server, etc.
-    * Example: 'https://your-org-cisc-asr.hf.space/run/predict'
-    */
   custom: 'https://cisckids2026-marungko-whisperapi.hf.space/transcribe',
 } as const;
+
+// Model path for local inference (in Android assets)
+// Path relative to android/app/src/main/assets/
+const LOCAL_MODEL_PATH = 'models/ggml-small-q5_1.bin';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -154,6 +137,38 @@ export const useSpeechToText = () => {
     [cleanTranscript],
   );
 
+// ── PROVIDER: Local Whisper (GGML model embedded in app) ─────────────────────
+// Note: This requires native whisper.cpp integration (not yet complete)
+// The ggml-custom.bin model is ready in android/app/src/main/assets/models/
+
+const transcribeWithLocalWhisper = useCallback(
+    async (
+      audioFilePath: string,
+      options: TranscriptionOptions,
+    ): Promise<string> => {
+      try {
+        const { WhisperModule } = require('react-native').NativeModules;
+
+        // Initialize model if not already initialized (using smaller model)
+        await WhisperModule.initModel('ggml-small-q5_1.bin');
+
+        // Transcribe with Tagalog/Filipino language and target text as prompt
+        const result = await WhisperModule.transcribe(
+          audioFilePath,
+          'fil',
+          options.targetText.slice(0, 800),
+        );
+        return cleanTranscript(result.text || result);
+      } catch (error) {
+        throw new Error(
+          'Local Whisper failed: ' +
+            (error instanceof Error ? error.message : String(error)),
+        );
+      }
+    },
+    [cleanTranscript],
+  );
+
   // ── PROVIDER: Your custom model ────────────────────────────────────────────
 
   const transcribeWithCustomModel = useCallback(
@@ -242,18 +257,21 @@ export const useSpeechToText = () => {
       try {
         const options: TranscriptionOptions = { type, targetText };
 
+        if (ACTIVE_PROVIDER === 'local') {
+          return await transcribeWithLocalWhisper(audioFilePath, options);
+        }
+
         if (ACTIVE_PROVIDER === 'custom') {
           return await transcribeWithCustomModel(audioFilePath, options);
         }
 
         // Default: whisper
         return await transcribeWithWhisper(audioFilePath, options);
-
       } finally {
         setIsLoading(false);
       }
     },
-    [transcribeWithWhisper, transcribeWithCustomModel],
+    [transcribeWithWhisper, transcribeWithCustomModel, transcribeWithLocalWhisper],
   );
 
   // ── Development fallback ───────────────────────────────────────────────────

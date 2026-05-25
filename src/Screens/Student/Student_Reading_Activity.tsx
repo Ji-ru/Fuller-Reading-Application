@@ -540,6 +540,7 @@ export default function ReadingActivityScreenPage() {
                          return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
                            const pct = (count / max) * 100;
                            const c = colors[type as keyof typeof colors];
+                           const typeMiscues = miscues.filter(m => m.type === type);
                            return (
                              <View key={type} style={S.miscueBarRow}>
                                <View style={S.miscueBarHeader}>
@@ -553,11 +554,22 @@ export default function ReadingActivityScreenPage() {
                                  </View>
                                  <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
                                </View>
+                               {/* Show specific words for this miscue type */}
+                               <View style={S.miscueWordsContainer}>
+                                 {typeMiscues.map((m, i) => (
+                                   <Text key={i} style={S.miscueWordText}>
+                                     {type === 'omission' && `"${m.expected}"`}
+                                     {type === 'substitution' && `"${m.expected}" → "${m.spoken}"`}
+                                     {type === 'insertion' && `"${m.spoken}"`}
+                                     {type === 'repetition' && `"${m.expected}"`}
+                                   </Text>
+                                 ))}
+                               </View>
                              </View>
                            );
-});
-                        })()}
-                      </View>
+ });
+                         })()}
+                       </View>
                     </BounceIn>
                   )}
 
@@ -718,6 +730,18 @@ const S = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'right',
     fontFamily: 'Andika-Bold',
+  },
+  miscueWordsContainer: {
+    paddingLeft: 14,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  miscueWordText: {
+    fontSize: 11,
+    color: '#859dab',
+    fontFamily: 'Andika-Regular',
+    fontStyle: 'italic',
+    marginBottom: 2,
   },
   miscueTypesRow: {
     flexDirection: 'row',

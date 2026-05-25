@@ -130,6 +130,9 @@ export default function StudentTungkolScreen() {
           </View>
         </View>
 
+        {/* Disclaimer */}
+        <Text style={S.disclaimerText}>Disclaimer: Ang mga background, icon, at shape na ginamit sa proyekto ay gawa ng AI.</Text>
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -289,5 +292,17 @@ const S = StyleSheet.create({
     color: C.green,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+
+  // Disclaimer
+  disclaimerText: {
+    fontSize: 18,
+    fontStyle: 'italic',
+    fontWeight: '200',
+    color: C.slate,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+    paddingHorizontal: 20,
   },
 });

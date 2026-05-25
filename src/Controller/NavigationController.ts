@@ -266,6 +266,20 @@ export const useNavigationHelper = () => {
     navigation.navigate('StudentAssessmentReview', { result });
   };
 
+  // Navigate to a specific user detail within UserManagement
+  const handleNavigateToUserDetail = (userData: {
+    uid: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email?: string;
+    role: UserRole;
+    sex?: string;
+    reading_Level?: string;
+  }) => {
+    navigation.navigate('UserManagement', { userData } as never);
+  };
+
   // Handles Back Button in any page the current user is in
   const handleBackStep = () => {
     navigation.goBack();
@@ -319,6 +333,7 @@ export const useNavigationHelper = () => {
     handleAssessmentNext,
     handleAssessmentReview,
     handleBackStep,
+    handleNavigateToUserDetail,
     handleLogout,
     handleCancelRegistration,
   };

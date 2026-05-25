@@ -218,68 +218,71 @@ export default function UserHomeScreen() {
           </TouchableOpacity>
 
           {/* Kasaysayan */}
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => animatePress(cardScale2, () => handleNextStep('ReadingHistory'))}
-          >
-            <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
-              <View style={S.secondaryCardGlow} />
-              <View style={S.secondaryIconBox}>
-                <HistoryIcon size={30} color={C.green} />
-              </View>
-              <View style={S.secondaryTextBox}>
-                <Text style={S.secondaryLabel}>Kasaysayan</Text>
-                <Text style={S.secondarySub}>Nakaraang Pagbasa</Text>
-              </View>
-              <View style={S.secondaryArrow}>
-                <ChevronRightIcon size={20} color={C.green} />
-              </View>
-            </Animated.View>
-          </TouchableOpacity>
+          <BounceIn delay={96}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => animatePress(cardScale2, () => handleNextStep('ReadingHistory'))}
+            >
+              <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
+                <View style={S.secondaryCardGlow} />
+                <View style={S.secondaryIconBox}>
+                  <HistoryIcon size={30} color={C.green} />
+                </View>
+                <View style={S.secondaryTextBox}>
+                  <Text style={S.secondaryLabel}>Kasaysayan</Text>
+                  <Text style={S.secondarySub}>Nakaraang Pagbasa</Text>
+                </View>
+                <View style={S.secondaryArrow}>
+                  <ChevronRightIcon size={20} color={C.green} />
+                </View>
+              </Animated.View>
+            </TouchableOpacity>
+          </BounceIn>
 
-         {/* Aking Klase */}
-<TouchableOpacity
-  activeOpacity={0.9}
-  onPress={() => handleNextStep('MyClasses')}
->
-  <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
-    <View style={S.secondaryCardGlow} />
-
-    <View style={[S.secondaryIconBox, { backgroundColor: C.sky + '15' }]}>
-      <UsersIcon size={30} color={C.sky} />
-    </View>
-
-    <View style={S.secondaryTextBox}>
-      <Text style={S.secondaryLabel}>Aking Klase</Text>
-      <Text style={S.secondarySub}>Tingnan ang klase</Text>
-    </View>
-
-    <View style={S.secondaryArrow}>
-      <ChevronRightIcon size={20} color={C.sky} />
-    </View>
-
-  </Animated.View>
-</TouchableOpacity>
+          {/* Aking Klase */}
+          <BounceIn delay={132}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => handleNextStep('MyClasses')}
+            >
+              <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
+                <View style={S.secondaryCardGlow} />
+                <View style={[S.secondaryIconBox, { backgroundColor: C.sky + '15' }]}>
+                  <UsersIcon size={30} color={C.sky} />
+                </View>
+                <View style={S.secondaryTextBox}>
+                  <Text style={S.secondaryLabel}>Aking Klase</Text>
+                  <Text style={S.secondarySub}>Tingnan ang klase</Text>
+                </View>
+                <View style={S.secondaryArrow}>
+                  <ChevronRightIcon size={20} color={C.sky} />
+                </View>
+              </Animated.View>
+            </TouchableOpacity>
+          </BounceIn>
 
           {/* Aking Profile */}
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => handleNextStep('Profile')}
-          >
-            <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
-              <View style={S.secondaryCardGlow} />
-              <View style={[S.secondaryIconBox, { backgroundColor: C.green + '15' }]}>
-                <UserProfileIcon size={30} color={C.green} />
-              </View>
-              <View style={S.secondaryTextBox}>
-                <Text style={S.secondaryLabel}>Aking Profile</Text>
-                <Text style={S.secondarySub}>I-edit ang profile</Text>
-              </View>
-              <View style={S.secondaryArrow}>
-                <ChevronRightIcon size={20} color={C.green} />
-              </View>
-            </Animated.View>
-          </TouchableOpacity>
+          <BounceIn delay={168}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => handleNextStep('Profile')}
+            >
+              <Animated.View style={[S.secondaryCard, { transform: [{ scale: cardScale2 }] }]}>
+                <View style={S.secondaryCardGlow} />
+                <View style={[S.secondaryIconBox, { backgroundColor: C.green + '15' }]}>
+                  <UserProfileIcon size={30} color={C.green} />
+                </View>
+                <View style={S.secondaryTextBox}>
+                  <Text style={S.secondaryLabel}>Aking Profile</Text>
+                  <Text style={S.secondarySub}>I-edit ang profile</Text>
+                </View>
+                <View style={S.secondaryArrow}>
+                  <ChevronRightIcon size={20} color={C.green} />
+                </View>
+              </Animated.View>
+            </TouchableOpacity>
+          </BounceIn>
+
         </BounceIn>
 
       </ScrollView>
