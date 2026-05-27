@@ -38,10 +38,8 @@ public class WhisperModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void initModel(String modelName, Promise promise) {
         try {
-            // Copy model from assets if needed
             String modelPath = copyModelFromAssets(modelName);
             
-            // Initialize whisper context
             ctx = nativeInitContext(modelPath);
             
             if (ctx == 0) {

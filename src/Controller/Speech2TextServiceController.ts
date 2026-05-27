@@ -21,8 +21,8 @@ import { readFile } from 'react-native-fs';
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Provider = 'local' | 'custom' | 'whisper';
-// Set to 'local' to use on-device Whisper (ggml-custom.bin)
-const ACTIVE_PROVIDER = 'local' as Provider;
+// Set to 'custom' for CISC Kids Hugging Face Space API
+const ACTIVE_PROVIDER = 'custom' as Provider;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ENDPOINT CONFIGURATION
@@ -35,7 +35,7 @@ const ENDPOINTS = {
 
 // Model path for local inference (in Android assets)
 // Path relative to android/app/src/main/assets/
-const LOCAL_MODEL_PATH = 'models/ggml-small-q5_1.bin';
+const LOCAL_MODEL_PATH = 'models/ggml-tiny-q5_1.bin';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -150,7 +150,7 @@ const transcribeWithLocalWhisper = useCallback(
         const { WhisperModule } = require('react-native').NativeModules;
 
         // Initialize model if not already initialized (using smaller model)
-        await WhisperModule.initModel('ggml-small-q5_1.bin');
+        await WhisperModule.initModel('ggml-tiny-q5_1.bin');
 
         // Transcribe with Tagalog/Filipino language and target text as prompt
         const result = await WhisperModule.transcribe(

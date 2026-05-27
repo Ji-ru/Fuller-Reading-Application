@@ -15,8 +15,6 @@ import {
   UserProfileIcon, 
   LogoutIcon, 
   ChevronRightIcon,
-  ClipboardListIcon,
-  BarChartIcon
 } from '../../GlobalUse/Icons';
 import { FacultyColors as F, Radii, Shadows } from '../../../Utilities/Theme';
 import { useNavigationHelper } from '../../../Controller/NavigationController';
@@ -106,7 +104,6 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
   const navItems = [
     { id: 'FacultyDashboard', label: 'Dashboard', icon: LayoutIcon },
     { id: 'MyClass', label: 'Mga Klase', icon: BriefcaseIcon },
-    { id: 'FacultyReports', label: 'Mga Ulat', icon: BarChartIcon },
     { id: 'Archive', label: 'Archive', icon: ArchiveIcon },
     { id: 'FacultyProfile', label: 'Aking Profile', icon: UserProfileIcon },
   ];
