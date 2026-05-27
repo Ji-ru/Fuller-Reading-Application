@@ -23,6 +23,10 @@ import {
     ChapterKey,
     LessonKey,
     WordReportDocument,
+    PassageSessionData,
+    PassagePeriodSlot,
+    PassageMasterySummary,
+    PassageReportDocument,
 } from '../Interfaces/dataInterfaces';
 
 export type TimeRange = 'week' | 'month' | 'year';
@@ -1025,4 +1029,173 @@ export function buildWordChapterProgress(
             };
         })
         .sort((a, b) => Number(a.chapter) - Number(b.chapter));
+}
+
+// ==========================================================================================
+// PASSAGE SESSION
+// ==========================================================================================
+
+type PassageOptions = {
+    timeRange: TimeRange;
+    onData?: (rows: PassageSessionData[]) => void;
+    onError?: (err: Error) => void;
+    maxDocs?: number;
+};
+
+function mapPassageDocToUI(id: string, data: any): PassageSessionData | null {
+    const studentId = String(data?.studentId ?? '');
+    if (!studentId) return null;
+
+    const dateKey =
+        (typeof data?.dateKey === 'string' && /^\d{8}$/.test(data.dateKey))
+            ? data.dateKey
+            : null;
+
+    if (!dateKey) return null;
+
+    return {
+        passageSessionId: String(data?.passageSessionId ?? id),
+        studentId,
+        dateKey,
+        displayDate: displayDateFromKey(dateKey),
+        passageTitle: String(data?.passageTitle ?? ''),
+        totalWords: Number(data?.totalWords ?? 0),
+        accuracyRate: Number(data?.accuracyRate ?? 0),
+        wordPerMin: Number(data?.wordPerMin ?? 0),
+        miscueCount: Number(data?.miscueCount ?? 0),
+    };
+}
+
+export async function passageSessionsByRange(
+    studentId: string,
+    opts: PassageOptions,
+): Promise<PassageSessionData[] | (() => void)> {
+    const { timeRange, onData, onError, maxDocs = 400 } = opts;
+
+    if (!studentId) {
+        const empty: PassageSessionData[] = [];
+        onData?.(empty);
+        return onData ? () => { } : empty;
+    }
+
+    const q = buildDateKeyRangeQuery('passageSessions', studentId, timeRange, maxDocs);
+
+    // Realtime mode
+    if (onData) {
+        const unsub = onSnapshot(
+            q,
+            (snap: FirebaseFirestoreTypes.QuerySnapshot<FirebaseFirestoreTypes.DocumentData>) => {
+                const rows: PassageSessionData[] = [];
+                for (const docSnap of snap.docs) {
+                    const mapped = mapPassageDocToUI(docSnap.id, docSnap.data());
+                    if (mapped) rows.push(mapped);
+                }
+                onData(rows);
+            },
+            err => {
+                const e = err instanceof Error ? err : new Error(String(err));
+                onError?.(e);
+            },
+        );
+
+        return unsub;
+    }
+
+    // One-shot mode
+    try {
+        const snap = await getDocs(q);
+        const rows: PassageSessionData[] = [];
+        for (const docSnap of snap.docs) {
+            const mapped = mapPassageDocToUI(docSnap.id, docSnap.data());
+            if (mapped) rows.push(mapped);
+        }
+        return rows;
+    } catch (err: any) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        onError?.(e);
+        throw e;
+    }
+}
+
+export function buildPassagePeriodSlots(
+    sessions: PassageSessionData[],
+    timeRange: TimeRange,
+): PassagePeriodSlot[] {
+    const labels = getPeriodLabels(timeRange);
+
+    const slotMap = new Map<string, PassagePeriodSlot>();
+    for (const label of labels) {
+        slotMap.set(label, {
+            label,
+            sessions: [],
+            accuracy: null,
+            totalWords: 0,
+            passageTitles: [],
+        });
+    }
+
+    for (const sess of sessions) {
+        const y = Number(sess.dateKey.slice(0, 4));
+        const m = Number(sess.dateKey.slice(4, 6)) - 1;
+        const d = Number(sess.dateKey.slice(6, 8));
+        const dateObj = new Date(y, m, d);
+
+        const label = getLabelForDate(dateObj, timeRange);
+        const slot = slotMap.get(label);
+        if (!slot) continue;
+
+        slot.sessions.push(sess);
+        slot.totalWords += sess.totalWords;
+
+        if (!slot.passageTitles.includes(sess.passageTitle)) {
+            slot.passageTitles.push(sess.passageTitle);
+        }
+    }
+
+    // Compute slot accuracy (weighted average)
+    for (const slot of slotMap.values()) {
+        if (slot.sessions.length > 0) {
+            const totalAccuracy = slot.sessions.reduce(
+                (sum, s) => sum + (s.accuracyRate * s.totalWords),
+                0,
+            );
+            slot.accuracy = Math.round(totalAccuracy / slot.totalWords);
+        }
+    }
+
+    return labels.map(l => slotMap.get(l)!);
+}
+
+export function computePassageMasterySummary(
+    slots: PassagePeriodSlot[],
+): PassageMasterySummary {
+    const nonEmpty = slots.filter(s => s.accuracy !== null);
+
+    if (nonEmpty.length === 0) {
+        return {
+            totalSessions: 0,
+            avgAccuracy: null,
+            avgWpm: null,
+            avgMiscues: null,
+        };
+    }
+
+    const avgAccuracy = Math.round(
+        nonEmpty.reduce((sum, s) => sum + (s.accuracy ?? 0), 0) / nonEmpty.length,
+    );
+
+    const avgWpm = Math.round(
+        nonEmpty.reduce((sum, s) => sum + (s.sessions[0]?.wordPerMin ?? 0), 0) / nonEmpty.length,
+    );
+
+    const avgMiscues = Math.round(
+        nonEmpty.reduce((sum, s) => sum + (s.sessions[0]?.miscueCount ?? 0), 0) / nonEmpty.length,
+    );
+
+    return {
+        totalSessions: nonEmpty.length,
+        avgAccuracy,
+        avgWpm,
+        avgMiscues,
+    };
 }

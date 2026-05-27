@@ -17,7 +17,14 @@ type PassageUploadMetadata = {
     accuracyRate: number;
 };
 
-export type UploadMetadata = WordUploadMetadata | PassageUploadMetadata;
+type AlphabetUploadMetadata = {
+    kind: 'alphabet';
+    letter: string;
+    miscueCount: number;
+    accuracyRate: number;
+};
+
+export type UploadMetadata = WordUploadMetadata | PassageUploadMetadata | AlphabetUploadMetadata;
 
 type UploadResult =
     | { ok: true; fileId: string; finalName: string }

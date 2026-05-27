@@ -149,3 +149,130 @@ export interface ActivityResultDocument {
     miscues?: any[];
   }[];
 }
+
+// =============================================================================
+// ALPHABET SESSION TYPES
+// =============================================================================
+
+export interface AlphabetSessionData {
+  alphabetSessionId: string;
+  studentId: string;
+  date: string;
+  displayDate: string;
+  attemptedCount: number;
+  correctCount: number;
+  correctLetters: string[];
+  incorrectLetters: string[];
+}
+
+// =============================================================================
+// WORD SESSION TYPES
+// =============================================================================
+
+export interface WordLessonData {
+  lessonId: number;
+  lessonTitle: string;
+  attempted: number;
+  correct: number;
+  targetWords?: string[];
+  correctWords?: string[];
+  incorrectWords?: string[];
+}
+
+export interface WordChapterData {
+  chapterId: number;
+  chapterTitle: string;
+  lessons: Record<string, WordLessonData>;
+}
+
+export interface WordSessionData {
+  wordSessionId: string;
+  studentId: string;
+  dateKey: string;
+  displayDate: string;
+  attemptedCount: number;
+  correctCount: number;
+  chapters: Record<string, WordChapterData>;
+}
+
+export interface WordPeriodSlot {
+  label: string;
+  sessions: WordSessionData[];
+  accuracy: number | null;
+  attemptedCount: number;
+  correctCount: number;
+  lessonAgg: Record<string, {
+    chapterId: number;
+    chapterTitle: string;
+    lessonId: number;
+    lessonTitle: string;
+    attempted: number;
+    correct: number;
+    accuracy: number | null;
+  }>;
+}
+
+export interface WordAccuracySummary {
+  totalSessions: number;
+  avgAccuracy: number | null;
+}
+
+export interface WordMasterySummary {
+  totalCompleted: number;
+  masteryPercent: number | null;
+  perLessonCompleted: Record<string, number>;
+}
+
+export type ChapterKey = `ch_${number}`;
+export type LessonKey = `ch_${number}::ls_${number}`;
+
+export interface WordReportDocument {
+  studentId: string;
+  dateKey: string;
+  totals?: {
+    attempted?: number;
+    correct?: number;
+  };
+  chapters?: Record<string, WordChapterData>;
+}
+
+// =============================================================================
+// PASSAGE SESSION TYPES
+// =============================================================================
+
+export interface PassageSessionData {
+  passageSessionId: string;
+  studentId: string;
+  dateKey: string;
+  displayDate: string;
+  passageTitle: string;
+  totalWords: number;
+  accuracyRate: number;
+  wordPerMin: number;
+  miscueCount: number;
+}
+
+export interface PassagePeriodSlot {
+  label: string;
+  sessions: PassageSessionData[];
+  accuracy: number | null;
+  totalWords: number;
+  passageTitles: string[];
+}
+
+export interface PassageMasterySummary {
+  totalSessions: number;
+  avgAccuracy: number | null;
+  avgWpm: number | null;
+  avgMiscues: number | null;
+}
+
+export interface PassageReportDocument {
+  studentId: string;
+  dateKey: string;
+  passageTitle: string;
+  totalWords?: number;
+  accuracyRate?: number;
+  wordPerMin?: number;
+  totalMiscues?: number;
+}
