@@ -7,6 +7,7 @@ import {
   getDocs,
   query,
   where,
+  limit,
   deleteDoc,
   updateDoc,
   serverTimestamp,
@@ -49,6 +50,38 @@ export const getFacultyClasses_Student = {
       throw new Error("Failed to fetch faculty's classes. " + error.message);
     }
   },
+
+async getPendingJoinRequests(facultyId: string): Promise<{class: ClassDocument; students: UserDocument[]}> {
+    try {
+      const classesRef = collection(db, 'classes');
+      const q = query(classesRef, where('facultyId', '==', facultyId), where('isActive', '==', true));
+      const querySnapshot = await getDocs(q);
+      
+      const classesWithPending: {class: ClassDocument; students: UserDocument[]}[] = [];
+      
+      for (const docSnap of querySnapshot.docs) {
+        const classData = { ...docSnap.data(), classId: docSnap.id } as ClassDocument;
+        if (classData.pendingJoinRequests && classData.pendingJoinRequests.length > 0) {
+          const studentIds = classData.pendingJoinRequests;
+          const students: UserDocument[] = [];
+          
+          for (const studentId of studentIds) {
+            const studentRef = doc(db, 'users', studentId);
+            const studentSnap = await getDoc(studentRef);
+            if (studentSnap.exists() && studentSnap.data()) {
+              students.push({ uid: studentId, ...studentSnap.data() } as UserDocument);
+            }
+          }
+          
+          classesWithPending.push({ class: classData, students });
+        }
+      }
+      
+      return classesWithPending[0] || { class: null as any, students: [] };
+    } catch (error: any) {
+      throw new Error("Failed to fetch pending join requests. " + error.message);
+    }
+  },
   
 
   // ====================================================================
@@ -78,6 +111,34 @@ export const getFacultyClasses_Student = {
       })) as UserDocument[];
     } catch (error: any) {
       throw new Error(`Failed to fetch students: ${error.message}`);
+    }
+  },
+
+   async getPendingStudentsInClass(classId: string): Promise<UserDocument[]> {
+    try {
+      const classRef = doc(db, 'classes', classId);
+      const classSnap = await getDoc(classRef);
+      
+      if (!classSnap.exists()) {
+        return [];
+      }
+      
+      const classData = classSnap.data() as ClassDocument;
+      const pendingIds = classData.pendingJoinRequests || [];
+      
+      const students: UserDocument[] = [];
+      for (const studentId of pendingIds) {
+        const studentRef = doc(db, 'users', studentId);
+        const studentSnap = await getDoc(studentRef);
+        if (studentSnap.exists() && studentSnap.data()) {
+          const studentData = studentSnap.data() as UserDocument;
+          students.push({ ...studentData, uid: studentId });
+        }
+      }
+      
+      return students;
+    } catch (error: any) {
+      throw new Error(`Failed to fetch pending students: ${error.message}`);
     }
   },
 
@@ -126,16 +187,18 @@ export const getFacultyClasses_Student = {
    *
    * @param classId - the id of the class to be updated
    * @param className - the name of the class to be updated
+   * @param facultyId - the faculty owner id (for duplicate validation)
    * @param updates - the class date that should remain and not tampered
-   * @returns - a success message when the class name is successfully upda
+   * @returns - a success message when the class name is successfully updated
    */
   async editClass(
     classId: string,
     className: string,
+    facultyId: string,
     updates: Partial<
       Omit<
         ClassDocument,
-        'classId' | 'createdAt' | 'studentIds' | 'facultyId' | 'classCode'
+        'classId' | 'createdAt' | 'studentIds' | 'facultyId' | 'classCode' | 'acadYear'
       >
     >,
   ): Promise<{ success: boolean; message: string }> {
@@ -149,9 +212,27 @@ export const getFacultyClasses_Student = {
       }
 
       const classData = classDoc.data() as ClassDocument;
+      
+      // Check for duplicate class name within the same academic year (if className changed)
+      if (className.trim() !== classData.className) {
+        const classesRef = collection(db, 'classes');
+        const duplicateQuery = query(
+          classesRef,
+          where('facultyId', '==', facultyId),
+          where('acadYear', '==', classData.acadYear),
+          where('className', '==', className.trim()),
+          limit(1),
+        );
+        
+        const duplicateSnapshot = await getDocs(duplicateQuery);
+        if (!duplicateSnapshot.empty) {
+          throw new Error('Pangalan ng Klase ay naggamit na sa parehong Academic Year.');
+        }
+      }
+
       await updateDoc(classRef, {
         ...updates,
-        className: className,
+        className: className.trim(),
         updatedAt: serverTimestamp(),
       });
 

@@ -23,6 +23,7 @@ import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
 import { useAudioRecording } from '../../Controller/AudioRecordingController';
 import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceController';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
+import { uploadRecording, UploadMetadata } from '../../Controller/DriveUploadController';
 import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
 import { Miscue } from '../../Interfaces/miscue';
 import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
@@ -308,6 +309,7 @@ export default function ReadingActivityScreenPage() {
   const analyzeReading = async (transcription: string, duration: number) => {
     let accuracyNum = 0;
     let isWordAlphabetCorrect = false;
+    let computedMiscueCount = 0;
 
     if (type === 'alphabet' && isAlphabet(readingMaterial)) {
       const result = MiscueAnalysisService.checkAlphabetPhonemeAccuracy(readingMaterial.letter, transcription);
@@ -317,6 +319,7 @@ export default function ReadingActivityScreenPage() {
       setAccuracyString(result.accuracy);
       setFeedback(result.feedback);
       setMiscues([]);
+      computedMiscueCount = 0;
       if (result.isCorrect && !hasStoredCorrectAttempt && !alreadyCompleted) {
         try {
           await MiscueReportController.storeAlphabetCorrectAttempt(readingMaterial.letter);
@@ -337,6 +340,7 @@ export default function ReadingActivityScreenPage() {
       setAccuracyString(calculatedAccuracy);
       setFeedback(accuracyFeedback);
       accuracyNum = convertAccuracyStringToNumber(calculatedAccuracy);
+      computedMiscueCount = detectedMiscues.length;
       setIsCorrectAttempt(accuracyNum >= 85);
       const wpm = duration > 0 ? Math.round((totalWords / duration) * 60) : 0;
       if (!hasStoredReport) storeMiscueReport(transcription, accuracyNum, duration, detectedMiscues, wpm);
@@ -349,6 +353,7 @@ export default function ReadingActivityScreenPage() {
       setIsCorrectAttempt(result.isCorrect);
       setAccuracyString(result.accuracy);
       setFeedback(correct ? 'Excellent!' : 'Keep practicing.');
+      computedMiscueCount = 0;
       if (result.isCorrect && !hasStoredCorrectAttempt && !alreadyCompleted) {
         try {
           await MiscueReportController.storeWordCorrectAttempt(readingMaterial.letter, targetWord);
@@ -363,6 +368,7 @@ export default function ReadingActivityScreenPage() {
       if (!hasStoredReport) storeMiscueReport(transcription, accuracyNum, duration, [], 0);
     }
 
+    return { accuracyNum, computedMiscueCount };
   };
 
   // Use a ref to always call the latest analyzeReading (avoids stale closure)
@@ -419,7 +425,54 @@ export default function ReadingActivityScreenPage() {
       try {
         const transcription = await transcribeAudioAPI(audioFile);
         const duration = (Date.now() - startTime) / 1000;
-        await analyzeReading(transcription, duration);
+        const result = await analyzeReading(transcription, duration);
+
+        // Build metadata and upload recording
+        let metadata: UploadMetadata;
+        if (type === 'alphabet' && isAlphabet(readingMaterial)) {
+          metadata = {
+            kind: 'alphabet',
+            letter: readingMaterial.letter,
+            miscueCount: result.computedMiscueCount,
+            accuracyRate: result.accuracyNum,
+          };
+        } else if (type === 'passage' && isPassage(readingMaterial)) {
+          metadata = {
+            kind: 'passage',
+            passageTitle: readingMaterial.title,
+            miscueCount: result.computedMiscueCount,
+            accuracyRate: result.accuracyNum,
+          };
+} else if (type === 'word' && isWords(readingMaterial)) {
+           // For words, derive chapterId from letter position in alphabet or use 0
+           const letterToChapter: Record<string, number> = {
+             'M': 1, 'S': 2, 'A': 3, 'Ang': 4, 'I': 5, 'O': 6, 'Ay': 7, 'E': 8, 'U': 9,
+             'B': 10, 'T': 11, 'K': 12, 'L': 13, 'Y': 14, 'Mga': 15, 'N': 16, 'G': 17,
+             'R': 18, 'P': 19, 'Ng': 20, 'D': 21, 'H': 22, 'W': 23, '-ng': 24, 'ng-': 25,
+           };
+           metadata = {
+             kind: 'word',
+             chapterId: letterToChapter[readingMaterial.letter] ?? 0,
+             lessonId: 0,
+             targetWord: getTargetText(),
+             miscueCount: result.computedMiscueCount,
+             accuracyRate: result.accuracyNum,
+           };
+         } else {
+          metadata = {
+            kind: 'alphabet',
+            letter: '',
+            miscueCount: 0,
+            accuracyRate: 0,
+          };
+        }
+
+        try {
+          await uploadRecording(audioFile, metadata);
+        } catch (uploadError) {
+          console.error('Recording upload failed:', uploadError);
+        }
+
         setIsReadingCompleted(true);
       } catch (error) {
         console.error('Transcription failed:', error);

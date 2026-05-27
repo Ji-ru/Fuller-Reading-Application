@@ -18,14 +18,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
-import { BurgerIcon, ArchiveIcon, BookOpenIcon, EditIcon, TrashIcon } from '../../Components/GlobalUse/Icons';
+import { BurgerIcon, ArchiveIcon, BookOpenIcon, EditIcon, TrashIcon, CheckCircleIcon, XCircleIcon, UsersIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
-import { createCustomClass } from '../../Controller/AuthenticationController';
+import { approveStudentJoin, createCustomClass, rejectStudentJoin, getUserProfile } from '../../Controller/AuthenticationController';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
-import { ClassDocument } from '../../Interfaces/dataInterfaces';
+import { ClassDocument, UserDocument } from '../../Interfaces/dataInterfaces';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
 
@@ -49,8 +49,14 @@ export default function MyClass() {
   const [newClassName, setNewClassName] = useState('');
   const [gradeLevel, setGradeLevel] = useState<string>('1');
 
-  const [actionModalVisible, setActionModalVisible] = useState(false);
-  const [actionType, setActionType] = useState<'archive' | 'delete'>('archive');
+const [actionModalVisible, setActionModalVisible] = useState(false);
+   const [actionType, setActionType] = useState<'archive' | 'delete'>('archive');
+   
+   // Pending Join Requests
+   const [pendingRequests, setPendingRequests] = useState<UserDocument[]>([]);
+   const [pendingModalVisible, setPendingModalVisible] = useState(false);
+   const [selectedPendingClass, setSelectedPendingClass] = useState<ClassDocument | null>(null);
+   const [pendingLoading, setPendingLoading] = useState(false);
 
   // Generic Alert State
   const [alertVisible, setAlertVisible] = useState(false);
@@ -135,14 +141,15 @@ export default function MyClass() {
     if (!selectedClass || !editingClassName.trim()) return;
     try {
       setIsProcessing(true);
-      await getFacultyClasses_Student.editClass(selectedClass.classId, editingClassName.trim(), {
+      const currentUser = getAuth().currentUser;
+      await getFacultyClasses_Student.editClass(selectedClass.classId, editingClassName.trim(), currentUser?.uid || '', {
         gradeLevel: parseInt(editingGrade, 10)
       });
       await fetchClasses();
       setEditModalVisible(false);
       showAlert('Success', 'Ang klase ay matagumpay na na-update.', 'info');
     } catch (error: any) {
-      showAlert('Error', 'Hindi ma-update ang klase.', 'danger');
+      showAlert('Error', error.message || 'Hindi ma-update ang klase.', 'danger');
     } finally {
       setIsProcessing(false);
     }
@@ -174,6 +181,47 @@ export default function MyClass() {
     }
   };
 
+   const fetchPendingRequests = async (classId: string) => {
+    try {
+      setPendingLoading(true);
+      const pendingStudents = await getFacultyClasses_Student.getPendingStudentsInClass(classId);
+      setPendingRequests(pendingStudents);
+    } catch (error: any) {
+      console.error('Fetch pending requests error:', error);
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+   const handleViewPendingRequests = (classItem: ClassDocument) => {
+    setSelectedPendingClass(classItem);
+    setPendingRequests([]); // Reset
+    setPendingModalVisible(true);
+    fetchPendingRequests(classItem.classId);
+  };
+
+   const handleApproveStudent = async (studentId: string) => {
+    if (!selectedPendingClass) return;
+    try {
+      await approveStudentJoin(studentId, selectedPendingClass.classId);
+      setPendingRequests(prev => prev.filter(s => s.uid !== studentId));
+      showAlert('Tagumpay!', 'Ang mag-aaral ay napApprove na.', 'info');
+    } catch (error: any) {
+      showAlert('Error', 'Hindi ma-approve ang mag-aaral.', 'danger');
+    }
+  };
+
+   const handleRejectStudent = async (studentId: string) => {
+    if (!selectedPendingClass) return;
+    try {
+      await rejectStudentJoin(studentId, selectedPendingClass.classId);
+      setPendingRequests(prev => prev.filter(s => s.uid !== studentId));
+      showAlert('Tagumpay!', 'Ang request ay tinanggihan.', 'info');
+    } catch (error: any) {
+      showAlert('Error', 'Hindi ma-reject ang request.', 'danger');
+    }
+  };
+
   const handleEllipsisPress = (px: number, py: number, item: ClassDocument) => {
     const screenHeight = Dimensions.get('window').height;
     const menuHeight = 160; // Approximate height of the menu
@@ -194,23 +242,37 @@ export default function MyClass() {
   });
 
   const renderClassItem = ({ item }: { item: ClassDocument }) => (
-    <TouchableOpacity
-      style={S.classCard}
-      onPress={() => handleClassStudents({
-        classId: item.classId,
-        className: item.className,
-        classCode: item.classCode,
-        acadYear: item.acadYear,
-      })}
-      activeOpacity={0.7}
-    >
-      <View style={S.classCardTop}>
+    <View style={S.classCard}>
+      <TouchableOpacity
+        style={S.classCardTop}
+        onPress={() => handleClassStudents({
+          classId: item.classId,
+          className: item.className,
+          classCode: item.classCode,
+          acadYear: item.acadYear,
+        })}
+        activeOpacity={0.7}
+      >
         <View style={S.iconBox}>
           <BookOpenIcon size={22} color={F.primary} />
         </View>
         <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={S.className} numberOfLines={1}>{item.className}</Text>
           <Text style={S.classYear}>{item.acadYear} • Grade {item.gradeLevel}</Text>
+        </View>
+        {item.pendingJoinRequests && item.pendingJoinRequests.length > 0 && (
+          <TouchableOpacity
+            style={S.badge}
+            onPress={() => handleViewPendingRequests(item)}
+          >
+            <Text style={S.badgeText}>{item.pendingJoinRequests.length}</Text>
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+      <View style={S.classCardFooter}>
+        <View style={S.codeBadge}>
+          <Text style={S.codeLabel}>Class Code:</Text>
+          <Text style={S.codeVal}>{item.classCode}</Text>
         </View>
         <TouchableOpacity
           onPress={(e) => {
@@ -222,13 +284,7 @@ export default function MyClass() {
           <Text style={S.moreText}>•••</Text>
         </TouchableOpacity>
       </View>
-      <View style={S.classCardFooter}>
-        <View style={S.codeBadge}>
-          <Text style={S.codeLabel}>Class Code:</Text>
-          <Text style={S.codeVal}>{item.classCode}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -390,6 +446,50 @@ export default function MyClass() {
           </View>
         </Modal>
 
+        /* PENDING REQUESTS MODAL */
+        <Modal visible={pendingModalVisible} transparent animationType="slide">
+          <View style={S.fullModalOverlay}>
+            <View style={S.modalContent}>
+              <Text style={S.modalHeader}>Mga Pending Request</Text>
+              <Text style={S.pendingClassLabel}>{selectedPendingClass?.className}</Text>
+              
+              {pendingLoading ? (
+                <View style={{ paddingVertical: 20 }}>
+                  <ActivityIndicator color={F.primary} />
+                </View>
+              ) : pendingRequests.length === 0 ? (
+                <Text style={S.emptySub}>Walang pending na request.</Text>
+              ) : (
+                <FlatList
+                  data={pendingRequests}
+                  keyExtractor={item => item.uid}
+                  style={{ maxHeight: 200 }}
+                  renderItem={({ item }) => (
+                    <View style={S.pendingStudentRow}>
+                      <View style={S.pendingStudentInfo}>
+                        <Text style={S.pendingStudentName}>{item.firstName} {item.lastName}</Text>
+                        <Text style={S.pendingStudentEmail}>{item.email}</Text>
+                      </View>
+                      <View style={S.pendingActions}>
+                        <TouchableOpacity onPress={() => handleApproveStudent(item.uid)} style={S.approveBtn}>
+<CheckCircleIcon size={18} color={F.green} />
+                         </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleRejectStudent(item.uid)} style={S.rejectBtn}>
+                           <XCircleIcon size={18} color={F.red} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                />
+              )}
+              
+              <TouchableOpacity style={S.cancelBtn} onPress={() => setPendingModalVisible(false)}>
+                <Text style={S.cancelBtnText}>Isara</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
         {/* ACTION CONFIRMATION MODAL (Archive/Delete) */}
         <ConfirmationModal
           visible={actionModalVisible}
@@ -480,4 +580,15 @@ menuItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadiu
   actionCancelText: { fontSize: 15, fontWeight: '700', color: F.slate, fontFamily: 'Andika-Regular' },
   actionConfirm: { flex: 1.5, paddingVertical: 14, borderRadius: 14, alignItems: 'center', ...Shadows.subtle },
   actionConfirmText: { fontSize: 15, fontWeight: '800', color: F.white, fontFamily: 'Andika-Bold' },
+
+   badge: { backgroundColor: F.red + '15', minWidth: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+   badgeText: { color: F.red, fontSize: 13, fontWeight: '800', fontFamily: 'Andika-Bold' },
+   pendingClassLabel: { fontSize: 14, color: F.slate, marginBottom: 12, fontWeight: '600' },
+   pendingStudentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: F.bg },
+   pendingStudentInfo: { flex: 1 },
+   pendingStudentName: { fontSize: 15, fontWeight: '700', color: F.ink, fontFamily: 'Andika-Bold' },
+   pendingStudentEmail: { fontSize: 12, color: F.slate, marginTop: 2, fontFamily: 'Andika-Regular' },
+   pendingActions: { flexDirection: 'row', gap: 12 },
+   approveBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: F.green + '15', justifyContent: 'center', alignItems: 'center' },
+   rejectBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: F.red + '15', justifyContent: 'center', alignItems: 'center' },
 });

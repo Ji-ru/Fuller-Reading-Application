@@ -76,4 +76,4 @@ yarn-error.log
 
 # Environment variables
 .env
-.env.*
+.env.*android/app/src/main/assets/models/*.bin

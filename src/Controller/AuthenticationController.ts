@@ -167,10 +167,18 @@ export const updateUserProfile = async (
       classCode?: string;
       reading_Level?: 'beginner' | 'intermediate' | 'advanced';
     };
+<<<<<<< HEAD
 facultyData?: {
        assignedGradeLevels?: number[];
        assignedClassIds?: string[];
      };
+=======
+  facultyData?: {
+     assignedGradeLevels?: number[];
+     assignedClassIds?: string[];
+     dateOfBirth?: string;
+   };
+>>>>>>> lugh/Marungko-Homefix-v4
   },
 ) => {
   const userRef = doc(db, 'users', uid);
@@ -192,6 +200,7 @@ facultyData?: {
     if (sd.reading_Level !== undefined)  update['studentData.reading_Level']  = sd.reading_Level;
   }
 
+<<<<<<< HEAD
 // Faculty-specific nested fields
     if (data.facultyData) {
       const fd = data.facultyData;
@@ -204,6 +213,15 @@ facultyData?: {
         update['facultyData.assignedClassIds'] = assignedClassIds;
       }
     }
+=======
+  // Faculty-specific nested fields
+  if (data.facultyData) {
+    const fd = data.facultyData;
+    if (fd.assignedGradeLevels !== undefined) update['facultyData.assignedGradeLevels'] = fd.assignedGradeLevels;
+    if (fd.assignedClassIds !== undefined)    update['facultyData.assignedClassIds']    = fd.assignedClassIds;
+    if (fd.dateOfBirth !== undefined)         update['facultyData.dateOfBirth']         = fd.dateOfBirth;
+  }
+>>>>>>> lugh/Marungko-Homefix-v4
 
    await updateDoc(userRef, update);
 };
@@ -245,7 +263,11 @@ export const updateUserPassword = async (
 
 
 /* -------------------------------------------------------------
+<<<<<<< HEAD
    CREATE CLASS
+=======
+    CREATE CLASS
+>>>>>>> lugh/Marungko-Homefix-v4
 ------------------------------------------------------------- */
 export const createClass = async (
   facultyId: string,
@@ -286,6 +308,67 @@ export const createClass = async (
     return { classId, classCode, acadYear: classDocument.acadYear };
   } catch (error: any) {
     throw new Error(`Automatic Class Registration Failed: ${error.message}`);
+  }
+};
+
+/* -------------------------------------------------------------
+    CREATE CUSTOM CLASS (with validation for duplicate names)
+------------------------------------------------------------- */
+export const createCustomClass = async (
+  facultyId: string,
+  className: string,
+  gradeLevel: number,
+): Promise<string> => {
+  try {
+    const acadYear = getCurrentAcademicYear();
+    
+    // Check for duplicate class name within the same academic year
+    const classesRef = collection(db, 'classes');
+    const duplicateQuery = query(
+      classesRef,
+      where('facultyId', '==', facultyId),
+      where('acadYear', '==', acadYear),
+      where('className', '==', className.trim()),
+      limit(1),
+    );
+    
+    const duplicateSnapshot = await getDocs(duplicateQuery);
+    if (!duplicateSnapshot.empty) {
+      throw new Error('Pangalan ng Klase ay naggamit na sa parehong Academic Year.');
+    }
+
+    const classId = `Class_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+    const classCode = generateClassCode();
+
+    const classDocument: ClassDocument = {
+      classId,
+      classCode,
+      className: className.trim(),
+      gradeLevel,
+      acadYear,
+      facultyId,
+      studentIds: [],
+      isActive: true,
+      createdAt: serverTimestamp(),
+    };
+
+    // Store class - MODULAR API
+    const classRef = doc(db, 'classes', classId);
+    await setDoc(classRef, classDocument);
+
+    // Update faculty document - MODULAR API
+    const facultyRef = doc(db, 'users', facultyId);
+    await updateDoc(facultyRef, {
+      'facultyData.assignedClassIds': arrayUnion(classId),
+      'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
+      updatedAt: serverTimestamp(),
+    });
+
+    return classCode;
+  } catch (error: any) {
+    throw new Error(error.message || `Failed to create class: ${error.message}`);
   }
 };
 
