@@ -293,14 +293,14 @@ async getPendingJoinRequests(facultyId: string): Promise<{class: ClassDocument; 
       // 3. Delete the class
       await deleteDoc(classRef);
 
-      // 4. Update the faculty's assignedClassIds
-      try {
-        const facultyRef = doc(db, 'users', classData.facultyId);
-        await updateDoc(facultyRef, {
-          'facultyData.assignedClassIds': arrayRemove(classId),
-          'facultyData.assignedGradeLevels': arrayRemove(classCode),
-          updatedAt: serverTimestamp(),
-        });
+// 4. Update the faculty's assignedClassIds
+       try {
+         const facultyRef = doc(db, 'users', classData.facultyId);
+         await updateDoc(facultyRef, {
+           'facultyData.assignedClassIds': arrayRemove(classId),
+           'facultyData.assignedGradeLevels': arrayRemove(classData.gradeLevel),
+           updatedAt: serverTimestamp(),
+         });
       } catch (error: any) {
         throw new Error(
           `Failed to update faculty's assignedClassIds: ${error.message}`,

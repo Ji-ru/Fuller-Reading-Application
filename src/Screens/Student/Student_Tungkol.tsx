@@ -79,10 +79,11 @@ export default function StudentTungkolScreen() {
           </Text>
         </View>
 
-        {/* Team Section */}
+        {/* Team Section - Container */}
         <View style={[S.aboutCard, { marginTop: 16 }]}>
-          <Text style={S.aboutHeader}>Ang Aming Team</Text>
-          <View style={S.aboutDivider} />
+          <View style={S.teamSectionHeader}>
+            <Text style={S.aboutHeader}>Ang Aming Team</Text>
+          </View>
 
           {/* Jayariz Cortez */}
           <View style={S.teamMember}>
@@ -130,8 +131,12 @@ export default function StudentTungkolScreen() {
           </View>
         </View>
 
-        {/* Disclaimer */}
-        <Text style={S.disclaimerText}>Disclaimer: Ang mga background, icon, at shape na ginamit sa proyekto ay gawa ng AI.</Text>
+        {/* Disclaimer Section - Container */}
+        <View style={[S.aboutCard, { marginTop: 16 }]}>
+          <Text style={S.aboutHeader}>Disclaimer</Text>
+          <View style={S.aboutDivider} />
+          <Text style={S.disclaimerText}>Ang mga background, icon, at shape na ginamit sa proyekto ay gawa ng AI.</Text>
+        </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -248,6 +253,9 @@ const S = StyleSheet.create({
   },
 
   // Team Section
+  teamSectionHeader: {
+    marginBottom: 10,
+  },
   teamMember: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -298,7 +306,7 @@ const S = StyleSheet.create({
   disclaimerText: {
     fontSize: 18,
     fontStyle: 'italic',
-    fontWeight: '200',
+    fontWeight: '800',
     color: C.slate,
     textAlign: 'center',
     marginTop: 16,

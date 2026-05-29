@@ -38,15 +38,12 @@ export default function SignUpOneScreen() {
   const { role } = route.params;
 
   // Add state of the Registration Steps using react hook
-  const { handleSignUpNavigationWithData, handleCancelRegistration, handleBackStep } =
+  const { handleSignUpNavigationWithData, handleBackStep } =
     useNavigationHelper();
-
-  // current step - UNDER CONSTRUCTION!!
-  const [currentStep, setCurrentStep] = useState(1);
 
   // Personal Infomation States
   const [firstName, setFirstName] = useState('');
-  const [middleName, setMiddleName] = useState('');
+  const [middleName, _setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gradeLevel, setGradeLevel] = useState(1); // Default to 1 to match UI default of dropdown
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -63,18 +60,6 @@ export default function SignUpOneScreen() {
 
 // Validation State
    const [isSubmitted, setIsSubmitted] = useState(false);
-   const [validatingClassCode, setValidatingClassCode] = useState(false);
-
-  const onChange = (event: any, selectedDate?: Date) => {
-    setShowPicker(false);
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
-
-  const showDatePicker = () => {
-    setShowPicker(true);
-  };
 
   // Handle profile picture selection
   const handleProfilePicChange = () => {

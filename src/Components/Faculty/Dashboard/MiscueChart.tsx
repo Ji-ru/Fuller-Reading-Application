@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import {
@@ -141,65 +142,69 @@ const MiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
          </View>
       </View>
 
-      {/* COMMON WORDS LIST */}
-      <View style={[S.card, { marginBottom: 16, height: 320 }]}>
-         <View style={S.cardHeader}>
-            <Text style={S.cardTitle}>Frequent Miscued Words</Text>
-         </View>
-         {commonWords.length > 0 ? (
-            commonWords.map((word, idx) => (
-               <View key={idx} style={[S.wordRow, idx === commonWords.length - 1 && { borderBottomWidth: 0 }]}>
-                  <View style={S.wordLeft}>
-                     <Text style={S.wordText}>{word.word}</Text>
-                     <Text style={S.wordSub}>Commonly: "{word.errorExample}"</Text>
-                  </View>
-                  <View style={S.wordRight}>
-                     <View style={[S.typeTag, { backgroundColor: word.dominantMiscueType === 'Substitution' ? '#FF272615' : '#FF941A15' }]}>
-                        <Text style={[S.typeTagText, { color: word.dominantMiscueType === 'Substitution' ? '#FF2726' : '#FF941A' }]}>
-                           {word.dominantMiscueType}
-                        </Text>
-                     </View>
-                     {Number.isFinite(word.studentCount) && (word.studentCount || 0) > 0 && (
-                        <View style={S.studentChip}>
-                           <Text style={S.studentChipText}>
-                              👥 {word.studentCount} {word.studentCount === 1 ? 'student' : 'students'}
-                           </Text>
-                        </View>
-                     )}
-                     <Text style={S.wordCount}>{word.errorCount}x</Text>
-                  </View>
-               </View>
-            ))
-         ) : (
-            <View style={S.emptyBoxFull}>
-               <Text style={S.emptyText}>No miscued words found.</Text>
-            </View>
-         )}
-      </View>
+{/* COMMON WORDS LIST */}
+       <View style={[S.card, { marginBottom: 12, maxHeight: 200 }]}>
+          <View style={S.cardHeader}>
+             <Text style={S.cardTitle}>Frequent Miscued Words</Text>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+          {commonWords.length > 0 ? (
+             commonWords.map((word, idx) => (
+                <View key={idx} style={[S.wordRow, idx === commonWords.length - 1 && { borderBottomWidth: 0 }]}>
+                   <View style={S.wordLeft}>
+                      <Text style={S.wordText}>{word.word}</Text>
+                      <Text style={S.wordSub}>Commonly: "{word.errorExample}"</Text>
+                   </View>
+                   <View style={S.wordRight}>
+                      <View style={[S.typeTag, { backgroundColor: word.dominantMiscueType === 'Substitution' ? '#FF272615' : '#FF941A15' }]}>
+                         <Text style={[S.typeTagText, { color: word.dominantMiscueType === 'Substitution' ? '#FF2726' : '#FF941A' }]}>
+                            {word.dominantMiscueType}
+                         </Text>
+                      </View>
+                      {Number.isFinite(word.studentCount) && (word.studentCount || 0) > 0 && (
+                         <View style={S.studentChip}>
+                            <Text style={S.studentChipText}>
+                               👥 {word.studentCount} {word.studentCount === 1 ? 'student' : 'students'}
+                            </Text>
+                         </View>
+                      )}
+                      <Text style={S.wordCount}>{word.errorCount}x</Text>
+                   </View>
+                </View>
+             ))
+          ) : (
+             <View style={S.emptyBoxFull}>
+                <Text style={S.emptyText}>No miscued words found.</Text>
+             </View>
+          )}
+          </ScrollView>
+       </View>
 
-      {/* FREQUENT PASSAGES LIST */}
-      <View style={[S.card, { height: 320 }]}>
-         <Text style={S.cardTitle}>Frequent Miscued Passages</Text>
-         {displayTopMiscue && displayTopMiscue[0]?.topMiscuedPassage?.length > 0 ? (
-            displayTopMiscue[0].topMiscuedPassage.slice(0, 4).map((p: any, idx: number) => (
-               <View key={idx} style={[S.wordRow, idx === 3 && { borderBottomWidth: 0 }]}>
-                  <View style={S.wordLeft}>
-                     <Text style={S.wordText} numberOfLines={1}>{p.title}</Text>
-                     <Text style={S.wordSub}>{p.attempts} attempts</Text>
-                  </View>
-                  <View style={S.wordRight}>
-                     <Text style={[S.wordCount, { color: p.averageAccuracy < 80 ? F.red : F.primaryDeep }]}>
-                        {p.averageAccuracy}% Acr.
-                     </Text>
-                  </View>
-               </View>
-            ))
-         ) : (
-            <View style={S.emptyBoxFull}>
-               <Text style={S.emptyText}>No miscued passages found.</Text>
-            </View>
-         )}
-      </View>
+       {/* FREQUENT PASSAGES LIST */}
+       <View style={[S.card, { maxHeight: 200 }]}>
+          <Text style={S.cardTitle}>Frequent Miscued Passages</Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
+          {displayTopMiscue && displayTopMiscue[0]?.topMiscuedPassage?.length > 0 ? (
+             displayTopMiscue[0].topMiscuedPassage.slice(0, 4).map((p: any, idx: number) => (
+                <View key={idx} style={[S.wordRow, idx === 3 && { borderBottomWidth: 0 }]}>
+                   <View style={S.wordLeft}>
+                      <Text style={S.wordText} numberOfLines={1}>{p.title}</Text>
+                      <Text style={S.wordSub}>{p.attempts} attempts</Text>
+                   </View>
+                   <View style={S.wordRight}>
+                      <Text style={[S.wordCount, { color: p.averageAccuracy < 80 ? F.red : F.primaryDeep }]}>
+                         {p.averageAccuracy}% Acr.
+                      </Text>
+                   </View>
+                </View>
+             ))
+          ) : (
+             <View style={S.emptyBoxFull}>
+                <Text style={S.emptyText}>No miscued passages found.</Text>
+             </View>
+          )}
+          </ScrollView>
+       </View>
     </View>
   );
 };

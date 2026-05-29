@@ -1,13 +1,10 @@
 // React Dependencies
-import React, { useState } from 'react';
-import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
@@ -20,11 +17,10 @@ import Video from 'react-native-video';
 
 // Styles
 import login from '../UI_Designs/LoginStyles';
-import bubbles from '../UI_Designs/BubblesDesign';
 
 // Controllers (Hooks)
 import { useNavigationHelper } from '../Controller/NavigationController';
-import { loginUser, sendPasswordReset } from '../Controller/AuthenticationController';
+import { loginUser, sendPasswordReset, getAuth, onAuthStateChanged } from '../Controller/AuthenticationController';
 import { EyeIcon, EyeOffIcon } from '../Components/GlobalUse/Icons';
 import ConfirmationModal from '../Components/GlobalUse/ConfirmationModal';
 
@@ -43,7 +39,6 @@ export default function LoginScreen() {
     password: false,
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
   
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
@@ -56,16 +51,15 @@ export default function LoginScreen() {
 
 
   // Check if user is already logged in on mount
-  React.useEffect(() => {
+  useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && !authChecked) {
-        setAuthChecked(true);
+      if (user) {
         handleReplaceStep('Loading');
       }
     });
     return unsubscribe;
-  }, [authChecked]);
+  }, [handleReplaceStep]);
 
   // Dismiss keyboard when tapping outside inputs
   const dismissKeyboard = () => {

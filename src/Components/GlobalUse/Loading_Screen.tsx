@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Video from 'react-native-video';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, Image } from 'react-native';
 import { useNavigationHelper, RootStackParamList } from '../../Controller/NavigationController';
 import {
   getAuth,
@@ -22,6 +22,7 @@ export default function LoadingScreen() {
   const { handleReplaceStep } = useNavigationHelper();
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Loading...');
+  const [videoError, setVideoError] = useState(false);
 
   // Track whether auth has already resolved so the safety timeout
   // does not fire a second navigation on top of a completed one.
@@ -32,9 +33,6 @@ export default function LoadingScreen() {
     let isMounted = true;
 
     // ── Progress bar animation ──────────────────────────────────────────────
-    // FIX: was 10 ms / +5% → completed in ~200 ms (way too fast).
-    // Now 60 ms / +1% → reaches ~90% in ~5.4 s, matching the auth timeout window.
-    // Progress is capped at 90 here; it jumps to 100 only when auth resolves.
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) {
@@ -52,16 +50,13 @@ export default function LoadingScreen() {
       unsubscribeFn();
       clearInterval(progressInterval);
       clearTimeout(timeoutId);
-      // Jump progress to 100% before navigating for a clean finish
       setProgress(100);
-      // Small delay so the 100% render is visible before the screen changes
       setTimeout(() => {
         if (isMounted) handleReplaceStep(screen);
       }, 150);
     };
 
     // ── Firebase Auth state ────────────────────────────────────────────────
-    // FIX: was auth().onAuthStateChanged(...) — legacy namespaced API
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!isMounted) return;
 
@@ -75,14 +70,12 @@ export default function LoadingScreen() {
         console.log('LoadingScreen: User found, checking profile...');
         if (isMounted) setStatusMessage('Checking profile...');
 
-        // FIX: was firestore().collection('users').doc(uid).get() — legacy API
         const userSnap = await getDoc(doc(db, 'users', currentUser.uid));
 
         if (!isMounted) return;
 
         if (!userSnap.exists()) {
           console.log('LoadingScreen: Profile not found, signing out');
-          // FIX: was auth().signOut() — legacy API, and was NOT awaited
           await signOut(auth).catch(e =>
             console.warn('LoadingScreen: signOut error', e),
           );
@@ -100,8 +93,6 @@ export default function LoadingScreen() {
         } else if (role === 'admin') {
           navigate('AdminDashboard', unsubscribe);
         } else {
-          // FIX: was silently doing nothing for unknown/missing roles —
-          // screen would hang until the 5 s timeout with no user feedback.
           console.warn(`LoadingScreen: Unknown role "${role}", going to Login`);
           await signOut(auth).catch(e =>
             console.warn('LoadingScreen: signOut error', e),
@@ -115,9 +106,6 @@ export default function LoadingScreen() {
     });
 
     // ── Safety timeout ─────────────────────────────────────────────────────
-    // FIX: was not guarded against auth having already navigated —
-    // could call handleReplaceStep('Login') on top of an in-progress navigation.
-    // Now checks authResolvedRef before acting.
     const timeoutId = setTimeout(() => {
       if (!authResolvedRef.current && isMounted) {
         console.warn('LoadingScreen: Timeout reached, going to Login');
@@ -136,13 +124,25 @@ export default function LoadingScreen() {
 
   return (
     <View style={loading.container}>
-      <Video
-        style={loading.video}
-        source={require('../../../assets/videos/cisc_logo_animated (4).mp4')}
-        repeat={true}
-        resizeMode="cover"
-        muted={true}
-      />
+      {!videoError ? (
+        <Video
+          style={loading.video}
+          source={require('../../../assets/videos/cisc_logo_animated (4).mp4')}
+          repeat={true}
+          resizeMode="cover"
+          muted={true}
+          onError={(e) => {
+            console.warn('LoadingScreen: Video error, using fallback', e);
+            setVideoError(true);
+          }}
+        />
+      ) : (
+        <Image
+          style={loading.video}
+          source={require('../../../assets/images/cisckids copy.png')}
+          resizeMode="contain"
+        />
+      )}
 
       <View style={loading.progressContainer}>
         <View style={loading.progressBarBackground}>

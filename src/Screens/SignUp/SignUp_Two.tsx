@@ -20,28 +20,21 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import buttons from '../../UI_Designs/ButtonStyles';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { RootStackParamList } from '../../Controller/NavigationController';
-import { SignUpUserCredentials, verifyFacultyAccessCode, getClassByCode } from '../../Controller/AuthenticationController';
+import { SignUpUserCredentials, verifyFacultyAccessCode } from '../../Controller/AuthenticationController';
 import LottieView from 'lottie-react-native';
-import { EyeIcon, EyeOffIcon, AlertTriangleIcon } from '../../Components/GlobalUse/Icons';
+import { EyeIcon, EyeOffIcon } from '../../Components/GlobalUse/Icons';
 export default function SignUpTwoScreen() {
-  // Access the studentInfo passed from SignUpOne
   const route = useRoute<RouteProp<RootStackParamList, 'SignUpTwo'>>();
   const personalInfo = route.params.userInfo;
 
-  // Updates Current Step Process from SignUpOne - UNDER CONSTRUCTION!!!
-  const [currentStep, setCurrentStep] = useState(2);
+  const { handleDesignatedUserPage, handleBackStep } = useNavigationHelper();
 
-  // Handles Navigation After Registration
-  const { handleDesignatedUserPage, handleCancelRegistration, handleBackStep } = useNavigationHelper();
-
-  // User Account Credential States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Modal states
   const [modalVisible, setModalVisible] = useState(false);
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -49,7 +42,6 @@ export default function SignUpTwoScreen() {
   const [modalMessage, setModalMessage] = useState('');
   const [enrollmentMessage, setEnrollmentMessage] = useState('');
 
-  // Ref for Lottie animation
   const congratulationsRef = useRef<LottieView>(null);
   const confettiRef = useRef<LottieView>(null);
   

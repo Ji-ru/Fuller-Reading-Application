@@ -4,11 +4,9 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
-  FlatList,
   TextInput,
   StyleSheet,
-  Dimensions,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -19,11 +17,9 @@ import { RootStackParamList } from '../../Controller/NavigationController';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
-import { UsersIcon, SearchIcon, ChevronRightIcon, BookOpenIcon, HistoryIcon } from '../../Components/GlobalUse/Icons';
+import { ChevronRightIcon, SearchIcon, UsersIcon } from '../../Components/GlobalUse/Icons';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
-
-const { width: SW } = Dimensions.get('window');
 
 type MyStudentsRouteProp = RouteProp<RootStackParamList, 'MyStudents'>;
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Dimensions,
   Image,
   ScrollView,
 } from 'react-native';
@@ -19,8 +18,7 @@ import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceCon
 import { useAudioRecording } from '../../Controller/AudioRecordingController';
 import { transcribeAudio as transcribeAudioAPI } from '../../../api';
 import { ActivityDocument } from '../../Interfaces/dataInterfaces';
-import { ReadingMaterial, Alphabet, Passage } from '../../Interfaces/passage';
-import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
+import { StudentColors as C, Shadows } from '../../Utilities/Theme';
 import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
 import { RecordingControls } from '../../Components/Student/Reading/RecordingControls';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
@@ -29,19 +27,15 @@ import readingStyles from '../../UI_Designs/ReadingActivityStyles';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import { StarIcon, TrophyIcon, CheckCircleIcon } from '../../Components/GlobalUse/Icons';
 
-const { width } = Dimensions.get('window');
-
 const alphabetData = readingMaterialData?.Alphabet || [];
 const passagesData = readingMaterialData?.Passages || [];
-const wordsData = readingMaterialData?.Words || [];
 
 export default function StudentAssessmentActivity() {
   const route = useRoute<any>();
   const { activityId } = route.params;
   const { handleBackStep, handleAssessmentReview } = useNavigationHelper();
 
-
-  const [activity, setActivity] = useState<ActivityDocument | null>(null);
+  const [_activity, setActivity] = useState<ActivityDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [deck, setDeck] = useState<any[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -59,7 +53,6 @@ export default function StudentAssessmentActivity() {
   const {
     isRecording,
     hasPermission,
-    recordTime,
     startRecording,
     stopRecording,
   } = useAudioRecording();
@@ -468,16 +461,18 @@ export default function StudentAssessmentActivity() {
             )}
 
             {isProcessed && (
-              <BounceIn delay={400} style={S.actionButtonsContainer}>
-                <TouchableOpacity style={S.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
-                  <Text style={S.retryBtnText}>Muling Subukan</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={S.backToLessonBtn} onPress={handleBackStep} activeOpacity={0.8}>
-                  <Text style={S.backToLessonBtnText}>Bumalik sa Aralin</Text>
-                </TouchableOpacity>
-              </BounceIn>
-            )}
+                <BounceIn delay={400} style={S.actionButtonsContainer}>
+                  <TouchableOpacity style={S.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
+                    <Text style={S.retryBtnText}>Muling Subukan</Text>
+                  </TouchableOpacity>
+                  
+                  {currentCard?.type === 'passage' && (
+                    <TouchableOpacity style={S.backToLessonBtn} onPress={handleBackStep} activeOpacity={0.8}>
+                      <Text style={S.backToLessonBtnText}>Bumalik sa Aralin</Text>
+                    </TouchableOpacity>
+                  )}
+                </BounceIn>
+              )}
           </ScrollView>
         </View>
       </View>

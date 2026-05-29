@@ -9,25 +9,26 @@ import {
   TextInput,
   Image,
   ScrollView,
+  Modal,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
 import { useAdminStats } from '../../Hooks/use_AdminStats';
-import { BurgerIcon, SearchIcon, FilterIcon, UsersIcon, TrashIcon, PencilIcon } from '../../Components/GlobalUse/Icons';
+import { BurgerIcon, SearchIcon, UsersIcon, TrashIcon, PencilIcon } from '../../Components/GlobalUse/Icons';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import AdminSideMenu from '../../Components/Admin/AdminSideMenu';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { updateUserProfile, deleteUserDocument } from '../../Controller/AuthenticationController';
-import { Modal, Alert } from 'react-native';
 import ConfirmationModal from '../../Components/GlobalUse/ConfirmationModal';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { useRoute } from '@react-navigation/native';
 
 const getRoleColor = (role: string) => {
   switch (role) {
-    case 'admin': return '#3d71d9'; // Brand Blue
-    case 'faculty': return '#eb5c6c'; // Brand Coral
-    case 'student': return '#5c7eb5'; // Muted Blue
+    case 'admin': return '#3d71d9';
+    case 'faculty': return '#eb5c6c';
+    case 'student': return '#5c7eb5';
     default: return '#8ca69a';
   }
 };
@@ -41,33 +42,18 @@ export default function UserManagement() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
 
-// EDIT & DELETE STATE
-   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-   const [editModalVisible, setEditModalVisible] = useState(false);
-   const [selectedUser, setSelectedUser] = useState<any>(null);
-   const [editFirstName, setEditFirstName] = useState('');
-   const [editMiddleName, setEditMiddleName] = useState('');
-   const [editLastName, setEditLastName] = useState('');
-   const [editEmail, setEditEmail] = useState('');
-   const [editSex, setEditSex] = useState('');
-<<<<<<< HEAD
-   
-   // Student-specific fields
-   const [editGradeLevel, setEditGradeLevel] = useState(1);
-   const [editDateOfBirth, setEditDateOfBirth] = useState('');
-   const [editClassCode, setEditClassCode] = useState('');
-   const [editReadingLevel, setEditReadingLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
-=======
-   const [editDateOfBirth, setEditDateOfBirth] = useState('');
-   
-   // Student-specific fields
-   const [editGradeLevel, setEditGradeLevel] = useState(1);
->>>>>>> lugh/Marungko-Homefix-v4
-   
-   // Faculty-specific fields
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editMiddleName, setEditMiddleName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editSex, setEditSex] = useState('');
+  const [editGradeLevel, setEditGradeLevel] = useState(1);
    const [editAssignedGradeLevels, setEditAssignedGradeLevels] = useState<number[]>([]);
-   
-   const [editLoading, setEditLoading] = useState(false);
+  
+  const [editLoading, setEditLoading] = useState(false);
 
   const { getAllUsers } = useAdminStats();
   const { handleLogout, handleNavigateStep } = useNavigationHelper();
@@ -96,7 +82,6 @@ export default function UserManagement() {
   };
 
 const handleEditPress = (user: any) => {
-<<<<<<< HEAD
      setSelectedUser(user);
      setEditFirstName(user.firstName || '');
      setEditMiddleName(user.middleName || '');
@@ -104,44 +89,16 @@ const handleEditPress = (user: any) => {
      setEditEmail(user.email || '');
      setEditSex(user.sex || '');
      
-     // Student-specific fields
      if (user.role === 'student' && user.studentData) {
        setEditGradeLevel(user.studentData.gradeLevel || 1);
-       setEditDateOfBirth(user.studentData.dateOfBirth || '');
-       setEditClassCode(user.studentData.classCode || '');
-       setEditReadingLevel(user.studentData.reading_Level || 'beginner');
      }
      
-     // Faculty-specific fields
      if (user.role === 'faculty' && user.facultyData) {
        setEditAssignedGradeLevels(user.facultyData.assignedGradeLevels || []);
      }
      
      setEditModalVisible(true);
    };
-=======
-       setSelectedUser(user);
-       setEditFirstName(user.firstName || '');
-       setEditMiddleName(user.middleName || '');
-       setEditLastName(user.lastName || '');
-       setEditEmail(user.email || '');
-       setEditSex(user.sex || '');
-       setEditDateOfBirth('');
-       
-       // Student-specific fields
-       if (user.role === 'student' && user.studentData) {
-         setEditGradeLevel(user.studentData.gradeLevel || 1);
-         setEditDateOfBirth(user.studentData.dateOfBirth || '');
-       }
-       
-       // Faculty-specific fields
-       if (user.role === 'faculty' && user.facultyData) {
-         setEditAssignedGradeLevels(user.facultyData.assignedGradeLevels || []);
-       }
-       
-       setEditModalVisible(true);
-     };
->>>>>>> lugh/Marungko-Homefix-v4
 
   const handleDeletePress = (user: any) => {
     setSelectedUser(user);
@@ -149,7 +106,6 @@ const handleEditPress = (user: any) => {
   };
 
 const handleSaveEdit = async () => {
-<<<<<<< HEAD
      if (!editFirstName.trim() || !editLastName.trim() || !editEmail.trim()) {
        Alert.alert('Maling Input', 'Punan ang lahat ng field.');
        return;
@@ -166,17 +122,12 @@ const handleSaveEdit = async () => {
          sex: editSex,
        };
        
-       // Add student-specific fields
        if (selectedUser.role === 'student') {
          updateData.studentData = {
            gradeLevel: editGradeLevel,
-           dateOfBirth: editDateOfBirth,
-           classCode: editClassCode,
-           reading_Level: editReadingLevel,
          };
        }
        
-       // Add faculty-specific fields
        if (selectedUser.role === 'faculty') {
          updateData.facultyData = {
            assignedGradeLevels: editAssignedGradeLevels,
@@ -191,50 +142,7 @@ const handleSaveEdit = async () => {
      } finally {
        setEditLoading(false);
      }
-   };
-=======
-      if (!editFirstName.trim() || !editLastName.trim() || !editEmail.trim()) {
-        Alert.alert('Maling Input', 'Punan ang lahat ng field.');
-        return;
-      }
-
-      try {
-        setEditLoading(true);
-        
-        const updateData: any = {
-          firstName: editFirstName,
-          middleName: editMiddleName,
-          lastName: editLastName,
-          email: editEmail,
-          sex: editSex,
-        };
-        
-        // Add student-specific fields
-        if (selectedUser.role === 'student') {
-          updateData.studentData = {
-            gradeLevel: editGradeLevel,
-            dateOfBirth: editDateOfBirth,
-          };
-        }
-        
-        // Add faculty-specific fields
-        if (selectedUser.role === 'faculty') {
-          updateData.facultyData = {
-            assignedGradeLevels: editAssignedGradeLevels,
-            dateOfBirth: editDateOfBirth,
-          };
-        }
-        
-        await updateUserProfile(selectedUser.uid, updateData);
-        setEditModalVisible(false);
-        fetchUsers();
-      } catch (e: any) {
-        Alert.alert('Error', e.message);
-      } finally {
-        setEditLoading(false);
-      }
-    };
->>>>>>> lugh/Marungko-Homefix-v4
+  };
 
   const handleConfirmDelete = async () => {
     try {
@@ -251,12 +159,10 @@ const handleSaveEdit = async () => {
   useEffect(() => {
     let result = users;
 
-    // Filter by Role
     if (activeRole !== 'all') {
       result = result.filter(u => u.role === activeRole);
     }
 
-    // Filter by Search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(u =>
@@ -395,277 +301,150 @@ const handleSaveEdit = async () => {
           confirmText="Burahin"
           onCancel={() => setDeleteModalVisible(false)}
           onConfirm={handleConfirmDelete}
-/>
+        />
 
-<<<<<<< HEAD
 {/* EDIT MODAL */}
-       <Modal visible={editModalVisible} transparent animationType="slide">
-         <View style={S.modalOverlay}>
-           <View style={S.editContainer}>
-             <View style={S.modalHeader}>
-               <Text style={S.modalTitle}>Ayusin ang Profile</Text>
-               <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-                 <Text style={S.closeTxt}>✕</Text>
-               </TouchableOpacity>
-             </View>
-
-             {/* Basic Fields */}
-             <View style={S.field}>
-               <Text style={S.fieldLabel}>Pangalan (First Name)</Text>
-               <TextInput
-                 style={S.modalInput}
-                 value={editFirstName}
-                 onChangeText={setEditFirstName}
-               />
-             </View>
-
-             <View style={S.field}>
-               <Text style={S.fieldLabel}>Gitnang Pangalan (Middle Name)</Text>
-               <TextInput
-                 style={S.modalInput}
-                 value={editMiddleName}
-                 onChangeText={setEditMiddleName}
-               />
-             </View>
-
-             <View style={S.field}>
-               <Text style={S.fieldLabel}>Apelyido (Last Name)</Text>
-               <TextInput
-                 style={S.modalInput}
-                 value={editLastName}
-                 onChangeText={setEditLastName}
-               />
-             </View>
-
-             <View style={S.field}>
-               <Text style={S.fieldLabel}>Email Address</Text>
-               <TextInput
-                 style={S.modalInput}
-                 value={editEmail}
-                 onChangeText={setEditEmail}
-                 keyboardType="email-address"
-               />
-             </View>
-
-             <View style={S.field}>
-               <Text style={S.fieldLabel}>Kasarian (Sex)</Text>
-               <TextInput
-                 style={S.modalInput}
-                 value={editSex}
-                 onChangeText={setEditSex}
-                 placeholder="Male / Female"
-               />
-             </View>
-
-             {/* Student-Specific Fields */}
-             {selectedUser?.role === 'student' && (
-               <>
-                 <View style={S.field}>
-                   <Text style={S.fieldLabel}>Antas ng Baitang (Grade Level)</Text>
-                   <TextInput
-                     style={S.modalInput}
-                     value={String(editGradeLevel)}
-                     onChangeText={(text) => setEditGradeLevel(Number(text) || 1)}
-                     keyboardType="numeric"
-                     placeholder="1-6"
-                   />
-                 </View>
-
-                 <View style={S.field}>
-                   <Text style={S.fieldLabel}>Petsa ng Kapanganakan (Date of Birth)</Text>
-                   <TextInput
-                     style={S.modalInput}
-                     value={editDateOfBirth}
-                     onChangeText={setEditDateOfBirth}
-                     placeholder="e.g. 7 Pebrero 2018"
-                   />
-                 </View>
-
-                 <View style={S.field}>
-                   <Text style={S.fieldLabel}>Code ng Klase (Class Code)</Text>
-                   <TextInput
-                     style={S.modalInput}
-                     value={editClassCode}
-                     onChangeText={setEditClassCode}
-                     placeholder="Optional"
-                   />
-                 </View>
-
-                 <View style={S.field}>
-                   <Text style={S.fieldLabel}>Antas ng Pagbabasa (Reading Level)</Text>
-                   <TextInput
-                     style={S.modalInput}
-                     value={editReadingLevel}
-                     onChangeText={(text) => setEditReadingLevel(text as any)}
-                     placeholder="beginner / intermediate / advanced"
-                   />
-                 </View>
-               </>
-             )}
-
-             {/* Faculty-Specific Fields */}
-             {selectedUser?.role === 'faculty' && (
-               <View style={S.field}>
-                 <Text style={S.fieldLabel}>Itinalagang Baitang (Assigned Grade Levels)</Text>
-                 <TextInput
-                   style={S.modalInput}
-                   value={editAssignedGradeLevels.join(', ')}
-                   onChangeText={(text) => {
-                     const levels = text.split(',').map(l => Number(l.trim())).filter(l => !isNaN(l));
-                     setEditAssignedGradeLevels(levels);
-                   }}
-                   placeholder="e.g. 1, 2, 3"
-                 />
-               </View>
-             )}
-
-             <TouchableOpacity
-               style={[S.saveActionBtn, editLoading && { opacity: 0.7 }]}
-               onPress={handleSaveEdit}
-               disabled={editLoading}
-             >
-               {editLoading ? <ActivityIndicator color={F.white} /> : <Text style={S.saveActionTxt}>I-update ang User</Text>}
-             </TouchableOpacity>
-           </View>
-         </View>
-       </Modal>
-=======
-/* EDIT MODAL */
         <Modal visible={editModalVisible} transparent animationType="slide">
-          <View style={S.modalOverlay}>
-            <View style={S.editContainer}>
-              <ScrollView 
-                style={{ flex: 1 }} 
-                contentContainerStyle={{ flexGrow: 1 }}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
-                <View style={S.modalContent}>
-                  <View style={S.modalHandle} />
-                  <View style={S.modalHeader}>
-                    <Text style={S.modalTitle}>Ayusin ang Profile</Text>
-                    <TouchableOpacity onPress={() => setEditModalVisible(false)} style={S.modalClose}>
-                      <Text style={S.modalCloseText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
+          <View style={S.fullScreenModal}>
+            <View style={S.fullScreenContainer}>
+              <View style={S.modalHeader}>
+                <Text style={S.modalTitle}>Ayusin ang Profile</Text>
+                <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                  <Text style={S.closeTxt}>✕</Text>
+                </TouchableOpacity>
+              </View>
 
-                  {/* Basic Fields */}
-                  <View style={S.field}>
-                    <Text style={S.fieldLabel}>Pangalan (First Name)</Text>
-                    <TextInput
-                      style={S.modalInput}
-                      value={editFirstName}
-                      onChangeText={setEditFirstName}
-                    />
-                  </View>
-
-                  <View style={S.field}>
-                    <Text style={S.fieldLabel}>Gitnang Pangalan (Middle Name)</Text>
-                    <TextInput
-                      style={S.modalInput}
-                      value={editMiddleName}
-                      onChangeText={setEditMiddleName}
-                    />
-                  </View>
-
-                  <View style={S.field}>
-                    <Text style={S.fieldLabel}>Apelyido (Last Name)</Text>
-                    <TextInput
-                      style={S.modalInput}
-                      value={editLastName}
-                      onChangeText={setEditLastName}
-                    />
-                  </View>
-
-                  <View style={S.field}>
-                    <Text style={S.fieldLabel}>Email Address</Text>
-                    <TextInput
-                      style={S.modalInput}
-                      value={editEmail}
-                      onChangeText={setEditEmail}
-                      keyboardType="email-address"
-                    />
-                  </View>
-
-                  <View style={S.field}>
-                    <Text style={S.fieldLabel}>Kasarian (Sex)</Text>
-                    <TextInput
-                      style={S.modalInput}
-                      value={editSex}
-                      onChangeText={setEditSex}
-                      placeholder="Male / Female"
-                    />
-                  </View>
-
-{/* Student-Specific Fields */}
-                   {selectedUser?.role === 'student' && (
-                     <>
-                       <View style={S.field}>
-                         <Text style={S.fieldLabel}>Antas ng Baitang (Grade Level)</Text>
-                         <TextInput
-                           style={S.modalInput}
-                           value={String(editGradeLevel)}
-                           onChangeText={(text) => setEditGradeLevel(Number(text) || 1)}
-                           keyboardType="numeric"
-                           placeholder="1-6"
-                         />
-                       </View>
-
-                       <View style={S.field}>
-                         <Text style={S.fieldLabel}>Petsa ng Kapanganakan (Date of Birth)</Text>
-                         <TextInput
-                           style={S.modalInput}
-                           value={editDateOfBirth}
-                           onChangeText={setEditDateOfBirth}
-                           placeholder="e.g. 7 Pebrero 2018"
-                         />
-                       </View>
-                     </>
-                   )}
-
-{/* Faculty-Specific Fields */}
-                   {selectedUser?.role === 'faculty' && (
-                     <>
-                       <View style={S.field}>
-                         <Text style={S.fieldLabel}>Petsa ng Kapanganakan (Date of Birth)</Text>
-                         <TextInput
-                           style={S.modalInput}
-                           value={editDateOfBirth}
-                           onChangeText={setEditDateOfBirth}
-                           placeholder="e.g. 7 Pebrero 2018"
-                         />
-                       </View>
-                       <View style={S.field}>
-                         <Text style={S.fieldLabel}>Itinalagang Baitang (Assigned Grade Levels)</Text>
-                         <TextInput
-                           style={S.modalInput}
-                           value={editAssignedGradeLevels.join(', ')}
-                           onChangeText={(text) => {
-                             const levels = text.split(',').map(l => Number(l.trim())).filter(l => !isNaN(l));
-                             setEditAssignedGradeLevels(levels);
-                           }}
-                           placeholder="e.g. 1, 2, 3"
-                         />
-                       </View>
-                     </>
-                   )}
-
-                  <TouchableOpacity
-                    style={[S.saveActionBtn, editLoading && { opacity: 0.7 }]}
-                    onPress={handleSaveEdit}
-                    disabled={editLoading}
-                  >
-                    {editLoading ? <ActivityIndicator color={F.white} /> : <Text style={S.saveActionTxt}>I-update ang User</Text>}
-                  </TouchableOpacity>
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={S.scrollContent}>
+                {/* Basic Fields */}
+                <View style={S.field}>
+                  <Text style={S.fieldLabel}>Pangalan (First Name)</Text>
+                  <TextInput
+                    style={S.modalInput}
+                    value={editFirstName}
+                    onChangeText={setEditFirstName}
+                  />
                 </View>
+
+                <View style={S.field}>
+                  <Text style={S.fieldLabel}>Gitnang Pangalan (Middle Name)</Text>
+                  <TextInput
+                    style={S.modalInput}
+                    value={editMiddleName}
+                    onChangeText={setEditMiddleName}
+                  />
+                </View>
+
+                <View style={S.field}>
+                  <Text style={S.fieldLabel}>Apelyido (Last Name)</Text>
+                  <TextInput
+                    style={S.modalInput}
+                    value={editLastName}
+                    onChangeText={setEditLastName}
+                  />
+                </View>
+
+                <View style={S.field}>
+                  <Text style={S.fieldLabel}>Email Address</Text>
+                  <TextInput
+                    style={S.modalInput}
+                    value={editEmail}
+                    onChangeText={setEditEmail}
+                    keyboardType="email-address"
+                  />
+                </View>
+
+                <View style={S.field}>
+                  <Text style={S.fieldLabel}>Kasarian (Sex)</Text>
+                  <TextInput
+                    style={S.modalInput}
+                    value={editSex}
+                    onChangeText={setEditSex}
+                    placeholder="Male / Female"
+                  />
+                </View>
+
+                {/* Student-Specific Fields */}
+                {selectedUser?.role === 'student' && (
+                  <>
+                    <View style={S.field}>
+                      <Text style={S.fieldLabel}>Antas ng Baitang (Grade Level)</Text>
+                      <View style={{ width: '100%' }}>
+                        {['Baitang 1', 'Baitang 2', 'Baitang 3'].map((level, index) => (
+                          <TouchableOpacity
+                            key={index}
+                            style={[
+                              S.modalInput,
+                              {
+                                backgroundColor: editGradeLevel === index + 1 ? F.primaryLight : F.bg,
+                                marginBottom: 8,
+                              }
+                            ]}
+                            onPress={() => setEditGradeLevel(index + 1)}
+                          >
+                            <Text style={{ 
+                              color: editGradeLevel === index + 1 ? F.primaryDeep : F.ink,
+                              fontFamily: 'Andika-Regular',
+                            }}>
+                              {level}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  </>
+                )}
+
+                {/* Faculty-Specific Fields */}
+                {selectedUser?.role === 'faculty' && (
+                  <View style={S.field}>
+                    <Text style={S.fieldLabel}>Itinalagang Baitang (Assigned Grade Levels)</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {[1, 2, 3].map((level) => (
+                        <TouchableOpacity
+                          key={level}
+                          style={{
+                            paddingVertical: 8,
+                            paddingHorizontal: 16,
+                            borderRadius: 12,
+                            backgroundColor: editAssignedGradeLevels.includes(level) ? F.primaryDeep : F.bg,
+                            borderWidth: 1,
+                            borderColor: F.primaryDeep,
+                          }}
+                          onPress={() => {
+                            if (editAssignedGradeLevels.includes(level)) {
+                              setEditAssignedGradeLevels(editAssignedGradeLevels.filter(l => l !== level));
+                            } else {
+                              setEditAssignedGradeLevels([...editAssignedGradeLevels, level]);
+                            }
+                          }}
+                        >
+                          <Text style={{ 
+                            color: editAssignedGradeLevels.includes(level) ? F.white : F.primaryDeep,
+                            fontFamily: 'Andika-Bold',
+                            fontSize: 14,
+                          }}>
+                            Baitang {level}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={[S.saveActionBtn, editLoading && { opacity: 0.7 }]}
+                  onPress={handleSaveEdit}
+                  disabled={editLoading}
+                >
+                  {editLoading ? <ActivityIndicator color={F.white} /> : <Text style={S.saveActionTxt}>I-update ang User</Text>}
+                </TouchableOpacity>
               </ScrollView>
             </View>
           </View>
         </Modal>
->>>>>>> lugh/Marungko-Homefix-v4
-     </SafeAreaView>
-   );
- }
+    </SafeAreaView>
+  );
+}
 
 const S = StyleSheet.create({
   container: { flex: 1, backgroundColor: F.bg },
@@ -717,10 +496,20 @@ const S = StyleSheet.create({
   actionGroup: { flexDirection: 'row', gap: 10 },
   actionIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: F.bg, justifyContent: 'center', alignItems: 'center' },
 
-<<<<<<< HEAD
-  // Modal Styles
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  editContainer: { backgroundColor: F.white, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 30, paddingBottom: 50 },
+  fullScreenModal: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    padding: 20,
+  },
+  fullScreenContainer: { 
+    backgroundColor: F.white, 
+    borderRadius: 32, 
+    width: '100%',
+    maxHeight: '90%',
+  },
+  scrollContent: { padding: 30, paddingBottom: 50 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   modalTitle: { fontSize: 20, fontWeight: '900', color: F.ink },
   closeTxt: { fontSize: 22, color: F.slate, fontWeight: '700' },
@@ -729,35 +518,4 @@ const S = StyleSheet.create({
   modalInput: { backgroundColor: F.bg, borderRadius: 12, padding: 14, fontSize: 16, color: F.ink, fontWeight: '600', borderWidth: 1, borderColor: '#eee' },
   saveActionBtn: { backgroundColor: F.primaryDeep, borderRadius: 16, padding: 18, alignItems: 'center', marginTop: 10, ...Shadows.button },
   saveActionTxt: { color: F.white, fontSize: 16, fontWeight: '800' }
-=======
-// Modal Styles
-   modalOverlay: { flex: 1, backgroundColor: 'rgba(27,46,35,0.45)', justifyContent: 'flex-end' },
-   editContainer: { 
-     backgroundColor: F.white, 
-     borderTopLeftRadius: 28, 
-     borderTopRightRadius: 28, 
-     paddingTop: 12, 
-     maxHeight: '85%',
-   },
-   modalContent: { paddingHorizontal: 20, paddingBottom: 40 },
-   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-   modalHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: F.primary, alignSelf: 'center', marginBottom: 14 },
-   modalIconWrap: { marginRight: 10 },
-   modalTitle: { flex: 1, fontSize: 20, fontWeight: '800', color: F.ink },
-   modalClose: { padding: 6, backgroundColor: F.primary + '15', borderRadius: 20 },
-   modalCloseText: { fontSize: 14, color: F.inkLight, fontWeight: '700' },
-   field: { marginBottom: 18 },
-   fieldLabel: { fontSize: 14, fontWeight: '700', color: F.ink },
-   modalInput: { 
-     backgroundColor: F.bg, 
-     borderRadius: 12, 
-     padding: 14, 
-     fontSize: 16, 
-     color: F.ink, 
-     fontWeight: '600',
-     marginTop: 1,
-   },
-   saveActionBtn: { backgroundColor: F.primaryDeep, borderRadius: 16, padding: 18, alignItems: 'center', marginTop: 10, ...Shadows.button },
-   saveActionTxt: { color: F.white, fontSize: 16, fontWeight: '800' }
->>>>>>> lugh/Marungko-Homefix-v4
 });

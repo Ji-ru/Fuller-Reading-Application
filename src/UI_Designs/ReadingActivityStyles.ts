@@ -1,6 +1,6 @@
 import { StyleSheet, Dimensions } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const scaleFont = (size: number) => Math.min(size, width * 0.05);
 
@@ -19,7 +19,7 @@ const readingStyles = StyleSheet.create({
   },
 
 // ── Passage Card ────────────────────────────────────────────────────────
-   passageContainer: {
+passageContainer: {
      backgroundColor: '#fff',
      paddingTop: 28,
      paddingBottom: 28,
@@ -29,22 +29,14 @@ const readingStyles = StyleSheet.create({
      alignSelf: 'center',
      width: '95%',
      maxWidth: 700,
-     minHeight: 200,
-     flex: 1,
+     minHeight: 150,
      borderWidth: 2,
      borderColor: '#d6eaf8',
-     position: 'relative',
-     overflow: 'visible',
    },
 
   passageCard: {
-    backgroundColor: '#ebf5fb',
-    padding: 24,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#d6eaf8',
-    width: '90%',
-    maxHeight: 300,
+    flex: 1,
+    width: '100%',
   },
 
   passageHeader: {
@@ -57,8 +49,8 @@ const readingStyles = StyleSheet.create({
   },
 
   passageScroll: {
-    marginTop: 10,
-    paddingBottom: 30,
+    flex: 1,
+    width: '100%',
   },
 
   passageTitle: {

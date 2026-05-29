@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
-  Dimensions,
   Image,
   ScrollView,
   StyleSheet,
@@ -22,9 +21,6 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
 
-const { width: SW } = Dimensions.get('window');
-
-// ─── Time-of-day greeting ─────────────────────────────────────────────────────
 function getTimeGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return 'Magandang Umaga,';
@@ -37,7 +33,7 @@ export default function UserHomeScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [firstName, setFirstName] = useState('Mag-aaral');
-  const [pendingAssessments, setPendingAssessments] = useState(0);
+  const [_, setPendingAssessments] = useState(0);
 
   const { handleLogout, handleNextStep } = useNavigationHelper();
 
@@ -229,7 +225,7 @@ export default function UserHomeScreen() {
                   <HistoryIcon size={30} color={C.green} />
                 </View>
                 <View style={S.secondaryTextBox}>
-                  <Text style={S.secondaryLabel}>Kasaysayan</Text>
+                  <Text style={S.secondaryLabel}>Mga Ulat</Text>
                   <Text style={S.secondarySub}>Nakaraang Pagbasa</Text>
                 </View>
                 <View style={S.secondaryArrow}>
@@ -304,8 +300,6 @@ export default function UserHomeScreen() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const CARD_W = (SW - 48 - 12) / 2;
-
 const S = StyleSheet.create({
   bg: { flex: 1, backgroundColor: C.bg },
 
@@ -469,8 +463,8 @@ const S = StyleSheet.create({
     alignItems: 'center',
   },
 
-// ── Secondary Cards ─────────────────────────────────────────────────────
-secondaryCard: {
+  // ── Secondary Cards ─────────────────────────────────────────────────────
+  secondaryCard: {
     marginTop: 10,
     backgroundColor: C.white,
     borderRadius: Radii.lg,

@@ -240,15 +240,15 @@ const S = StyleSheet.create({
     color: INK_LIGHT,
   },
 
-  /* Section Card */
-  sectionCard: {
-    backgroundColor: C.white,
-    borderRadius: Radii.md,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: PRIMARY_LIGHT,
-    marginBottom: 12,
-  },
+/* Section Card */
+   sectionCard: {
+     backgroundColor: C.white,
+     borderRadius: Radii.md,
+     padding: 12,
+     borderWidth: 1,
+     borderColor: PRIMARY_LIGHT,
+     marginBottom: 8,
+   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '800',

@@ -13,13 +13,10 @@ import { useRoute } from '@react-navigation/native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { ActivityResultDocument } from '../../Interfaces/dataInterfaces';
 import { StudentColors as C, Radii, Shadows } from '../../Utilities/Theme';
-import { 
+import {
   BackArrowIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   TrophyIcon,
-  StarIcon,
-  ClipboardListIcon
+  ClipboardListIcon,
 } from '../../Components/GlobalUse/Icons';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { BounceIn } from '../../Components/GlobalUse/Animations';

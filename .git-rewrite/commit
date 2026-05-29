@@ -1,0 +1,6 @@
+tree f05b1bad64a99d151cf42454da4b65f1a7feac79
+parent 2c8163bf24627564605be364a504bff6654d71cc
+author Ji-ru <164502698+Ji-ru@users.noreply.github.com> 1775440184 +0800
+committer Ji-ru <164502698+Ji-ru@users.noreply.github.com> 1775440184 +0800
+
+Added reading level computation and Fixed Google Registration and Login

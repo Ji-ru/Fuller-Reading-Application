@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { BriefcaseIcon, HistoryIcon, UserProfileIcon, BurgerIcon } from '../../Components/GlobalUse/Icons';
+import { BriefcaseIcon, HistoryIcon, BurgerIcon, UserProfileIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import {
@@ -31,7 +31,7 @@ export default function FacultyProfile() {
   const [profileData, setProfileData] = useState<UserDocument | null>(null);
   const [activeClassCount, setActiveClassCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_, setError] = useState<string | null>(null);
 
   const { handleLogout } = useNavigationHelper();
   const route = useRoute();

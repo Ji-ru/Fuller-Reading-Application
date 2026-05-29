@@ -222,14 +222,20 @@ const [actionModalVisible, setActionModalVisible] = useState(false);
     }
   };
 
-  const handleEllipsisPress = (px: number, py: number, item: ClassDocument) => {
+  const handleEllipsisPress = (_px: number, _py: number, item: ClassDocument) => {
     const screenHeight = Dimensions.get('window').height;
+    const screenWidth = Dimensions.get('window').width;
+    const menuWidth = 160;
     const menuHeight = 160; // Approximate height of the menu
-    const shouldShowUpward = py + menuHeight > screenHeight - 60;
+    const shouldShowUpward = screenHeight / 2 > menuHeight;
+
+    // Center the menu horizontally on screen
+    const centeredX = (screenWidth - menuWidth) / 2;
+    const centeredY = (screenHeight - menuHeight) / 2;
 
     setMenuPosition({
-      x: px - 110,
-      y: shouldShowUpward ? py - menuHeight : py + 20
+      x: centeredX,
+      y: centeredY
     });
     setSelectedClass(item);
     setEllipsisVisible(true);
@@ -275,10 +281,7 @@ const [actionModalVisible, setActionModalVisible] = useState(false);
           <Text style={S.codeVal}>{item.classCode}</Text>
         </View>
         <TouchableOpacity
-          onPress={(e) => {
-            const { pageX, pageY } = e.nativeEvent;
-            handleEllipsisPress(pageX, pageY, item);
-          }}
+onPress={() => handleEllipsisPress(0, 0, item)}
           style={S.moreBtn}
         >
           <Text style={S.moreText}>•••</Text>

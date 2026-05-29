@@ -34,17 +34,15 @@ export const getCurrentAcademicYear = (): string => {
     return `${startYear - 1}-${endYear - 1}`;
   };
   
-  /**
+/**
    * Generate academic year options for dropdown
    * Default: 2 years back, current year, 2 years forward
    */
-  export const getAcademicYearOptions = (): string[] => {
-    const currentSY = getCurrentAcademicYear();
-    const [startYear] = currentSY.split('-').map(Number);
-    const options: string[] = [];
-    
-    return options.reverse(); // Most recent first
-  };
+export const getAcademicYearOptions = (): string[] => {
+   const options: string[] = [];
+   
+   return options.reverse(); // Most recent first
+};
   
   /**
    * Format academic year for display

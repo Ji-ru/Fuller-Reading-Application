@@ -6,6 +6,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  onAuthStateChanged,
 } from '@react-native-firebase/auth';
 import {
   getFirestore,
@@ -150,9 +151,6 @@ const createUserDocument = async (
   await setDoc(userRef, userDocument);
 };
 
-/* -------------------------------------------------------------
-   UPDATE USER PROFILE
-------------------------------------------------------------- */
 export const updateUserProfile = async (
   uid: string,
   data: {
@@ -167,18 +165,10 @@ export const updateUserProfile = async (
       classCode?: string;
       reading_Level?: 'beginner' | 'intermediate' | 'advanced';
     };
-<<<<<<< HEAD
-facultyData?: {
-       assignedGradeLevels?: number[];
-       assignedClassIds?: string[];
-     };
-=======
-  facultyData?: {
-     assignedGradeLevels?: number[];
-     assignedClassIds?: string[];
-     dateOfBirth?: string;
-   };
->>>>>>> lugh/Marungko-Homefix-v4
+    facultyData?: {
+      assignedGradeLevels?: number[];
+      assignedClassIds?: string[];
+    };
   },
 ) => {
   const userRef = doc(db, 'users', uid);
@@ -200,34 +190,18 @@ facultyData?: {
     if (sd.reading_Level !== undefined)  update['studentData.reading_Level']  = sd.reading_Level;
   }
 
-<<<<<<< HEAD
-// Faculty-specific nested fields
-    if (data.facultyData) {
-      const fd = data.facultyData;
-      const assignedGradeLevels = fd.assignedGradeLevels;
-      const assignedClassIds = fd.assignedClassIds;
-      if (assignedGradeLevels !== undefined) {
-        update['facultyData.assignedGradeLevels'] = assignedGradeLevels;
-      }
-      if (assignedClassIds !== undefined) {
-        update['facultyData.assignedClassIds'] = assignedClassIds;
-      }
-    }
-=======
   // Faculty-specific nested fields
   if (data.facultyData) {
     const fd = data.facultyData;
     if (fd.assignedGradeLevels !== undefined) update['facultyData.assignedGradeLevels'] = fd.assignedGradeLevels;
     if (fd.assignedClassIds !== undefined)    update['facultyData.assignedClassIds']    = fd.assignedClassIds;
-    if (fd.dateOfBirth !== undefined)         update['facultyData.dateOfBirth']         = fd.dateOfBirth;
   }
->>>>>>> lugh/Marungko-Homefix-v4
 
-   await updateDoc(userRef, update);
+  await updateDoc(userRef, update);
 };
 
 /* -------------------------------------------------------------
-   DELETE USER DOCUMENT
+    DELETE USER DOCUMENT
 ------------------------------------------------------------- */
 export const deleteUserDocument = async (uid: string) => {
   const userRef = doc(db, 'users', uid);
@@ -263,11 +237,7 @@ export const updateUserPassword = async (
 
 
 /* -------------------------------------------------------------
-<<<<<<< HEAD
-   CREATE CLASS
-=======
     CREATE CLASS
->>>>>>> lugh/Marungko-Homefix-v4
 ------------------------------------------------------------- */
 export const createClass = async (
   facultyId: string,
@@ -481,16 +451,30 @@ export const requestToJoinClass = async (studentId: string, joinClassCode: strin
 };
 
 /* -------------------------------------------------------------
-    APPROVE STUDENT JOIN REQUEST
+     APPROVE STUDENT JOIN REQUEST
+     Moves student from pending to enrolled and ensures classCode is set
 ------------------------------------------------------------- */
 export const approveStudentJoin = async (studentId: string, classId: string) => {
   try {
     const classRef = doc(db, 'classes', classId);
     
+    // Get class data to find classCode
+    const classSnap = await getDoc(classRef);
+    if (!classSnap.exists()) throw new Error('Class not found');
+    const classData = classSnap.data() as ClassDocument;
+    const classCode = classData.classCode;
+    
     // Move student from pending to enrolled
     await updateDoc(classRef, {
       studentIds: arrayUnion(studentId),
       pendingJoinRequests: arrayRemove(studentId),
+      updatedAt: serverTimestamp(),
+    });
+
+    // Ensure student has the classCode set (required for enrollment)
+    const studentRef = doc(db, 'users', studentId);
+    await updateDoc(studentRef, {
+      'studentData.classCode': classCode,
       updatedAt: serverTimestamp(),
     });
 
@@ -572,26 +556,24 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
 };
 
 /* -------------------------------------------------------------
-   LEAVE CLASS
+    LEAVE CLASS
 ------------------------------------------------------------- */
 export const leaveClass = async (studentId: string, classId: string) => {
    try {
      // Get current class data to find classCode
      const classRef = doc(db, 'classes', classId);
      const classSnap = await getDoc(classRef);
-     let classCode = '';
-     if (classSnap.exists()) {
-       const snapData = classSnap.data();
-       if (snapData) {
-         classCode = snapData.classCode || '';
-       }
-     }
-
-     // Remove student from class - MODULAR API
-     await updateDoc(classRef, {
+     
+     // Update class - remove from studentIds and pendingJoinRequests
+     const updateData: Record<string, any> = {
        studentIds: arrayRemove(studentId),
+       pendingJoinRequests: arrayRemove(studentId),
        updatedAt: serverTimestamp(),
-     });
+     };
+     
+     if (classSnap.exists()) {
+       await updateDoc(classRef, updateData);
+     }
 
      // Update student's classCode to empty - MODULAR API
      const studentRef = doc(db, 'users', studentId);
@@ -689,6 +671,8 @@ export const loginUser = async (email: string, password: string) => {
 export const getCurrentUser = () => {
   return auth.currentUser;
 };
+
+export { getAuth, onAuthStateChanged };
 
 /* -------------------------------------------------------------
    LOGOUT USER

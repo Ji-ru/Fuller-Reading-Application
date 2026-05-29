@@ -1,13 +1,14 @@
-import React, { useState, ReactElement } from 'react';
+import React, { useState, ReactElement, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, Image } from 'react-native';
 import signup from '../../../UI_Designs/SignUpStyles';
 
 interface GradeLevelDropDownSelectionProps {
   onSelect?: (value: number) => void;
   transparent?: boolean;
+  initialValue?: number;
 }
 
-export default function GradeLevelDropDownSelection({ onSelect, transparent }: GradeLevelDropDownSelectionProps): ReactElement {
+export default function GradeLevelDropDownSelection({ onSelect, transparent, initialValue }: GradeLevelDropDownSelectionProps): ReactElement {
   const gradeLevels = ['Baitang 1', 'Baitang 2', 'Baitang 3'];
   const [selectedValue, setSelectedValue] = useState(gradeLevels[0]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -17,8 +18,17 @@ export default function GradeLevelDropDownSelection({ onSelect, transparent }: G
     onSelectRef.current = onSelect;
   });
 
+  useEffect(() => {
+    if (initialValue !== undefined) {
+      const idx = initialValue - 1;
+      if (idx >= 0 && idx < gradeLevels.length) {
+        setSelectedValue(gradeLevels[idx]);
+      }
+    }
+  }, [initialValue]);
+
   React.useEffect(() => {
-    if (onSelectRef.current) {
+    if (onSelectRef.current && initialValue === undefined) {
       onSelectRef.current(1);
     }
   }, []);

@@ -786,6 +786,8 @@ const S = StyleSheet.create({
   codeLabel: { fontSize: 12, color: F.slate, fontWeight: '600', fontFamily: 'Andika-Regular' },
   codeVal: { fontSize: 13, fontWeight: '800', color: F.primaryDeep, marginLeft: 6, textTransform: 'uppercase', fontFamily: 'Andika-Bold' },
   actionBtn: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', ...Shadows.subtle },
+  percentBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: F.slate + '10' },
+  percentText: { fontSize: 12, fontWeight: '800', fontFamily: 'Andika-Bold' },
   
   emptyState: { alignItems: 'center', marginTop: 40, opacity: 0.5 },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: F.ink, marginTop: 16, fontFamily: 'Andika-Bold' },

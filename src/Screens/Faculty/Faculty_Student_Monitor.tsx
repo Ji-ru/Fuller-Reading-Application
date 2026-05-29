@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
+    Animated,
     Dimensions,
     Image,
     ScrollView,
@@ -7,23 +8,17 @@ import {
     Text,
     TouchableOpacity,
     View,
-    Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import {
-    BookOpenIcon,
+    ChevronRightIcon,
     CheckCircleIcon,
     HistoryIcon,
-    StarIcon,
     TimerIcon,
     TrophyIcon,
-    ZapIcon,
-    PartyIcon,
-    ThumbsUpIcon,
-    FlexIcon,
 } from '../../Components/GlobalUse/Icons';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper, RootStackParamList } from '../../Controller/NavigationController';

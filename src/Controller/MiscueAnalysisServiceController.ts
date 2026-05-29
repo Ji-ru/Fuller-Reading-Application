@@ -5,38 +5,22 @@ import { Miscue } from '../Interfaces/miscue';
 
 export class MiscueAnalysisService {
   static detectMiscues(passageText: string, spokenText: string): Miscue[] {
-    // Check for no speech detected then mark every target word as omitted
-    if (!spokenText ||
-        spokenText.trim() === '' ||
-        spokenText.toLowerCase().trim() === 'no speech detected!') {
-      const targetWords = passageText
-        .toLowerCase()
-        .replace(/[^a-zñ0-9\s]/g, '')
-        .split(/\s+/)
-        .filter(word => word.length > 0);
-
-      return targetWords.map(word => ({
-        expected: word,
-        spoken: '',
-        position: 0,
-        timestamp: new Date(),
-        type: 'omission',
-      }));
+    if (!spokenText || spokenText === 'No Speech Detected!') {
+      return [];
     }
 
-    // Strip punctuation and split into words (supporting Filipino ñ)
+    // Strip punctuation and split into words
     const targetWords = passageText
       .toLowerCase()
-      .replace(/[^a-zñ0-9\s]/g, '') // Keep ñ and numbers
+      .replace(/[^\w\s]/g, '') // Remove all punctuation
       .split(/\s+/)
-      .filter(word => word.length > 0);
+      .filter(word => word.length > 0); // Remove empty strings
 
     const userWords = spokenText
       .toLowerCase()
-      .replace(/[^a-zñ0-9\s]/g, '') // Keep ñ and numbers
+      .replace(/[^\w\s]/g, '') // Remove all punctuation
       .split(/\s+/)
-      .filter(word => word.length > 0);
-
+      .filter(word => word.length > 0); // Remove empty strings
 
     const detectedMiscues: Miscue[] = [];
 
@@ -270,14 +254,13 @@ export class MiscueAnalysisService {
 
   // Enhanced accuracy calculation that considers miscues
   static calculateAccuracy(passageText: string, spokenText: string): string {
-    if (!spokenText || spokenText.trim() === '' || spokenText.toLowerCase().trim() === 'no speech detected!') return '0';
+    if (!spokenText || spokenText === 'No speech detected') return '0';
 
     const targetWords = passageText
       .toLowerCase()
-      .replace(/[^a-zñ0-9\s]/g, '')
+      .replace(/[^\w\s]/g, '')
       .split(/\s+/)
       .filter(word => word.length > 0);
-
     const miscues = this.detectMiscues(passageText, spokenText);
 
     // Count all error types that affect accuracy
@@ -299,8 +282,8 @@ export class MiscueAnalysisService {
     const accuracyNum = parseFloat(accuracy);
     if (accuracyNum >= 95) return 'Napakahusay! 🎉';
     if (accuracyNum >= 90) return 'Magaling!';
-    if (accuracyNum >= 80) return 'Mabuti!';
-    if (accuracyNum >= 70) return 'Mag-ensayo pa!';
+    if (accuracyNum >= 80) return 'Magaling!';
+    if (accuracyNum >= 70) return 'Magpatuloy pa!';
     return "Subukan Muli!";
   }
 
@@ -337,20 +320,19 @@ export class MiscueAnalysisService {
     accuracy: string;
     feedback: string;
   } {
-    if (!spokenText || spokenText.toLowerCase().trim() === 'no speech detected!') {
+    if (!spokenText || spokenText === 'No Speech Detected!') {
       return {
         isCorrect: false,
         accuracy: '0',
-        feedback: 'Walang natukoy na pagbigkas',
+        feedback: 'Walang audio na narinig',
       };
     }
 
     const normalizedTarget = targetLetter.toUpperCase().trim();
     const normalizedSpoken = spokenText.toUpperCase().trim();
 
-    // Remove everything except letters (including Ñ)
-    const cleanSpoken = normalizedSpoken.replace(/[^A-ZÑ]/g, '');
-
+    // Remove everything except letters
+    const cleanSpoken = normalizedSpoken.replace(/[^A-Z]/g, '');
 
     // For alphabet phoneme: must be exactly the single letter
     // Examples that should PASS: "A", "A.", "A!", "A "
@@ -360,7 +342,9 @@ export class MiscueAnalysisService {
     return {
       isCorrect,
       accuracy: isCorrect ? '100' : '0',
-      feedback: isCorrect ? 'Mahusay!' : 'Maling Bigkas',
+      feedback: isCorrect
+        ? `✓ Magaling! sinabi mo ang salita "${normalizedTarget}" ng maayos.`
+        : `✗ Subukan muli. Say just the letter "${normalizedTarget}". You said: "${normalizedSpoken}"`,
     };
   }
 
@@ -375,44 +359,32 @@ export class MiscueAnalysisService {
     accuracy: string;
     feedback: string;
   } {
-    if (!spokenText || spokenText.toLowerCase().trim() === 'no speech detected!') {
+    if (!spokenText || spokenText === 'No Speech Detected!') {
       return {
         isCorrect: false,
         accuracy: '0',
-        feedback: 'Walang natukoy na pagbigkas',
+        feedback: 'Walang audio na narinig',
       };
     }
 
-    // Normalize both target and spoken text
     const normalizedTarget = targetWord.toUpperCase().trim();
     const normalizedSpoken = spokenText.toUpperCase().trim();
 
-    // Remove non-alphabetic characters but keep spaces and Ñ
-    const cleanTarget = normalizedTarget.replace(/[^A-ZÑ\s]/g, '').trim();
-    const cleanSpoken = normalizedSpoken.replace(/[^A-ZÑ\s]/g, '').trim();
+    // Remove non-alphabetic characters but keep spaces for multi-word phrases
+    const cleanSpoken = normalizedSpoken.replace(/[^A-Z\s]/g, '').trim();
+    const cleanTarget = normalizedTarget.replace(/[^A-Z\s]/g, '').trim();
 
-
-    // Split into words
-    const targetWords = cleanTarget.split(/\s+/).filter(Boolean);
-    const spokenWords = cleanSpoken.split(/\s+/).filter(Boolean);
-
-    // Strict comparison: every word must match in order
-    let allMatch = true;
-    if (targetWords.length !== spokenWords.length) {
-      allMatch = false;
-    } else {
-      for (let i = 0; i < targetWords.length; i++) {
-        if (targetWords[i] !== spokenWords[i]) {
-          allMatch = false;
-          break;
-        }
-      }
-    }
+    // For words: check if spoken contains the word (more tolerant)
+    const isCorrect =
+      cleanSpoken === cleanTarget || // Exact match
+      cleanSpoken.includes(cleanTarget); // Word appears within spoken text
 
     return {
-      isCorrect: allMatch,
-      accuracy: allMatch ? '100' : '0',
-      feedback: allMatch ? 'Mahusay!' : 'Maling Bigkas',
+      isCorrect,
+      accuracy: isCorrect ? '100' : '0',
+      feedback: isCorrect
+        ? `✓ Mahusay! Sinabi mo ay "${cleanTarget}" na sakto.`
+        : `✗ Subukan Muli. Expected "${cleanTarget}", sinabi mo ay: "${normalizedSpoken}"`,
     };
   }
 }

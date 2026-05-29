@@ -35,9 +35,9 @@ export const FacultyColors = {
   primaryPale: '#eaf2f8',
 
   // Green family
-  green: '#3d71d9',
-  greenDeep: '#154360',
-  greenLight: '#d4e6f1',
+  green: '#154360',
+  greenDeep: '#0d3048',
+  greenLight: '#d6eaf8',
   greenPale: '#e8f5e9',
 
   // Accent – same family, restrained
@@ -48,12 +48,13 @@ export const FacultyColors = {
   coral: '#eb5c6c',
   sky: '#2980b9',
   purple: '#7d4b9a',
+  inkDeep: '#1c2833',
+  ink: '#1c2833',
 
   // Neutrals
   white: '#ffffff',
-  ink: '#1c2b24',
-  inkLight: '#4f6259',
-  slate: '#8ca69a',
+  inkLight: '#2c3e50',
+  slate: '#859dab',
   slatePale: '#f0f4f8',
   bg: '#eaf2f8',
 } as const;

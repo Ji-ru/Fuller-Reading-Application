@@ -1,6 +1,8 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -13,10 +15,7 @@ import bubbles from '../../UI_Designs/BubblesDesign';
 import readingStyles from '../../UI_Designs/ReadingActivityStyles';
 
 import auth from '@react-native-firebase/auth';
-import { FeedbackModal } from '../../Components/Student/Reading/FeedbackModal';
-import { transcribeAudio as transcribeAudioAPI } from '../../../api';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
 import { ReadingHeader } from '../../Components/Student/Reading/ReadingHeader';
 import { RecordingControls } from '../../Components/Student/Reading/RecordingControls';
 import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
@@ -28,6 +27,7 @@ import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
 import { Miscue } from '../../Interfaces/miscue';
 import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
 import { ACCENT_COLORS } from '../../Utilities/Theme';
+import { transcribeAudio as transcribeAudioAPI } from '../../../api';
 
 type ReadingActivityScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -549,7 +549,7 @@ export default function ReadingActivityScreenPage() {
 
 
 
-          <View style={S.statusReserved}>
+<View style={S.statusReserved}>
             {(isLoading || isTranscribing) && (
               <View style={S.miniStatus}>
                 <ActivityIndicator size="small" color="#3d71d9" />
@@ -571,72 +571,72 @@ export default function ReadingActivityScreenPage() {
                   </Text>
                 </BounceIn>
 
-{type === 'passage' && miscues.length > 0 && (
-                    <BounceIn delay={200} style={S.miscueReportContainerNew}>
-                      <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
-                      <View style={{ width: '100%' }}>
-                        {(() => {
-                         const typeCounts = {
-                           omission: miscues.filter(m => m.type === 'omission').length,
-                           substitution: miscues.filter(m => m.type === 'substitution').length,
-                           insertion: miscues.filter(m => m.type === 'insertion').length,
-                           repetition: miscues.filter(m => m.type === 'repetition').length,
-                         };
-                         const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
-                         const max = Math.max(...Object.values(typeCounts), 1);
-                         const colors = {
-                            omission: { bar: '#FF9800', bg: '#FFF3E0', label: 'Pagkakaltas' },
-                           substitution: { bar: '#eb5c6c', bg: '#FFEBEE', label: 'Pagpapalit' },
-                           insertion: { bar: '#42A5F5', bg: '#E3F2FD', label: 'Pagdaragdag' },
-                           repetition: { bar: '#AB47BC', bg: '#F3E5F5', label: 'Pag-uulit' },
-                         };
-                         return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
-                           const pct = (count / max) * 100;
-                           const c = colors[type as keyof typeof colors];
-                           const typeMiscues = miscues.filter(m => m.type === type);
-                           return (
-                             <View key={type} style={S.miscueBarRow}>
-                               <View style={S.miscueBarHeader}>
-                                 <View style={[S.miscueBarDot, { backgroundColor: c.bar }]} />
-                                 <Text style={S.miscueBarLabel}>{c.label}</Text>
-                                 <Text style={S.miscueBarPct}>{total > 0 ? Math.round((count / total) * 100) : 0}%</Text>
-                               </View>
-                               <View style={S.miscueBarTrackContainer}>
-                                 <View style={[S.miscueBarTrack, { backgroundColor: c.bg }]}>
-                                   <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
-                                 </View>
-                                 <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
-                               </View>
-                               {/* Show specific words for this miscue type */}
-                               <View style={S.miscueWordsContainer}>
-                                 {typeMiscues.map((m, i) => (
-                                   <Text key={i} style={S.miscueWordText}>
-                                     {type === 'omission' && `"${m.expected}"`}
-                                     {type === 'substitution' && `"${m.expected}" → "${m.spoken}"`}
-                                     {type === 'insertion' && `"${m.spoken}"`}
-                                     {type === 'repetition' && `"${m.expected}"`}
-                                   </Text>
-                                 ))}
-                               </View>
-                             </View>
-                           );
- });
-                         })()}
-                       </View>
-                    </BounceIn>
-                  )}
+                {type === 'passage' && miscues.length > 0 && (
+                  <BounceIn delay={200} style={S.miscueReportContainerNew}>
+                    <Text style={S.miscueReportTitle}>Mga Uri ng Pagkakamali</Text>
+                    <View style={{ width: '100%' }}>
+                      {(() => {
+                        const typeCounts = {
+                          omission: miscues.filter(m => m.type === 'omission').length,
+                          substitution: miscues.filter(m => m.type === 'substitution').length,
+                          insertion: miscues.filter(m => m.type === 'insertion').length,
+                          repetition: miscues.filter(m => m.type === 'repetition').length,
+                        };
+                        const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
+                        const max = Math.max(...Object.values(typeCounts), 1);
+                        const colors = {
+                          omission: { bar: '#f39c12', bg: '#FFF3E0', label: 'Pagkakaltas' },
+                          substitution: { bar: '#eb5c6c', bg: '#FFEBEE', label: 'Pagpapalit' },
+                          insertion: { bar: '#3498db', bg: '#E3F2FD', label: 'Pagdaragdag' },
+                          repetition: { bar: '#9b59b6', bg: '#F3E5F5', label: 'Pag-uulit' },
+                        };
+                        return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
+                          const pct = (count / max) * 100;
+                          const c = colors[type as keyof typeof colors];
+                          const typeMiscues = miscues.filter(m => m.type === type);
+                          return (
+                            <View key={type} style={S.miscueBarRow}>
+                              <View style={S.miscueBarHeader}>
+                                <View style={[S.miscueBarDot, { backgroundColor: c.bar }]} />
+                                <Text style={S.miscueBarLabel}>{c.label}</Text>
+                                <Text style={S.miscueBarPct}>{total > 0 ? Math.round((count / total) * 100) : 0}%</Text>
+                              </View>
+                              <View style={S.miscueBarTrackContainer}>
+                                <View style={[S.miscueBarTrack, { backgroundColor: c.bg }]}>
+                                  <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
+                                </View>
+                                <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
+                              </View>
+                              {/* Show specific words for this miscue type */}
+                              <View style={S.miscueWordsContainer}>
+                                {typeMiscues.map((m, i) => (
+                                  <Text key={i} style={S.miscueWordText}>
+                                    {type === 'omission' && `"${m.expected}"`}
+                                    {type === 'substitution' && `"${m.expected}" → "${m.spoken}"`}
+                                    {type === 'insertion' && `"${m.spoken}"`}
+                                    {type === 'repetition' && `"${m.expected}"`}
+                                  </Text>
+                                ))}
+                              </View>
+                            </View>
+                          );
+                        });
+                      })()}
+                    </View>
+                  </BounceIn>
+                )}
 
-                {isReadingCompleted && (
-                  <BounceIn delay={400} style={S.actionButtonsContainer}>
-                    <TouchableOpacity style={S.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
-                      <Text style={S.retryBtnText}>Muling Subukan</Text>
-                    </TouchableOpacity>
-                    
+                <BounceIn delay={400} style={S.actionButtonsContainer}>
+                  <TouchableOpacity style={S.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
+                    <Text style={S.retryBtnText}>Muling Subukan</Text>
+                  </TouchableOpacity>
+                  
+                  {type === 'passage' && (
                     <TouchableOpacity style={S.backToLessonBtn} onPress={handleBackStep} activeOpacity={0.8}>
                       <Text style={S.backToLessonBtnText}>Bumalik sa Aralin</Text>
                     </TouchableOpacity>
-                  </BounceIn>
-                )}
+                  )}
+                </BounceIn>
               </>
             )}
           </View>

@@ -33,7 +33,7 @@ const [stats, setStats] = useState<{
   facultyCount: number;
   classCount: number;
 }>({ studentCount: 0, facultyCount: 0, classCount: 0 });
-  const { handleLogout, handleTabNavigation, handleNavigateStep } = useNavigationHelper();
+  const { handleLogout, handleNavigateStep } = useNavigationHelper();
   const route = useRoute();
   const { getTotals } = useAdminStats();
 

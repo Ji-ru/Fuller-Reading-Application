@@ -1,16 +1,17 @@
 import { getAuth } from '@react-native-firebase/auth';
 import { useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Dimensions, FlatList, Image, Modal, ScrollView,
+  Dimensions, Image, Modal, ScrollView,
   StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FacultySideMenu from '../../Components/Faculty/NavigationBar/FacultySideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
 import {
-  BarChartIcon, BurgerIcon, ChevronRightIcon,
-  CheckCircleIcon, BookOpenIcon, TargetIcon, UsersIcon
+   BarChartIcon, BurgerIcon,
+   CheckCircleIcon, UsersIcon,
+   BookOpenIcon, ChevronRightIcon,
 } from '../../Components/GlobalUse/Icons';
 import { LoadingDots } from '../../Components/GlobalUse/LoadingDots';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
@@ -149,7 +150,7 @@ export default function FacultyReports() {
           <UsersIcon size={18} color={F.primary} />
           <Text style={S.sectionTitle}>Mga Mag-aaral</Text>
         </View>
-        {students.map((s, i) => (
+        {students.map(s => (
           <TouchableOpacity key={s.uid} style={S.studentRow} onPress={() => loadStudentReport(s)}>
             <View style={S.avatarBoxSmall}>
               <Text style={S.avatarTextSmall}>{s.name.charAt(0)}</Text>

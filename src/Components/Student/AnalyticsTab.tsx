@@ -86,11 +86,11 @@ export default function PerformanceTab({ studentId, reports: realReports, gradeL
 }
 
 const S = StyleSheet.create({
-  root: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 40 },
+   root: { flex: 1 },
+   content: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 20 },
 
-  // Charts Container
-  chartsContainer: { gap: 16 },
+   // Charts Container
+   chartsContainer: { gap: 8 },
   chartSection: {
     backgroundColor: C.white,
     borderRadius: Radii.lg,

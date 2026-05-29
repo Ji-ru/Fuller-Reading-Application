@@ -182,33 +182,27 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   }
   
 
-  // PASSAGE DISPLAY
-  if(type === 'passage' && isPassage(material)){
-    return (
-      <View>
-
-        <View style={readingStyles.passageContainer}>
-
-
-
-          <View style={readingStyles.clipContainer}>
-             {/* Decorative shapes to match Hero */}
-             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
-          </View>
-          
-          <ScrollView
-            style={readingStyles.passageScroll}
-            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={false}
-          >
-            <View style={readingStyles.textContainer}>
-              {renderPassageText()}
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    );
-  }
+// PASSAGE DISPLAY - with miscue feedback coloring
+   if(type === 'passage' && isPassage(material)){
+     return (
+       <View style={readingStyles.passageContainer}>
+         <View style={readingStyles.clipContainer}>
+            {/* Decorative shapes to match Hero */}
+            <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
+         </View>
+         
+         <View style={readingStyles.passageCard}>
+           <ScrollView
+             style={readingStyles.passageScroll}
+             contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+             showsVerticalScrollIndicator={false}
+             scrollEnabled={false}
+           >
+             {renderPassageText()}
+           </ScrollView>
+         </View>
+       </View>
+     );
+   }
   return null
 };
