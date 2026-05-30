@@ -1,21 +1,23 @@
-// components/Admin/ClassesPerGradeChart.tsx
-import React, { useEffect } from 'react';
+// components/Admin/StudentsPerGradeChart.tsx
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
-import { useClassMetrics } from '../../Hooks/Admin/useClassMetrics';
 import { sw, sh, sf } from '../../Utils/responsive';
+import { FacultyColors } from '../../Utilities/Theme';
+import {
+  getStudentGradeLevelDistribution,
+  GradeLevelDistribution,
+} from '../../Controller/AuthenticationController';
 
 const screenWidth = Dimensions.get('window').width;
 
-interface ClassesPerGradeChartProps {
+interface StudentsPerGradeChartProps {
   acadYear?: string;
 }
 
 // Grade levels the app supports (see GradeLevelSelectionButton). These always
-// appear on the chart — even at zero classes — so the axis stays consistent.
+// appear on the chart — even at zero students — so the axis stays consistent.
 const SUPPORTED_GRADES = [1, 2, 3];
-
-import { FacultyColors } from '../../Utilities/Theme';
 
 const COLORS = {
   primary: FacultyColors.primaryLight,
@@ -40,23 +42,45 @@ const chartConfig = {
   },
 };
 
-const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) => {
-  const {
-    gradeDistribution,
-    totalClasses,
-    isLoading,
-    errorMessage,
-    fetchMetrics,
-  } = useClassMetrics(acadYear);
+/**
+ * Bar chart of enrolled students grouped by the grade level of their class.
+ * Self-fetching via getStudentGradeLevelDistribution; honors the dashboard's
+ * academic-year filter.
+ */
+const StudentsPerGradeChart: React.FC<StudentsPerGradeChartProps> = ({ acadYear }) => {
+  const [data, setData] = useState<GradeLevelDistribution>({ byGrade: {}, total: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchMetrics();
-  }, [fetchMetrics]);
+    let isActive = true;
+
+    const fetchDistribution = async () => {
+      try {
+        if (isActive) {
+          setIsLoading(true);
+          setErrorMessage(null);
+        }
+        const result = await getStudentGradeLevelDistribution(acadYear);
+        if (isActive) setData(result);
+      } catch (error: any) {
+        if (isActive) setErrorMessage(error.message);
+        console.error('[StudentsPerGradeChart] Failed to fetch distribution:', error);
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    };
+
+    fetchDistribution();
+    return () => {
+      isActive = false;
+    };
+  }, [acadYear]);
 
   if (isLoading) {
     return (
       <View style={styles.card}>
-        <Text style={styles.title}>Classes per Grade Level</Text>
+        <Text style={styles.title}>Students per Grade Level</Text>
         <ActivityIndicator size="small" color={COLORS.primary} />
       </View>
     );
@@ -65,20 +89,20 @@ const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) =
   if (errorMessage) {
     return (
       <View style={styles.card}>
-        <Text style={styles.title}>Classes per Grade Level</Text>
+        <Text style={styles.title}>Students per Grade Level</Text>
         <Text style={styles.errorText}>Failed to load: {errorMessage}</Text>
       </View>
     );
   }
 
   // Always show the supported grades, plus any extra grades that have data,
-  // so Grade 2 / Grade 3 appear even when their class count is zero.
+  // so Grade 2 / Grade 3 appear even when their student count is zero.
   const sortedGrades = Array.from(
-    new Set([...SUPPORTED_GRADES, ...Object.keys(gradeDistribution).map(Number)]),
+    new Set([...SUPPORTED_GRADES, ...Object.keys(data.byGrade).map(Number)]),
   ).sort((a, b) => a - b);
 
   const labels = sortedGrades.map(grade => `G${grade}`);
-  const dataValues = sortedGrades.map(grade => gradeDistribution[grade] ?? 0);
+  const dataValues = sortedGrades.map(grade => data.byGrade[grade] ?? 0);
   const maxValue = Math.max(0, ...dataValues);
   const segments = maxValue > 0 ? Math.min(6, maxValue) : 1;
 
@@ -92,9 +116,11 @@ const ClassesPerGradeChart: React.FC<ClassesPerGradeChartProps> = ({acadYear}) =
       <View style={styles.headerRow}>
         <View style={styles.accentBar} />
         <View>
-          <Text style={styles.title}>Classes per Grade Level</Text>
-          <Text style={styles.subtitle}>Total Classes: {totalClasses}</Text>
-          <Text style={styles.description}>Visualizes the distribution of classes across different grade levels.</Text>
+          <Text style={styles.title}>Students per Grade Level</Text>
+          <Text style={styles.subtitle}>Total Students: {data.total}</Text>
+          <Text style={styles.description}>
+            Number of enrolled students grouped by their class's grade level.
+          </Text>
         </View>
       </View>
 
@@ -171,4 +197,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ClassesPerGradeChart;
+export default StudentsPerGradeChart;

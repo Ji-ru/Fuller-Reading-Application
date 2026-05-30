@@ -1,13 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, Alert, ActivityIndicator, FlatList, StyleSheet, Dimensions } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { getAuth } from '@react-native-firebase/auth';
-import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
-import { unarchiveClass } from '../../Controller/AuthenticationController';
+// ─── Added for studentIds/assignedClassIds source-of-truth refactor ────────
+// Archive view now fetched via getAssignedClasses (filtered by status='archived')
+// rather than the previous facultyId-only realtime listener.
+import { unarchiveClass, getAssignedClasses, deleteClassByFaculty } from '../../Controller/AuthenticationController';
+// ─── End ──────────────────────────────────────────────────────────────────
 import myClass from '../../UI_Designs/MyClassStyles';
 import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
@@ -34,21 +37,27 @@ export default function MyArchive() {
 
   // ========================================================================
   // FETCH CLASSES
+  // ─── Modified for studentIds/assignedClassIds source-of-truth refactor ──
+  // One-shot fetch via assignedClassIds, then filter to archived. Manual
+  // refresh after unarchive to keep the list in sync.
+  // ─── End ────────────────────────────────────────────────────────────────
   // ========================================================================
-  useEffect(() => {
+  const fetchClasses = useCallback(async () => {
     if (!currentUser) return;
-
-    const unsubscribe =
-      getFacultyClasses_Student.getToFacultyClassesRealTime(
-        currentUser.uid,
-        classes => {
-          setClasses(classes.filter(c => c.status === 'archived'));
-          setLoading(false);
-        },
-      );
-
-    return unsubscribe;
+    try {
+      setLoading(true);
+      const all = await getAssignedClasses(currentUser.uid);
+      setClasses(all.filter(c => c.status === 'archived'));
+    } catch (error: any) {
+      console.error('Failed to fetch archived classes:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [currentUser]);
+
+  useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
 
   // ========================================================================
   // EVENT HANDLER
@@ -124,6 +133,9 @@ export default function MyArchive() {
             try {
               await unarchiveClass(classItem.classId);
               Alert.alert('Success', 'Class unarchived successfully');
+              // ─── Added for studentIds/assignedClassIds source-of-truth refactor ──
+              await fetchClasses();
+              // ─── End ─────────────────────────────────────────────────────────────
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to unarchive class');
             } finally {
@@ -215,12 +227,18 @@ export default function MyArchive() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const result = await getFacultyClasses_Student.deleteClass(
+              // ─── Modified for studentIds/assignedClassIds source-of-truth refactor ──
+              // Uses deleteClassByFaculty (atomic batch: assignedClassIds + class doc).
+              // ─── End ───────────────────────────────────────────────────────────────
+              await deleteClassByFaculty(
                 classItem.classId,
+                currentUser?.uid || '',
               );
-              if (result.success) {
-                Alert.alert('Success', result.message);
-              }
+              Alert.alert(
+                'Success',
+                `Class "${classItem.className || classItem.classId}" deleted successfully.`,
+              );
+              await fetchClasses();
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to delete class');
             }

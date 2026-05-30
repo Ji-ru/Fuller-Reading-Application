@@ -68,9 +68,18 @@ export type RootStackParamList = {
   // ADMIN NAVIGATION
   AdminDashboard: undefined;
   AdminUserManagement: undefined;
+  AdminClassManagement: undefined;
   AdminViewFacultyData: {
     facultyId: string;
     facultyName: string;
+  };
+  AdminClassDashboard: {
+    classId: string;
+    className?: string;
+    acadYear: string;
+    facultyId: string;
+    gradeLevel: number;
+    studentCount: number;
   };
 
   FacultyTabs: undefined;
@@ -324,6 +333,18 @@ export const useNavigationHelper = () => {
     navigation.navigate('AdminViewFacultyData', facultyData);
   };
 
+  // Handles admin navigation into a single class' analytics dashboard
+  const handleAdminClassDashboard = (classData: {
+    classId: string;
+    className?: string;
+    acadYear: string;
+    facultyId: string;
+    gradeLevel: number;
+    studentCount: number;
+  }) => {
+    navigation.navigate('AdminClassDashboard', classData);
+  };
+
   // Handles navigation to view students progress
   const handleStudentViewStats = (studentData: {
     studentId: string;
@@ -379,6 +400,7 @@ export const useNavigationHelper = () => {
   return {
     routeParams: route.params,
     handleNavigateToUserDetail,
+    handleAdminClassDashboard,
     handleNextStep,
     handleReplaceStep,
     handleSignUpNavigationWithData,

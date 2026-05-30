@@ -41,7 +41,8 @@ import {
   UserRole,
   PassageDocument,
   // ─── Added for student acceptance or rejection to a class by faculty ───────
-  EnrollmentRequestDocument,
+  // Migrated to a pendingStudentIds array on ClassDocument; the
+  // EnrollmentRequestDocument type is no longer used.
   StudentClassState,
   // ─── End ──────────────────────────────────────────────────────────────────
 } from '../Interfaces/dataInterfaces';
@@ -379,28 +380,12 @@ export const archiveClass = async (classId: string, facultyId: string) => {
     archivedAt: serverTimestamp() as Timestamp,
     archivedBy: facultyId,
     updatedAt: serverTimestamp() as Timestamp,
+    // ─── Added for student acceptance or rejection to a class by faculty ───
+    // Clear pending join requests so students don't sit in limbo on an
+    // archived class. They can re-request after unarchive if needed.
+    pendingStudentIds: [],
+    // ─── End ──────────────────────────────────────────────────────────────
   });
-
-  // ─── Added for student acceptance or rejection to a class by faculty ───────
-  // Auto-reject any pending requests so students aren't stuck waiting forever.
-  const pendingQuery = query(
-    collection(db, 'enrollmentRequests'),
-    where('classId', '==', classId),
-    where('status', '==', 'pending'),
-  );
-  const pendingSnap = await getDocs(pendingQuery);
-  if (!pendingSnap.empty) {
-    const batch = writeBatch(db);
-    pendingSnap.docs.forEach((d: any) => {
-      batch.update(d.ref, {
-        status: 'rejected',
-        decidedAt: serverTimestamp() as Timestamp,
-        decidedBy: facultyId,
-      });
-    });
-    await batch.commit();
-  }
-  // ─── End ──────────────────────────────────────────────────────────────────
 };
 
 /**
@@ -668,9 +653,6 @@ const STUDENT_DATA_COLLECTIONS = [
   'alphabetCompleted',
   'wordSessions',
   'wordCompleted',
-  // ─── Added for student acceptance or rejection to a class by faculty ───────
-  'enrollmentRequests',
-  // ─── End ──────────────────────────────────────────────────────────────────
 ] as const;
 
 const deleteDocsWhereStudentId = async (
@@ -707,6 +689,20 @@ const cascadeDeleteStudent = async (uid: string) => {
     }
   }
 
+  // ─── Added for student acceptance or rejection to a class by faculty ───────
+  // Strip this UID from any class's pendingStudentIds so it doesn't dangle
+  // after the user account is gone.
+  const pendingMatchesSnap = await getDocs(
+    query(collection(db, 'classes'), where('pendingStudentIds', 'array-contains', uid)),
+  );
+  for (const cls of pendingMatchesSnap.docs) {
+    await updateDoc(cls.ref, {
+      pendingStudentIds: arrayRemove(uid),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+  }
+  // ─── End ──────────────────────────────────────────────────────────────────
+
   for (const coll of STUDENT_DATA_COLLECTIONS) {
     await deleteDocsWhereStudentId(coll, uid);
   }
@@ -736,21 +732,6 @@ const cascadeDeleteFaculty = async (uid: string) => {
 
     await deleteDoc(classRef);
   }
-
-  // ─── Added for student acceptance or rejection to a class by faculty ───────
-  // Wipe any enrollment requests addressed to this faculty (denormalized field).
-  const reqsSnap = await getDocs(
-    query(collection(db, 'enrollmentRequests'), where('facultyId', '==', uid)),
-  );
-  if (!reqsSnap.empty) {
-    const docs = reqsSnap.docs;
-    for (let i = 0; i < docs.length; i += 500) {
-      const batch = writeBatch(db);
-      docs.slice(i, i + 500).forEach((d: any) => batch.delete(d.ref));
-      await batch.commit();
-    }
-  }
-  // ─── End ──────────────────────────────────────────────────────────────────
 
   await deleteDoc(doc(db, 'users', uid));
 };
@@ -827,25 +808,33 @@ export const createUserByAdmin = async (
 
 /* -------------------------------------------------------------
    JOIN CLASS
-   ─── Modified for student acceptance or rejection to a class by faculty ───
-   IMPORTANT BEHAVIOR CHANGE: this function NO LONGER enrolls the student
-   immediately. It creates a *pending* EnrollmentRequest document. The student
-   becomes a member of the class only after the faculty calls
-   acceptEnrollmentRequest(). The function name is unchanged for caller
-   convenience, but the return shape now includes status: 'pending'.
+   ─── Modified for instant-rejoin enrollment flow ──────────────────────────
+   Two branches:
+     A) FIRST-TIME: student has never been in this class's studentIds.
+        Adds to pendingStudentIds AND preemptively writes student.classCode
+        so the resolver has an anchor for showing pending/active state.
+     B) REJOIN: student is already in this class's studentIds (historical
+        member returning after a leave). Skips pending entirely — just sets
+        student.classCode = target.code. Faculty already approved this
+        student previously, so re-approval would be redundant.
 
-   Constraints enforced here:
-     - Class code must resolve to an *active* class (archived classes don't
-       accept new requests).
-     - Student must not already be enrolled in this class.
-     - Student must not already have a pending request to ANY class
-       (one pending at a time keeps the UI deterministic). Race window is
-       narrow but non-zero; acceptance-time validation can catch the rest.
-   ─── End ────────────────────────────────────────────────────────────────────
+   Preconditions:
+     - student.classCode must be empty (must leave current class first)
+     - no pending request anywhere
+     - target class must be active
+   ─── End ──────────────────────────────────────────────────────────────────
 ------------------------------------------------------------- */
 export const joinClass = async (studentId: string, joinClassCode: string) => {
   try {
-    // 1. Resolve the class by code
+    // 1. Verify student has no active enrollment
+    const studentSnap = await getDoc(doc(db, 'users', studentId));
+    if (!studentSnap.exists()) throw new Error('Student profile not found.');
+    const studentDocData = studentSnap.data() as UserDocument;
+    if (studentDocData.studentData?.classCode) {
+      throw new Error('You are already enrolled in a class. Leave it first.');
+    }
+
+    // 2. Resolve the class by code
     const classesRef = collection(db, 'classes');
     const classQuery = query(
       classesRef,
@@ -858,22 +847,16 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     const classDoc = classQuerySnap.docs[0];
     const classData = classDoc.data() as ClassDocument;
 
-    // 2. Only active classes accept new requests
+    // 3. Only active classes accept new requests / rejoins
     if (classData.status !== 'active') {
       throw new Error('This class is no longer accepting new students.');
-    }
-
-    // 3. Block if student is already enrolled
-    if (classData.studentIds?.includes(studentId)) {
-      throw new Error('You are already enrolled in this class.');
     }
 
     // 4. Block if student already has a pending request anywhere
     const existingPendingSnap = await getDocs(
       query(
-        collection(db, 'enrollmentRequests'),
-        where('studentId', '==', studentId),
-        where('status', '==', 'pending'),
+        collection(db, 'classes'),
+        where('pendingStudentIds', 'array-contains', studentId),
         limit(1),
       ),
     );
@@ -883,31 +866,43 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
       );
     }
 
-    // 5. Pre-fetch student profile to denormalize the display name on the request
-    const studentSnap = await getDoc(doc(db, 'users', studentId));
-    if (!studentSnap.exists()) throw new Error('Student profile not found.');
-    const student = studentSnap.data() as UserDocument;
-    const studentName = `${student.firstName} ${student.middleName ?? ''} ${student.lastName}`
-      .replace(/\s+/g, ' ')
-      .trim();
+    // 5. Branch on whether this is a REJOIN or a FIRST-TIME join.
+    //    studentIds preserves historical members across the academic year,
+    //    so presence here means the student was previously approved by faculty.
+    const isReturningMember = classData.studentIds?.includes(studentId) === true;
 
-    // 6. Create the pending enrollment request
-    const requestRef = doc(collection(db, 'enrollmentRequests'));
-    const reqDoc: EnrollmentRequestDocument = {
-      requestId: requestRef.id,
-      studentId,
-      studentName,
-      classId: classData.classId,
-      classCode: classData.classCode,
-      facultyId: classData.facultyId,
-      status: 'pending',
-      requestedAt: serverTimestamp() as Timestamp,
-    };
-    await setDoc(requestRef, reqDoc);
+    if (isReturningMember) {
+      // ─── REJOIN PATH ─────────────────────────────────────────────────────
+      // Instant rejoin — single user-doc write. No pending, no faculty action.
+      await updateDoc(doc(db, 'users', studentId), {
+        'studentData.classCode': classData.classCode,
+        updatedAt: serverTimestamp() as Timestamp,
+      });
+      return {
+        success: true,
+        classId: classData.classId,
+        className: classData.className,
+        status: 'active' as const,
+      };
+    }
+
+    // ─── FIRST-TIME PATH ─────────────────────────────────────────────────────
+    // Atomic batch: pendingStudentIds gets the student, and the student's
+    // own classCode is set preemptively so the resolver can show 'pending'
+    // and later detect accept/reject without ambiguity.
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'classes', classData.classId), {
+      pendingStudentIds: arrayUnion(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    batch.update(doc(db, 'users', studentId), {
+      'studentData.classCode': classData.classCode,
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    await batch.commit();
 
     return {
       success: true,
-      requestId: requestRef.id,
       classId: classData.classId,
       className: classData.className,
       status: 'pending' as const,
@@ -920,213 +915,354 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
 
 /* -------------------------------------------------------------
    ─── Added for student acceptance or rejection to a class by faculty ───
-   ENROLLMENT REQUEST FUNCTIONS
-   - cancelEnrollmentRequest:    student withdraws their own pending request
-   - acknowledgeRejection:       student dismisses the "rejected" notice
-   - getPendingRequestsForClass: faculty reads pending list for one class
-   - getStudentLatestRequest:    helper used by resolveStudentClassState
-   - acceptEnrollmentRequest:    faculty approves (atomic batch w/ class roster)
-   - rejectEnrollmentRequest:    faculty declines (optional reason)
-   - resolveStudentClassState:   Student_MyClass entry point; returns a
-                                  discriminated state and self-heals the
-                                  student's classCode on first sight of an
-                                  accepted request.
-   Note: faculty cannot write to user docs under current security rules, so
-   the student's classCode is reconciled on the student's own next session.
+   ENROLLMENT FUNCTIONS (array-on-class implementation)
+   - cancelJoinRequest:        student withdraws their own pending request
+   - getPendingStudents:       faculty reads the pending UIDs and resolves them
+                                to UserDocument profiles for rendering
+   - acceptStudent:            faculty approves — single atomic batched update
+                                (arrayRemove from pendingStudentIds + arrayUnion
+                                 into studentIds in one operation)
+   - rejectStudent:            faculty declines — arrayRemove only; no trace
+                                remains by design (no audit history)
+   - resolveStudentClassState: Student_MyClass entry point; returns the
+                                discriminated state pending/active/none and
+                                self-heals the student's classCode after a
+                                faculty accept (since faculty cannot write to
+                                the student's user doc under existing rules).
    ─── End ──────────────────────────────────────────────────────────────────
 ------------------------------------------------------------- */
 
 // ─── Added for student acceptance or rejection to a class by faculty ─────────
-export const cancelEnrollmentRequest = async (requestId: string) => {
+// ─── Modified for instant-rejoin enrollment flow ─────────────────────────────
+// Batched: arrayRemove from pendingStudentIds AND clear the student's classCode
+// (which was preemptively set by joinClass). Both writes commit atomically.
+export const cancelJoinRequest = async (studentId: string, classId: string) => {
   try {
-    const requestRef = doc(db, 'enrollmentRequests', requestId);
-    const snap = await getDoc(requestRef);
-    if (!snap.exists()) throw new Error('Request not found.');
-    const data = snap.data() as EnrollmentRequestDocument;
-    if (data.status !== 'pending') {
-      throw new Error('Only pending requests can be cancelled.');
-    }
-    await updateDoc(requestRef, {
-      status: 'cancelled',
-      decidedAt: serverTimestamp() as Timestamp,
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'classes', classId), {
+      pendingStudentIds: arrayRemove(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
     });
+    batch.update(doc(db, 'users', studentId), {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    await batch.commit();
     return { success: true };
   } catch (error: any) {
     throw new Error('Failed to cancel request: ' + error.message);
   }
 };
+// ─── End ──────────────────────────────────────────────────────────────────────
 
-export const acknowledgeRejection = async (requestId: string) => {
-  try {
-    const requestRef = doc(db, 'enrollmentRequests', requestId);
-    await updateDoc(requestRef, { acknowledgedByStudent: true });
-    return { success: true };
-  } catch (error: any) {
-    throw new Error('Failed to acknowledge rejection: ' + error.message);
-  }
-};
-
-export const getPendingRequestsForClass = async (
+/**
+ * Faculty-side: read the pending UIDs from a class doc, then batch-fetch each
+ * student profile so the UI can render names/grade levels.
+ * Firestore `in` queries are limited to 30 elements per query, so we chunk.
+ */
+export const getPendingStudents = async (
   classId: string,
-): Promise<EnrollmentRequestDocument[]> => {
+): Promise<UserDocument[]> => {
   try {
-    const q = query(
-      collection(db, 'enrollmentRequests'),
-      where('classId', '==', classId),
-      where('status', '==', 'pending'),
-      orderBy('requestedAt', 'asc'),
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((d: any) => d.data() as EnrollmentRequestDocument);
+    const classSnap = await getDoc(doc(db, 'classes', classId));
+    if (!classSnap.exists()) return [];
+    const classData = classSnap.data() as ClassDocument;
+    const uids = classData.pendingStudentIds || [];
+    if (uids.length === 0) return [];
+
+    const results: UserDocument[] = [];
+    for (let i = 0; i < uids.length; i += 30) {
+      const chunk = uids.slice(i, i + 30);
+      const chunkSnap = await getDocs(
+        query(collection(db, 'users'), where('uid', 'in', chunk)),
+      );
+      chunkSnap.forEach((d: any) => {
+        results.push(d.data() as UserDocument);
+      });
+    }
+    return results;
   } catch (error: any) {
-    throw new Error('Failed to fetch pending requests: ' + error.message);
-  }
-};
-
-export const acceptEnrollmentRequest = async (
-  requestId: string,
-  facultyId: string,
-) => {
-  try {
-    const requestRef = doc(db, 'enrollmentRequests', requestId);
-    const reqSnap = await getDoc(requestRef);
-    if (!reqSnap.exists()) throw new Error('Request not found.');
-    const request = reqSnap.data() as EnrollmentRequestDocument;
-
-    if (request.facultyId !== facultyId) {
-      throw new Error('Not authorized to act on this request.');
-    }
-    if (request.status !== 'pending') {
-      throw new Error('Request is no longer pending.');
-    }
-
-    const batch = writeBatch(db);
-    batch.update(requestRef, {
-      status: 'accepted',
-      decidedAt: serverTimestamp() as Timestamp,
-      decidedBy: facultyId,
-    });
-    batch.update(doc(db, 'classes', request.classId), {
-      studentIds: arrayUnion(request.studentId),
-      updatedAt: serverTimestamp() as Timestamp,
-    });
-    await batch.commit();
-
-    return { success: true, classId: request.classId, studentId: request.studentId };
-  } catch (error: any) {
-    throw new Error('Failed to accept request: ' + error.message);
-  }
-};
-
-export const rejectEnrollmentRequest = async (
-  requestId: string,
-  facultyId: string,
-) => {
-  try {
-    const requestRef = doc(db, 'enrollmentRequests', requestId);
-    const reqSnap = await getDoc(requestRef);
-    if (!reqSnap.exists()) throw new Error('Request not found.');
-    const request = reqSnap.data() as EnrollmentRequestDocument;
-
-    if (request.facultyId !== facultyId) {
-      throw new Error('Not authorized to act on this request.');
-    }
-    if (request.status !== 'pending') {
-      throw new Error('Request is no longer pending.');
-    }
-
-    await updateDoc(requestRef, {
-      status: 'rejected',
-      decidedAt: serverTimestamp() as Timestamp,
-      decidedBy: facultyId,
-    });
-
-    return { success: true };
-  } catch (error: any) {
-    throw new Error('Failed to reject request: ' + error.message);
+    throw new Error('Failed to fetch pending students: ' + error.message);
   }
 };
 
 /**
- * Single source of truth for the student-facing "what is my class status?"
- * question. Reads the student's profile + their request history (1 query) and
- * folds the result into a discriminated union. Also self-heals the student's
- * classCode field on first sight of an accepted request.
+ * Faculty accepts: atomically move the student from pendingStudentIds to
+ * studentIds on the class doc. The student's own client reconciles their
+ * `studentData.classCode` field on next visit via resolveStudentClassState
+ * (since faculty cannot write to user docs under existing security rules).
+ */
+export const acceptStudent = async (classId: string, studentId: string) => {
+  try {
+    await updateDoc(doc(db, 'classes', classId), {
+      pendingStudentIds: arrayRemove(studentId),
+      studentIds: arrayUnion(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    return { success: true, classId, studentId };
+  } catch (error: any) {
+    throw new Error('Failed to accept student: ' + error.message);
+  }
+};
+
+/**
+ * Faculty rejects: drop the UID from pendingStudentIds. No history is kept.
+ * The student's UI returns to the "No Class Yet" state on next read.
+ */
+export const rejectStudent = async (classId: string, studentId: string) => {
+  try {
+    await updateDoc(doc(db, 'classes', classId), {
+      pendingStudentIds: arrayRemove(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to reject student: ' + error.message);
+  }
+};
+
+// ─── Added for instant-rejoin enrollment flow ─────────────────────────────────
+/**
+ * Faculty manually removes a student from the class roster. This drops the UID
+ * from studentIds — the only path that touches that array now. The student's
+ * own classCode (if still pointing here) self-heals to empty on their next
+ * visit via resolveStudentClassState. After removal, the student's rejoin
+ * via joinClass goes through the FIRST-TIME path (pending → re-approval).
+ */
+export const removeStudentFromClass = async (
+  classId: string,
+  studentId: string,
+) => {
+  try {
+    await updateDoc(doc(db, 'classes', classId), {
+      studentIds: arrayRemove(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to remove student: ' + error.message);
+  }
+};
+// ─── End ──────────────────────────────────────────────────────────────────────
+
+/* -------------------------------------------------------------
+   GET ENROLLED STUDENTS BY CLASS ROSTER
+   ─── Added for studentIds/assignedClassIds source-of-truth refactor ─────
+   Replaces the previous classCode-based query for Faculty_MyStudents.tsx.
+   Source of truth is now the class doc's studentIds array, which:
+     - excludes pending students (they live in pendingStudentIds)
+     - excludes removed students (arrayRemove drops them)
+   Pattern mirrors getPendingStudents: read class doc → chunked `in` queries
+   on users (Firestore caps `in` at 30 elements per query).
+   ─── End ────────────────────────────────────────────────────────────────
+------------------------------------------------------------- */
+export const getEnrolledStudents = async (
+  classId: string,
+): Promise<UserDocument[]> => {
+  try {
+    const classSnap = await getDoc(doc(db, 'classes', classId));
+    if (!classSnap.exists()) return [];
+    const classData = classSnap.data() as ClassDocument;
+    const uids = classData.studentIds || [];
+    if (uids.length === 0) return [];
+
+    const results: UserDocument[] = [];
+    for (let i = 0; i < uids.length; i += 30) {
+      const chunk = uids.slice(i, i + 30);
+      const chunkSnap = await getDocs(
+        query(collection(db, 'users'), where('uid', 'in', chunk)),
+      );
+      chunkSnap.forEach((d: any) => {
+        results.push(d.data() as UserDocument);
+      });
+    }
+    return results;
+  } catch (error: any) {
+    throw new Error('Failed to fetch enrolled students: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   GET FACULTY ASSIGNED CLASSES
+   ─── Added for studentIds/assignedClassIds source-of-truth refactor ─────
+   Replaces the previous facultyId-based query for Faculty_MyClass.tsx and
+   Faculty_MyArchive.tsx. Reads the faculty user doc's assignedClassIds and
+   resolves each ID to its ClassDocument via chunked `in` queries.
+   Callers filter by status='active' / 'archived' as needed.
+   ─── End ────────────────────────────────────────────────────────────────
+------------------------------------------------------------- */
+export const getAssignedClasses = async (
+  facultyId: string,
+): Promise<ClassDocument[]> => {
+  try {
+    const facultySnap = await getDoc(doc(db, 'users', facultyId));
+    if (!facultySnap.exists()) return [];
+    const facultyData = facultySnap.data() as UserDocument;
+    const classIds = facultyData.facultyData?.assignedClassIds || [];
+    if (classIds.length === 0) return [];
+
+    const results: ClassDocument[] = [];
+    for (let i = 0; i < classIds.length; i += 30) {
+      const chunk = classIds.slice(i, i + 30);
+      const chunkSnap = await getDocs(
+        query(collection(db, 'classes'), where('classId', 'in', chunk)),
+      );
+      chunkSnap.forEach((d: any) => {
+        results.push(d.data() as ClassDocument);
+      });
+    }
+    return results;
+  } catch (error: any) {
+    throw new Error('Failed to fetch assigned classes: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   DELETE CLASS BY FACULTY
+   ─── Added for studentIds/assignedClassIds source-of-truth refactor ─────
+   Atomic deletion of a class owned by the calling faculty:
+     1. Remove classId from faculty's assignedClassIds
+     2. Delete the class document
+   Both writes are batched, so either both succeed or both roll back.
+
+   The previous hook-based deleteClass silently failed at step 2 because
+   the security rule blocked faculty deletion. This function relies on the
+   updated rule that allows faculty to delete classes where they are the
+   owning facultyId.
+
+   Student cleanup: any student whose classCode points to this deleted
+   class self-heals on their next visit via resolveStudentClassState
+   (classCode → non-existent class → cleared).
+   ─── End ────────────────────────────────────────────────────────────────
+------------------------------------------------------------- */
+export const deleteClassByFaculty = async (
+  classId: string,
+  facultyId: string,
+) => {
+  try {
+    const classRef = doc(db, 'classes', classId);
+    const classSnap = await getDoc(classRef);
+    if (!classSnap.exists()) {
+      throw new Error('Class not found.');
+    }
+    const classData = classSnap.data() as ClassDocument;
+    if (classData.facultyId !== facultyId) {
+      throw new Error('Not authorized to delete this class.');
+    }
+
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'users', facultyId), {
+      'facultyData.assignedClassIds': arrayRemove(classId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    batch.delete(classRef);
+    await batch.commit();
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to delete class: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   DELETE CLASS BY ADMIN
+   Admin-authority deletion of any class (no owner-match guard).
+   Reads the class doc to find its owning facultyId, then atomically:
+     1. Remove classId from that faculty's assignedClassIds
+     2. Delete the class document
+   Students whose classCode points here self-heal on their next
+   visit via resolveStudentClassState (same as deleteClassByFaculty).
+------------------------------------------------------------- */
+export const deleteClassByAdmin = async (classId: string) => {
+  try {
+    const classRef = doc(db, 'classes', classId);
+    const classSnap = await getDoc(classRef);
+    if (!classSnap.exists()) {
+      throw new Error('Class not found.');
+    }
+    const classData = classSnap.data() as ClassDocument;
+
+    const batch = writeBatch(db);
+    if (classData.facultyId) {
+      batch.update(doc(db, 'users', classData.facultyId), {
+        'facultyData.assignedClassIds': arrayRemove(classId),
+        updatedAt: serverTimestamp() as Timestamp,
+      });
+    }
+    batch.delete(classRef);
+    await batch.commit();
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to delete class: ' + error.message);
+  }
+};
+
+/**
+ * ─── Modified for instant-rejoin enrollment flow ───────────────────────────
+ * Anchored on the student's own classCode. joinClass and cancelJoinRequest
+ * keep it in sync; resolver reads the referenced class doc to decide whether
+ * the student is pending, active, or got rejected (in which case it self-heals
+ * classCode back to empty).
+ *
+ * - classCode empty            → 'none'
+ * - classCode set, in pending  → 'pending'
+ * - classCode set, in studentIds AND active → 'active'
+ * - classCode set, neither     → faculty rejected / archived / kicked
+ *                                → clear classCode, return 'none'
+ * ─── End ───────────────────────────────────────────────────────────────────
  */
 export const resolveStudentClassState = async (
   studentId: string,
 ): Promise<StudentClassState> => {
   try {
-    // 1. Pull student profile (for currentCode + name fallback)
+    // 1. Pull the student's profile to read classCode anchor
     const studentSnap = await getDoc(doc(db, 'users', studentId));
     if (!studentSnap.exists()) throw new Error('Student profile not found.');
     const student = studentSnap.data() as UserDocument;
     const currentCode = student.studentData?.classCode || '';
 
-    // 2. Pull ALL of this student's requests (single-field index, no composite needed)
-    const reqSnap = await getDocs(
+    if (!currentCode) {
+      return { kind: 'none' };
+    }
+
+    // 2. Fetch the referenced class. We deliberately do NOT filter by
+    //    status='active' here so we can detect 'archived' and self-heal.
+    const classSnap = await getDocs(
       query(
-        collection(db, 'enrollmentRequests'),
-        where('studentId', '==', studentId),
+        collection(db, 'classes'),
+        where('classCode', '==', currentCode),
+        limit(1),
       ),
     );
-    const allRequests: EnrollmentRequestDocument[] = reqSnap.docs.map(
-      (d: any) => d.data() as EnrollmentRequestDocument,
-    );
 
-    // 3. Sort newest-first by requestedAt so "latest" semantics are predictable
-    allRequests.sort((a: EnrollmentRequestDocument, b: EnrollmentRequestDocument) => {
-      const aMs = (a.requestedAt as any)?.toMillis?.() ?? 0;
-      const bMs = (b.requestedAt as any)?.toMillis?.() ?? 0;
-      return bMs - aMs;
-    });
-
-    const pending = allRequests.find(
-      (r: EnrollmentRequestDocument) => r.status === 'pending',
-    );
-    if (pending) return { kind: 'pending', request: pending };
-
-    // 4. Look for an accepted request whose classCode isn't yet on the student
-    //    doc — that means the faculty accepted while the student was offline
-    //    or the previous session ended before reconciliation. Apply it now.
-    const acceptedUnapplied = allRequests.find(
-      (r: EnrollmentRequestDocument) =>
-        r.status === 'accepted' && r.classCode !== currentCode,
-    );
-    if (acceptedUnapplied) {
+    // 2a. classCode points to a class that no longer exists → clear it
+    if (classSnap.empty) {
       await updateDoc(doc(db, 'users', studentId), {
-        'studentData.classCode': acceptedUnapplied.classCode,
+        'studentData.classCode': '',
         updatedAt: serverTimestamp() as Timestamp,
       });
-      // Fetch the class for immediate rendering
-      const classSnap = await getDocs(
-        query(
-          collection(db, 'classes'),
-          where('classCode', '==', acceptedUnapplied.classCode),
-          where('status', '==', 'active'),
-          limit(1),
-        ),
-      );
-      const classData = classSnap.empty
-        ? null
-        : (classSnap.docs[0].data() as ClassDocument);
-      return { kind: 'just_accepted', request: acceptedUnapplied, class: classData };
+      return { kind: 'none' };
     }
 
-    // 5. Unacknowledged rejection → show the notice once
-    const rejected = allRequests.find(
-      (r: EnrollmentRequestDocument) =>
-        r.status === 'rejected' && !r.acknowledgedByStudent,
-    );
-    if (rejected) return { kind: 'rejected', request: rejected };
+    const cls = classSnap.docs[0].data() as ClassDocument;
 
-    // 6. Student has a classCode set → return the active class
-    if (currentCode) {
-      const classData = await getStudentClass(studentId);
-      if (classData) return { kind: 'active', class: classData };
+    // 3. Pending? Faculty hasn't decided yet.
+    if (cls.pendingStudentIds?.includes(studentId)) {
+      return { kind: 'pending', class: cls };
     }
 
-    // 7. No class, no pending/rejected business
+    // 4. Active enrollment? In studentIds AND class is active.
+    if (cls.status === 'active' && cls.studentIds?.includes(studentId)) {
+      return { kind: 'active', class: cls };
+    }
+
+    // 5. Otherwise: rejected, archived, or faculty kicked them — clear the
+    //    stale classCode so the student can join a new class cleanly.
+    await updateDoc(doc(db, 'users', studentId), {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp() as Timestamp,
+    });
     return { kind: 'none' };
   } catch (error: any) {
     throw new Error('Failed to resolve student class state: ' + error.message);
@@ -1137,10 +1273,16 @@ export const resolveStudentClassState = async (
 /* -------------------------------------------------------------
    LEAVE CLASS
 ------------------------------------------------------------- */
-export const leaveClass = async (studentId: string, classId: string) => {
+export const leaveClass = async (studentId: string, _classId: string) => {
   try {
-
-    // Update student's classCode to empty - MODULAR API
+    // ─── Modified for instant-rejoin enrollment flow ─────────────────────────
+    // Lightweight leave: only clear the student's classCode. studentIds on the
+    // class doc is left intact so the year's roster is preserved, and so a
+    // returning student can rejoin instantly via the REJOIN path in joinClass.
+    // Faculty's removeStudentFromClass() is the only way to truly drop a UID
+    // from studentIds (and that's their explicit, manual action).
+    // _classId is kept in the signature for caller compatibility.
+    // ─── End ─────────────────────────────────────────────────────────────────
     const studentRef = doc(db, 'users', studentId);
     await updateDoc(studentRef, {
       'studentData.classCode': '',
@@ -1590,6 +1732,155 @@ export const getUsersByRole = async (role?: UserRole, acadYear?: string) => {
   } catch (error: any) {
     console.error('Error fetching users by role:', error);
     throw new Error(`Failed to fetch users: ${error.message}`);
+  }
+};
+
+// ==============================================================================================================
+// GET STUDENT GENDER DISTRIBUTION
+// ==============================================================================================================
+
+export interface GenderDistribution {
+  male: number;
+  female: number;
+  other: number;
+  total: number;
+}
+
+/**
+ * Counts enrolled students by sex (male / female / other).
+ *
+ * Scope is driven by the options:
+ *  - classId  → only students on that class's roster (studentIds)
+ *  - acadYear → only students whose classCode belongs to a class in that
+ *               academic year
+ *  - neither  → all students system-wide
+ *
+ * Used by the gender pie chart on the Admin dashboard (acadYear scope),
+ * the Faculty dashboard, and the Admin per-class dashboard (classId scope).
+ */
+export const getStudentGenderDistribution = async (
+  options: { classId?: string; acadYear?: string } = {},
+): Promise<GenderDistribution> => {
+  try {
+    const tally = (students: UserDocument[]): GenderDistribution => {
+      let male = 0;
+      let female = 0;
+      let other = 0;
+      students.forEach(student => {
+        const sex = (student.sex || '').toLowerCase();
+        if (sex === 'male') male++;
+        else if (sex === 'female') female++;
+        else other++;
+      });
+      return { male, female, other, total: students.length };
+    };
+
+    // Class-scoped: reuse the roster resolver (reads studentIds → profiles).
+    if (options.classId) {
+      const students = await getEnrolledStudents(options.classId);
+      return tally(students);
+    }
+
+    let students: UserDocument[] = [];
+
+    if (options.acadYear) {
+      // Limit to students whose classCode belongs to a class in this acad year.
+      const { classCodes } = await getClassesByAcadYear(options.acadYear);
+      const codes = Array.from(classCodes);
+      if (codes.length === 0) return { male: 0, female: 0, other: 0, total: 0 };
+
+      // Firestore caps `in` queries at 30 elements, so chunk the codes.
+      const byUid = new Map<string, UserDocument>();
+      for (let i = 0; i < codes.length; i += 30) {
+        const chunk = codes.slice(i, i + 30);
+        const snap = await getDocs(
+          query(
+            collection(db, 'users'),
+            where('role', '==', 'student'),
+            where('studentData.classCode', 'in', chunk),
+          ),
+        );
+        snap.forEach((d: any) => {
+          const data = d.data() as UserDocument;
+          if (data.uid) byUid.set(data.uid, data);
+        });
+      }
+      students = Array.from(byUid.values());
+    } else {
+      // System-wide: every student.
+      const snap = await getDocs(
+        query(collection(db, 'users'), where('role', '==', 'student')),
+      );
+      snap.forEach((d: any) => students.push(d.data() as UserDocument));
+    }
+
+    return tally(students);
+  } catch (error: any) {
+    throw new Error('Failed to get gender distribution: ' + error.message);
+  }
+};
+
+// ==============================================================================================================
+// GET STUDENT GRADE-LEVEL DISTRIBUTION
+// ==============================================================================================================
+
+export interface GradeLevelDistribution {
+  byGrade: Record<number, number>;
+  total: number;
+}
+
+/**
+ * Counts enrolled students grouped by the grade level of the class they are
+ * enrolled in (NOT the student's own studentData.gradeLevel).
+ *
+ *  - acadYear provided → only classes in that academic year
+ *  - acadYear omitted  → all classes (every academic year)
+ *
+ * Only students whose studentData.classCode currently points to one of those
+ * classes are counted, so the result reflects active enrollment (students who
+ * left, clearing their classCode, are excluded).
+ *
+ * Used by the "Students per Grade Level" chart on the Admin dashboard.
+ */
+export const getStudentGradeLevelDistribution = async (
+  acadYear?: string,
+): Promise<GradeLevelDistribution> => {
+  try {
+    // 1. Resolve the relevant classes and map each classCode to its grade.
+    const classesQuery = acadYear
+      ? query(collection(db, 'classes'), where('acadYear', '==', acadYear))
+      : query(collection(db, 'classes'));
+    const classesSnap = await getDocs(classesQuery);
+
+    const codeToGrade = new Map<string, number>();
+    classesSnap.forEach((d: any) => {
+      const data = d.data() as ClassDocument;
+      if (data.classCode && typeof data.gradeLevel === 'number') {
+        codeToGrade.set(data.classCode, data.gradeLevel);
+      }
+    });
+    if (codeToGrade.size === 0) return { byGrade: {}, total: 0 };
+
+    // 2. Group enrolled students by their class's grade level.
+    const studentsSnap = await getDocs(
+      query(collection(db, 'users'), where('role', '==', 'student')),
+    );
+
+    const byGrade: Record<number, number> = {};
+    let total = 0;
+    studentsSnap.forEach((d: any) => {
+      const student = d.data() as UserDocument;
+      const code = student.studentData?.classCode;
+      if (!code) return;
+      const grade = codeToGrade.get(code);
+      if (grade === undefined) return;
+      byGrade[grade] = (byGrade[grade] || 0) + 1;
+      total++;
+    });
+
+    return { byGrade, total };
+  } catch (error: any) {
+    throw new Error('Failed to get grade-level distribution: ' + error.message);
   }
 };
 

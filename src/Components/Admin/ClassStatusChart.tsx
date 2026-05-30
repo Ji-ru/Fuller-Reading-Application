@@ -148,10 +148,10 @@ const ClassStatusChart: React.FC<ClassStatusChartProps> = ({ acadYear }) => {
       </View>
 
       {/* ── Insight bar ────────────────────────────────────────────────── */}
-      <View style={S.insightBar}>
+      {/* <View style={S.insightBar}>
         <Text style={S.insightIcon}>📊</Text>
         <Text style={S.insightText}>{insightText}</Text>
-      </View>
+      </View> */}
     </View>
   );
 };

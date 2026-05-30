@@ -19,9 +19,11 @@ import {
     leaveClass,
     verifyCurrentUserPassword,
     // ─── Added for student acceptance or rejection to a class by faculty ───
+    // Migrated to the array-based flow:
+    //   • cancelJoinRequest replaces cancelEnrollmentRequest
+    //   • acknowledgeRejection is gone (no rejection notice in the new flow)
     resolveStudentClassState,
-    cancelEnrollmentRequest,
-    acknowledgeRejection,
+    cancelJoinRequest,
     // ─── End ──────────────────────────────────────────────────────────────
 } from '../../Controller/AuthenticationController';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
@@ -201,6 +203,44 @@ const JoinSuccessPopup: React.FC<JoinSuccessPopupProps> = ({ visible, className,
 );
 // ─── End ──────────────────────────────────────────────────────────────────
 
+// ─── Added for instant-rejoin enrollment flow ────────────────────────────
+// WelcomeBackPopup is shown when a returning member rejoins their class.
+// The REJOIN path in joinClass skips pending entirely (faculty already
+// approved them previously), so we celebrate instead of saying "request
+// sent". Uses the green success styling family.
+interface WelcomeBackPopupProps {
+    visible: boolean;
+    className: string;
+    onClose: () => void;
+}
+
+const WelcomeBackPopup: React.FC<WelcomeBackPopupProps> = ({ visible, className, onClose }) => (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+        <View style={popupStyles.overlay}>
+            <View style={popupStyles.card}>
+                <View style={[popupStyles.iconCircle, popupStyles.iconCircleSuccess]}>
+                    <Text style={popupStyles.iconEmoji}>👋</Text>
+                </View>
+                <Text style={popupStyles.title}>Welcome Back!</Text>
+                <Text style={popupStyles.body}>
+                    You've rejoined{'\n'}
+                    <Text style={popupStyles.bodyBold}>{className}</Text>.
+                    {'\n\n'}
+                    Your spot was saved, so no teacher approval is needed.
+                </Text>
+                <TouchableOpacity
+                    style={[popupStyles.actionButton, popupStyles.actionButtonSuccess]}
+                    onPress={onClose}
+                    activeOpacity={0.82}
+                >
+                    <Text style={popupStyles.actionButtonText}>Let's Go!</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    </Modal>
+);
+// ─── End ──────────────────────────────────────────────────────────────────
+
 // ─── LeaveClassPopup ─────────────────────────────────────────────────────────
 
 interface LeaveClassPopupProps {
@@ -341,10 +381,10 @@ export default function StudentMyClass() {
     const [logoutVisible, setLogoutVisible] = useState(false);
 
     // ─── Added for student acceptance or rejection to a class by faculty ───
-    // classState is the single source of truth: pending | just_accepted | rejected | active | none
+    // classState is the single source of truth: pending | active | none
+    // (No rejected/just_accepted variants in the array-based flow.)
     const [classState, setClassState] = useState<StudentClassState>({ kind: 'none' });
     const [cancellingRequest, setCancellingRequest] = useState(false);
-    const [acknowledgingRejection, setAcknowledgingRejection] = useState(false);
     // ─── End ──────────────────────────────────────────────────────────────
     const [loadingClass, setLoadingClass] = useState(true);
     const [classError, setClassError] = useState('');
@@ -356,6 +396,9 @@ export default function StudentMyClass() {
 
     const [alreadyEnrolledVisible, setAlreadyEnrolledVisible] = useState(false);
     const [successPopupVisible, setSuccessPopupVisible] = useState(false);
+    // ─── Added for instant-rejoin enrollment flow ────────────────────────
+    const [welcomeBackVisible, setWelcomeBackVisible] = useState(false);
+    // ─── End ─────────────────────────────────────────────────────────────
     const [joinedClassName, setJoinedClassName] = useState('');
 
     const [leaveModalVisible, setLeaveModalVisible] = useState(false);
@@ -366,13 +409,11 @@ export default function StudentMyClass() {
     const [passwordError, setPasswordError] = useState('');
     const [verifyingPassword, setVerifyingPassword] = useState(false);
 
-    // Convenience accessor: the currently-enrolled class (active OR freshly-accepted)
+    // Convenience accessor: the currently-enrolled class (only 'active' in the
+    // new flow; 'just_accepted' was removed since reconciliation now happens
+    // inside resolveStudentClassState and surfaces as plain 'active').
     const enrolledClass: ClassDocument | null =
-        classState.kind === 'active'
-            ? classState.class
-            : classState.kind === 'just_accepted'
-                ? classState.class
-                : null;
+        classState.kind === 'active' ? classState.class : null;
 
     // ─── Added for student acceptance or rejection to a class by faculty ───
     const fetchClassState = async () => {
@@ -412,7 +453,15 @@ export default function StudentMyClass() {
             setJoinModalVisible(false);
             setJoinCode('');
             setJoinedClassName(result.className || '');
-            setSuccessPopupVisible(true);
+            // ─── Modified for instant-rejoin enrollment flow ─────────────────
+            // FIRST-TIME (status='pending'): show the "Request Sent!" popup.
+            // REJOIN     (status='active'):  show the "Welcome Back!" popup.
+            if (result.status === 'pending') {
+                setSuccessPopupVisible(true);
+            } else {
+                setWelcomeBackVisible(true);
+            }
+            // ─── End ─────────────────────────────────────────────────────────
             await fetchClassState();
         } catch (error: any) {
             setJoinError(error.message);
@@ -426,25 +475,13 @@ export default function StudentMyClass() {
         if (classState.kind !== 'pending' || cancellingRequest) return;
         setCancellingRequest(true);
         try {
-            await cancelEnrollmentRequest(classState.request.requestId);
+            // Array-based flow: pass studentId + classId (no request doc anymore)
+            await cancelJoinRequest(studentId, classState.class.classId);
             await fetchClassState();
         } catch (error: any) {
             console.error('Cancel request failed:', error);
         } finally {
             setCancellingRequest(false);
-        }
-    };
-
-    const handleAcknowledgeRejection = async () => {
-        if (classState.kind !== 'rejected' || acknowledgingRejection) return;
-        setAcknowledgingRejection(true);
-        try {
-            await acknowledgeRejection(classState.request.requestId);
-            await fetchClassState();
-        } catch (error: any) {
-            console.error('Acknowledge rejection failed:', error);
-        } finally {
-            setAcknowledgingRejection(false);
         }
     };
     // ─── End ──────────────────────────────────────────────────────────────
@@ -592,7 +629,9 @@ export default function StudentMyClass() {
                         <Text style={styles.pendingTitle}>Waiting for Approval</Text>
                         <Text style={styles.pendingBody}>
                             Your request to join{' '}
-                            <Text style={styles.pendingBodyBold}>{classState.request.classCode}</Text>{' '}
+                            <Text style={styles.pendingBodyBold}>
+                                {classState.class.className || classState.class.classCode}
+                            </Text>{' '}
                             has been sent. Your teacher will review it shortly.
                         </Text>
                         <TouchableOpacity
@@ -609,31 +648,8 @@ export default function StudentMyClass() {
                         </TouchableOpacity>
                     </View>
                 )}
-
-                {!loadingClass && !classError && classState.kind === 'rejected' && (
-                    <View style={styles.rejectedCard}>
-                        <View style={styles.rejectedIconCircle}>
-                            <Text style={styles.rejectedIconText}>✕</Text>
-                        </View>
-                        <Text style={styles.rejectedTitle}>Request Declined</Text>
-                        <Text style={styles.rejectedBody}>
-                            Your teacher declined your request to join{' '}
-                            <Text style={styles.rejectedBodyBold}>{classState.request.classCode}</Text>.
-                        </Text>
-                        <TouchableOpacity
-                            style={[styles.rejectedAckButton, acknowledgingRejection && styles.rejectedAckBusy]}
-                            onPress={handleAcknowledgeRejection}
-                            disabled={acknowledgingRejection}
-                            activeOpacity={0.82}
-                        >
-                            {acknowledgingRejection ? (
-                                <ActivityIndicator size="small" color="#FFF" />
-                            ) : (
-                                <Text style={styles.rejectedAckText}>OK, Got It</Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                )}
+                {/* No 'rejected' branch in the array-based flow — a rejected
+                    student simply returns to the 'none' (empty) state below. */}
                 {/* ─── End ──────────────────────────────────────────────────────────── */}
 
                 {!loadingClass && !classError && classState.kind === 'none' && (
@@ -771,6 +787,9 @@ export default function StudentMyClass() {
 
             <AlreadyEnrolledPopup visible={alreadyEnrolledVisible} onClose={() => setAlreadyEnrolledVisible(false)} />
             <JoinSuccessPopup visible={successPopupVisible} className={joinedClassName} onClose={() => setSuccessPopupVisible(false)} />
+            {/* ─── Added for instant-rejoin enrollment flow ─── */}
+            <WelcomeBackPopup visible={welcomeBackVisible} className={joinedClassName} onClose={() => setWelcomeBackVisible(false)} />
+            {/* ─── End ──────────────────────────────────────── */}
             <LeaveClassPopup
                 visible={leaveModalVisible}
                 className={enrolledClass?.className || ''}
@@ -930,37 +949,6 @@ const styles = StyleSheet.create({
     },
     pendingCancelBusy: { opacity: 0.7 },
     pendingCancelText: { fontSize: sf(15), fontFamily: 'Andika-Bold', color: COLORS.danger },
-
-    rejectedCard: {
-        backgroundColor: COLORS.surface, borderRadius: sw(20), padding: sw(28),
-        alignItems: 'center', elevation: 3,
-        shadowColor: '#000', shadowOffset: { width: 0, height: sw(3) },
-        shadowOpacity: 0.08, shadowRadius: sw(10),
-        borderWidth: 1, borderColor: '#FECACA',
-    },
-    rejectedIconCircle: {
-        width: sw(80), height: sw(80), borderRadius: sw(40),
-        backgroundColor: COLORS.dangerLight, alignItems: 'center', justifyContent: 'center',
-        marginBottom: sh(20), borderWidth: 2, borderColor: '#FECACA',
-    },
-    rejectedIconText: { fontSize: sf(36), fontFamily: 'Andika-Bold', color: COLORS.danger },
-    rejectedTitle: {
-        fontSize: sf(22), fontFamily: 'Andika-Bold', color: COLORS.text,
-        marginBottom: sh(10), textAlign: 'center',
-    },
-    rejectedBody: {
-        fontSize: sf(14), fontFamily: 'Andika-Regular', color: COLORS.textSecondary,
-        textAlign: 'center', lineHeight: sf(22), marginBottom: sh(16),
-    },
-    rejectedBodyBold: { fontFamily: 'Andika-Bold', color: COLORS.danger, letterSpacing: sf(1) },
-    rejectedAckButton: {
-        width: '100%', paddingVertical: sh(14), borderRadius: sw(12),
-        alignItems: 'center', backgroundColor: COLORS.teal,
-        elevation: 2, shadowColor: COLORS.tealDark,
-        shadowOffset: { width: 0, height: sw(2) }, shadowOpacity: 0.2, shadowRadius: sw(5),
-    },
-    rejectedAckBusy: { opacity: 0.7 },
-    rejectedAckText: { fontSize: sf(15), fontFamily: 'Andika-Bold', color: '#FFF' },
     // ─── End ──────────────────────────────────────────────────────────────
 
     fabContainer: { position: 'absolute', bottom: sh(28), left: sw(20), right: sw(20) },

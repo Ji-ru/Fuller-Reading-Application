@@ -17,6 +17,7 @@ export type IconName =
   | 'myclass'
   | 'archive'
   | 'profile'
+  | 'classroom'
   // Student Profile tabs
   | 'progress'
   | 'sessions'
@@ -47,7 +48,9 @@ export type IconName =
   | 'adminBadge'
   | 'download'
   | 'eye'
-  | 'eye-off';
+  | 'eye-off'
+  | 'calendar'
+  | 'unarchive';
 
 interface IconProps {
   name: IconName;
@@ -166,6 +169,39 @@ const ProfileIcon: React.FC<{ size: number; color: string; filled: boolean }> = 
       fill={filled ? `${color}40` : 'none'}
       stroke={color}
       strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+// Classroom - board with students
+const ClassroomIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    {/* Board */}
+    <Rect
+      x="3" y="3.5" width="18" height="9" rx="1.6"
+      fill={filled ? `${color}20` : 'none'}
+      stroke={color}
+      strokeWidth={1.7}
+    />
+    {/* Board lines */}
+    <Line x1="6" y1="6.5" x2="12" y2="6.5" stroke={color} strokeWidth={1.4} strokeLinecap="round" opacity={filled ? 0.7 : 1} />
+    <Line x1="6" y1="9" x2="10" y2="9" stroke={color} strokeWidth={1.4} strokeLinecap="round" opacity={filled ? 0.7 : 1} />
+    {/* Students */}
+    <Circle cx="8" cy="17" r="2.2" fill={filled ? color : 'none'} stroke={color} strokeWidth={1.6} />
+    <Circle cx="16" cy="17" r="2.2" fill={filled ? color : 'none'} stroke={color} strokeWidth={1.6} />
+    <Path
+      d="M4.5 21c.4-2.2 2.4-3.6 3.5-3.6s3.2 1.4 3.6 3.6"
+      fill={filled ? `${color}20` : 'none'}
+      stroke={color}
+      strokeWidth={1.6}
+      strokeLinecap="round"
+    />
+    <Path
+      d="M12.4 21c.4-2.2 2.4-3.6 3.5-3.6s3.2 1.4 3.6 3.6"
+      fill={filled ? `${color}20` : 'none'}
+      stroke={color}
+      strokeWidth={1.6}
       strokeLinecap="round"
     />
   </Svg>
@@ -765,6 +801,62 @@ const DownloadIcon: React.FC<{ size: number; color: string; filled: boolean }> =
   </Svg>
 );
 
+// Calendar — academic year / date filter
+const CalendarIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    {/* Body */}
+    <Rect
+      x="3" y="5" width="18" height="16" rx="2.5"
+      fill={filled ? `${color}20` : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+    />
+    {/* Header bar */}
+    <Path
+      d="M3 9h18"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+    {/* Hangers */}
+    <Line x1="8" y1="3" x2="8" y2="6.5" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    <Line x1="16" y1="3" x2="16" y2="6.5" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    {/* Date dot */}
+    <Circle cx="12" cy="15" r="1.6" fill={filled ? color : color} />
+  </Svg>
+);
+
+// Unarchive — archive box with an up arrow (restore)
+const UnarchiveIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    {/* Lid */}
+    <Rect
+      x="2" y="3" width="20" height="5" rx="1.5"
+      fill={filled ? color : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+    />
+    {/* Body */}
+    <Path
+      d="M4 8v11a1 1 0 001 1h14a1 1 0 001-1V8"
+      fill={filled ? `${color}35` : 'none'}
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+    {/* Up arrow (restore) */}
+    <Polyline
+      points="9.5 14 12 11.5 14.5 14"
+      fill="none"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Line x1="12" y1="11.5" x2="12" y2="17" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+  </Svg>
+);
+
 // ─── Icon Router ──────────────────────────────────────────────────────────────
 
 export const Icon: React.FC<IconProps> = ({
@@ -778,6 +870,7 @@ export const Icon: React.FC<IconProps> = ({
     case 'myclass':   return <MyClassIcon   size={size} color={color} filled={filled} />;
     case 'archive':   return <ArchiveIcon   size={size} color={color} filled={filled} />;
     case 'profile':   return <ProfileIcon   size={size} color={color} filled={filled} />;
+    case 'classroom': return <ClassroomIcon size={size} color={color} filled={filled} />;
     case 'progress':  return <ProgressIcon  size={size} color={color} filled={filled} />;
     case 'sessions':  return <SessionsIcon  size={size} color={color} filled={filled} />;
     case 'analytics': return <AnalyticsIcon size={size} color={color} filled={filled} />;
@@ -805,6 +898,8 @@ export const Icon: React.FC<IconProps> = ({
     case 'download':  return <DownloadIcon  size={size} color={color} filled={filled} />;
     case 'eye':       return <EyeIcon       size={size} color={color} filled={filled} />;
     case 'eye-off':   return <EyeOffIcon    size={size} color={color} filled={filled} />;
+    case 'calendar':  return <CalendarIcon  size={size} color={color} filled={filled} />;
+    case 'unarchive': return <UnarchiveIcon size={size} color={color} filled={filled} />;
     default:          return null;
   }
 };

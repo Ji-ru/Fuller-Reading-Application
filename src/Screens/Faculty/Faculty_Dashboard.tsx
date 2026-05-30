@@ -15,6 +15,7 @@ import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/Numbe
 import ClassParticipationRate from '../../Components/Faculty/Dashboard/ClassParticipationRate';
 import ReadingCalendarHeatmap from '../../Components/Faculty/Dashboard/ReadingCalendarHeatmap';
 import PassageDifficultyRanking from '../../Components/Faculty/Dashboard/PassageDifficultyRanking';
+import GenderDistributionChart from '../../Components/GlobalUse/GenderDistributionChart';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { useFetchClassReadingHealth } from '../../Hooks/use_ReadingStudentStats';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
@@ -156,6 +157,12 @@ export default function FacultyDashboard() {
     if (cls?.totalStudents) return cls.totalStudents;
     return stats.studentCount;
   }, [classHealthData, readingStatusFilter.selectedView, stats.studentCount]);
+
+  // The filter's selectedView is a classId once data loads ('overall' before).
+  const selectedClassId = React.useMemo(
+    () => (readingStatusFilter.selectedView !== 'overall' ? readingStatusFilter.selectedView : undefined),
+    [readingStatusFilter.selectedView],
+  );
 
   const displayName = firstName;
 
@@ -349,6 +356,14 @@ export default function FacultyDashboard() {
             filter={readingStatusFilter}
             onFilterChange={handleReadingFilterChange}
           /> */}
+
+          {/* 3.5 GENDER DISTRIBUTION — students enrolled in the selected class */}
+          {selectedClassId && (
+            <>
+              <SectionLabel label="Gender Distribution" />
+              <GenderDistributionChart classId={selectedClassId} />
+            </>
+          )}
 
           {/* 4. CLASS PARTICIPATION — are students actually reading this week? */}
           <SectionLabel label="Class Participation" />

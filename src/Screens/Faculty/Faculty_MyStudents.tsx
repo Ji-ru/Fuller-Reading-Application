@@ -8,31 +8,36 @@ import {
   FlatList,
   TextInput,
   StyleSheet,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import myStudents from '../../UI_Designs/MyStudentsStyle';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import { RootStackParamList } from '../../Controller/NavigationController';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import {
-  UserDocument,
-  // ─── Added for student acceptance or rejection to a class by faculty ───
-  EnrollmentRequestDocument,
-  // ─── End ──────────────────────────────────────────────────────────────
-} from '../../Interfaces/dataInterfaces';
+import { UserDocument } from '../../Interfaces/dataInterfaces';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import Svg, { Text as SvgText } from 'react-native-svg';
 import { FacultyColors } from '../../Utilities/Theme';
 import { Icon } from '../../Components/GlobalUse/Icon';
 // ─── Added for student acceptance or rejection to a class by faculty ───────
-import { getAuth } from '@react-native-firebase/auth';
+// Migrated to the array-on-class flow. Pending students are now plain
+// UserDocument records (resolved from pendingStudentIds UIDs), not request
+// records, so the imports and types here are simpler.
+// ─── Modified for instant-rejoin enrollment flow ──────────────────────────
+// Added removeStudentFromClass for faculty manual remove (kebab UI).
+// ─── Added for studentIds/assignedClassIds source-of-truth refactor ───────
+// Enrolled list now fetched via getEnrolledStudents (reads class.studentIds)
+// instead of the old classCode-based query, which incorrectly included
+// pending and just-removed students.
 import {
-  getPendingRequestsForClass,
-  acceptEnrollmentRequest,
-  rejectEnrollmentRequest,
+  getPendingStudents,
+  acceptStudent,
+  rejectStudent,
+  removeStudentFromClass,
+  getEnrolledStudents,
 } from '../../Controller/AuthenticationController';
 // ─── End ──────────────────────────────────────────────────────────────────
 
@@ -207,10 +212,17 @@ export default function MyStudents() {
   const [filteredStudents, setFilteredStudents] = useState<UserDocument[]>([]);
 
   // ─── Added for student acceptance or rejection to a class by faculty ───────
-  const facultyId = getAuth().currentUser?.uid || '';
-  const [pendingRequests, setPendingRequests] = useState<EnrollmentRequestDocument[]>([]);
+  // Pending students are now UserDocument records (resolved from the class's
+  // pendingStudentIds UIDs). actingOnUid tracks the busy state per student.
+  const [pendingStudents, setPendingStudents] = useState<UserDocument[]>([]);
   const [pendingExpanded, setPendingExpanded] = useState(true);
-  const [actingOnRequestId, setActingOnRequestId] = useState<string | null>(null);
+  const [actingOnUid, setActingOnUid] = useState<string | null>(null);
+  // ─── Added for instant-rejoin enrollment flow ────────────────────────────
+  // Kebab UI for faculty's manual "Remove from class" action on enrolled rows.
+  const [removeTargetStudent, setRemoveTargetStudent] =
+    useState<UserDocument | null>(null);
+  const [removingStudent, setRemovingStudent] = useState(false);
+  // ─── End ─────────────────────────────────────────────────────────────────
   // ─── End ──────────────────────────────────────────────────────────────────
 
   // ========================================================================
@@ -220,13 +232,15 @@ export default function MyStudents() {
 
   // ========================================================================
   // FETCH STUDENTS
+  // ─── Modified for studentIds/assignedClassIds source-of-truth refactor ──
+  // Sourced from class.studentIds (via getEnrolledStudents) so pending and
+  // just-removed students are correctly excluded.
+  // ─── End ────────────────────────────────────────────────────────────────
   // ========================================================================
   const fetchFacultyStudents = useCallback(async () => {
     try {
       setLoading(true);
-      const studentList = await getFacultyClasses_Student.getStudentsInClass(
-        classCode
-      );
+      const studentList = await getEnrolledStudents(classId);
       setStudents(studentList);
       setFilteredStudents(studentList);
     } catch (error: any) {
@@ -234,60 +248,86 @@ export default function MyStudents() {
     } finally {
       setLoading(false);
     }
-  }, [classCode]);
+  }, [classId]);
 
   useEffect(() => {
     fetchFacultyStudents();
   }, [fetchFacultyStudents]);
 
   // ─── Added for student acceptance or rejection to a class by faculty ───────
-  const fetchPendingRequests = useCallback(async () => {
+  const fetchPendingStudents = useCallback(async () => {
     if (!classId) return;
     try {
-      const reqs = await getPendingRequestsForClass(classId);
-      setPendingRequests(reqs);
+      const profiles = await getPendingStudents(classId);
+      setPendingStudents(profiles);
     } catch (error: any) {
-      console.error('Failed to fetch pending requests:', error);
+      console.error('Failed to fetch pending students:', error);
     }
   }, [classId]);
 
   useEffect(() => {
-    fetchPendingRequests();
-  }, [fetchPendingRequests]);
+    fetchPendingStudents();
+  }, [fetchPendingStudents]);
 
-  const handleAcceptRequest = useCallback(
-    async (request: EnrollmentRequestDocument) => {
-      if (actingOnRequestId) return;
-      setActingOnRequestId(request.requestId);
+  const handleAcceptStudent = useCallback(
+    async (student: UserDocument) => {
+      if (actingOnUid) return;
+      setActingOnUid(student.uid);
       try {
-        await acceptEnrollmentRequest(request.requestId, facultyId);
+        await acceptStudent(classId, student.uid);
         // Refresh both pending list and the enrolled-students roster.
-        await Promise.all([fetchPendingRequests(), fetchFacultyStudents()]);
+        await Promise.all([fetchPendingStudents(), fetchFacultyStudents()]);
       } catch (error: any) {
-        console.error('Accept request failed:', error);
+        console.error('Accept student failed:', error);
       } finally {
-        setActingOnRequestId(null);
+        setActingOnUid(null);
       }
     },
-    [actingOnRequestId, facultyId, fetchPendingRequests, fetchFacultyStudents],
+    [actingOnUid, classId, fetchPendingStudents, fetchFacultyStudents],
   );
 
-  const handleRejectRequest = useCallback(
-    async (request: EnrollmentRequestDocument) => {
-      if (actingOnRequestId) return;
-      setActingOnRequestId(request.requestId);
+  const handleRejectStudent = useCallback(
+    async (student: UserDocument) => {
+      if (actingOnUid) return;
+      setActingOnUid(student.uid);
       try {
-        // Reason is optional — left blank for now; a confirm dialog could prompt later.
-        await rejectEnrollmentRequest(request.requestId, facultyId);
-        await fetchPendingRequests();
+        await rejectStudent(classId, student.uid);
+        await fetchPendingStudents();
       } catch (error: any) {
-        console.error('Reject request failed:', error);
+        console.error('Reject student failed:', error);
       } finally {
-        setActingOnRequestId(null);
+        setActingOnUid(null);
       }
     },
-    [actingOnRequestId, facultyId, fetchPendingRequests],
+    [actingOnUid, classId, fetchPendingStudents],
   );
+  // ─── End ──────────────────────────────────────────────────────────────────
+
+  // ─── Added for instant-rejoin enrollment flow ─────────────────────────────
+  const handleOpenRemoveConfirm = useCallback((student: UserDocument) => {
+    setRemoveTargetStudent(student);
+  }, []);
+
+  const handleCancelRemoveConfirm = useCallback(() => {
+    if (removingStudent) return;
+    setRemoveTargetStudent(null);
+  }, [removingStudent]);
+
+  const handleConfirmRemoveStudent = useCallback(async () => {
+    if (!removeTargetStudent || removingStudent) return;
+    setRemovingStudent(true);
+    try {
+      await removeStudentFromClass(classId, removeTargetStudent.uid);
+      // After removal the enrolled-students list is what changes; the pending
+      // list is unrelated.
+      await fetchFacultyStudents();
+      setRemoveTargetStudent(null);
+    } catch (error: any) {
+      console.error('Remove student failed:', error);
+    } finally {
+      setRemovingStudent(false);
+    }
+  }, [removeTargetStudent, removingStudent, classId, fetchFacultyStudents]);
   // ─── End ──────────────────────────────────────────────────────────────────
 
   // ========================================================================
@@ -309,63 +349,68 @@ export default function MyStudents() {
   // RENDER STUDENT ITEM
   // ========================================================================
   const renderStudentItem = ({ item, index }: { item: UserDocument; index: number }) => (
-    <TouchableOpacity
-      style={myStudents.studentCard}
-      onPress={() =>
-        handleStudentViewStats({
-          studentId: item.uid,
-          studentName: `${item.firstName} ${item.middleName ?? ''} ${
-            item.lastName
-          }`.trim(),
-          readingLevel: item.studentData?.reading_Level || 'N/A',
-          gradeLevel: item.studentData?.gradeLevel ?? 1,
-        })
-      }
-      activeOpacity={0.7}
-    >
-      <View style={myStudents.studentCardContent}>
-        {/* Profile Image/Initial */}
-        {item.profileImageUrl ? (
-          <Image
-            source={{ uri: item.profileImageUrl }}
-            style={myStudents.profileImage}
-          />
-        ) : (
-          <View style={[myStudents.defaultProfile, { backgroundColor: ACCENT_COLORS_FACULTY[index % ACCENT_COLORS_FACULTY.length] }]}>
-            <Text style={myStudents.defaultProfileText}>
-              {item.firstName?.charAt(0)}
-              {item.lastName?.charAt(0)}
+    // ─── Modified for instant-rejoin enrollment flow ──────────────────────
+    // Row is a View. Main tappable area navigates to the profile; the kebab
+    // on the right is a separate tappable that opens the remove-confirm modal.
+    <View style={[myStudents.studentCard, removeRowStyles.row]}>
+      <TouchableOpacity
+        style={removeRowStyles.mainTap}
+        onPress={() =>
+          handleStudentViewStats({
+            studentId: item.uid,
+            studentName: `${item.firstName} ${item.middleName ?? ''} ${
+              item.lastName
+            }`.trim(),
+            readingLevel: item.studentData?.reading_Level || 'N/A',
+            gradeLevel: item.studentData?.gradeLevel ?? 1,
+          })
+        }
+        activeOpacity={0.7}
+      >
+        <View style={myStudents.studentCardContent}>
+          {/* Profile Image/Initial */}
+          {item.profileImageUrl ? (
+            <Image
+              source={{ uri: item.profileImageUrl }}
+              style={myStudents.profileImage}
+            />
+          ) : (
+            <View style={[myStudents.defaultProfile, { backgroundColor: ACCENT_COLORS_FACULTY[index % ACCENT_COLORS_FACULTY.length] }]}>
+              <Text style={myStudents.defaultProfileText}>
+                {item.firstName?.charAt(0)}
+                {item.lastName?.charAt(0)}
+              </Text>
+            </View>
+          )}
+
+          {/* Student Info */}
+          <View style={myStudents.studentInfo}>
+            <Text style={myStudents.studentName} numberOfLines={1}>
+              {item.firstName} {item.middleName} {item.lastName}
             </Text>
-          </View>
-        )}
-
-        {/* Student Info */}
-        <View style={myStudents.studentInfo}>
-          <Text style={myStudents.studentName} numberOfLines={1}>
-            {item.firstName} {item.middleName} {item.lastName}
-          </Text>
-          <View style={myStudents.detailsRow}>
-            <View style={myStudents.detailChip}>
-              <Text style={myStudents.detailLabel}>Grade</Text>
-              <Text style={myStudents.detailValue}>
-                {item.studentData?.gradeLevel || 'N/A'}
-              </Text>
-            </View>
-            <View style={myStudents.detailChip}>
-              <Text style={myStudents.detailLabel}>Reading Level</Text>
-              <Text style={myStudents.detailValue}>
-                {item.studentData?.reading_Level || 'N/A'}
-              </Text>
+            <View style={myStudents.detailsRow}>
+              <View style={myStudents.detailChip}>
+                <Text style={myStudents.detailLabel}>Grade</Text>
+                <Text style={myStudents.detailValue}>
+                  {item.studentData?.gradeLevel || 'N/A'}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
+      </TouchableOpacity>
 
-        {/* Arrow Icon */}
-        <View style={myStudents.arrowContainer}>
-          <Text style={myStudents.arrowIcon}>›</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+      {/* Kebab → opens remove confirmation */}
+      <TouchableOpacity
+        style={removeRowStyles.kebabBtn}
+        onPress={() => handleOpenRemoveConfirm(item)}
+        activeOpacity={0.6}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Text style={removeRowStyles.kebabIcon}>⋮</Text>
+      </TouchableOpacity>
+    </View>
+    // ─── End ──────────────────────────────────────────────────────────────
   );
 
   // ========================================================================
@@ -509,7 +554,7 @@ export default function MyStudents() {
           </View>
 
           {/* ─── Added for student acceptance or rejection to a class by faculty ─── */}
-          {pendingRequests.length > 0 && (
+          {pendingStudents.length > 0 && (
             <View style={pendingStyles.card}>
               <TouchableOpacity
                 style={pendingStyles.headerRow}
@@ -519,7 +564,7 @@ export default function MyStudents() {
                 <Icon name="inbox" size={20} color="#C77700" filled />
                 <Text style={pendingStyles.headerTitle}>Pending Requests</Text>
                 <View style={pendingStyles.badge}>
-                  <Text style={pendingStyles.badgeText}>{pendingRequests.length}</Text>
+                  <Text style={pendingStyles.badgeText}>{pendingStudents.length}</Text>
                 </View>
                 <Text style={pendingStyles.chevron}>{pendingExpanded ? '▾' : '▸'}</Text>
               </TouchableOpacity>
@@ -527,27 +572,25 @@ export default function MyStudents() {
               {pendingExpanded && (
                 <>
                   <View style={pendingStyles.divider} />
-                  {pendingRequests.map(req => {
-                    const isBusy = actingOnRequestId === req.requestId;
-                    const initials = req.studentName
-                      .split(' ')
-                      .filter(Boolean)
-                      .map(p => p.charAt(0).toUpperCase())
-                      .slice(0, 2)
-                      .join('');
+                  {pendingStudents.map(student => {
+                    const isBusy = actingOnUid === student.uid;
+                    const fullName = `${student.firstName} ${student.lastName}`.trim();
+                    const initials =
+                      `${(student.firstName?.charAt(0) || '').toUpperCase()}${(student.lastName?.charAt(0) || '').toUpperCase()}` ||
+                      '?';
                     return (
-                      <View key={req.requestId} style={pendingStyles.requestRow}>
+                      <View key={student.uid} style={pendingStyles.requestRow}>
                         <View style={pendingStyles.avatar}>
-                          <Text style={pendingStyles.avatarText}>{initials || '?'}</Text>
+                          <Text style={pendingStyles.avatarText}>{initials}</Text>
                         </View>
                         <Text style={pendingStyles.requestName} numberOfLines={1}>
-                          {req.studentName}
+                          {fullName}
                         </Text>
                         <View style={pendingStyles.actions}>
                           <TouchableOpacity
                             style={[pendingStyles.rejectBtn, isBusy && pendingStyles.busyBtn]}
                             disabled={isBusy}
-                            onPress={() => handleRejectRequest(req)}
+                            onPress={() => handleRejectStudent(student)}
                             activeOpacity={0.8}
                           >
                             <Text style={pendingStyles.rejectText}>Reject</Text>
@@ -555,7 +598,7 @@ export default function MyStudents() {
                           <TouchableOpacity
                             style={[pendingStyles.acceptBtn, isBusy && pendingStyles.busyBtn]}
                             disabled={isBusy}
-                            onPress={() => handleAcceptRequest(req)}
+                            onPress={() => handleAcceptStudent(student)}
                             activeOpacity={0.8}
                           >
                             {isBusy ? (
@@ -632,6 +675,160 @@ export default function MyStudents() {
           </View>
         </View>
       </View>
+
+      {/* ─── Added for instant-rejoin enrollment flow ─── */}
+      {/* REMOVE-FROM-CLASS CONFIRMATION MODAL */}
+      <Modal
+        visible={!!removeTargetStudent}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelRemoveConfirm}
+      >
+        <View style={removeRowStyles.modalOverlay}>
+          <View style={removeRowStyles.modalCard}>
+            <View style={removeRowStyles.modalIconCircle}>
+              <Text style={removeRowStyles.modalIconText}>⚠</Text>
+            </View>
+            <Text style={removeRowStyles.modalTitle}>Remove from class?</Text>
+            <Text style={removeRowStyles.modalBody}>
+              {removeTargetStudent
+                ? `${removeTargetStudent.firstName} ${removeTargetStudent.lastName} will be removed from this class roster. They'll need a new approval to rejoin.`
+                : ''}
+            </Text>
+            <View style={removeRowStyles.modalButtonRow}>
+              <TouchableOpacity
+                style={[removeRowStyles.modalCancelBtn, removingStudent && removeRowStyles.modalBtnBusy]}
+                disabled={removingStudent}
+                onPress={handleCancelRemoveConfirm}
+                activeOpacity={0.8}
+              >
+                <Text style={removeRowStyles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[removeRowStyles.modalConfirmBtn, removingStudent && removeRowStyles.modalBtnBusy]}
+                disabled={removingStudent}
+                onPress={handleConfirmRemoveStudent}
+                activeOpacity={0.8}
+              >
+                {removingStudent ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={removeRowStyles.modalConfirmText}>Remove</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      {/* ─── End ────────────────────────────────────────────────────────── */}
     </SafeAreaView>
   );
 }
+
+// ─── Added for instant-rejoin enrollment flow ───────────────────────────────
+const removeRowStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  mainTap: {
+    flex: 1,
+  },
+  kebabBtn: {
+    width: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  kebabIcon: {
+    fontSize: 22,
+    fontFamily: 'Nunito-Bold',
+    color: '#91A89B',
+    lineHeight: 24,
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.50)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 22,
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+  },
+  modalIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FDECEE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#F8D7DA',
+  },
+  modalIconText: {
+    fontSize: 30,
+    color: '#D64550',
+    fontFamily: 'Nunito-Black',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: 'Nunito-ExtraBold',
+    color: '#1B2B22',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalBody: {
+    fontSize: 13,
+    fontFamily: 'Nunito-Medium',
+    color: '#5C7064',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 22,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 10,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 14,
+    fontFamily: 'Nunito-Bold',
+    color: '#4B5563',
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#D64550',
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    fontSize: 14,
+    fontFamily: 'Nunito-Bold',
+    color: '#FFFFFF',
+  },
+  modalBtnBusy: { opacity: 0.6 },
+});
+// ─── End ──────────────────────────────────────────────────────────────────────

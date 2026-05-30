@@ -38,7 +38,7 @@ const myClass = StyleSheet.create({
   createButton: {
     backgroundColor: FacultyColors.primary,
     borderRadius: sw(12),
-    marginTop: sh(50),
+    marginTop: sh(5),
     marginBottom: sh(20),
     elevation: 3,
     shadowColor: FacultyColors.primary,
@@ -222,7 +222,7 @@ const myClass = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'transparent',
-    zIndex: 998,
+    zIndex: 9998,
   },
   overlay: {
     top: 0,
@@ -242,7 +242,7 @@ const myClass = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: sw(12),
     minWidth: sw(180),
-    zIndex: 1000,
+    zIndex: 9999,
   },
   contextMenuItem: {
     flexDirection: 'row',

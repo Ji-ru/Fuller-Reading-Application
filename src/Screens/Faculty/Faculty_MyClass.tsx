@@ -21,7 +21,17 @@ import { ClassDocument } from '../../Interfaces/dataInterfaces';
 import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import myClass from '../../UI_Designs/MyClassStyles';
 import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
-import { archiveClass, createCustomClass } from '../../Controller/AuthenticationController';
+// ─── Added for studentIds/assignedClassIds source-of-truth refactor ────────
+// Classes are now fetched via getAssignedClasses (faculty.assignedClassIds),
+// and deletions go through deleteClassByFaculty so the class doc is actually
+// removed from Firestore (not just the assignedClassIds entry).
+import {
+  archiveClass,
+  createCustomClass,
+  getAssignedClasses,
+  deleteClassByFaculty,
+} from '../../Controller/AuthenticationController';
+// ─── End ──────────────────────────────────────────────────────────────────
 import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
 import { getAcademicYearOptions } from '../../Utilities/acadYearUtils';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
@@ -63,21 +73,29 @@ export default function MyClass() {
 
   // ========================================================================
   // FETCH CLASSES
+  // ─── Modified for studentIds/assignedClassIds source-of-truth refactor ──
+  // One-shot fetch driven by the faculty's assignedClassIds. We refresh
+  // after every action (create/edit/archive/delete) instead of using a
+  // realtime listener; this also avoids the previous bug where deleted
+  // classes lingered because the old listener queried by facultyId only.
+  // ─── End ────────────────────────────────────────────────────────────────
   // ========================================================================
-  useEffect(() => {
+  const fetchClasses = useCallback(async () => {
     if (!currentUser) return;
-
-    const unsubscribe =
-      getFacultyClasses_Student.getToFacultyClassesRealTime(
-        currentUser.uid,
-        classes => {
-          setClasses(classes.filter(c => c.status === 'active'));
-          setLoading(false);
-        },
-      );
-
-    return unsubscribe;
+    try {
+      setLoading(true);
+      const all = await getAssignedClasses(currentUser.uid);
+      setClasses(all.filter(c => c.status === 'active'));
+    } catch (error: any) {
+      console.error('Failed to fetch classes:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [currentUser]);
+
+  useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
 
 
   // ========================================================================
@@ -142,6 +160,9 @@ export default function MyClass() {
       setNewClassName('');
       setGradeLevel('1');
       setAcademicYear('');
+      // ─── Added for studentIds/assignedClassIds source-of-truth refactor ──
+      await fetchClasses();
+      // ─── End ─────────────────────────────────────────────────────────────
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to create class');
     } finally {
@@ -211,6 +232,9 @@ export default function MyClass() {
       if (result.success) {
         Alert.alert('Success', result.message);
         setEditModalVisible(false);
+        // ─── Added for studentIds/assignedClassIds source-of-truth refactor ──
+        await fetchClasses();
+        // ─── End ─────────────────────────────────────────────────────────────
       }
     } catch (error: any) {
       console.error('Failed to edit class:', error);
@@ -233,6 +257,9 @@ export default function MyClass() {
             try {
               await archiveClass(classItem.classId, currentUser?.uid || '');
               Alert.alert('Success', 'Class archived successfully');
+              // ─── Added for studentIds/assignedClassIds source-of-truth refactor ──
+              await fetchClasses();
+              // ─── End ─────────────────────────────────────────────────────────────
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to archive class');
             } finally {
@@ -255,12 +282,19 @@ export default function MyClass() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const result = await getFacultyClasses_Student.deleteClass(
+              // ─── Modified for studentIds/assignedClassIds source-of-truth refactor ──
+              // Uses deleteClassByFaculty so the class doc is actually deleted
+              // (atomic batch with the assignedClassIds arrayRemove).
+              // ─── End ───────────────────────────────────────────────────────────────
+              await deleteClassByFaculty(
                 classItem.classId,
+                currentUser?.uid || '',
               );
-              if (result.success) {
-                Alert.alert('Success', result.message);
-              }
+              Alert.alert(
+                'Success',
+                `Class "${classItem.className || classItem.classId}" deleted successfully.`,
+              );
+              await fetchClasses();
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to delete class');
             }

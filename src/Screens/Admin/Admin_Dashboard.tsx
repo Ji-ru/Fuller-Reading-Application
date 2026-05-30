@@ -29,7 +29,9 @@ import UsersByRoleChart from '../../Components/Admin/UsersByRoleChart';
 import UsersRegisteredChart from '../../Components/Admin/UsersRegisteredChart';
 import ClassStatusChart from '../../Components/Admin/ClassStatusChart';
 import ClassesPerGradeChart from '../../Components/Admin/ClassesPerGradeChart';
+import StudentsPerGradeChart from '../../Components/Admin/StudentsPerGradeChart';
 import ReadingLevelDistributionChart from '../../Components/Admin/ReadingLevelDistributionChart';
+import GenderDistributionChart from '../../Components/GlobalUse/GenderDistributionChart';
 
 // KPI Card Component
 const KPICard = ({ icon, label, value, color }: { icon: IconName; label: string; value: number | string; color: string }) => (
@@ -161,16 +163,16 @@ export default function AdminDashboard() {
                   <KPICard icon="students" label={`Total Students\n${formatAcademicYear(currentAcadYear)}`} value={roleCounts.students} color={FacultyColors.primary} />
                   <KPICard icon="teacher" label={`Total Teachers\n${formatAcademicYear(currentAcadYear)}`} value={roleCounts.faculty} color={FacultyColors.primary} />
                 </View>
-                <View style={adminDashboard.kpiRowCentered}>
+                {/* <View style={adminDashboard.kpiRowCentered}>
                   <View style={adminDashboard.kpiCardHalf}>
                     <KPICard icon="myclass" label={`Active Classes\n${formatAcademicYear(currentAcadYear)}`} value={activeClassCount} color={FacultyColors.primaryLight} />
                   </View>
-                </View>
+                </View> */}
               </View>
             </View>
 
             {/* YEAR FILTER DROPDOWN */}
-            {/* <View style={adminDashboard.yearFilterContainer}>
+            <View style={adminDashboard.yearFilterContainer}>
               <Text style={adminDashboard.yearFilterLabel}>Filter Charts by Academic Year</Text>
               <TouchableOpacity
                 style={adminDashboard.filterDropdownButton}
@@ -210,28 +212,34 @@ export default function AdminDashboard() {
                   })}
                 </View>
               )}
-            </View> */}
+            </View>
 
             {/* CHARTS SECTION */}
             <View style={adminDashboard.chartsContainer}>
-              {/* <SectionDivider label="Users" /> */}
+              <SectionDivider label="Users" />
               {/* <View style={adminDashboard.chartWrapper}>
                 <ReadingLevelDistributionChart acadYear={acadYearParam} />
               </View> */}
-              {/* <View style={adminDashboard.chartWrapper}>
+              <View style={adminDashboard.chartWrapper}>
                 <UsersByRoleChart acadYear={acadYearParam} />
-              </View> */}
-              {/* <View style={adminDashboard.chartWrapper}>
+              </View>
+              <View style={adminDashboard.chartWrapper}>
                 <UsersRegisteredChart acadYear={acadYearParam} />
-              </View> */}
+              </View>
+              <View style={adminDashboard.chartWrapper}>
+                <GenderDistributionChart acadYear={acadYearParam} />
+              </View>
 
-              {/* <SectionDivider label="Classes" /> */}
-              {/* <View style={adminDashboard.chartWrapper}>
+              <SectionDivider label="Classes" />
+              <View style={adminDashboard.chartWrapper}>
                 <ClassStatusChart acadYear={acadYearParam} />
-              </View> */}
-              {/* <View style={adminDashboard.chartWrapper}>
+              </View>
+              <View style={adminDashboard.chartWrapper}>
                 <ClassesPerGradeChart acadYear={acadYearParam} />
-              </View> */}
+              </View>
+              <View style={adminDashboard.chartWrapper}>
+                <StudentsPerGradeChart acadYear={acadYearParam} />
+              </View>
             </View>
 
           </View>

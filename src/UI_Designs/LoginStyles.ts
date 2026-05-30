@@ -132,6 +132,11 @@ const login = StyleSheet.create({
   inputIcon: {
     fontSize: sf(16),
   },
+  eyeIcon: {
+    width: sw(22),
+    height: sw(22),
+    tintColor: C.slate,
+  },
   input: {
     flex: 1,
     fontSize: sf(15),

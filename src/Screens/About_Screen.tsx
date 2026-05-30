@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigationHelper } from '../Controller/NavigationController';
@@ -35,9 +36,21 @@ const C = {
 
 // ─── Team members ─────────────────────────────────────────────────────────────
 const TEAM = [
-  { name: 'Jibril Leander Paul M. Rubi', role: 'Lead Developer', emoji: '🧑' },
-  { name: 'Arth Luije S. Bancat', role: 'Software Developer', emoji: '🧑' },
-  { name: 'Erwin Leonardia', role: 'AI/ML Developer', emoji: '🧑' },
+  {
+    name: 'Jibril Leander Paul M. Rubi',
+    role: 'Lead Developer',
+    image: require('../../assets/developers/jibril.jpg'),
+  },
+  {
+    name: 'Arth Luije S. Bancat',
+    role: 'Software Developer',
+    image: require('../../assets/developers/arth.jpg'),
+  },
+  {
+    name: 'Erwin Leonardia',
+    role: 'AI/ML Developer',
+    image: require('../../assets/developers/erwin.jpg'),
+  },
 ];
 
 // ─── STT model (currently active) ────────────────────────────────────────────
@@ -97,6 +110,21 @@ function SectionHeading({ emoji, title }: { emoji: string; title: string }) {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export default function AboutScreen() {
   const { handleBackStep } = useNavigationHelper();
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState<any>(null);
+  const [previewName, setPreviewName] = useState('');
+
+  const openPreview = (image: any, name: string) => {
+    setPreviewImage(image);
+    setPreviewName(name);
+    setPreviewVisible(true);
+  };
+
+  const closePreview = () => {
+    setPreviewVisible(false);
+    setPreviewImage(null);
+    setPreviewName('');
+  };
 
   return (
     <SafeAreaView style={S.bg}>
@@ -228,13 +256,14 @@ export default function AboutScreen() {
 
             <View style={S.teamGrid}>
               {TEAM.map((member, i) => (
-                <Animated.View
-                  key={i}
-                  style={S.memberCard}
-                >
-                  <View style={S.memberAvatarCircle}>
-                    <Text style={S.memberEmoji}>{member.emoji}</Text>
-                  </View>
+                <Animated.View key={i} style={S.memberCard}>
+                  <TouchableOpacity
+                    style={S.memberAvatarCircle}
+                    onPress={() => openPreview(member.image, member.name)}
+                    activeOpacity={0.85}
+                  >
+                    <Image source={member.image} style={S.memberAvatarImage} />
+                  </TouchableOpacity>
                   <Text style={S.memberName}>{member.name}</Text>
                   <Text style={S.memberRole}>{member.role}</Text>
                 </Animated.View>
@@ -273,6 +302,19 @@ export default function AboutScreen() {
 
         <View style={{ height: sh(32) }} />
       </ScrollView>
+
+      <Modal visible={previewVisible} transparent animationType="fade" onRequestClose={closePreview}>
+        <View style={S.previewOverlay}>
+          <TouchableOpacity style={S.previewBackdrop} onPress={closePreview} activeOpacity={1} />
+          <View style={S.previewCard}>
+            <Image source={previewImage} style={S.previewImage} resizeMode="contain" />
+            {!!previewName && <Text style={S.previewName}>{previewName}</Text>}
+            <TouchableOpacity style={S.previewCloseButton} onPress={closePreview} activeOpacity={0.85}>
+              <Text style={S.previewCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -513,7 +555,13 @@ const S = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: sw(4),
   },
-  memberEmoji: { fontSize: sf(26) },
+  memberAvatarImage: {
+    width: sw(48),
+    height: sw(48),
+    borderRadius: sw(24),
+    borderWidth: 1,
+    borderColor: C.border,
+  },
   memberName: {
     fontSize: sf(13),
     fontFamily: 'Nunito-ExtraBold',
@@ -526,6 +574,56 @@ const S = StyleSheet.create({
     fontFamily: 'Nunito-Medium',
     color: C.inkLight,
     textAlign: 'center',
+  },
+
+  // Preview modal
+  previewOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  previewBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  previewCard: {
+    width: sw(260),
+    borderRadius: sw(18),
+    backgroundColor: C.white,
+    padding: sw(16),
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: C.greenDeep,
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.2,
+    shadowRadius: sw(10),
+  },
+  previewImage: {
+    width: sw(200),
+    height: sw(200),
+    borderRadius: sw(12),
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.greenPale,
+  },
+  previewName: {
+    marginTop: sh(10),
+    fontSize: sf(13),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+    textAlign: 'center',
+  },
+  previewCloseButton: {
+    marginTop: sh(10),
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(8),
+    borderRadius: sw(14),
+    backgroundColor: C.green,
+  },
+  previewCloseText: {
+    fontSize: sf(12),
+    fontFamily: 'Nunito-Bold',
+    color: C.white,
   },
 
   // Built with

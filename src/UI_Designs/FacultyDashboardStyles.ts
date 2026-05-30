@@ -107,12 +107,12 @@ const facultyDashboard = StyleSheet.create({
       width: sw(20),
       height: sw(20),
       marginRight: sw(12),
-      tintColor: FacultyColors.primary,
+      tintColor: FacultyColors.red,
     },
     dropdownText: {
       fontSize: sf(15),
       fontFamily: 'Satoshi-Bold',
-      color: FacultyColors.primary,
+      color: FacultyColors.red,
     },
     dropdownTextAbout: {
       fontSize: sf(15),

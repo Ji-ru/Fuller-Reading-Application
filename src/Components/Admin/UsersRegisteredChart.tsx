@@ -79,13 +79,15 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
     labels,
     datasets: [
       {
-        data: monthlyRegistrations.map(item => item.count),
+        data: monthlyRegistrations.map(item => item.count ?? 0),
         color: (opacity = 1) => `rgba(0, 132, 67, ${opacity})`, // primary
         strokeWidth: sw(3),
       },
     ],
     legend: ['New Users'],
   };
+  const maxValue = Math.max(0, ...monthlyRegistrations.map(item => item.count));
+  const segments = maxValue > 0 ? Math.min(6, maxValue) : 1;
 
   return (
     <View style={styles.card}>
@@ -104,6 +106,7 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
           width={screenWidth - sw(48)}
           height={sh(200)}
           chartConfig={chartConfig}
+          segments={segments}
           bezier
           style={{ marginVertical: sh(8), borderRadius: sw(16) }}
           formatYLabel={(y) => Math.round(Number(y)).toString()}

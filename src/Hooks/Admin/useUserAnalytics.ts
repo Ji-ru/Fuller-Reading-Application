@@ -7,6 +7,7 @@ import {
   query,
   where,
 } from '@react-native-firebase/firestore';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 interface UserAnalyticsData {
   roleCounts: { students: number; faculty: number };
@@ -72,7 +73,10 @@ export const useUserAnalytics = (acadYear?: string, filterByAcadYear: boolean = 
             query(collection(db, 'users'), where('role', 'in', ['student', 'faculty'])),
           );
 
-          const allUsers = usersSnapshot.docs.map(doc => doc.data() as UserDocument);
+          const allUsers = usersSnapshot.docs.map(
+            (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
+              doc.data() as UserDocument,
+          );
           students = allUsers.filter((u: UserDocument) => u.role === 'student');
           faculty = allUsers.filter((u: UserDocument) => u.role === 'faculty');
         } else {
@@ -84,22 +88,22 @@ export const useUserAnalytics = (acadYear?: string, filterByAcadYear: boolean = 
           const classCodes = Array.from(
             new Set(
               classesSnapshot.docs
-                .map(doc => {
+                .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
                   const data = doc.data() as { classCode?: string };
                   return data.classCode;
                 })
-                .filter((code): code is string => !!code),
+                .filter((code: string | undefined): code is string => !!code),
             ),
           );
 
           const classIds = Array.from(
             new Set(
               classesSnapshot.docs
-                .map(doc => {
+                .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
                   const data = doc.data() as { classId?: string };
                   return data.classId || doc.id;
                 })
-                .filter((id): id is string => !!id),
+                .filter((id: string | undefined): id is string => !!id),
             ),
           );
 
@@ -131,13 +135,21 @@ export const useUserAnalytics = (acadYear?: string, filterByAcadYear: boolean = 
           );
 
           students = dedupeByUid(
-            studentSnapshots.flatMap(snapshot =>
-              snapshot.docs.map(doc => doc.data() as UserDocument),
+            studentSnapshots.flatMap(
+              (snapshot: FirebaseFirestoreTypes.QuerySnapshot) =>
+                snapshot.docs.map(
+                  (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
+                    doc.data() as UserDocument,
+                ),
             ),
           );
           faculty = dedupeByUid(
-            facultySnapshots.flatMap(snapshot =>
-              snapshot.docs.map(doc => doc.data() as UserDocument),
+            facultySnapshots.flatMap(
+              (snapshot: FirebaseFirestoreTypes.QuerySnapshot) =>
+                snapshot.docs.map(
+                  (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
+                    doc.data() as UserDocument,
+                ),
             ),
           );
         }

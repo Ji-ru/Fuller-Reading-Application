@@ -29,6 +29,7 @@ import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -291,7 +292,7 @@ export default function LoginScreen() {
                   </View>
                   <TextInput
                     style={login.input}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     placeholder="••••••••"
                     placeholderTextColor="#D1D5DB"
                     value={password}
@@ -303,6 +304,17 @@ export default function LoginScreen() {
                     returnKeyType="done"
                     onSubmitEditing={handleLogin}
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    disabled={loading}
+                  >
+                    <Image
+                      source={showPassword
+                        ? require('../../assets/icons/EyesClose-icon.png')
+                        : require('../../assets/icons/EyesOpen-icon.png')}
+                      style={login.eyeIcon}
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
 

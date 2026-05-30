@@ -427,20 +427,20 @@ export default function ReadingActivityScreenPage() {
         throw new Error('No audio file provided');
       }
       // const transcription = await processAudioWithGoogle(audioFile);
-      const transcription = await processAudioWithAssemblyAI(audioFile);
-      // const transcription = await processAudioWithDeepgram(audioFile);
+      // const transcription = await processAudioWithAssemblyAI(audioFile);
+      const transcription = await processAudioWithDeepgram(audioFile);
       // const transcription = await processAudioWithPuter(audioFile);
       // const transcription = await processAudioWithWav2Vec2(audioFile);
       // const transcription = await processAudioWithHubert(audioFile);
       // const transcription = await processAudioWithWhisper(audioFile);
-      setSpokenText(transcription.toLowerCase());
+      setSpokenText(transcription.fulltext.toLowerCase());
       console.log('THIS IS THE SPOKEN: ' + transcription);
       // console.log('THIS IS THE UTTERANCES: ' + transcription);
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
 
-      await analyzeReading(transcription, duration, audioFile);
+      await analyzeReading(transcription.fulltext, duration, audioFile);
       setIsReadingCompleted(true);
     } catch (error) {
       // Fallback on error: 0% accuracy instead of 100% simulated response
@@ -452,7 +452,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithAssemblyAI, getSimulatedResponse, targetText]);
+  }, [processAudioWithDeepgram, getSimulatedResponse, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:
