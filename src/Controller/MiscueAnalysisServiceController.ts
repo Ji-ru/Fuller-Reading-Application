@@ -4,23 +4,23 @@
 import { Miscue } from '../Interfaces/miscue';
 
 export class MiscueAnalysisService {
+  // Strip punctuation, lowercase, and split text into a clean list of words
+  private static normalizeWords(text: string): string[] {
+    return text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter(word => word.length > 0);
+  }
+
   static detectMiscues(passageText: string, spokenText: string): Miscue[] {
     if (!spokenText || spokenText === 'No Speech Detected!') {
       return [];
     }
 
     // Strip punctuation and split into words
-    const targetWords = passageText
-      .toLowerCase()
-      .replace(/[^\w\s]/g, '') // Remove all punctuation
-      .split(/\s+/)
-      .filter(word => word.length > 0); // Remove empty strings
-
-    const userWords = spokenText
-      .toLowerCase()
-      .replace(/[^\w\s]/g, '') // Remove all punctuation
-      .split(/\s+/)
-      .filter(word => word.length > 0); // Remove empty strings
+    const targetWords = this.normalizeWords(passageText);
+    const userWords = this.normalizeWords(spokenText);
 
     const detectedMiscues: Miscue[] = [];
 

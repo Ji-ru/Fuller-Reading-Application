@@ -262,8 +262,8 @@ function buildDonutSvg(
 function buildPairedBarChartSvg(
   passages: { label: string; accuracy: number; wpm: number }[],
 ): string {
-  const W = 500, H = 220;
-  const padL = 45, padR = 20, padT = 20, padB = 50;
+  const W = 500, H = 260;
+  const padL = 45, padR = 20, padT = 20, padB = 90;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
   const n = Math.max(passages.length, 1);
@@ -287,21 +287,21 @@ function buildPairedBarChartSvg(
     const wpmScaled = Math.min((p.wpm / 150) * 100, 100);
     const wpmH = (wpmScaled / 100) * chartH;
     const wpmY = yScale(wpmScaled);
-    const labelY = H - padB + 16;
-    const shortLabel = p.label.length > 14 ? p.label.slice(0, 13) + '…' : p.label;
+    const labelAnchorY = H - padB + 6;
+    const shortLabel = p.label.length > 24 ? p.label.slice(0, 23) + '…' : p.label;
     return `
     <rect x="${accX.toFixed(1)}" y="${accY.toFixed(1)}" width="${barW}" height="${accH.toFixed(1)}" fill="#388E3C" rx="3"/>
     <text x="${(accX + barW / 2).toFixed(1)}" y="${(accY - 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="#388E3C" font-family="Arial" font-weight="bold">${p.accuracy.toFixed(0)}%</text>
     <rect x="${wpmX.toFixed(1)}" y="${wpmY.toFixed(1)}" width="${barW}" height="${wpmH.toFixed(1)}" fill="#3B82F6" rx="3"/>
     <text x="${(wpmX + barW / 2).toFixed(1)}" y="${(wpmY - 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="#3B82F6" font-family="Arial" font-weight="bold">${p.wpm}</text>
-    <text x="${cx.toFixed(1)}" y="${labelY}" text-anchor="middle" font-size="9" fill="#374151" font-family="Arial">${esc(shortLabel)}</text>`;
+    <text x="${cx.toFixed(1)}" y="${labelAnchorY.toFixed(1)}" text-anchor="end" font-size="9" fill="#374151" font-family="Arial" transform="rotate(-90 ${cx.toFixed(1)} ${labelAnchorY.toFixed(1)})">${esc(shortLabel)}</text>`;
   }).join('\n');
 
   const legend = `
-    <rect x="${padL}" y="${H - 12}" width="10" height="10" fill="#388E3C" rx="2"/>
-    <text x="${padL + 14}" y="${H - 4}" font-size="9" fill="#374151" font-family="Arial">Accuracy (%)</text>
-    <rect x="${padL + 110}" y="${H - 12}" width="10" height="10" fill="#3B82F6" rx="2"/>
-    <text x="${padL + 124}" y="${H - 4}" font-size="9" fill="#374151" font-family="Arial">WPM (scaled)</text>`;
+    <rect x="${padL}" y="${(H - 14).toFixed(1)}" width="10" height="10" fill="#388E3C" rx="2"/>
+    <text x="${padL + 14}" y="${(H - 6).toFixed(1)}" font-size="9" fill="#374151" font-family="Arial">Accuracy (%)</text>
+    <rect x="${padL + 110}" y="${(H - 14).toFixed(1)}" width="10" height="10" fill="#3B82F6" rx="2"/>
+    <text x="${padL + 124}" y="${(H - 6).toFixed(1)}" font-size="9" fill="#374151" font-family="Arial">WPM (scaled)</text>`;
 
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   ${gridLines}
@@ -1002,7 +1002,7 @@ function buildHistorySectionHtml(
     return {
       stats: { passages: 0, attempts: 0, avgAcc: '0', bestWpm: 0 },
       html: `
-      <h2 class="tab-title">📋 Reading History</h2>
+      <h2 class="tab-title page-break">📋 Reading History</h2>
       <div class="history-period">${esc(formatPeriodLabel(historyFilter, historyAnchor))}${selectedDay !== null ? ' · Day filter active' : ''}${selectedWeekOfMonth !== null ? ` · Week ${selectedWeekOfMonth} filter active` : ''}</div>
       <div class="empty-card">
         <div class="empty-emoji">📚</div>
@@ -1099,7 +1099,7 @@ function buildHistorySectionHtml(
   return {
     stats: { passages, attempts, avgAcc, bestWpm },
     html: `
-    <h2 class="tab-title">📋 Reading History</h2>
+    <h2 class="tab-title page-break">📋 Reading History</h2>
     <div class="history-period">${esc(formatPeriodLabel(historyFilter, historyAnchor))}${filterSuffix}</div>
 
     <div class="hist-stats">
@@ -1212,6 +1212,12 @@ function buildPdfHtml(opts: BuildOpts): string {
 <head>
 <meta charset="UTF-8"/>
 <style>
+  /* ── Page setup: lock to A4 portrait so layout is consistent across devices ── */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: Arial, Helvetica, sans-serif;
@@ -1219,6 +1225,35 @@ function buildPdfHtml(opts: BuildOpts): string {
     background: #ffffff;
     padding: 24px 28px;
     font-size: 12px;
+  }
+  @media print {
+    body { padding: 0; }
+  }
+
+  /* ── Page-break protection: keep atomic blocks together ── */
+  /* NOTE: .prog-card / .sub-section are intentionally NOT listed — they are
+     containers that should flow naturally across pages. Only their children
+     (chapter-card, word-chapter, report-card, …) stay atomic. */
+  .chart-box, .summary-grid, .charts-row,
+  .chapter-card, .word-chapter, .lesson-row, .word-lesson,
+  .report-card, .passage-card, .bench-card, .insight-card,
+  .trend-card, .trend-row, .miscue-row, .word-row, .empty-card,
+  .report-header, .hist-stats, .mini-stats {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Keep headings attached to the content that follows */
+  .tab-title, .sub-title, .section-title, .chart-label,
+  .card-title, .miscue-section-title {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Force a fresh page before any tab-title that opts in via .page-break */
+  .tab-title.page-break {
+    page-break-before: always;
+    break-before: page;
   }
 
   /* ── Header ── */
@@ -1580,13 +1615,13 @@ function buildPdfHtml(opts: BuildOpts): string {
   <!-- ══════════════════════════════════════════════════════════════════
        TAB 2 — WORD MASTERY
   ══════════════════════════════════════════════════════════════════ -->
-  <h2 class="tab-title">📖 Word Mastery</h2>
+  <h2 class="tab-title page-break">📖 Word Mastery</h2>
   ${wordHtml}
 
   <!-- ══════════════════════════════════════════════════════════════════
        TAB 3 — ANALYTICS
   ══════════════════════════════════════════════════════════════════ -->
-  <h2 class="tab-title">📊 Analytics</h2>
+  <h2 class="tab-title page-break">📊 Analytics</h2>
   <div class="history-period">${esc(opts.analyticsRangeLabel)}</div>
   ${accuracyHtml}
   ${miscueHtml}
