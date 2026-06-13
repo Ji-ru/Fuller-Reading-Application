@@ -6,6 +6,7 @@ import {
   Modal, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Keyboard,
   StyleSheet,
 } from 'react-native';
+import Svg, { Text as SvgText } from 'react-native-svg';
 import signup from '../../UI_Designs/SignUpStyles';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import buttons from '../../UI_Designs/ButtonStyles';
@@ -28,7 +29,9 @@ import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLe
 
 const C = {
   greenDark: '#008443',
+  greenPale: '#E8F5E9',
   white:     '#ffffff',
+  ink:       '#1B2B22',
 };
 
 const H = StyleSheet.create({
@@ -88,6 +91,7 @@ export default function SignUpTwoScreen() {
   const [modalType, setModalType] = useState<'loading' | 'success'>('loading');
   const [modalMessage, setModalMessage] = useState('');
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const isMounted = useRef(true);
   const congratulationsRef = useRef<LottieView>(null);
@@ -161,6 +165,7 @@ export default function SignUpTwoScreen() {
 
       const email = accountInfo.email;
       const password = accountInfo.password || '';
+      const normalizedGradeLevel = typeof gradeLevel === 'string' ? parseInt(gradeLevel, 10) : gradeLevel;
 
       const userData = {
         role,
@@ -171,7 +176,7 @@ export default function SignUpTwoScreen() {
         profileImageUrl: profileImage || '',
         gradeLevel: role === 'student' ? gradeLevel : undefined,
         dateOfBirth: formatDateToReadable(date),
-        assignedGradeLevels: role === 'faculty' ? [gradeLevel] : undefined,
+        assignedGradeLevels: role === 'faculty' ? [normalizedGradeLevel] : undefined,
         parentConsent: { confirmed: isParentConfirmed || false },
       };
 
@@ -216,17 +221,36 @@ export default function SignUpTwoScreen() {
         <TouchableOpacity style={H.backBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
           <Text style={H.backArrowText}>‹</Text>
         </TouchableOpacity>
+
+        <Svg height={60} width={220}>
+          <SvgText
+            x={110} y={35} fontSize={23}
+            fontFamily="Nunito-Black" textAnchor="middle"
+            fill="none" stroke={C.greenPale}
+            strokeWidth={8} strokeLinejoin="round"
+          >
+            Create Account
+          </SvgText>
+          <SvgText
+            x={110} y={35} fontSize={23}
+            fontFamily="Nunito-Black" textAnchor="middle"
+            fill={C.greenDark}
+          >
+            Create Account
+          </SvgText>
+        </Svg>
+      
+      <View style={{ width: 45 }} />  
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <KeyboardAvoidingView style={{ flex: 1 }}>
         <ScrollView 
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }} 
+          scrollEnabled={!dropdownOpen}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 150 }} 
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View>
-              <Text style={signup.label}>Register</Text>
-
+          <View style={{ flex: 1, zIndex: 1 }}>
               {/* Step indicator */}
               <View style={signup.stepsContainer}>
                 <View style={[signup.stepCircle, signup.activateStep]}>
@@ -313,27 +337,31 @@ export default function SignUpTwoScreen() {
                 />
 
                 {role !== 'admin' && (
-                  <>
+                  <View style={{ zIndex: 999, elevation: 999 }}>
                     <Text style={signup.textform}>{role === 'student' ? 'Grade Level' : 'Assigned Grade Level'}</Text>
-                    <GradeLevelDropDownSelection onSelect={value => setGradeLevel(value)} />
-                  </>
+                    <GradeLevelDropDownSelection 
+                    key={`grade-${role}`}
+                    onSelect={value => setGradeLevel(value)} />
+                  </View>
                 )}
               </View>
 
               {/* Action Buttons */}
-              <TouchableOpacity
-                style={[buttons.nextPageSignUpButton, { marginTop: 30 }]}
-                onPress={handleRegister}
-              >
-                <Text style={buttons.nextPageSignUpText}>Complete Registration</Text>
-              </TouchableOpacity>
+              <View style={{ marginTop: 10 }}>
+                <TouchableOpacity
+                  style={[buttons.nextPageSignUpButton, { marginTop: 30 }]}
+                  onPress={handleRegister}
+                >
+                  <Text style={buttons.nextPageSignUpText}>Complete Registration</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={buttons.cancelSignUpButton}
-                onPress={() => handleCancelRegistration(false)}
-              >
-                <Text style={buttons.cancelSignUpText}>Cancel</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={buttons.cancelSignUpButton}
+                  onPress={() => handleCancelRegistration(false)}
+                >
+                  <Text style={buttons.cancelSignUpText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

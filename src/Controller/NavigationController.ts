@@ -69,6 +69,7 @@ export type RootStackParamList = {
   AdminDashboard: undefined;
   AdminUserManagement: undefined;
   AdminClassManagement: undefined;
+  AdminPassageList: undefined;
   AdminViewFacultyData: {
     facultyId: string;
     facultyName: string;

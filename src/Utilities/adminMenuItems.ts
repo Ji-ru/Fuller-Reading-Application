@@ -9,7 +9,7 @@ import { RootStackParamList } from '../Controller/NavigationController';
 
 type ScreenNames = keyof RootStackParamList;
 
-export type AdminMenuItemId = 'dashboard' | 'user-management' | 'class-management' | 'about';
+export type AdminMenuItemId = 'dashboard' | 'user-management' | 'class-management' | 'passage-list' | 'about';
 
 export interface AdminMenuItem {
   id: AdminMenuItemId;
@@ -43,6 +43,12 @@ export const buildAdminMenuItems = (
     label: 'Class Management',
     iconName: 'myclass',
     onPress: () => handleReplaceStep('AdminClassManagement'),
+  },
+  {
+    id: 'passage-list',
+    label: 'Passages',
+    iconName: 'bookOpen',
+    onPress: () => handleReplaceStep('AdminPassageList'),
   },
   {
     id: 'about',

@@ -439,7 +439,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   //   );
   // }
 
-  // ── WORD — Redesigned ──────────────────────────────────────────────────────
+  // ── WORD DISPLAY ──────────────────────────────────────────────────────
   if (type === 'word' && isWords(material)) {
     const allWords = material.contrasts.flatMap(c => c.words);
     const word = allWords[0];
@@ -487,7 +487,7 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     );
   }
 
-  // ── PASSAGE — unchanged ────────────────────────────────────────────────────
+  // ── PASSAGE DISPLAY ────────────────────────────────────────────────────
   return (
     <View style={readingStyles.insideContainer}>
       {!isRecording && isReadingCompleted && (
@@ -500,18 +500,12 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
         </Svg>
       )}
 
-      {!isReadingCompleted && isPassage(material) ? (
+      {!isReadingCompleted && isPassage(material) && material.image ? (
         <Image style={readingStyles.readingImage} source={getPassageImage(material.image)} />
       ) : null}
 
       <View style={!isRecording ? readingStyles.passageContainer : readingStyles.passageContainerFeedback}>
-        {isReadingCompleted ? (
-          <ScrollView style={readingStyles.passageScrollView} contentContainerStyle={readingStyles.passageScrollContent} showsVerticalScrollIndicator nestedScrollEnabled>
-            <View style={readingStyles.passageTextWrapper}>{renderTextContent()}</View>
-          </ScrollView>
-        ) : (
-          <View style={readingStyles.passageTextWrapper}>{renderTextContent()}</View>
-        )}
+        <View style={readingStyles.passageTextWrapper}>{renderTextContent()}</View>
       </View>
     </View>
   );

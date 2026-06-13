@@ -24,6 +24,8 @@ import { WordContext } from '../../Interfaces/dataInterfaces';
 import Svg, { Text as SvgText } from 'react-native-svg';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
 import { Icon } from '../../Components/GlobalUse/Icon';
+import { usePassagesByGradeLevel } from '../../Hooks/Student/usePassagesByGradeLevel';
+import { ActivityIndicator } from 'react-native';
 
 const currentStudentId = getAuth().currentUser?.uid ?? '';
 const { width: SW } = Dimensions.get('window');
@@ -215,7 +217,7 @@ function FadeSlideIn({
 }
 
 // const alphabetData = readingMaterialData?.Alphabet || [];
-const passages = readingMaterialData?.Passages || [];
+const staticPassages = (readingMaterialData?.Passages || []) as Passage[];
 
 // New structure: Words[0].chapters[]
 const wordsContainer = readingMaterialData?.Words?.[0];
@@ -253,6 +255,10 @@ export const READING_COLORS = [
 
 export default function PageSelectionScreen() {
   const { handleLogout, handleBackStep, handleReadingNext, handleNextStep } = useNavigationHelper();
+  
+  // Custom Hook to fetch dynamic passages
+  const { dynamicPassages, loading: passagesLoading } = usePassagesByGradeLevel();
+  const allPassages = [...dynamicPassages, ...staticPassages];
 
   // const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
   // const isAlphabetCompleted = (letter: string) => completedAlphabets.some(a => a.letter === letter);
@@ -704,9 +710,13 @@ export default function PageSelectionScreen() {
               <FadeSlideIn delay={40}>
                 <Text style={selection.sublabel}>Select a passage to read:</Text>
               </FadeSlideIn>
-              {passages.length > 0 ? (
+              {passagesLoading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#008443" />
+                </View>
+              ) : allPassages.length > 0 ? (
                 <FlatList
-                  data={passages}
+                  data={allPassages}
                   renderItem={renderPassageItem}
                   keyExtractor={(item, index) => index.toString()}
                   showsVerticalScrollIndicator={false}

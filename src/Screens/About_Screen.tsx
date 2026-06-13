@@ -131,12 +131,12 @@ export default function AboutScreen() {
       <BubbleBackground />
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <View style={{ zIndex: 100 }}>
+      <View style={{ zIndex: 100, elevation: 100 }}>
         <View style={upperNav.header}>
-          <TouchableOpacity style={S.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
+          <TouchableOpacity style={S.backBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
             <Text style={S.backArrowText}>‹</Text>
           </TouchableOpacity>
-          <Svg height={60} width={220}>
+          <Svg height={60} width={220} pointerEvents="none">
             <SvgText
               x={110}
               y={35}

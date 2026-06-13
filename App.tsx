@@ -39,6 +39,7 @@ import AdminUserManagement from './src/Screens/Admin/Admin_UserManagement';
 import AdminClassManagement from './src/Screens/Admin/Admin_ClassManagement';
 import AdminClassDashboard from './src/Screens/Admin/Admin_ClassDashboard';
 import AdminViewFacultyData from './src/Screens/Admin/Admin_ViewFacultyData';
+import AdminPassageList from './src/Screens/Admin/Admin_PassageList';
 import AboutScreen from './src/Screens/About_Screen';
 
 const Stack = createNativeStackNavigator();
@@ -83,8 +84,8 @@ function App() {
               <Stack.Screen name='AdminUserManagement' component={AdminUserManagement} />
               <Stack.Screen name='AdminClassManagement' component={AdminClassManagement} />
               <Stack.Screen name='AdminClassDashboard' component={AdminClassDashboard} />
+              <Stack.Screen name='AdminPassageList' component={AdminPassageList} />
               <Stack.Screen name='AdminViewFacultyData' component={AdminViewFacultyData} />
-
             </Stack.Navigator>
           </NavigationContainer>
         </GlobalMusicProvider>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
+import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 import {
   TimeRange,
   wordSessionsByRange,

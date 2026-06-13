@@ -115,15 +115,10 @@ export const MiscueReportController = {
         omissionCount: miscues.filter(m => m.type === 'omission').length,
         insertionCount: miscues.filter(m => m.type === 'insertion').length,
         repetitionCount: miscues.filter(m => m.type === 'repetition').length,
-        // Firestore server timestamp
         createdAt: serverTimestamp(),
       };
-
-      // ======================================================================
-      // STEP 6: Store in Firestore
-      // ======================================================================
+      
       await setDoc(miscueDocRef, reportData);
-      // ─── READING LEVEL RECALCULATION (fire-and-forget)
       // Triggered after every completed passage. Does NOT block the return value.
       // A failed recalculation is non-fatal — the report is already saved above.
       recalculateStudentReadingLevel(user.uid).catch(err =>

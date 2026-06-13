@@ -332,12 +332,10 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
     </View>
   );
 
-  // ─── ALPHABET & WORD ───────────────────────────────────────────────────────
-  if (/* type === 'alphabet' || */ type === 'word') {
+  // ─── WORD FEEDBACK ───────────────────────────────────────────────────────
+  if ( type === 'word') {
     const accuracy = passedAccuracy || (
-      // type === 'alphabet'
-      //   ? MiscueAnalysisService.checkAlphabetPhonemeAccuracy(targetText, spokenText).accuracy
-      //   :
+
       (isTextCorrect ? '100' : '0')
     );
     const isCorrect = accuracy === '100';
@@ -396,9 +394,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
               <View style={S.flipCard}>
                 <Animated.View
                   style={[
-                    S.flipSide,
-                    { transform: [{ perspective: 1000 }, { rotateY: flipFrontRotation }] },
-                  ]}
+                    S.flipSide, { transform: [{ perspective: 1000 }, { rotateY: flipFrontRotation }] },]}
                 >
                   <Text style={[S.largeText, S.flipText, !isCorrect && S.flipTextFrontWarning]}>
                     {targetText}
@@ -412,10 +408,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
                 >
                   <Text
                     style={[
-                      S.largeText,
-                      S.flipText,
-                      S.flipTextBack,
-                      !isCorrect && S.flipTextBackWarning,
+                      S.largeText, S.flipText, S.flipTextBack, !isCorrect && S.flipTextBackWarning,
                     ]}
                   >
                     {spokenWord}
@@ -436,7 +429,6 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
             </Text>
           </View>
         </View>
-
         {renderButtons()}
       </View>
     );

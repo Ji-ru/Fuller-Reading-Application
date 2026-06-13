@@ -290,14 +290,18 @@ export const createCustomClass = async (
     const duplicateQuery = query(
       classesRef,
       where('className', '==', className),
-      where('acadYear', '==', currentAcadYear)
+      where('acadYear', '==', currentAcadYear),
     );
     const duplicateSnapshot = await getDocs(duplicateQuery);
     if (!duplicateSnapshot.empty) {
-      throw new Error(`The class name "${className}" is already taken for the ${currentAcadYear} academic year.`);
+      throw new Error(
+        `The class name "${className}" is already taken for the ${currentAcadYear} academic year.`,
+      );
     }
     // 2. Proceed with normal creation
-    const classId = `Class_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const classId = `Class_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
     const classCode = generateClassCode();
     const classDocument: ClassDocument = {
       classId,
@@ -360,6 +364,63 @@ export const AddPassage = async (
   } catch (error: any) {
     console.error('Adding Passage Error:', error.message);
     return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Updates an existing passage by its pid.
+ *
+ * @param pid - the passage ID to update
+ * @param updates - the fields to update (title, author, gradeLevel, passageText)
+ * @returns - success flag
+ */
+export const UpdatePassage = async (
+  pid: string,
+  updates: Partial<Omit<PassageDocument, 'pid' | 'createdAt'>>,
+) => {
+  try {
+    const passageRef = doc(db, 'passages', pid);
+    await updateDoc(passageRef, { ...updates });
+    return { success: true };
+  } catch (error: any) {
+    console.error('Updating Passage Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Deletes a passage by its pid.
+ *
+ * @param pid - the passage ID to delete
+ * @returns - success flag
+ */
+export const DeletePassage = async (pid: string) => {
+  try {
+    const passageRef = doc(db, 'passages', pid);
+    await deleteDoc(passageRef);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Deleting Passage Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Fetches all passages, ordered by creation date (newest first).
+ *
+ * @returns - array of PassageDocument
+ */
+export const GetAllPassages = async (): Promise<PassageDocument[]> => {
+  try {
+    const passagesRef = collection(db, 'passages');
+    const q = query(passagesRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(
+      (d: QueryDocumentSnapshot) => d.data() as PassageDocument,
+    );
+  } catch (error: any) {
+    console.error('Fetching Passages Error:', error.message);
+    return [];
   }
 };
 
@@ -500,7 +561,7 @@ export const updateFacultyProfile = async (
       } catch (authError: any) {
         throw new Error(
           'Could not update login email. Please re-authenticate if modifying email. ' +
-          authError.message,
+            authError.message,
         );
       }
     }
@@ -630,7 +691,9 @@ export const sendAdminPasswordResetEmail = async (email: string) => {
     await sendPasswordResetEmail(auth, email);
     return { success: true };
   } catch (error: any) {
-    throw new Error('Password reset email failed: ' + (error?.message || 'unknown error'));
+    throw new Error(
+      'Password reset email failed: ' + (error?.message || 'unknown error'),
+    );
   }
 };
 
@@ -674,8 +737,9 @@ const deleteDocsWhereStudentId = async (
 
 const cascadeDeleteStudent = async (uid: string) => {
   const studentSnap = await getDoc(doc(db, 'users', uid));
-  const classCode: string | undefined = (studentSnap.data() as UserDocument | undefined)
-    ?.studentData?.classCode;
+  const classCode: string | undefined = (
+    studentSnap.data() as UserDocument | undefined
+  )?.studentData?.classCode;
 
   if (classCode) {
     const classQuerySnap = await getDocs(
@@ -693,7 +757,10 @@ const cascadeDeleteStudent = async (uid: string) => {
   // Strip this UID from any class's pendingStudentIds so it doesn't dangle
   // after the user account is gone.
   const pendingMatchesSnap = await getDocs(
-    query(collection(db, 'classes'), where('pendingStudentIds', 'array-contains', uid)),
+    query(
+      collection(db, 'classes'),
+      where('pendingStudentIds', 'array-contains', uid),
+    ),
   );
   for (const cls of pendingMatchesSnap.docs) {
     await updateDoc(cls.ref, {
@@ -713,7 +780,8 @@ const cascadeDeleteStudent = async (uid: string) => {
 const cascadeDeleteFaculty = async (uid: string) => {
   const facultySnap = await getDoc(doc(db, 'users', uid));
   const assignedClassIds: string[] =
-    (facultySnap.data() as UserDocument | undefined)?.facultyData?.assignedClassIds || [];
+    (facultySnap.data() as UserDocument | undefined)?.facultyData
+      ?.assignedClassIds || [];
 
   for (const classId of assignedClassIds) {
     const classRef = doc(db, 'classes', classId);
@@ -754,7 +822,9 @@ export const deleteUserByAdmin = async (uid: string) => {
 
     return { success: true };
   } catch (error: any) {
-    throw new Error('Admin user delete failed: ' + (error?.message || 'unknown error'));
+    throw new Error(
+      'Admin user delete failed: ' + (error?.message || 'unknown error'),
+    );
   }
 };
 
@@ -802,7 +872,9 @@ export const createUserByAdmin = async (
     } catch {
       /* ignore */
     }
-    throw new Error('Admin create user failed: ' + (error?.message || 'unknown error'));
+    throw new Error(
+      'Admin create user failed: ' + (error?.message || 'unknown error'),
+    );
   }
 };
 
@@ -869,7 +941,8 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     // 5. Branch on whether this is a REJOIN or a FIRST-TIME join.
     //    studentIds preserves historical members across the academic year,
     //    so presence here means the student was previously approved by faculty.
-    const isReturningMember = classData.studentIds?.includes(studentId) === true;
+    const isReturningMember =
+      classData.studentIds?.includes(studentId) === true;
 
     if (isReturningMember) {
       // ─── REJOIN PATH ─────────────────────────────────────────────────────
@@ -911,7 +984,6 @@ export const joinClass = async (studentId: string, joinClassCode: string) => {
     throw new Error('Failed to join class: ' + error.message);
   }
 };
-
 
 /* -------------------------------------------------------------
    ─── Added for student acceptance or rejection to a class by faculty ───
@@ -1306,7 +1378,7 @@ export const verifyCurrentUserPassword = async (password: string) => {
 
     // Check if user has a password provider
     const hasPasswordProvider = currentUser.providerData.some(
-      (provider) => provider.providerId === 'password'
+      provider => provider.providerId === 'password',
     );
 
     // If user only signed in with Google (no password provider), bypass password check
@@ -1314,12 +1386,18 @@ export const verifyCurrentUserPassword = async (password: string) => {
       return { success: true, bypassed: true };
     }
 
-    const credential = EmailAuthProvider.credential(currentUser.email, password);
+    const credential = EmailAuthProvider.credential(
+      currentUser.email,
+      password,
+    );
     await reauthenticateWithCredential(currentUser, credential);
     return { success: true, bypassed: false };
   } catch (error: any) {
     let errorMessage = 'Password verification failed.';
-    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+    if (
+      error.code === 'auth/wrong-password' ||
+      error.code === 'auth/invalid-credential'
+    ) {
       errorMessage = 'Incorrect password.';
     } else if (error.code === 'auth/too-many-requests') {
       errorMessage = 'Too many failed attempts. Please try again later.';
@@ -1599,8 +1677,8 @@ export const getAllClasses = async ({
       lastDoc:
         snapshot.docs.length > 0
           ? (snapshot.docs[
-            snapshot.docs.length - 1
-          ] as unknown as QueryDocumentSnapshot<ClassDocument>)
+              snapshot.docs.length - 1
+            ] as unknown as QueryDocumentSnapshot<ClassDocument>)
           : undefined,
     };
   } catch (error: any) {
@@ -1905,5 +1983,25 @@ export const getCurrentUserSex = async (): Promise<string | null> => {
   } catch (error) {
     console.error('[getCurrentUserSex] Error fetching user sex:', error);
     return null; // fallback
+  }
+};
+
+/**
+ * Fetches passages by a specific grade level.
+ *
+ * @param gradeLevel - the grade level to filter by
+ * @returns - array of PassageDocument
+ */
+export const GetPassagesByGradeLevel = async (gradeLevel: number): Promise<PassageDocument[]> => {
+  try {
+    const passagesRef = collection(db, 'passages');
+    const q = query(passagesRef, where('gradeLevel', '==', gradeLevel), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(
+      (d: QueryDocumentSnapshot) => d.data() as PassageDocument,
+    );
+  } catch (error: any) {
+    console.error('Fetching Passages By Grade Level Error:', error.message);
+    return [];
   }
 };

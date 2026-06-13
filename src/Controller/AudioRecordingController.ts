@@ -10,21 +10,16 @@ import { AudioPermissionService } from './PermissionsController';
 import AudioRecord from 'react-native-audio-record';
 
 export const useAudioRecording = () => {
-  // useState: Manage state/data in a component. Creates reactive variables.
   const [isRecording, setIsRecording] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
   const [audioPath, setAudioPath] = useState('');
   const currentWavFileRef = useRef<string>('');
 
-  // useRef: Persist mutable values across renders without causing re-render. Useful for values like intervals.
-  // const recordingIntervalRef = useRef<number>(0);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
 
-  // useEffect: Runs after rendering (side effects: API calls, listeners, etc)
-  // With [] (empty dependency array), runs once after initial render, like componentDidMount.
   useEffect(() => {
     initializeAudio();
 
@@ -68,10 +63,8 @@ export const useAudioRecording = () => {
   }, [requestPermission]);
 
   /**
-   * UPDATED!!
    * Caclulate the expected duration of reading the passage
    *  - this is a general expected duration regardless of what alphabet, word, or passage the user selected.
-   * 
    */
   const calculateExpectedDuration = useCallback((passageText: string) => {
     const wordCount = passageText.split(/\s+/).length;
@@ -174,7 +167,6 @@ export const useAudioRecording = () => {
 
   /**
    * Formats the time into 0:00 for counting the duration during the start of recording
-   * 
    */
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);

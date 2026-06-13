@@ -164,13 +164,11 @@ export interface MiscueReportDocument {
 
 /**
  * Blueprint for creating a passage
+ * Passages are managed globally by Admins and categorised by grade level.
  */
 export interface PassageDocument {
   pid: string;
-  creatorId: string; // Faculty who added the Passage
-  creatorName: string; // Denormalized name for quick UI display (avoids extra fetching)
-  facultyIds: string[]; // Faculties who will add this passage
-  classId: string[]; // Classes that can view this passage
+  gradeLevel: number;
   title: string;
   author: string | null;
   passageText: string;

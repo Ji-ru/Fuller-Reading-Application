@@ -192,7 +192,7 @@ export default function AdminViewFacultyData() {
 
                         <ClassReadingStatus facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
 
-                        <AccuracyTrendsChart facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
+                        <AccuracyTrendsChart facultyId={facultyId} filter={filter} />
 
                         <ActiveHoursChart facultyId={facultyId} filter={filter} />
 

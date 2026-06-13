@@ -174,8 +174,6 @@ export default function SignUpOneScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <View>
-              <Text style={signup.label}>Register</Text>
-
               {/* Step indicator */}
               <View style={signup.stepsContainer}>
                 <View style={[signup.stepCircle, signup.activateStep]}>
