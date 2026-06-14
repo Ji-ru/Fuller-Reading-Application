@@ -22,14 +22,12 @@ import {
 } from '../../Controller/AuthenticationController';
 import { getAuth } from '@react-native-firebase/auth';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
-import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { sw, sh, sf } from '../../Utils/responsive';
-import Svg, { Text as SvgText } from 'react-native-svg';
-import { Icon } from '../../Components/GlobalUse/Icon';
 import { StudentColors } from '../../Utilities/Theme';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 
-// ─── Palette (aligned with Reading Selection blue/cyan theme) ─────────────────
+// Palette (aligned with Reading Selection blue/cyan theme)
 const C = {
   bg: '#F1FBF4',
   primary: '#008443',
@@ -303,59 +301,12 @@ export default function Profile() {
       <BubbleBackground />
 
       {/* HEADER */}
-      <View style={S.headerWrapper}>
-        <View style={upperNav.header}>
-          <TouchableOpacity style={headerStyles.backBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
-            <Text style={headerStyles.backArrowText}>‹</Text>
-          </TouchableOpacity>
-
-          <Svg height={60} width={200}>
-            <SvgText
-              x={100} y={35} fontSize={30}
-              fontFamily="Andika-Bold" textAnchor="middle"
-              fill="none" stroke={C.primaryLight}
-              strokeWidth={8} strokeLinejoin="round"
-            >
-              My Profile
-            </SvgText>
-            <SvgText
-              x={100} y={35} fontSize={30}
-              fontFamily="Andika-Bold" textAnchor="middle"
-              fill={C.primary}
-            >
-              My Profile
-            </SvgText>
-          </Svg>
-
-          <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
-            <MenuBars />
-          </TouchableOpacity>
-        </View>
-
-        {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
-            <TouchableOpacity
-              onPress={() => {
-                setMenuVisible(false);
-                handleNextStep('About');
-              }}
-              style={headerStyles.aboutRow}
-              activeOpacity={0.75}
-            >
-              <Icon name="info" size={sw(20)} color={StudentColors.slate} filled />
-              <Text style={headerStyles.aboutText}>About</Text>
-            </TouchableOpacity>
-            <View style={headerStyles.dropdownDivider} />
-            <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
-              <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
-              <Text style={upperNav.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        {menuVisible && (
-          <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
-        )}
-      </View>
+      <StudentHeader 
+        title="My Class"
+        onBackPress={handleBackStep}
+        onAboutPress={() => handleNextStep('About')}
+        onLogoutPress={() => setLogoutVisible(true)}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

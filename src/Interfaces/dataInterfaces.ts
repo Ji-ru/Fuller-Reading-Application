@@ -168,7 +168,6 @@ export interface MiscueReportDocument {
  */
 export interface PassageDocument {
   pid: string;
-  gradeLevel: number;
   title: string;
   author: string | null;
   passageText: string;

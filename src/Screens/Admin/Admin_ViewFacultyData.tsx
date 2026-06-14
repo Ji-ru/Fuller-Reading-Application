@@ -19,7 +19,7 @@ import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingS
 import AccuracyTrendsChart from '../../Components/Faculty/Dashboard/AccuracyTrends';
 import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/NumberOFClassesAndStudents';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
+// import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
 import ClassWordMastery from '../../Components/Faculty/Dashboard/ClassWordMastery';
 import { buildAdminMenuItems } from '../../Utilities/adminMenuItems';
 
@@ -186,7 +186,7 @@ export default function AdminViewFacultyData() {
                             studentCount={stats.studentCount}
                         />
 
-                        <ClassAlphabetMastery facultyId={facultyId} filter={filter} />
+                        {/* <ClassAlphabetMastery facultyId={facultyId} filter={filter} /> */}
 
                         <ClassWordMastery facultyId={facultyId} filter={filter} />
 

@@ -28,7 +28,7 @@ import { buildAdminMenuItems } from '../../Utilities/adminMenuItems';
 import { FacultyColors, Radii, Shadows } from '../../Utilities/Theme';
 import adminUserManagment from '../../UI_Designs/AdminUserManagementStyles';
 import adminDashboard from '../../UI_Designs/AdminDashboardStyles';
-import GradeLevelDropDownSelection from '../../Components/SignUp/Buttons/GradeLevelSelectionButton';
+
 import { sw, sh, sf } from '../../Utils/responsive';
 
 function MenuBars() {
@@ -60,7 +60,6 @@ export default function AdminPassageList() {
   // Form States
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
-  const [gradeLevel, setGradeLevel] = useState<number>(1);
   const [passageText, setPassageText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -88,7 +87,6 @@ export default function AdminPassageList() {
   const resetForm = () => {
     setTitle('');
     setAuthor('');
-    setGradeLevel(1);
     setPassageText('');
     setSelectedPassage(null);
   };
@@ -103,7 +101,6 @@ export default function AdminPassageList() {
     setSelectedPassage(passage);
     setTitle(passage.title);
     setAuthor(passage.author || '');
-    setGradeLevel(passage.gradeLevel);
     setPassageText(passage.passageText);
     setModalMode('edit');
     setIsModalVisible(true);
@@ -125,7 +122,6 @@ export default function AdminPassageList() {
       const result = await AddPassage({
         title: title.trim(),
         author: author.trim() || null,
-        gradeLevel,
         passageText: passageText.trim(),
       });
       if (result.success) {
@@ -138,7 +134,6 @@ export default function AdminPassageList() {
       const result = await UpdatePassage(selectedPassage.pid, {
         title: title.trim(),
         author: author.trim() || null,
-        gradeLevel,
         passageText: passageText.trim(),
       });
       if (result.success) {
@@ -183,11 +178,6 @@ export default function AdminPassageList() {
           <Text style={adminUserManagment.userName} numberOfLines={1}>
             {item.title}
           </Text>
-          <View style={[adminUserManagment.roleChip, { backgroundColor: '#E3F0E7' }]}>
-            <Text style={[adminUserManagment.roleChipText, { color: FacultyColors.primary }]}>
-              Grade {item.gradeLevel}
-            </Text>
-          </View>
         </View>
         <Text style={adminUserManagment.userEmail} numberOfLines={1}>
           {item.author ? `By ${item.author}` : 'Unknown Author'}
@@ -319,14 +309,6 @@ export default function AdminPassageList() {
                   placeholderTextColor={FacultyColors.slate}
                 />
 
-                <Text style={adminUserManagment.modalLabel}>Grade Level</Text>
-                <View style={{ marginBottom: 16 }}>
-                  <GradeLevelDropDownSelection
-                    selectedLevel={gradeLevel}
-                    onSelect={(level: number) => setGradeLevel(level)}
-                  />
-                </View>
-
                 <Text style={adminUserManagment.modalLabel}>Passage Text</Text>
                 <TextInput
                   style={[adminUserManagment.modalInput, { height: sh(150), textAlignVertical: 'top' }]}
@@ -379,11 +361,6 @@ export default function AdminPassageList() {
                   <Text style={adminUserManagment.userEmail}>
                     {selectedPassage?.author ? `By ${selectedPassage.author}` : 'Unknown Author'}
                   </Text>
-                  <View style={[adminUserManagment.roleChip, { backgroundColor: '#E3F0E7', marginLeft: 8 }]}>
-                    <Text style={[adminUserManagment.roleChipText, { color: FacultyColors.primary }]}>
-                      Grade {selectedPassage?.gradeLevel}
-                    </Text>
-                  </View>
                 </View>
                 
                 <Text style={{ fontFamily: 'Satoshi-Medium', fontSize: sf(15), color: FacultyColors.ink, lineHeight: sf(22) }}>

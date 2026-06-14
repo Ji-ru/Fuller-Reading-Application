@@ -23,16 +23,15 @@ import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
 
 // ── Performance / Activity components (moved from Student_Profile) ────────────
-import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
 import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Status/Student_Accuracy_Chart';
 import StudentMiscueInsights from '../../Components/Faculty/StudentView_Status/Student_MiscueInsights';
 // import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
 import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
 import StudentCompletionProgress from '../../Components/Faculty/StudentView_Status/StudentCompletionProgress';
 import { Icon, IconName } from '../../Components/GlobalUse/Icon';
-import ExportPdf from '../../Components/GlobalUse/ExportPdf';
 import { sw, sh, sf } from '../../Utils/responsive';
 import { StudentColors } from '../../Utilities/Theme';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 
 const auth = getAuth();
 
@@ -41,16 +40,6 @@ const C = {
   darkBlue: '#163F6C',
   ink: '#1b2e23',
 };
-
-function MenuBars() {
-  return (
-    <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
-      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
-      <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
-      <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
-    </View>
-  );
-}
 
 const headerStyles = StyleSheet.create({
   menuBtn: {
@@ -469,62 +458,6 @@ export default function ReadingHistoryScreen() {
 
   const uid = auth.currentUser?.uid || '';
 
-  // ── Shared header ─────────────────────────────────────────────────────────
-  const Header = () => (
-    <View>
-      <View style={upperNav.header}>
-        <TouchableOpacity style={headerStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
-          <Text style={headerStyles.backArrowText}>‹</Text>
-        </TouchableOpacity>
-
-        <Svg height={60} width={220}>
-          <SvgText
-            x={110} y={35} fontSize={23}
-            fontFamily="Nunito-Black" textAnchor="middle"
-            fill="none" stroke="#E8F5E9" strokeWidth={8} strokeLinejoin="round"
-          >
-            Reading History
-          </SvgText>
-          <SvgText
-            x={110} y={35} fontSize={23}
-            fontFamily="Nunito-Black" textAnchor="middle"
-            fill="#1B5E20"
-          >
-            Reading History
-          </SvgText>
-        </Svg>
-
-        <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
-          <MenuBars />
-        </TouchableOpacity>
-      </View>
-
-      {menuVisible && (
-        <View style={upperNav.dropdownMenu}>
-          <TouchableOpacity
-            onPress={() => {
-              setMenuVisible(false);
-              handleNextStep('About');
-            }}
-            style={headerStyles.aboutRow}
-            activeOpacity={0.75}
-          >
-            <Icon name="info" size={sw(20)} color={StudentColors.slate} filled />
-            <Text style={headerStyles.aboutText}>About</Text>
-          </TouchableOpacity>
-          <View style={headerStyles.dropdownDivider} />
-          <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
-            <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
-            <Text style={upperNav.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      {menuVisible && (
-        <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
-      )}
-    </View>
-  );
-
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -551,27 +484,13 @@ export default function ReadingHistoryScreen() {
           contentContainerStyle={historyStyles.scrollContent}
         >
           {/* Header */}
-          <Header />
-
-          {/* ── EXPORT BUTTON ───────────────────────────────────────────────── */}
-          {/* <FadeSlideIn delay={40}>
-            <View style={tabStyles.exportRow}>
-              <ExportPdf
-                studentId={uid}
-                groupedReports={groupedReports}
-                historyFilter={historyFilter}
-                historyAnchor={filterAnchor}
-                historySelectedDay={selectedDay}
-                historySelectedWeekOfMonth={selectedWeekOfMonth}
-                perfTimeRange={perfTimeRange}
-                perfAnchor={perfAnchor}
-                perfSelectedDay={perfSelectedDay}
-                perfSelectedWeekOfMonth={perfSelectedWeekOfMonth}
-                gradeLevel={gradeLevel}
-              />
-            </View>
-          </FadeSlideIn> */}
-
+          <StudentHeader 
+            title="Reading History"
+            onBackPress={handleBackStep}
+            onAboutPress={() => handleNextStep('About')}
+            onLogoutPress={() => setLogoutVisible(true)}
+          />
+          
           {/* ── TAB BAR ────────────────────────────────────────────────────── */}
           <FadeSlideIn delay={60}>
             <View style={tabStyles.tabGrid}>

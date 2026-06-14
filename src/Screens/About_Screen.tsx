@@ -17,8 +17,6 @@ import { sw, sh, sf } from '../Utils/responsive';
 import upperNav from '../UI_Designs/UpperNavigation';
 import Svg, { Text as SvgText } from 'react-native-svg';
 
-const { width: SW } = Dimensions.get('window');
-
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
   green: '#2ca96a',

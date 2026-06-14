@@ -14,6 +14,7 @@ import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { sw, sh, sf } from '../../Utils/responsive';
 import { Icon, IconName } from '../../Components/GlobalUse/Icon';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 
 // ─── Palette ─────────────────
 const C = {
@@ -191,17 +192,12 @@ export default function UserHomeScreen() {
     <SafeAreaView style={S.bg}>
       <BubbleBackground />
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <View style={S.header}>
-        <Text style={S.headerLogo}>CISC KIDS</Text>
-        <TouchableOpacity
-          style={S.menuBtn}
-          onPress={() => setMenuVisible(v => !v)}
-          activeOpacity={0.7}
-        >
-          <MenuBars />
-        </TouchableOpacity>
-      </View>
+      {/* Header */}
+      <StudentHeader 
+        title="CISC KIDS" 
+        onAboutPress={() => handleNextStep('About')}
+        onLogoutPress={() => setLogoutVisible(true)}
+      />
 
       {/* Dropdown */}
       {menuVisible && (

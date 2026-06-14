@@ -14,18 +14,18 @@ import {
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 import selection from '../../UI_Designs/PassageSelectionStyles';
-import { /* Alphabet, */ Passage, Word } from '../../Interfaces/passage';
+import { Passage, Word } from '../../Interfaces/passage';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-import { /* useStudentCompletedAlphabet, */ useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
+import { useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
 import { getAuth } from '@react-native-firebase/auth';
 import { WordContext } from '../../Interfaces/dataInterfaces';
-import Svg, { Text as SvgText } from 'react-native-svg';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
 import { Icon } from '../../Components/GlobalUse/Icon';
-import { usePassagesByGradeLevel } from '../../Hooks/Student/usePassagesByGradeLevel';
+import { useAllPassages } from '../../Hooks/Student/useAllPassages';
 import { ActivityIndicator } from 'react-native';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 
 const currentStudentId = getAuth().currentUser?.uid ?? '';
 const { width: SW } = Dimensions.get('window');
@@ -257,7 +257,7 @@ export default function PageSelectionScreen() {
   const { handleLogout, handleBackStep, handleReadingNext, handleNextStep } = useNavigationHelper();
   
   // Custom Hook to fetch dynamic passages
-  const { dynamicPassages, loading: passagesLoading } = usePassagesByGradeLevel();
+  const { dynamicPassages, loading: passagesLoading } = useAllPassages();
   const allPassages = [...dynamicPassages, ...staticPassages];
 
   // const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
@@ -449,7 +449,7 @@ export default function PageSelectionScreen() {
     );
   };
 
-  // --- LESSON CARD (Step 2) – reuses phonemeSection styles ---
+  // --- LESSON CARD (Step 2) ---
   const renderLesson = (lesson: any, index: number) => {
     const words = lesson.words || [];
     if (words.length === 0) return null;
@@ -508,43 +508,13 @@ export default function PageSelectionScreen() {
       <View style={selection.insideContainer}>
         <BubbleBackground />
 
-        {/* Header – unchanged */}
         {/* Header */}
-        <View style={{ zIndex: 100 }}>
-          <View style={upperNav.header}>
-            <TouchableOpacity style={headerStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
-              <Text style={headerStyles.backArrowText}>‹</Text>
-            </TouchableOpacity>
-            <Svg height={60} width={220}>
-              <SvgText
-                x={110}                 // center X
-                y={35}                  // baseline Y
-                fontSize={24}
-                fontFamily="Andika-Bold"
-                textAnchor="middle"     // center align
-                fill="none"          // inside color
-                stroke="#E8F5E9"        // outline color
-                strokeWidth={8}         // outline thickness
-                strokeLinejoin='round'
-              >
-                Reading Materials
-              </SvgText>
-              <SvgText
-                x={110}
-                y={35}
-                fontSize={24}
-                fontFamily="Andika-Bold"
-                textAnchor="middle"
-                fill="#1B5E20"
-              >
-                Reading Materials
-              </SvgText>
-            </Svg>
-            <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
-              <MenuBars />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <StudentHeader 
+          title="Reading Selection"
+          onBackPress={handleBackStep}
+          onAboutPress={() => handleNextStep('About')}
+          onLogoutPress={() => setLogoutVisible(true)}
+        />
 
         {menuVisible && (
           <View style={headerStyles.dropdown}>

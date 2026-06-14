@@ -14,7 +14,7 @@ import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
 import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceController';
 
 // Components
-import { ReadingHeader } from '../../Components/Student/Reading/ReadingHeader';
+
 import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
 import { RecordingControls } from '../../Components/Student/Reading/RecordingControls';
 import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
@@ -26,6 +26,7 @@ import { getPassageImage } from '../../Utilities/ReadingAssets';
 import { useGlobalMusic } from '../../Components/GlobalUse/Background/GlobalMusicContext';
 import { BubbleBackgroundUpper } from '../../Components/GlobalUse/BubbleBackground';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 
 // Auth Firebase
 import { getAuth } from '@react-native-firebase/auth';
@@ -48,6 +49,7 @@ export default function ReadingActivityScreenPage() {
   const [accuracyString, setAccuracyString] = useState('0');
   const [feedback, setFeedback] = useState('');
   const [isReadingCompleted, setIsReadingCompleted] = useState(false);
+  const [logoutVisible, setLogoutVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackModalType, setFeedbackModalType] = useState<
@@ -892,12 +894,11 @@ export default function ReadingActivityScreenPage() {
               {(isWords(readingMaterial) || !hasImage) && <BubbleBackgroundUpper />}
 
               {/* Header */}
-              <ReadingHeader
-                onBack={handleBackStep}
-                onMenuToggle={toggleMenu}
-                onLogout={handleLogout}
-                onAbout={() => handleNextStep('About')}
-                menuVisible={menuVisible}
+              <StudentHeader 
+                title="My Class"
+                onBackPress={handleBackStep}
+                onAboutPress={() => handleNextStep('About')}
+                onLogoutPress={() => setLogoutVisible(true)}
               />
 
               <PassageDisplay

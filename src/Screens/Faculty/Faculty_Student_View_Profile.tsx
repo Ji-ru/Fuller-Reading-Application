@@ -29,7 +29,6 @@ import StudentCompletionProgress from '../../Components/Faculty/StudentView_Stat
 import StudentTotalActivityToday from '../../Components/Faculty/StudentView_Status/StudentTotalActivityToday';
 import FadeSlideIn from '../../Components/GlobalUse/FadeSlideIn';
 import { DateRangeFilter, DateBounds } from '../../Components/GlobalUse/DateRangeFilter';
-import ExportExcel from '../../Components/GlobalUse/ExportExcel';
 import ExportPdf from '../../Components/GlobalUse/ExportPdf';
 import { Icon, IconName } from '../../Components/GlobalUse/Icon';
 import { FacultyColors } from '../../Utilities/Theme';
@@ -275,19 +274,12 @@ export default function StudentViewProfile() {
             {/* Preserved Block as requested */}
             <View style={facultyStudentView.profileInfoColumn}>
               <Text style={facultyStudentView.studentName}>{studentName}</Text>
-              {/* <View style={facultyStudentView.readingLevelBadge}>
-                <View style={facultyStudentView.readingLevelDot} />
-                <Text style={facultyStudentView.readingLevelText}>
-                  Level {readingLevel}
-                </Text>
-              </View> */}
             </View>
           </View>
 
           {/* TAB SWITCHER (Reused from Student_History) */}
           <FadeSlideIn delay={60}>
             <View style={tabStyles.exportRow}>
-              {/* <ExportExcel studentName="Student" /> */}
               <ExportPdf
                 studentId={studentId}
                 gradeLevel={gradeLevel}

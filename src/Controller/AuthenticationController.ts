@@ -1986,22 +1986,4 @@ export const getCurrentUserSex = async (): Promise<string | null> => {
   }
 };
 
-/**
- * Fetches passages by a specific grade level.
- *
- * @param gradeLevel - the grade level to filter by
- * @returns - array of PassageDocument
- */
-export const GetPassagesByGradeLevel = async (gradeLevel: number): Promise<PassageDocument[]> => {
-  try {
-    const passagesRef = collection(db, 'passages');
-    const q = query(passagesRef, where('gradeLevel', '==', gradeLevel), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(
-      (d: QueryDocumentSnapshot) => d.data() as PassageDocument,
-    );
-  } catch (error: any) {
-    console.error('Fetching Passages By Grade Level Error:', error.message);
-    return [];
-  }
-};
+

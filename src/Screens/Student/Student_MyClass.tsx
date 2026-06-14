@@ -18,23 +18,14 @@ import {
     joinClass,
     leaveClass,
     verifyCurrentUserPassword,
-    // ─── Added for student acceptance or rejection to a class by faculty ───
-    // Migrated to the array-based flow:
-    //   • cancelJoinRequest replaces cancelEnrollmentRequest
-    //   • acknowledgeRejection is gone (no rejection notice in the new flow)
     resolveStudentClassState,
     cancelJoinRequest,
-    // ─── End ──────────────────────────────────────────────────────────────
 } from '../../Controller/AuthenticationController';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
-import {
-    ClassDocument,
-    // ─── Added for student acceptance or rejection to a class by faculty ───
-    StudentClassState,
-    // ─── End ──────────────────────────────────────────────────────────────
-} from '../../Interfaces/dataInterfaces';
+import { ClassDocument, StudentClassState } from '../../Interfaces/dataInterfaces';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 import { sw, sh, sf } from '../../Utils/responsive';
 import { Icon } from '../../Components/GlobalUse/Icon';
 import { StudentColors } from '../../Utilities/Theme';
@@ -64,18 +55,6 @@ const C = {
     white: '#ffffff',
     ink: '#1b2e23',
 };
-
-// ─── MenuBars (from History) ──────────────────────────────────────────────────
-
-function MenuBars() {
-    return (
-        <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>
-            <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
-            <View style={{ width: 16, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
-            <View style={{ width: 22, height: 2.5, borderRadius: 2, backgroundColor: C.ink }} />
-        </View>
-    );
-}
 
 // ─── Header styles (from History) ────────────────────────────────────────────
 
@@ -542,33 +521,13 @@ export default function StudentMyClass() {
         <SafeAreaView style={styles.safeArea}>
             <BubbleBackground />
 
-            {/* ── Header (History style) ──────────────────────────────────── */}
-            <View style={upperNav.header}>
-                <TouchableOpacity style={headerStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
-                    <Text style={headerStyles.backArrowText}>‹</Text>
-                </TouchableOpacity>
-
-                <Svg height={60} width={200}>
-                    <SvgText
-                        x={100} y={35} fontSize={23}
-                        fontFamily="Andika-Bold" textAnchor="middle"
-                        fill="none" stroke="#E8F5E9" strokeWidth={8} strokeLinejoin="round"
-                    >
-                        My Class
-                    </SvgText>
-                    <SvgText
-                        x={100} y={35} fontSize={23}
-                        fontFamily="Andika-Bold" textAnchor="middle"
-                        fill="#1B5E20"
-                    >
-                        My Class
-                    </SvgText>
-                </Svg>
-
-                <TouchableOpacity style={headerStyles.menuBtn} onPress={() => setMenuVisible(v => !v)} activeOpacity={0.7}>
-                    <MenuBars />
-                </TouchableOpacity>
-            </View>
+            {/* Header */}
+          <StudentHeader 
+            title="My Class"
+            onBackPress={handleBackStep}
+            onAboutPress={() => handleNextStep('About')}
+            onLogoutPress={() => setLogoutVisible(true)}
+          />
 
             {menuVisible && (
                 <View style={upperNav.dropdownMenu}>
