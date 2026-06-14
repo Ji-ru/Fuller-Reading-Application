@@ -81,3 +81,8 @@ assets/model/*.safetensors
 !assets/model/.gitkeep
 # Keep the converted GGML model for offline inference
 !android/app/src/main/assets/models/ggml-model-small-q6_K.bin
+
+#model and kilo
+.kilo/
+assets/model/
+temp.npz
