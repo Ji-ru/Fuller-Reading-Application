@@ -124,7 +124,7 @@ export default function FacultyReports() {
                           <Text style={[S.dropdownItemText, isSelected && S.dropdownItemTextActive]}>
                             {c.className || c.classCode}
                           </Text>
-                          <Text style={S.dropdownItemMeta}>Grade {c.gradeLevel} • {c.classCode}</Text>
+                           <Text style={S.dropdownItemMeta}>{c.gradeLevel === 0 ? '' : `Baitang ${c.gradeLevel}`} • {c.classCode}</Text>
                         </View>
                         {isSelected && <CheckCircleIcon size={20} color={F.primary} />}
                       </TouchableOpacity>

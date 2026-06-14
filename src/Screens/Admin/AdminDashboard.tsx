@@ -181,16 +181,39 @@ const [stats, setStats] = useState<{
                 {renderStatsSection()}
               </View>
 
-            <View style={{ marginBottom: 20 }}>
-              <Text style={S.sectionLabel}>Mabilisang Aksyon</Text>
-              <TouchableOpacity 
-                style={S.quickActionBtn}
-                onPress={() => handleNavigateStep('UserManagement')}
-              >
-                <UsersIcon size={20} color={F.white} />
-                <Text style={S.quickActionText}>Manage Users</Text>
-              </TouchableOpacity>
-            </View>
+<View style={{ marginBottom: 20 }}>
+               <Text style={S.sectionLabel}>Mabilisang Aksyon</Text>
+               <View style={S.actionsGrid}>
+                 <TouchableOpacity 
+                   style={S.quickActionBtn}
+                   onPress={() => handleNavigateStep('UserManagement')}
+                 >
+                   <UsersIcon size={20} color={F.white} />
+                   <Text style={S.quickActionText}>Pamamahala ng User</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity 
+                   style={S.quickActionBtn}
+                   onPress={() => handleNavigateStep('AdminClassDashboard')}
+                 >
+                   <BookOpenIcon size={20} color={F.white} />
+                   <Text style={S.quickActionText}>Class Dashboard</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity 
+                   style={S.quickActionBtn}
+                   onPress={() => handleNavigateStep('AdminClassManagement')}
+                 >
+                   <ClipboardListIcon size={20} color={F.white} />
+                   <Text style={S.quickActionText}>Pamamahala ng Klase</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity 
+                   style={S.quickActionBtn}
+                   onPress={() => handleNavigateStep('AdminViewFacultyData')}
+                 >
+                   <BriefcaseIcon size={20} color={F.white} />
+                   <Text style={S.quickActionText}>Faculty Data</Text>
+                 </TouchableOpacity>
+               </View>
+             </View>
           </View>
         </View>
       </ScrollView>
@@ -237,8 +260,11 @@ const S = StyleSheet.create({
   quickActionBtn: {
     backgroundColor: F.primary, borderRadius: Radii.lg, padding: 16,
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    ...Shadows.card
+    ...Shadows.card,
+    flex: 1,
+    minWidth: '45%',
   },
   quickActionText: { fontSize: 16, fontWeight: '800', color: F.white },
+  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
 
 });

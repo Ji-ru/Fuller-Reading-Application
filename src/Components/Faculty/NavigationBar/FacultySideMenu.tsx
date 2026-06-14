@@ -15,6 +15,7 @@ import {
   UserProfileIcon, 
   LogoutIcon, 
   ChevronRightIcon,
+  InfoIcon,
 } from '../../GlobalUse/Icons';
 import { FacultyColors as F, Radii, Shadows } from '../../../Utilities/Theme';
 import { useNavigationHelper } from '../../../Controller/NavigationController';
@@ -106,6 +107,7 @@ const FacultySideMenu: React.FC<FacultySideMenuProps> = ({
     { id: 'MyClass', label: 'Mga Klase', icon: BriefcaseIcon },
     { id: 'Archive', label: 'Archive', icon: ArchiveIcon },
     { id: 'FacultyProfile', label: 'Aking Profile', icon: UserProfileIcon },
+    { id: 'Tungkol', label: 'Tungkol', icon: InfoIcon },
   ];
 
   const handleNavigate = (route: string) => {

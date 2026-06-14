@@ -15,7 +15,7 @@ export const useAdminStats = () => {
         querySnapshot = await getDocs(classesRef);
       }
       
-      const activeClasses = querySnapshot.docs.map(doc => doc.data()) as ClassDocument[];
+      const activeClasses = querySnapshot.docs.map((doc: any) => doc.data()) as ClassDocument[];
       const activeStudentIds = new Set<string>();
       const activeFacultyIds = new Set<string>();
       
@@ -38,7 +38,7 @@ export const useAdminStats = () => {
         let studentCount = 0;
         let facultyCount = 0;
 
-        usersSnapshot.forEach(doc => {
+        usersSnapshot.forEach((doc: any) => {
           const data = doc.data();
           if (data.role === 'student') studentCount++;
           else if (data.role === 'faculty') facultyCount++;
@@ -72,7 +72,7 @@ export const useAdminStats = () => {
   const getAllUsers = async () => {
     try {
       const snapshot = await getDocs(collection(db, 'users'));
-      return snapshot.docs.map(doc => ({
+      return snapshot.docs.map((doc: any) => ({
         uid: doc.id,
         ...doc.data(),
       }));
@@ -82,5 +82,18 @@ export const useAdminStats = () => {
     }
   };
 
-  return { getTotals, getAllUsers };
+  const getAllClasses = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'classes'));
+      return snapshot.docs.map((doc: any) => ({
+        classId: doc.id,
+        ...doc.data(),
+      })) as ClassDocument[];
+    } catch (error: any) {
+      console.error('Error fetching classes:', error);
+      return [];
+    }
+  };
+
+  return { getTotals, getAllUsers, getAllClasses };
 };

@@ -398,3 +398,18 @@ export const BurgerIcon = ({ size = 24, color = '#000' }: IconProps) => (
     <Line x1="3" y1="18" x2="21" y2="18" />
   </Svg>
 );
+
+export const MoreVerticalIcon = ({ size = 24, color = '#000' }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Circle cx="12" cy="12" r="1" fill={color} />
+    <Circle cx="12" cy="5" r="1" fill={color} />
+    <Circle cx="12" cy="19" r="1" fill={color} />
+  </Svg>
+);
+
+export const PlusIcon: React.FC<IconProps> = ({ size = 24, color = '#000' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Line x1="12" y1="5" x2="12" y2="19" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    <Line x1="5" y1="12" x2="19" y2="12" stroke={color} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);

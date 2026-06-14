@@ -95,22 +95,34 @@ async getPendingJoinRequests(facultyId: string): Promise<{class: ClassDocument; 
    */
   async getStudentsInClass(classCode: string): Promise<UserDocument[]> {
     try {
-      // 1. Query all students with this class code
+      const classesRef = collection(db, 'classes');
+      const classQuery = query(
+        classesRef,
+        where('classCode', '==', classCode.toUpperCase()),
+        limit(1),
+      );
+      const classSnap = await getDocs(classQuery);
+      if (classSnap.empty) {
+        return [];
+      }
+
+      const classData = classSnap.docs[0].data() as ClassDocument;
+      const enrolledIds: string[] = classData.studentIds || [];
+      const pendingIds: string[] = classData.pendingJoinRequests || [];
+
       const usersRef = collection(db, 'users');
       const studentsQuery = query(
         usersRef,
-        where('studentData.classCode', '==', classCode),
+        where('studentData.classCode', '==', classCode.toUpperCase()),
         where('role', '==', 'student'),
       );
-
       const studentsSnapshot = await getDocs(studentsQuery);
 
-      return studentsSnapshot.docs.map((doc: any) => ({
-        uid: doc.id,
-        ...doc.data(),
-      })) as UserDocument[];
+      return studentsSnapshot.docs
+        .map((doc: any) => ({ uid: doc.id, ...doc.data() }))
+        .filter((s: UserDocument) => enrolledIds.includes(s.uid) && !pendingIds.includes(s.uid)) as UserDocument[];
     } catch (error: any) {
-      throw new Error(`Failed to fetch students: ${error.message}`);
+      throw new Error('Failed to fetch students: ' + error.message);
     }
   },
 

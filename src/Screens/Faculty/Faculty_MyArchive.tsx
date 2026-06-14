@@ -75,7 +75,7 @@ export default function MyArchive() {
          </View>
          <View style={{ flex: 1, marginLeft: 16 }}>
             <Text style={S.className} numberOfLines={1}>{item.className}</Text>
-            <Text style={S.classYear}>Archived • Grade {item.gradeLevel}</Text>
+             <Text style={S.classYear}>Archived • {item.gradeLevel === 0 ? '' : `Baitang ${item.gradeLevel}`}</Text>
          </View>
          <TouchableOpacity onPress={() => handleRestore(item)} style={S.restoreBtn}>
             <Text style={S.restoreText}>Restore</Text>

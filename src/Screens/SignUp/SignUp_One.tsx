@@ -295,9 +295,9 @@ export default function SignUpOneScreen() {
                 </TouchableOpacity>
               </Modal>
 
-              <Text style={signup.textform}>
-                {role === 'student' ? 'Antas ng Baitang' : 'Assigned Grade Level'}
-              </Text>
+               <Text style={signup.textform}>
+                 {role === 'student' ? 'Antas ng Baitang' : 'Itinalagang Baitang'}
+               </Text>
               <GradeLevelDropDownSelection
                 onSelect={value => setGradeLevel(value)}
               />

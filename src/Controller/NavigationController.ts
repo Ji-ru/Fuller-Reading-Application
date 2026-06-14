@@ -62,11 +62,14 @@ export type RootStackParamList = {
     readingLevel: string;
   };
 
-  // ADMIN NAVIGATION
-  AdminDashboard: undefined;
-  UserManagement: undefined;
+// ADMIN NAVIGATION
+   AdminDashboard: undefined;
+   UserManagement: undefined;
+   AdminClassDashboard: undefined;
+   AdminClassManagement: undefined;
+   AdminViewFacultyData: { classId?: string; facultyId?: string };
 
-  // ASSESSMENT NAVIGATION
+   // ASSESSMENT NAVIGATION
   FacultyAssessments: undefined;
   FacultyCreateAssessment: { activity?: any }; // Optional activity for editing
   StudentAssessments: undefined,
@@ -99,8 +102,8 @@ export const useNavigationHelper = () => {
     navigation.replace(destination as any);
   };
 
-  const handleNavigateStep = (destination: ScreenNames) => {
-    navigation.navigate(destination as any);
+  const handleNavigateStep = (destination: ScreenNames, params?: any) => {
+    navigation.navigate(destination as any, params);
   };
 
   /**

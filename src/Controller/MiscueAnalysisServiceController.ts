@@ -115,15 +115,27 @@ export class MiscueAnalysisService {
       targetIndex++;
     }
 
-    // Handle remaining insertions (extra spoken words)
     while (userIndex < userWords.length) {
-      detectedMiscues.push({
-        expected: '[EXTRA]',
-        spoken: userWords[userIndex],
-        position: userIndex,
-        timestamp: new Date(),
-        type: 'insertion',
-      });
+      if (
+        userIndex > 0 &&
+        userWords[userIndex] === userWords[userIndex - 1]
+      ) {
+        detectedMiscues.push({
+          expected: targetWords[targetWords.length - 1] || '[UNKNOWN]',
+          spoken: userWords[userIndex],
+          position: targetIndex,
+          timestamp: new Date(),
+          type: 'repetition',
+        });
+      } else {
+        detectedMiscues.push({
+          expected: '[EXTRA]',
+          spoken: userWords[userIndex],
+          position: targetIndex,
+          timestamp: new Date(),
+          type: 'insertion',
+        });
+      }
       userIndex++;
     }
 
@@ -148,11 +160,6 @@ export class MiscueAnalysisService {
      */
 
     if (userIndex > 0 && userWords[userIndex] === userWords[userIndex - 1]) {
-      /**
-       * Check if the target text also has this repetition at this position
-       * If yes then, its not a MISCUE
-       * @returns null since its not a repetitive word
-       */
       if (
         targetIndex > 0 &&
         targetWords[targetIndex] === targetWords[targetIndex - 1]
@@ -160,7 +167,7 @@ export class MiscueAnalysisService {
         return null;
       }
       return {
-        expected: `[NO REPETITION EXPECTED]`,
+        expected: targetWords[targetIndex] || '[UNKNOWN]',
         spoken: userWords[userIndex],
         position: targetIndex,
         timestamp: new Date(),

@@ -86,7 +86,7 @@ export const useFacultyClassesFilter = (facultyId: string | null) => {
         // Transform to the format needed for the filter
         const formattedClasses = data.map(cls => ({
           classId: cls.classId,
-          className: cls.className || `Grade ${cls.gradeLevel}`,
+           className: cls.className || (cls.gradeLevel === 0 ? '' : `Baitang ${cls.gradeLevel}`),
           gradeLevel: cls.gradeLevel,
         }));
         

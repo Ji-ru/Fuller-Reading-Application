@@ -76,4 +76,8 @@ yarn-error.log
 
 # Environment variables
 .env
-.env.*android/app/src/main/assets/models/*.bin
+.env.*
+assets/model/*.safetensors
+!assets/model/.gitkeep
+# Keep the converted GGML model for offline inference
+!android/app/src/main/assets/models/ggml-model-small-q6_K.bin

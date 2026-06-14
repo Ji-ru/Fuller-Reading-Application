@@ -16,7 +16,7 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import { AssessmentController } from '../../Controller/AssessmentController';
 import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceController';
 import { useAudioRecording } from '../../Controller/AudioRecordingController';
-import { transcribeAudio as transcribeAudioAPI } from '../../../api';
+import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
 import { ActivityDocument } from '../../Interfaces/dataInterfaces';
 import { StudentColors as C, Shadows } from '../../Utilities/Theme';
 import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
@@ -56,6 +56,8 @@ export default function StudentAssessmentActivity() {
     startRecording,
     stopRecording,
   } = useAudioRecording();
+
+  const { transcribeAudio } = useSpeechToText();
 
   useEffect(() => {
     fetchActivity();
@@ -123,7 +125,10 @@ export default function StudentAssessmentActivity() {
   const handleAudioProcessing = async (audioFile: string) => {
     setIsTranscribing(true);
     try {
-      const transcription = await transcribeAudioAPI(audioFile);
+      const targetText = currentCard.type === 'alphabet' ? currentCard.letter
+        : currentCard.type === 'word' ? currentCard.contrasts[0].words[0]
+          : currentCard.type === 'passage' ? currentCard.text : '';
+      const transcription = await transcribeAudio(audioFile, currentCard.type, targetText);
       setSpokenText(transcription);
 
       let correct = false;
@@ -249,11 +254,11 @@ export default function StudentAssessmentActivity() {
                 <Text style={S.scoreLabel}>Tamang Sagot</Text>
               </View>
 
-              <View style={S.starsRow}>
-                <StarIcon size={24} color={score > 0 ? C.yellow : C.slate + '20'} />
-                <StarIcon size={32} color={score / deck.length >= 0.7 ? C.yellow : C.slate + '20'} style={{ marginTop: -10 }} />
-                <StarIcon size={24} color={score / deck.length === 1 ? C.yellow : C.slate + '20'} />
-              </View>
+               <View style={S.starsRow}>
+                 <StarIcon size={24} color={score > 0 ? C.yellow : C.slate + '20'} />
+                 <StarIcon size={32} color={score / deck.length >= 0.7 ? C.yellow : C.slate + '20'} />
+                 <StarIcon size={24} color={score / deck.length === 1 ? C.yellow : C.slate + '20'} />
+               </View>
 
               <TouchableOpacity style={S.finishBtn} onPress={handleBackStep} activeOpacity={0.8}>
                 <Text style={S.finishBtnText}>Bumalik sa Listahan</Text>
@@ -340,7 +345,7 @@ export default function StudentAssessmentActivity() {
                             }
 
                             const cleanWord = word.replace(/[^a-zA-ZñÑ0-9]/g, '');
-                            let color = C.green; // Default to correct
+                            let color: string = C.green; // Default to correct
 
                             if (cleanWord.length > 0) {
                               const miscue = miscues.find(m => m.position === absoluteWordIndex);
@@ -440,6 +445,7 @@ export default function StudentAssessmentActivity() {
                   return Object.entries(typeCounts).filter(([_, count]) => count > 0).map(([type, count]) => {
                     const pct = (count / max) * 100;
                     const c = colors[type as keyof typeof colors];
+                    const typeMiscues = miscues.filter(m => m.type === type);
                     return (
                       <View key={type} style={S.miscueBarRow}>
                         <View style={S.miscueBarHeader}>
@@ -452,6 +458,31 @@ export default function StudentAssessmentActivity() {
                             <View style={[S.miscueBarFill, { width: `${pct}%`, backgroundColor: c.bar }]} />
                           </View>
                           <Text style={[S.miscueBarCount, { color: c.bar }]}>{count}</Text>
+                        </View>
+                        {/* Show specific words for this miscue type */}
+                        <View style={S.miscueWordsContainer}>
+                          {type === 'substitution' ? (
+                            typeMiscues.map((m, i) => (
+                              <Text key={i} style={S.miscueWordText}>
+                                "{m.expected}" → "{m.spoken}"
+                              </Text>
+                            ))
+                          ) : (
+                            <Text style={S.miscueWordText}>
+                              {(() => {
+                                if (type === 'omission') {
+                                  return typeMiscues.map(m => `"${m.expected}"`).join(', ');
+                                }
+                                if (type === 'insertion') {
+                                  return typeMiscues.map(m => `"${m.spoken}"`).join(', ');
+                                }
+                                if (type === 'repetition') {
+                                  return typeMiscues.map(m => `"${m.expected}"`).join(', ');
+                                }
+                                return '';
+                              })()}
+                            </Text>
+                          )}
                         </View>
                       </View>
                     );
@@ -534,7 +565,7 @@ const S = StyleSheet.create({
     width: 100,
     height: 90,
   },
-  headerRight: {
+   headerRight: {
     width: 44,
     height: 44,
     justifyContent: 'center',
@@ -543,6 +574,7 @@ const S = StyleSheet.create({
     borderRadius: 14,
     ...Shadows.subtle
   },
+  progressPerc: { fontSize: 13, fontWeight: '800', color: C.ink },
 
   content: { flex: 1, justifyContent: 'flex-start', marginTop: 40, gap: 24 },
   stage: {
@@ -694,6 +726,17 @@ const S = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     textAlign: 'right',
+  },
+  miscueWordsContainer: {
+    paddingLeft: 14,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  miscueWordText: {
+    fontSize: 11,
+    color: '#859dab',
+    fontFamily: 'Andika-Regular',
+    fontStyle: 'italic',
   },
   actionButtonsContainer: {
     marginTop: 20,

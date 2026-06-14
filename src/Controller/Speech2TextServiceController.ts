@@ -4,9 +4,8 @@
  * Custom hook for speech-to-text transcription.
  *
  * PROVIDERS:
- *   - 'local'  → uses GGML model embedded in app (no internet required)
- *   - 'custom' → your HF Space API endpoint
- *   - 'whisper' → HuggingFace Inference API (legacy)
+ *   - 'custom' → CISC Kids Hugging Face Space API (active)
+ *   - 'whisper' → HuggingFace Inference API (fallback)
  *
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -20,7 +19,7 @@ import { readFile } from 'react-native-fs';
 // PROVIDER SWITCH
 // ─────────────────────────────────────────────────────────────────────────────
 
-type Provider = 'local' | 'custom' | 'whisper';
+type Provider = 'custom' | 'whisper';
 // Set to 'custom' for CISC Kids Hugging Face Space API
 const ACTIVE_PROVIDER = 'custom' as Provider;
 
@@ -32,10 +31,6 @@ const ENDPOINTS = {
   whisper: 'https://api-inference.huggingface.co/models/openai/whisper-large-v3',
   custom: 'https://cisckids2026-marungko-whisperapi.hf.space/transcribe',
 } as const;
-
-// Model path for local inference (in Android assets)
-// Path relative to android/app/src/main/assets/
-const LOCAL_MODEL_PATH = 'models/ggml-tiny-q5_1.bin';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -137,39 +132,7 @@ export const useSpeechToText = () => {
     [cleanTranscript],
   );
 
-// ── PROVIDER: Local Whisper (GGML model embedded in app) ─────────────────────
-// Note: This requires native whisper.cpp integration (not yet complete)
-// The ggml-custom.bin model is ready in android/app/src/main/assets/models/
-
-const transcribeWithLocalWhisper = useCallback(
-    async (
-      audioFilePath: string,
-      options: TranscriptionOptions,
-    ): Promise<string> => {
-      try {
-        const { WhisperModule } = require('react-native').NativeModules;
-
-        // Initialize model if not already initialized (using smaller model)
-        await WhisperModule.initModel('ggml-tiny-q5_1.bin');
-
-        // Transcribe with Tagalog/Filipino language and target text as prompt
-        const result = await WhisperModule.transcribe(
-          audioFilePath,
-          'fil',
-          options.targetText.slice(0, 800),
-        );
-        return cleanTranscript(result.text || result);
-      } catch (error) {
-        throw new Error(
-          'Local Whisper failed: ' +
-            (error instanceof Error ? error.message : String(error)),
-        );
-      }
-    },
-    [cleanTranscript],
-  );
-
-  // ── PROVIDER: Your custom model ────────────────────────────────────────────
+  // ── PROVIDER: Your custom model (CISC Kids HF Space) ────────────────────────
 
   const transcribeWithCustomModel = useCallback(
     async (
@@ -182,35 +145,67 @@ const transcribeWithLocalWhisper = useCallback(
         );
       }
 
-      const formData = new FormData();
+      const baseUrl = ENDPOINTS.custom.replace(/\/$/, '');
+      const fileUri = audioFilePath.startsWith('file://') ? audioFilePath : 'file://' + audioFilePath;
 
-      const fileUri = audioFilePath.startsWith("file://") ? audioFilePath : "file://" + audioFilePath;
+      // Try Gradio-style /api/predict first (standard HF Space pattern), then fallback to /transcribe
+      const gradioPayload = {
+        data: [fileUri],
+        fn_index: 0,
+        session_hash: Math.random().toString(36).slice(2),
+      };
 
-      formData.append("file", {
-        uri: fileUri,
-        name: "recording.wav",
-        type: "audio/wav",
-      } as any);
-
-      const response = await fetch(ENDPOINTS.custom, {
+      let response = await fetch(`${baseUrl}/api/predict`, {
         method: 'POST',
-        body: formData,
-        headers: {
-          "Accept": "application/json",
-        },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...gradioPayload,
+          data: [gradioPayload.data[0], options.type, options.targetText],
+        }),
       });
+
+      // Fallback to the custom /transcribe endpoint if /api/predict fails or returns non-JSON
+      if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+        response = await fetch(baseUrl, {
+          method: 'POST',
+          body: (() => {
+            const fd = new FormData();
+            fd.append('file', {
+              uri: fileUri,
+              name: 'recording.wav',
+              type: 'audio/wav',
+            } as any);
+            fd.append('type', options.type);
+            fd.append('prompt', options.targetText);
+            fd.append('language', 'fil');
+            return fd;
+          })(),
+        });
+      }
 
       const responseText = await response.text();
 
       if (!response.ok) {
-        throw new Error(`Custom model error ${response.status}: ${responseText.substring(0, 50)}...`);
+        throw new Error(
+          `Custom model error ${response.status}. The space may be cold-starting or the endpoint is wrong.`,
+        );
       }
 
-      // We expect JSON back from your HF Space FastAPI endpoint.
-      const result = JSON.parse(responseText);
+      // Try JSON first, then raw text
+      let result: any;
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        return cleanTranscript(responseText);
+      }
 
       // ADJUST THIS to match your model's response shape
-      const transcript = parseCustomResponse(result) || result.transcript || result.text || responseText;
+      const transcript =
+        parseCustomResponse(result) ||
+        result?.data?.[0] ||
+        result?.transcript ||
+        result?.text ||
+        responseText;
 
       if (!transcript || !transcript.trim()) {
         throw new Error('Walang natukoy na pagbigkas!');
@@ -257,10 +252,6 @@ const transcribeWithLocalWhisper = useCallback(
       try {
         const options: TranscriptionOptions = { type, targetText };
 
-        if (ACTIVE_PROVIDER === 'local') {
-          return await transcribeWithLocalWhisper(audioFilePath, options);
-        }
-
         if (ACTIVE_PROVIDER === 'custom') {
           return await transcribeWithCustomModel(audioFilePath, options);
         }
@@ -271,7 +262,7 @@ const transcribeWithLocalWhisper = useCallback(
         setIsLoading(false);
       }
     },
-    [transcribeWithWhisper, transcribeWithCustomModel, transcribeWithLocalWhisper],
+    [transcribeWithWhisper, transcribeWithCustomModel],
   );
 
   // ── Development fallback ───────────────────────────────────────────────────

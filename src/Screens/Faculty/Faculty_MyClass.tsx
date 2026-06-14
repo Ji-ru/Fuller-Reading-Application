@@ -264,14 +264,14 @@ const [actionModalVisible, setActionModalVisible] = useState(false);
         </View>
         <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={S.className} numberOfLines={1}>{item.className}</Text>
-          <Text style={S.classYear}>{item.acadYear} • Grade {item.gradeLevel}</Text>
+           <Text style={S.classYear}>{item.acadYear} • {item.gradeLevel === 0 ? '' : `Baitang ${item.gradeLevel}`}</Text>
         </View>
         {item.pendingJoinRequests && item.pendingJoinRequests.length > 0 && (
           <TouchableOpacity
-            style={S.badge}
+            style={S.pendingBtn}
             onPress={() => handleViewPendingRequests(item)}
           >
-            <Text style={S.badgeText}>{item.pendingJoinRequests.length}</Text>
+            <Text style={S.pendingBtnText}>PENDING ({item.pendingJoinRequests.length})</Text>
           </TouchableOpacity>
         )}
       </TouchableOpacity>
@@ -411,13 +411,11 @@ onPress={() => handleEllipsisPress(0, 0, item)}
               <Text style={S.modalHeader}>Bagong Klase</Text>
               <TextInput
                 style={[S.input, nameError && { borderBottomColor: F.red }]}
-                placeholder="Pangalan ng Klase (hal. Grade 1 - A)"
-                value={newClassName}
-                onChangeText={(t) => { setNewClassName(t); if (nameError) setNameError(false); }}
-              />
-              {nameError && <Text style={S.errorText}>* Ito ay kinakailangan</Text>}
-              <Text style={S.modalLabel}>Grade Level</Text>
-              <GradeLevelDropDownSelection transparent onSelect={(v) => setGradeLevel(v.toString())} />
+                 placeholder="Pangalan ng Klase (hal. Baitang 1 - A)"
+               />
+               {nameError && <Text style={S.errorText}>* Ito ay kinakailangan</Text>}
+               <Text style={S.modalLabel}>Baitang</Text>
+               <GradeLevelDropDownSelection transparent onSelect={(v) => setGradeLevel(v.toString())} />
 
               <View style={S.modalActions}>
                 <TouchableOpacity style={S.cancelBtn} onPress={() => setCreateModalVisible(false)}><Text style={S.cancelBtnText}>I-cancel</Text></TouchableOpacity>
@@ -437,9 +435,9 @@ onPress={() => handleEllipsisPress(0, 0, item)}
                 placeholder="Pangalan ng Klase"
                 value={editingClassName}
                 onChangeText={setEditingClassName}
-              />
-              <Text style={S.modalLabel}>Grade Level</Text>
-              <GradeLevelDropDownSelection transparent onSelect={(v) => setEditingGrade(v.toString())} />
+               />
+               <Text style={S.modalLabel}>Baitang</Text>
+               <GradeLevelDropDownSelection transparent onSelect={(v) => setEditingGrade(v.toString())} />
 
               <View style={S.modalActions}>
                 <TouchableOpacity style={S.cancelBtn} onPress={() => setEditModalVisible(false)}><Text style={S.cancelBtnText}>I-cancel</Text></TouchableOpacity>
@@ -584,8 +582,8 @@ menuItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadiu
   actionConfirm: { flex: 1.5, paddingVertical: 14, borderRadius: 14, alignItems: 'center', ...Shadows.subtle },
   actionConfirmText: { fontSize: 15, fontWeight: '800', color: F.white, fontFamily: 'Andika-Bold' },
 
-   badge: { backgroundColor: F.red + '15', minWidth: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
-   badgeText: { color: F.red, fontSize: 13, fontWeight: '800', fontFamily: 'Andika-Bold' },
+   pendingBtn: { backgroundColor: F.amber + '18', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, marginLeft: 8, borderWidth: 1, borderColor: F.amber + '40' },
+   pendingBtnText: { color: F.amber, fontSize: 12, fontWeight: '800', fontFamily: 'Andika-Bold' },
    pendingClassLabel: { fontSize: 14, color: F.slate, marginBottom: 12, fontWeight: '600' },
    pendingStudentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: F.bg },
    pendingStudentInfo: { flex: 1 },

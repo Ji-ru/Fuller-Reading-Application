@@ -162,8 +162,8 @@ export default function FacultyDashboard() {
       }
     };
 
-fetchParticipation();
-   }, [auth.currentUser?.uid, selectedClassId, getClassParticipationRate]);
+    fetchParticipation();
+  }, [auth.currentUser?.uid, selectedClassId, getClassParticipationRate]);
 
   // ========================================================================
   // EVENT HANDLERS
@@ -199,9 +199,9 @@ fetchParticipation();
     if (stats.classCount === 0) {
       return (
         <View style={facultyDashboard.noDataContainer}>
-          <Text style={facultyDashboard.noDataText}>No Classes Yet</Text>
+          <Text style={facultyDashboard.noDataText}>Wala kang klase, Gumawa ka muna</Text>
           <Text style={facultyDashboard.noDataSubtext}>
-            Create your first class to get started
+            Para makapag-umpisa, gumawa ng Klase.
           </Text>
         </View>
       );
@@ -237,7 +237,7 @@ fetchParticipation();
   const classOptions = useMemo(() => {
     return filteredClasses.map(c => ({
       value: c.classId,
-      label: c.className || `Grade ${c.gradeLevel}`,
+       label: c.className || (c.gradeLevel === 0 ? '' : `Baitang ${c.gradeLevel}`),
     }));
   }, [filteredClasses]);
 
@@ -301,12 +301,12 @@ fetchParticipation();
               {renderStatsSection()}
             </View>
 
-<View style={{ marginBottom: 20 }}>
-              <Text style={S.sectionLabel}>Academic Filters</Text>
+            <View style={{ marginBottom: 20 }}>
+              <Text style={S.sectionLabel}>Mga pagsalang pang-akademiko</Text>
               <View style={S.filterCard}>
                 <View style={S.filterRow}>
                   <View style={S.filterItem}>
-                    <Text style={S.filterLabel}>Academic Year</Text>
+                    <Text style={S.filterLabel}>Akademikong Taon</Text>
                     <TouchableOpacity
                       style={[S.filterButton, showYearDropdown && S.filterButtonActive]}
                       onPress={() => {
@@ -316,7 +316,7 @@ fetchParticipation();
                       activeOpacity={0.7}
                     >
                       <Text style={S.filterButtonText}>
-                        {selectedAcademicYear || 'Select Year'}
+                        {selectedAcademicYear || 'Pumili ng Taon'}
                       </Text>
                       <Text style={S.filterButtonIcon}>
                         {showYearDropdown ? '▲' : '▼'}
@@ -325,7 +325,7 @@ fetchParticipation();
                     {showYearDropdown && (
                       <View style={S.filterDropdownMenu}>
                         {academicYears.length === 0 ? (
-                          <Text style={S.filterDropdownEmpty}>No academic years</Text>
+                          <Text style={S.filterDropdownEmpty}>Walang naitalang akademikong taon</Text>
                         ) : (
                           academicYears.map((year, idx) => (
                             <TouchableOpacity
@@ -359,7 +359,7 @@ fetchParticipation();
                   </View>
 
                   <View style={S.filterItem}>
-                    <Text style={S.filterLabel}>Section</Text>
+                    <Text style={S.filterLabel}>Pangkat</Text>
                     <TouchableOpacity
                       style={[S.filterButton, showClassDropdown && S.filterButtonActive]}
                       onPress={() => {
@@ -378,7 +378,7 @@ fetchParticipation();
                     {showClassDropdown && (
                       <View style={S.filterDropdownMenu}>
                         {classOptions.length === 0 ? (
-                          <Text style={S.filterDropdownEmpty}>No classes</Text>
+                          <Text style={S.filterDropdownEmpty}>Walang Klase</Text>
                         ) : (
                           classOptions.map((opt, idx) => (
                             <TouchableOpacity
@@ -413,13 +413,13 @@ fetchParticipation();
             </View>
 
             <View style={{ marginBottom: 20 }}>
-              <Text style={S.sectionLabel}>Class Participation</Text>
+              <Text style={S.sectionLabel}>Pakikilahok sa klase</Text>
               <View style={S.participationCard}>
                 <View style={S.participationHeader}>
                   <View style={S.participationIconBox}>
                     <UsersIcon size={18} color={F.primary} />
                   </View>
-                  <Text style={S.participationTitle}>This Week</Text>
+                  <Text style={S.participationTitle}>Ngayong Linggo</Text>
                 </View>
                 <Text style={S.participationValue}>
                   {participation ? `${participation.currentRate.toFixed(0)}%` : '0%'}
@@ -473,7 +473,7 @@ fetchParticipation();
             </View> */}
 
             <View style={{ marginBottom: 30 }}>
-              <Text style={S.sectionLabel}>Monthly Activity</Text>
+              <Text style={S.sectionLabel}>Buwanang Aktibidad</Text>
               <MonthlyActivityHeatmap
                 facultyId={auth.currentUser?.uid || null}
                 classId={selectedClassId || undefined}

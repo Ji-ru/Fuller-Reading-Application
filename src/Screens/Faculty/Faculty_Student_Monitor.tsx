@@ -19,12 +19,14 @@ import {
     HistoryIcon,
     TimerIcon,
     TrophyIcon,
+    ZapIcon,
 } from '../../Components/GlobalUse/Icons';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { useNavigationHelper, RootStackParamList } from '../../Controller/NavigationController';
 import PassageHistoryTab from '../../Components/Student/PassageHistoryTab';
 import AnalyticsTab from '../../Components/Student/AnalyticsTab';
 import SessionsTab from '../../Components/Student/SessionsTab';
+import PdfExportButton from '../../Components/Faculty/PdfExportButton';
 import { MiscueReportDocument } from '../../Interfaces/dataInterfaces';
 import bubbles from '../../UI_Designs/BubblesDesign';
 import { ACCENT_COLORS, StudentColors as C, FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
@@ -376,7 +378,14 @@ export default function FacultyStudentMonitor() {
                             source={require('../../../assets/images/cisckids copy.png')}
                             resizeMode="contain"
                         />
-                        <View style={{ width: 44 }} />
+                        <PdfExportButton
+                            studentName={studentName}
+                            readingLevel={readingLevel}
+                            aralinDone={aralinDone}
+                            totalAttempts={totalAttempts}
+                            groupedReports={groupedReports}
+                            allReports={allReports}
+                        />
                     </View>
                 </View>
 

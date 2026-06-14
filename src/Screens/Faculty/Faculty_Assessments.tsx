@@ -466,7 +466,9 @@ export default function FacultyAssessments() {
                           : 'Lahat ng Klase'}
                       </Text>
                     </View>
-                    <ChevronRightIcon size={18} color={F.slate} style={{ transform: [{ rotate: '90deg' }] }} />
+                    <View style={{ transform: [{ rotate: '90deg' }] }}>
+                      <ChevronRightIcon size={18} color={F.slate} />
+                    </View>
                   </TouchableOpacity>
 
                   <Text style={S.listLabel}>MGA PAGSUSULIT ({activities.length})</Text>
@@ -689,7 +691,7 @@ export default function FacultyAssessments() {
                     <Text style={[S.filterOptionText, selectedClassCode === cl.classCode && S.filterOptionTextActive]}>
                       {cl.className}
                     </Text>
-                    <Text style={S.filterOptionSub}>{cl.classCode} • Grade {cl.gradeLevel}</Text>
+                     <Text style={S.filterOptionSub}>{cl.classCode} • {cl.gradeLevel === 0 ? '' : `Baitang ${cl.gradeLevel}`}</Text>
                   </View>
                   {selectedClassCode === cl.classCode && <View style={S.activeDot} />}
                 </TouchableOpacity>

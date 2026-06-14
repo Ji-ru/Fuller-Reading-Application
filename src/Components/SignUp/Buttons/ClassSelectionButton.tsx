@@ -1,9 +1,20 @@
 import React, { useState, useEffect, ReactElement } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
 import signup from '../../../UI_Designs/SignUpStyles';
-import { getAllActiveClasses } from '../../../Controller/AuthenticationController';
 import { ClassDocument } from '../../../Interfaces/dataInterfaces';
 import { getCurrentAcademicYear } from '../../../Utilities/acadYearUtils';
+import { getFirestore, collection, getDocs } from '@react-native-firebase/firestore';
+
+const db = getFirestore();
+
+const getAllActiveClasses = async (): Promise<(ClassDocument & { id: string })[]> => {
+  const snapshot = await getDocs(collection(db, 'classes'));
+  return snapshot.docs.map((doc: any) => ({
+    ...doc.data(),
+    classId: doc.id,
+    id: doc.id,
+  })) as (ClassDocument & { id: string })[];
+};
 
 interface ClassSelectionButtonProps {
   gradeLevel?: number;
@@ -46,10 +57,10 @@ export default function ClassSelectionButton({ gradeLevel, onSelect, transparent
 
       // 2. Filter by Grade Level if provided
       if (gradeLevel) {
-        const gNum = typeof gradeLevel === 'string' ? parseInt(gradeLevel.replace(/\D/g, ''), 10) : gradeLevel;
+        const gNum = typeof gradeLevel === 'number' ? gradeLevel : parseInt(String(gradeLevel).replace(/\D/g, ''), 10);
         list = currentYearClasses.filter(cls => {
           if (!cls.gradeLevel) return false;
-          const clsGrade = typeof cls.gradeLevel === 'string' ? parseInt(cls.gradeLevel.replace(/\D/g, ''), 10) : cls.gradeLevel;
+          const clsGrade = typeof cls.gradeLevel === 'number' ? cls.gradeLevel : parseInt(String(cls.gradeLevel).replace(/\D/g, ''), 10);
           return clsGrade === gNum;
         });
       } else {

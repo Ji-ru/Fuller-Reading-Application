@@ -40,6 +40,9 @@ import FacultyStudentMonitor from './src/Screens/Faculty/Faculty_Student_Monitor
 // ADMIN PAGE
 import AdminDashboard from './src/Screens/Admin/AdminDashboard';
 import UserManagement from './src/Screens/Admin/UserManagement';
+import AdminClassDashboard from './src/Screens/Admin/AdminClassDashboard';
+import AdminClassManagement from './src/Screens/Admin/AdminClassManagement';
+import AdminViewFacultyData from './src/Screens/Admin/AdminViewFacultyData';
 
 // ASSESSMENT PAGE
 import FacultyAssessments from './src/Screens/Faculty/Faculty_Assessments';
@@ -96,6 +99,9 @@ function App() {
             {/* ADMIN PAGES */}
             <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
             <Stack.Screen name="UserManagement" component={UserManagement} />
+            <Stack.Screen name="AdminClassDashboard" component={AdminClassDashboard} />
+            <Stack.Screen name="AdminClassManagement" component={AdminClassManagement} />
+            <Stack.Screen name="AdminViewFacultyData" component={AdminViewFacultyData} />
 
 
           </Stack.Navigator>

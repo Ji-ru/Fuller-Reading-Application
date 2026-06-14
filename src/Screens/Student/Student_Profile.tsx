@@ -655,7 +655,7 @@ export default function Profile() {
             </>
           )}
           <View style={S.gradeGuide}>
-            <Text style={S.gradeGuideTitle}>Pamantayan para sa Grade 1–3</Text>
+             <Text style={S.gradeGuideTitle}>Pamantayan para sa Baitang 1–3</Text>
             {[
               { range: '60+ WPM',    label: 'Mabilis',     color: C.green  },
               { range: '40–59 WPM',  label: 'Katamtaman',  color: C.yellow },

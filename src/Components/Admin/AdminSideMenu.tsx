@@ -9,12 +9,16 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
-import { 
-  LayoutIcon, 
-  UsersIcon, 
-  UserProfileIcon, 
-  LogoutIcon, 
-  ChevronRightIcon 
+import {
+  LayoutIcon,
+  UsersIcon,
+  UserProfileIcon,
+  LogoutIcon,
+  ChevronRightIcon,
+  BookOpenIcon,
+  ClipboardListIcon,
+  BriefcaseIcon,
+  InfoIcon
 } from '../GlobalUse/Icons';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
 import { useNavigationHelper } from '../../Controller/NavigationController';
@@ -30,16 +34,16 @@ interface AdminSideMenuProps {
   currentRoute?: string;
 }
 
-const AdminSideMenu: React.FC<AdminSideMenuProps> = ({ 
-  visible, 
-  onClose, 
+const AdminSideMenu: React.FC<AdminSideMenuProps> = ({
+  visible,
+  onClose,
   onLogout,
-  currentRoute 
+  currentRoute
 }) => {
   const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
   const { handleTabNavigation, handleNavigateStep } = useNavigationHelper();
-  
+
   const currentUser = auth().currentUser;
   const [userName, setUserName] = React.useState('Admin User');
   const [initial, setInitial] = React.useState('A');
@@ -97,6 +101,10 @@ const AdminSideMenu: React.FC<AdminSideMenuProps> = ({
   const navItems = [
     { id: 'AdminDashboard', label: 'Dashboard', icon: LayoutIcon },
     { id: 'UserManagement', label: 'Pamamahala ng User', icon: UsersIcon },
+    { id: 'AdminClassDashboard', label: 'Class Dashboard', icon: BookOpenIcon },
+    { id: 'AdminClassManagement', label: 'Pamamahala ng Klase', icon: ClipboardListIcon },
+    { id: 'AdminViewFacultyData', label: 'Faculty Data', icon: BriefcaseIcon },
+    { id: 'Tungkol', label: 'Tungkol', icon: InfoIcon },
   ];
 
   const handleNavigate = (route: string) => {
@@ -109,17 +117,17 @@ const AdminSideMenu: React.FC<AdminSideMenuProps> = ({
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'auto' : 'none'}>
       <TouchableWithoutFeedback onPress={onClose}>
-        <Animated.View 
+        <Animated.View
           style={[
-            styles.backdrop, 
+            styles.backdrop,
             { opacity: opacityAnim }
-          ]} 
+          ]}
         />
       </TouchableWithoutFeedback>
 
-      <Animated.View 
+      <Animated.View
         style={[
-          styles.sidebar, 
+          styles.sidebar,
           { transform: [{ translateX: slideAnim }] }
         ]}
       >
@@ -137,7 +145,7 @@ const AdminSideMenu: React.FC<AdminSideMenuProps> = ({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentRoute === item.id;
-            
+
             return (
               <TouchableOpacity
                 key={item.id}

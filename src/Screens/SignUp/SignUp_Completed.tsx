@@ -16,16 +16,7 @@ export default function SignUpCompletedScreen() {
   const { role } = route.params;
 
   const navigation = useNavigation() as any;
-  
-  // Loads for 3 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('UserHome');
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [navigation]);
-
+   
   const { handleDesignatedUserPage }  = useNavigationHelper();
 
   return (
@@ -37,14 +28,13 @@ export default function SignUpCompletedScreen() {
         repeat={false}
         resizeMode="cover"
       />
-      <Text style={signup.completeTitle}>Register Completed!</Text>
+      <Text style={signup.completeTitle}>Congratulations!</Text>
       <Text style={signup.completeStatement}>
-        Learn and enjoy your journey even if you make mistakes, it what keeps
-        you better in reading.
+        Pwede mo nang i-log in ang iyong account.
       </Text>
 
-      <TouchableOpacity style={signup.completeNextButton} onPress={() => handleDesignatedUserPage(role)}>
-        <Text style={buttons.nextPageText}>Start Learning</Text>
+      <TouchableOpacity style={signup.completeNextButton} onPress={() => navigation.replace('Login')}>
+        <Text style={buttons.nextPageText}>OKAY</Text>
       </TouchableOpacity>
 
     </View>

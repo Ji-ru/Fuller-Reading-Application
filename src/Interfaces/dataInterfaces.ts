@@ -40,11 +40,12 @@ export interface UserDocument {
     reading_Level?: 'beginner' | 'intermediate' | 'advanced';
   };
 
-  // Faculty specific data
-  facultyData?: {
-    assignedGradeLevels: number[];
-    assignedClassIds: string[];
-  };
+// Faculty specific data
+   facultyData?: {
+     assignedGradeLevels: number[];
+     assignedClassIds: string[];
+     dateOfBirth?: string;
+   };
 
   // Creation and update from Firestore Timestamp
   createdAt: any; 

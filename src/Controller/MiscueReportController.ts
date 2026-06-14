@@ -655,4 +655,17 @@ export const MiscueReportController = {
       };
     }
   },
+
+  async getWordMasteryData(
+    studentId: string,
+  ): Promise<{ masteredWords: Array<{ word: string; letter: string; timestamp: Date }> }> {
+    const mastered = await this.getWordMasteryAllTime(studentId);
+    return {
+      masteredWords: mastered.map(m => ({
+        word: m.word,
+        letter: m.letter,
+        timestamp: new Date(),
+      })),
+    };
+  },
 };

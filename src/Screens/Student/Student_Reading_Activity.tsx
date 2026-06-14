@@ -26,8 +26,6 @@ import { uploadRecording, UploadMetadata } from '../../Controller/DriveUploadCon
 import { useSpeechToText } from '../../Controller/Speech2TextServiceController';
 import { Miscue } from '../../Interfaces/miscue';
 import { isAlphabet, isPassage, isWords } from '../../Interfaces/passage';
-import { ACCENT_COLORS } from '../../Utilities/Theme';
-import { transcribeAudio as transcribeAudioAPI } from '../../../api';
 
 type ReadingActivityScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -386,7 +384,7 @@ export default function ReadingActivityScreenPage() {
       );
       
       const transcription = await Promise.race([
-        transcribeAudioAPI(audioFile),
+        transcribeAudio(audioFile, type, targetText),
         timeoutPromise,
       ]);
       
@@ -395,8 +393,10 @@ export default function ReadingActivityScreenPage() {
       setRecordingDuration(duration);
       await analyzeReadingRef.current(transcription, duration);
       setIsReadingCompleted(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Audio processing error:', error);
+      const errorMessage = error?.message || String(error);
+      console.log('Using simulated response due to error:', errorMessage.substring(0, 50));
       const simulatedResponse = getSimulatedResponse(targetText);
       setSpokenText(simulatedResponse);
         try {
@@ -406,7 +406,7 @@ export default function ReadingActivityScreenPage() {
         }
       setIsReadingCompleted(true);
     }
-    }, [targetText, getSimulatedResponse, analyzeReadingRef, transcribeAudioAPI, getSimulatedResponse, setIsTranscribing, setFinalTagalogText, setSpokenText, analyzeReadingRef, setIsReadingCompleted]);
+    }, [targetText, getSimulatedResponse, analyzeReadingRef, transcribeAudio, setIsTranscribing, setFinalTagalogText, setSpokenText, analyzeReadingRef, setIsReadingCompleted]);
 
   const handleRetry = () => {
     setIsReadingCompleted(false);
@@ -423,7 +423,7 @@ export default function ReadingActivityScreenPage() {
       const audioFile = await stopRecording();
       const startTime = Date.now();
       try {
-        const transcription = await transcribeAudioAPI(audioFile);
+const transcription = await transcribeAudio(audioFile, type, targetText);
         const duration = (Date.now() - startTime) / 1000;
         const result = await analyzeReading(transcription, duration);
 
@@ -443,22 +443,22 @@ export default function ReadingActivityScreenPage() {
             miscueCount: result.computedMiscueCount,
             accuracyRate: result.accuracyNum,
           };
-} else if (type === 'word' && isWords(readingMaterial)) {
-           // For words, derive chapterId from letter position in alphabet or use 0
-           const letterToChapter: Record<string, number> = {
-             'M': 1, 'S': 2, 'A': 3, 'Ang': 4, 'I': 5, 'O': 6, 'Ay': 7, 'E': 8, 'U': 9,
-             'B': 10, 'T': 11, 'K': 12, 'L': 13, 'Y': 14, 'Mga': 15, 'N': 16, 'G': 17,
-             'R': 18, 'P': 19, 'Ng': 20, 'D': 21, 'H': 22, 'W': 23, '-ng': 24, 'ng-': 25,
-           };
-           metadata = {
-             kind: 'word',
-             chapterId: letterToChapter[readingMaterial.letter] ?? 0,
-             lessonId: 0,
-             targetWord: getTargetText(),
-             miscueCount: result.computedMiscueCount,
-             accuracyRate: result.accuracyNum,
-           };
-         } else {
+        } else if (type === 'word' && isWords(readingMaterial)) {
+          // For words, derive chapterId from letter position in alphabet or use 0
+          const letterToChapter: Record<string, number> = {
+            'M': 1, 'S': 2, 'A': 3, 'Ang': 4, 'I': 5, 'O': 6, 'Ay': 7, 'E': 8, 'U': 9,
+            'B': 10, 'T': 11, 'K': 12, 'L': 13, 'Y': 14, 'Mga': 15, 'N': 16, 'G': 17,
+            'R': 18, 'P': 19, 'Ng': 20, 'D': 21, 'H': 22, 'W': 23, '-ng': 24, 'ng-': 25,
+          };
+          metadata = {
+            kind: 'word',
+            chapterId: letterToChapter[readingMaterial.letter] ?? 0,
+            lessonId: 0,
+            targetWord: getTargetText(),
+            miscueCount: result.computedMiscueCount,
+            accuracyRate: result.accuracyNum,
+          };
+        } else {
           metadata = {
             kind: 'alphabet',
             letter: '',
@@ -474,9 +474,11 @@ export default function ReadingActivityScreenPage() {
         }
 
         setIsReadingCompleted(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Transcription failed:', error);
-        Alert.alert('Mali', 'Hindi maiproseso ang iyong boses. Pakisubukan muli.');
+        // Show more details for debugging during development
+        const errorMessage = error?.message || String(error);
+        Alert.alert('Mali', `Hindi maiproseso ang iyong boses. ${errorMessage.substring(0, 100)}`);
       } finally {
         setIsTranscribing(false);
       }
@@ -609,14 +611,28 @@ export default function ReadingActivityScreenPage() {
                               </View>
                               {/* Show specific words for this miscue type */}
                               <View style={S.miscueWordsContainer}>
-                                {typeMiscues.map((m, i) => (
-                                  <Text key={i} style={S.miscueWordText}>
-                                    {type === 'omission' && `"${m.expected}"`}
-                                    {type === 'substitution' && `"${m.expected}" → "${m.spoken}"`}
-                                    {type === 'insertion' && `"${m.spoken}"`}
-                                    {type === 'repetition' && `"${m.expected}"`}
+                                {type === 'substitution' ? (
+                                  typeMiscues.map((m, i) => (
+                                    <Text key={i} style={S.miscueWordText}>
+                                      "{m.expected}" → "{m.spoken}"
+                                    </Text>
+                                  ))
+                                ) : (
+                                  <Text style={S.miscueWordText}>
+                                    {(() => {
+                                      if (type === 'omission') {
+                                        return typeMiscues.map(m => `"${m.expected}"`).join(', ');
+                                      }
+                                      if (type === 'insertion') {
+                                        return typeMiscues.map(m => `"${m.spoken}"`).join(', ');
+                                      }
+                                      if (type === 'repetition') {
+                                        return typeMiscues.map(m => `"${m.expected}"`).join(', ');
+                                      }
+                                      return '';
+                                    })()}
                                   </Text>
-                                ))}
+                                )}
                               </View>
                             </View>
                           );
@@ -649,13 +665,13 @@ export default function ReadingActivityScreenPage() {
           (type === 'passage' || items.length <= 1) && { justifyContent: 'center' },
           type === 'passage' && { bottom: 60 }
         ]}>
-          {(type !== 'passage' && items.length > 1) && (
-            <NavArrow
-              direction="left"
-              disabled={currentIndex === 0 || isRecording}
-              onPress={handlePrevious}
-            />
-          )}
+           {(type !== 'passage' && items.length > 1) && (
+             <NavArrow
+               direction="left"
+               disabled={currentIndex === 0 || isRecording || isTranscribing}
+               onPress={handlePrevious}
+             />
+           )}
 
           {!isReadingCompleted && (
             <RecordingControls
@@ -666,14 +682,14 @@ export default function ReadingActivityScreenPage() {
             />
           )}
 
-          {(type !== 'passage' && items.length > 1) && (
-            <NavArrow
-              direction="right"
-              isFinish={currentIndex === items.length - 1}
-              disabled={isRecording}
-              onPress={handleNext}
-            />
-          )}
+           {(type !== 'passage' && items.length > 1) && (
+             <NavArrow
+               direction="right"
+               isFinish={currentIndex === items.length - 1}
+               disabled={isRecording || isTranscribing}
+               onPress={handleNext}
+             />
+           )}
         </View>
     </SafeAreaView>
 

@@ -93,18 +93,31 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
       wordsInLine.forEach((originalWord, inLineIdx) => {
         const keyBase = `line-${lineIdx}-word-${inLineIdx}`;
 
-        // Determine color
+        // Render any insertion words BEFORE this target word
+        const posData = showFeedback ? miscuesByPosition.get(globalWordIndex) : undefined;
+        if (posData?.insertions && posData.insertions.length > 0) {
+          posData.insertions.forEach((insertion, insIdx) => {
+            renderedWords.push(
+              <Text
+                key={`ins-${keyBase}-${insIdx}`}
+                style={{ color: '#9b59b6', fontFamily: 'Andika-Bold' }}
+              >
+                {insertion.spoken}{' '}
+              </Text>
+            );
+          });
+        }
+
+        // Determine color for the target word
         let wordColor = '#1c2833'; // Default black (during reading)
 
         if (showFeedback) {
-            const posData = miscuesByPosition.get(globalWordIndex);
-            if (posData?.substitution) {
+            const posDataForWord = miscuesByPosition.get(globalWordIndex);
+            if (posDataForWord?.substitution) {
                 wordColor = '#eb5c6c'; // Pagpapalit (Red)
-            } else if (posData?.omission) {
+            } else if (posDataForWord?.omission) {
                 wordColor = '#f39c12'; // Pagkakaltas (Orange)
-            } else if (posData?.insertions && posData.insertions.length > 0) {
-                wordColor = '#3498db'; // Pagdaragdag (Blue)
-            } else if (posData?.repetition) {
+            } else if (posDataForWord?.repetition) {
                 wordColor = '#9b59b6'; // Pag-uulit (Purple)
             } else {
                 wordColor = '#1a7a45'; // Correct (Green)

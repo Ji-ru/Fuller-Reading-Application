@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -28,12 +28,14 @@ export default function SignUpTwoScreen() {
   const personalInfo = route.params.userInfo;
 
   const { handleDesignatedUserPage, handleBackStep } = useNavigationHelper();
+  const navigation = useNavigation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [parentConsent, setParentConsent] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -50,6 +52,10 @@ export default function SignUpTwoScreen() {
     setIsSubmitted(true);
 
     if (!email || !password || !confirmPassword) {
+      return;
+    }
+
+    if (personalInfo.role === 'student' && !parentConsent) {
       return;
     }
 
@@ -111,25 +117,26 @@ export default function SignUpTwoScreen() {
         }
       }
 
-      // Switch to success modal
-      setModalType('success');
-      setModalMessage('Account created successfully!');
+       // Switch to success modal
+       setModalType('success');
+       setModalMessage('Account created successfully!');
 
-      // Play the success animation
-      setTimeout(() => {
-        if (confettiRef.current) {
-          confettiRef.current.play();
-        }
-        if (congratulationsRef.current) {
-          congratulationsRef.current.play();
-        }
-      }, 500);
+       // Play the success animation
+       setTimeout(() => {
+         if (confettiRef.current) {
+           confettiRef.current.play();
+         }
+         if (congratulationsRef.current) {
+           congratulationsRef.current.play();
+         }
+       }, 500);
 
-      // Wait 2 seconds to show success animation, then navigate
-      setTimeout(() => {
-        setModalVisible(false);
-        handleDesignatedUserPage(personalInfo.role!);
-      }, 2000);
+       // Wait 2 seconds to show success animation, then show congratulations modal
+       setTimeout(() => {
+         setModalVisible(false);
+         // Navigate to SignUpCompleted screen instead of directly to user home
+         navigation.replace('SignUpCompleted', { role: personalInfo.role! });
+       }, 2000);
     } catch (error: any) {
       setModalVisible(false);
       Alert.alert('Registration Error', error.message || 'May naganap na error. Pakisubukan muli.');
@@ -275,6 +282,22 @@ export default function SignUpTwoScreen() {
               * Hindi tumutugma
             </Text>
           )}
+          {personalInfo.role === 'student' && (
+            <View style={localStyles.checkboxContainer}>
+              <TouchableOpacity
+                style={[localStyles.checkbox, parentConsent && { backgroundColor: '#1b2e23', borderColor: '#1b2e23' }]}
+                onPress={() => setParentConsent(!parentConsent)}
+                activeOpacity={0.7}
+              >
+                {parentConsent && (
+                  <Text style={localStyles.checkmark}>✓</Text>
+                )}
+              </TouchableOpacity>
+              <Text style={localStyles.checkboxLabel}>
+                By clicking this box, I confirm that I am a parent or guardian and consent to my child's registration
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* CONFIRM AND CANCEL BUTTONS */}
@@ -406,6 +429,39 @@ const localStyles = StyleSheet.create({
     marginTop: -4,
     marginBottom: 8,
     fontFamily: 'Andika-Regular',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginHorizontal: 24,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    marginTop: 2,
+    flexShrink: 0,
+    backgroundColor: 'transparent',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Andika-Bold',
+  },
+  checkboxLabel: {
+    flex: 1,
+    fontSize: 13,
+    color: '#555',
+    fontFamily: 'Andika-Regular',
+    lineHeight: 18,
   },
   // Modal Styles (Cancel Registration)
   modalOverlay: {

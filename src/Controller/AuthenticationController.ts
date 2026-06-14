@@ -168,6 +168,7 @@ export const updateUserProfile = async (
     facultyData?: {
       assignedGradeLevels?: number[];
       assignedClassIds?: string[];
+      dateOfBirth?: string;
     };
   },
 ) => {
@@ -195,6 +196,7 @@ export const updateUserProfile = async (
     const fd = data.facultyData;
     if (fd.assignedGradeLevels !== undefined) update['facultyData.assignedGradeLevels'] = fd.assignedGradeLevels;
     if (fd.assignedClassIds !== undefined)    update['facultyData.assignedClassIds']    = fd.assignedClassIds;
+    if (fd.dateOfBirth !== undefined)         update['facultyData.dateOfBirth']         = fd.dateOfBirth;
   }
 
   await updateDoc(userRef, update);
