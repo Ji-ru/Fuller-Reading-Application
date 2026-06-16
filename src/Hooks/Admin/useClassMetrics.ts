@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { GetClassesResult, getAllClasses } from '../../Controller/AuthenticationController';
+import { getFirestore, collection, query, where, getCountFromServer } from '@react-native-firebase/firestore';
 
 /** Return type for useClassMetrics hook */
 interface ClassMetrics {
@@ -14,12 +14,12 @@ interface ClassMetrics {
   resetMetrics: () => void;
 }
 
+const db = getFirestore();
+
 /**
  * Custom hook to fetch and aggregate class data from Firestore.
- * Retrieves a large batch of classes (up to 1000) and computes:
- * - total / active / archived counts
- * - total students enrolled
- * - distribution of classes per grade level
+ * Retrieves aggregate counts from the server using getCountFromServer
+ * for performance and reduced billing costs.
  *
  * @param acadYear - Optional academic year to filter classes (e.g., "2025-2026")
  */
@@ -37,45 +37,54 @@ export const useClassMetrics = (acadYear?: string): ClassMetrics => {
       setIsLoading(true);
       setErrorMessage(null);
 
-      // Request up to 1000 classes for accurate metrics, passing acadYear filter
-      const result: GetClassesResult = await getAllClasses({ limitOverride: 1000, acadYear });
-      
-      const fetchedClasses = result.classes;
+      const classesRef = collection(db, 'classes');
+      const activeQuery = acadYear
+        ? query(classesRef, where('acadYear', '==', acadYear), where('status', '==', 'active'))
+        : query(classesRef, where('status', '==', 'active'));
 
-      let activeCount = 0;
-      let archivedCount = 0;
-      let studentTotal = 0;
+      const archivedQuery = acadYear
+        ? query(classesRef, where('acadYear', '==', acadYear), where('status', '==', 'archived'))
+        : query(classesRef, where('status', '==', 'archived'));
+
+      const grades = [1, 2, 3];
+      const gradeQueries = grades.map(g => 
+        acadYear
+          ? query(classesRef, where('acadYear', '==', acadYear), where('gradeLevel', '==', g))
+          : query(classesRef, where('gradeLevel', '==', g))
+      );
+
+      // Execute all count queries in parallel
+      const [activeSnap, archivedSnap, ...gradeSnaps] = await Promise.all([
+        getCountFromServer(activeQuery),
+        getCountFromServer(archivedQuery),
+        ...gradeQueries.map(q => getCountFromServer(q))
+      ]);
+
+      const activeCount = activeSnap.data().count;
+      const archivedCount = archivedSnap.data().count;
+      const totalCount = activeCount + archivedCount;
+
       const gradeMap: Record<number, number> = {};
-      
-
-      fetchedClasses.forEach(cls => {
-        // Status counts
-        if (cls.status === 'active') activeCount++;
-        else if (cls.status === 'archived') archivedCount++;
-
-        // Sum student IDs
-        if (cls.studentIds) studentTotal += cls.studentIds.length;
-
-        // Grade level distribution
-        const grade = cls.gradeLevel || 0;
-        gradeMap[grade] = (gradeMap[grade] || 0) + 1;
+      grades.forEach((g, index) => {
+        gradeMap[g] = gradeSnaps[index].data().count;
       });
 
-      console.log("Archive Count: " + archivedCount)
-      setTotalClasses(fetchedClasses.length);
+      setTotalClasses(totalCount);
       setActiveClassCount(activeCount);
       setArchivedClassCount(archivedCount);
-      setTotalEnrolledStudents(studentTotal);
       setGradeDistribution(gradeMap);
+      
+      // Total enrolled students requires array length aggregation which is expensive in NoSQL.
+      // Since it's currently unused in the UI charts, we set it to 0 to save massive document read costs.
+      setTotalEnrolledStudents(0);
     } catch (err: any) {
       setErrorMessage(err.message);
-      console.error('[useClassMetrics] Failed to fetch classes:', err);
+      console.error('[useClassMetrics] Failed to fetch classes metrics:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [acadYear]); // Re‑create function when acadYear changes
+  }, [acadYear]);
 
-  // Auto‑fetch when acadYear changes
   useEffect(() => {
     fetchMetrics();
   }, [fetchMetrics]);

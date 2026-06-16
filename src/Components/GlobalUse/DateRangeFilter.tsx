@@ -31,6 +31,8 @@ interface Props {
   showWeekChips?: boolean;
   /** When true, hides the period navigator and all chip subfilters — just the Week/Month/Year toggle. */
   simple?: boolean;
+  /** Set of date strings (YYYY-M-D) that have activity, to show a dot on the chip */
+  activeDates?: Set<string>;
 }
 
 // ─── Date Helpers ─────────────────────────────────────────────────────────────
@@ -90,6 +92,7 @@ export const DateRangeFilter: React.FC<Props> = ({
   showDayChips = true,
   showWeekChips = true,
   simple = false,
+  activeDates = new Set(),
 }) => {
   // simple mode = toggle only; force-disable nav and chips
   const _showDayChips = simple ? false : showDayChips;
@@ -144,10 +147,12 @@ export const DateRangeFilter: React.FC<Props> = ({
     const today = new Date(); today.setHours(0, 0, 0, 0);
     return labels.map((label, i) => {
       const date = new Date(monday); date.setDate(monday.getDate() + i);
+      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
       const isToday = date.getTime() === today.getTime();
-      return { label, dateNum: date.getDate(), index: i, isToday };
+      const hasActivity = activeDates.has(dateKey);
+      return { label, dateNum: date.getDate(), index: i, isToday, hasActivity };
     });
-  }, [range, anchor]);
+  }, [range, anchor, activeDates]);
 
   const monthWeeks = useMemo(() => {
     if (range !== 'month') return [];
@@ -223,7 +228,12 @@ export const DateRangeFilter: React.FC<Props> = ({
                 activeOpacity={0.7}
               >
                 <Text style={[S.dayChipLabel, isSelected && S.dayChipLabelActive]}>{day.label}</Text>
-                <Text style={[S.dayChipDate, isSelected && S.dayChipDateActive]}>{day.dateNum}</Text>
+                <Text style={[S.dayChipDate, isSelected && S.dayChipDateActive]}>
+                  {day.dateNum}
+                </Text>
+                {day.hasActivity && !isSelected && (
+                  <View style={S.activityDot} />
+                )}
               </TouchableOpacity>
             );
           })}
@@ -346,8 +356,16 @@ const S = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: sw(2),
   },
-  weekChipText: { fontSize: sf(12), fontFamily: 'Nunito-Bold', color: '#388E3C' },
-  weekChipTextActive: { color: '#fff' },
+  weekChipText: { fontSize: sf(13), fontFamily: 'Nunito-Bold', color: '#1B5E20' },
+  weekChipTextActive: { color: '#ffffff' },
+  activityDot: {
+    width: sw(4),
+    height: sw(4),
+    borderRadius: sw(2),
+    backgroundColor: '#388E3C',
+    position: 'absolute',
+    bottom: sh(4),
+  },
 });
 
 export default DateRangeFilter;

@@ -20,6 +20,7 @@ export const useStudentAccuracyTrends = (
   anchor?: Date,
   startDate?: Date,
   endDate?: Date,
+  prefetchedReports?: MiscueReportDocument[],
 ) => {
   const [chartData, setChartData] = useState<ProgressData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,9 +28,15 @@ export const useStudentAccuracyTrends = (
   const [reports, setReports] = useState<MiscueReportDocument[]>([]);
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId && !prefetchedReports) return;
 
     const fetchReports = async () => {
+      if (prefetchedReports) {
+        setReports(prefetchedReports);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
@@ -43,7 +50,7 @@ export const useStudentAccuracyTrends = (
     };
     fetchReports();
 
-  }, [studentId]);
+  }, [studentId, prefetchedReports]);
 
   // Process reports with date range filtering using shared weighted-bucketing helpers.
   // - Drops reports with wpm <= 0 (aborted/no timing).
@@ -98,19 +105,31 @@ interface MiscueData {
  * @param studentId - used to get the percentage of each miscue type from the miscue report using the studentId
  * @returns - the percentages of the students each misuce type
  */
-export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'month' | 'year', anchor?: Date, startDate?: Date, endDate?: Date) => {
+export const useStudentMiscueStats = (
+  studentId: string,
+  timeRange?: 'week' | 'month' | 'year',
+  anchor?: Date,
+  startDate?: Date,
+  endDate?: Date,
+  prefetchedReports?: MiscueReportDocument[],
+) => {
   const [reports, setReports] = useState<MiscueReportDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId && !prefetchedReports) return;
 
     const fetchReports = async () => {
+      if (prefetchedReports) {
+        setReports(prefetchedReports);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const data =
-          await MiscueReportController.getStudentReports(studentId);
+        const data = await MiscueReportController.getStudentReports(studentId);
         setReports(data);
       } catch (err: any) {
         setError(err.message);
@@ -120,7 +139,7 @@ export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'm
     };
 
     fetchReports();
-  }, [studentId]);
+  }, [studentId, prefetchedReports]);
 
   // ==================== FILTER BY TIME RANGE ====================
 
@@ -209,19 +228,31 @@ export const useStudentMiscueStats = (studentId: string, timeRange?: 'week' | 'm
  * @param studentId - used to get the students miscue report 
  * @returns - top miscued passage and top 5 miscued words
  */
-export const useStudentTopMiscuePassageAndWords = (studentId: string, timeRange?: 'week' | 'month' | 'year', anchor?: Date, startDate?: Date, endDate?: Date) => {
+export const useStudentTopMiscuePassageAndWords = (
+  studentId: string,
+  timeRange?: 'week' | 'month' | 'year',
+  anchor?: Date,
+  startDate?: Date,
+  endDate?: Date,
+  prefetchedReports?: MiscueReportDocument[],
+) => {
   const [reports, setReports] = useState<MiscueReportDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId && !prefetchedReports) return;
 
     const fetchReports = async () => {
+      if (prefetchedReports) {
+        setReports(prefetchedReports);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const data =
-          await MiscueReportController.getStudentReports(studentId);
+        const data = await MiscueReportController.getStudentReports(studentId);
         setReports(data);
       } catch (err: any) {
         setError(err.message);
@@ -231,7 +262,7 @@ export const useStudentTopMiscuePassageAndWords = (studentId: string, timeRange?
     };
 
     fetchReports();
-  }, [studentId]);
+  }, [studentId, prefetchedReports]);
 
   // ==================== FILTER BY TIME RANGE ====================
 
@@ -372,6 +403,7 @@ interface UseStudentActiveHoursOptions {
 export function useStudentActiveHours(
   studentId: string,
   { timeRange }: UseStudentActiveHoursOptions,
+  prefetchedReports?: MiscueReportDocument[],
 ) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -381,10 +413,17 @@ export function useStudentActiveHours(
     let mounted = true;
 
     async function fetchReports() {
+      if (prefetchedReports) {
+        if (mounted) {
+          setReports(prefetchedReports);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         setLoading(true);
-        const data =
-          await MiscueReportController.getStudentReports(studentId);
+        const data = await MiscueReportController.getStudentReports(studentId);
         if (mounted) setReports(data);
       } catch (e: any) {
         if (mounted) setError(e.message);
@@ -397,7 +436,7 @@ export function useStudentActiveHours(
     return () => {
       mounted = false;
     };
-  }, [studentId]);
+  }, [studentId, prefetchedReports]);
 
   const chartData = useMemo(() => {
     const { start, end } = getDateRangeForTimeFilter(timeRange);

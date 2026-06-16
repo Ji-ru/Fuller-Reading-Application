@@ -30,7 +30,6 @@ import UsersRegisteredChart from '../../Components/Admin/UsersRegisteredChart';
 import ClassStatusChart from '../../Components/Admin/ClassStatusChart';
 import ClassesPerGradeChart from '../../Components/Admin/ClassesPerGradeChart';
 import StudentsPerGradeChart from '../../Components/Admin/StudentsPerGradeChart';
-import ReadingLevelDistributionChart from '../../Components/Admin/ReadingLevelDistributionChart';
 import GenderDistributionChart from '../../Components/GlobalUse/GenderDistributionChart';
 
 // KPI Card Component
@@ -217,9 +216,6 @@ export default function AdminDashboard() {
             {/* CHARTS SECTION */}
             <View style={adminDashboard.chartsContainer}>
               <SectionDivider label="Users" />
-              {/* <View style={adminDashboard.chartWrapper}>
-                <ReadingLevelDistributionChart acadYear={acadYearParam} />
-              </View> */}
               <View style={adminDashboard.chartWrapper}>
                 <UsersByRoleChart acadYear={acadYearParam} />
               </View>

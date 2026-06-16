@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -98,6 +99,7 @@ export default function StudentViewProfile() {
   // --- Tabs State ---
   const [activeTab, setActiveTab] = useState<ActiveTab>('completion');
   const [isLoadingReports, setIsLoadingReports] = useState(false);
+  const [rawReports, setRawReports] = useState<MiscueReportDocument[]>([]);
   const [groupedReports, setGroupedReports] = useState<GroupedReport[]>([]);
   const [expandedPassages, setExpandedPassages] = useState<Set<number>>(new Set());
 
@@ -115,6 +117,7 @@ export default function StudentViewProfile() {
     try {
       setIsLoadingReports(true);
       const reports = await MiscueReportController.getStudentReports(studentId);
+      setRawReports(reports);
       setGroupedReports(groupReportsByPassage(reports));
     } catch (error) {
       console.error('Failed to fetch reports:', error);
@@ -228,7 +231,17 @@ export default function StudentViewProfile() {
 
   return (
     <SafeAreaView style={facultyStudentView.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingReports}
+            onRefresh={fetchReports}
+            colors={['#008443']}
+            tintColor="#008443"
+          />
+        }
+      >
         <View style={facultyStudentView.innerContainer}>
           <BubbleBackground />
 
@@ -368,14 +381,14 @@ export default function StudentViewProfile() {
                     <DateRangeFilter onRangeChange={setPerfBounds} />
                   </View>
                 </FadeSlideIn>
-                <FadeSlideIn delay={120}>
+                <FadeSlideIn delay={80}>
                   <View style={tabStyles.section}>
-                    <StudentMiscueInsights studentId={studentId} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} />
+                    <StudentAccuracyTrendsChart studentId={studentId} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} prefetchedReports={rawReports} />
                   </View>
                 </FadeSlideIn>
-                <FadeSlideIn delay={180}>
+                <FadeSlideIn delay={160}>
                   <View style={tabStyles.section}>
-                    <StudentAccuracyTrendsChart studentId={studentId} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} />
+                    <StudentMiscueInsights studentId={studentId} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} prefetchedReports={rawReports} />
                   </View>
                 </FadeSlideIn>
               </>

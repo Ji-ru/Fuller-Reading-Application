@@ -9,11 +9,11 @@ import {
   GoogleAuthProvider,
   signInWithCredential,
   updateEmail,
-  sendPasswordResetEmail,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   EmailAuthProvider,
   reauthenticateWithCredential,
 } from '@react-native-firebase/auth';
-import { initializeApp, getApps } from '@react-native-firebase/app';
+import firebase, { initializeApp, getApps } from '@react-native-firebase/app';
 import {
   getFirestore,
   collection,
@@ -22,6 +22,7 @@ import {
   updateDoc,
   getDoc,
   getDocs,
+  getCountFromServer,
   query,
   where,
   limit,
@@ -64,17 +65,12 @@ const SECONDARY_APP_NAME = 'AdminCreateUser';
 const getOrInitSecondaryApp = async () => {
   const existing = getApps().find(a => a.name === SECONDARY_APP_NAME);
   if (existing) return existing;
-  return await initializeApp(
-    {
-      apiKey: 'AIzaSyAMG5RvwLzp437kq73K3NlHGHhDQjvopIM',
-      appId: '1:274037817546:android:37cc2a2e7d0f478b04f433',
-      projectId: 'cisckids-25',
-      storageBucket: 'cisckids-25.firebasestorage.app',
-      messagingSenderId: '274037817546',
-      databaseURL: '',
-    },
-    SECONDARY_APP_NAME,
-  );
+  
+  // Extract the config dynamically from the default app instance
+  // This is safely populated by google-services.json at runtime
+  const primaryAppConfig = firebase.app().options;
+  
+  return await initializeApp(primaryAppConfig, SECONDARY_APP_NAME);
 };
 
 /* -------------------------------------------------------------
@@ -681,14 +677,14 @@ export const updateUserByAdmin = async (
 };
 
 /* -------------------------------------------------------------
-   ADMIN: SEND PASSWORD RESET EMAIL (Pattern A)
+   SEND PASSWORD RESET EMAIL (Pattern A)
    The target user receives a Firebase password-reset email and
    sets their own new password. Works for any user without admin
    privilege.
 ------------------------------------------------------------- */
-export const sendAdminPasswordResetEmail = async (email: string) => {
+export const sendPasswordResetEmail = async (email: string) => {
   try {
-    await sendPasswordResetEmail(auth, email);
+    await firebaseSendPasswordResetEmail(auth, email);
     return { success: true };
   } catch (error: any) {
     throw new Error(
@@ -1859,7 +1855,14 @@ export const getStudentGenderDistribution = async (
       return tally(students);
     }
 
-    let students: UserDocument[] = [];
+    // We check both lowercase and Capitalized versions to ensure accuracy
+    const MALE_KEYS = ['male', 'Male'];
+    const FEMALE_KEYS = ['female', 'Female'];
+
+    let maleCount = 0;
+    let femaleCount = 0;
+    let otherCount = 0;
+    let totalStudents = 0;
 
     if (options.acadYear) {
       // Limit to students whose classCode belongs to a class in this acad year.
@@ -1868,31 +1871,72 @@ export const getStudentGenderDistribution = async (
       if (codes.length === 0) return { male: 0, female: 0, other: 0, total: 0 };
 
       // Firestore caps `in` queries at 30 elements, so chunk the codes.
-      const byUid = new Map<string, UserDocument>();
       for (let i = 0; i < codes.length; i += 30) {
         const chunk = codes.slice(i, i + 30);
-        const snap = await getDocs(
-          query(
-            collection(db, 'users'),
-            where('role', '==', 'student'),
-            where('studentData.classCode', 'in', chunk),
-          ),
-        );
-        snap.forEach((d: any) => {
-          const data = d.data() as UserDocument;
-          if (data.uid) byUid.set(data.uid, data);
-        });
+        
+        // 1. Get total students in chunk
+        const totalSnap = await getCountFromServer(query(
+          collection(db, 'users'), 
+          where('role', '==', 'student'), 
+          where('studentData.classCode', 'in', chunk)
+        ));
+        const chunkTotal = totalSnap.data().count;
+
+        // 2. Count males and females explicitly
+        const countGendersInChunk = async (sexKeys: string[]) => {
+          const promises = sexKeys.map(sexKey => 
+            getCountFromServer(query(
+              collection(db, 'users'), 
+              where('role', '==', 'student'), 
+              where('studentData.classCode', 'in', chunk),
+              where('sex', '==', sexKey)
+            ))
+          );
+          const snaps = await Promise.all(promises);
+          return snaps.reduce((acc, snap) => acc + snap.data().count, 0);
+        };
+
+        const [m, f] = await Promise.all([
+          countGendersInChunk(MALE_KEYS),
+          countGendersInChunk(FEMALE_KEYS),
+        ]);
+
+        maleCount += m;
+        femaleCount += f;
+        totalStudents += chunkTotal;
       }
-      students = Array.from(byUid.values());
+      otherCount = totalStudents - maleCount - femaleCount;
     } else {
       // System-wide: every student.
-      const snap = await getDocs(
-        query(collection(db, 'users'), where('role', '==', 'student')),
-      );
-      snap.forEach((d: any) => students.push(d.data() as UserDocument));
+      const totalSnap = await getCountFromServer(query(
+        collection(db, 'users'), 
+        where('role', '==', 'student')
+      ));
+      totalStudents = totalSnap.data().count;
+
+      const countSystemGenders = async (sexKeys: string[]) => {
+        const promises = sexKeys.map(sexKey => 
+          getCountFromServer(query(
+            collection(db, 'users'), 
+            where('role', '==', 'student'), 
+            where('sex', '==', sexKey)
+          ))
+        );
+        const snaps = await Promise.all(promises);
+        return snaps.reduce((acc, snap) => acc + snap.data().count, 0);
+      };
+
+      const [m, f] = await Promise.all([
+        countSystemGenders(MALE_KEYS),
+        countSystemGenders(FEMALE_KEYS),
+      ]);
+
+      maleCount = m;
+      femaleCount = f;
+      otherCount = totalStudents - maleCount - femaleCount;
     }
 
-    return tally(students);
+    return { male: maleCount, female: femaleCount, other: otherCount, total: totalStudents };
   } catch (error: any) {
     throw new Error('Failed to get gender distribution: ' + error.message);
   }
@@ -1903,8 +1947,10 @@ export const getStudentGenderDistribution = async (
 // ==============================================================================================================
 
 export interface GradeLevelDistribution {
-  byGrade: Record<number, number>;
+  byGrade: Record<number, { enrolled: number; unenrolled: number }>;
   total: number;
+  totalEnrolled: number;
+  totalUnenrolled: number;
 }
 
 /**
@@ -1924,39 +1970,86 @@ export const getStudentGradeLevelDistribution = async (
   acadYear?: string,
 ): Promise<GradeLevelDistribution> => {
   try {
-    // 1. Resolve the relevant classes and map each classCode to its grade.
+    // 1. Resolve the relevant classes and group class codes by grade level
     const classesQuery = acadYear
       ? query(collection(db, 'classes'), where('acadYear', '==', acadYear))
       : query(collection(db, 'classes'));
     const classesSnap = await getDocs(classesQuery);
 
-    const codeToGrade = new Map<string, number>();
+    const gradeToCodes = new Map<number, string[]>();
     classesSnap.forEach((d: any) => {
       const data = d.data() as ClassDocument;
       if (data.classCode && typeof data.gradeLevel === 'number') {
-        codeToGrade.set(data.classCode, data.gradeLevel);
+        const codes = gradeToCodes.get(data.gradeLevel) || [];
+        codes.push(data.classCode);
+        gradeToCodes.set(data.gradeLevel, codes);
       }
     });
-    if (codeToGrade.size === 0) return { byGrade: {}, total: 0 };
 
-    // 2. Group enrolled students by their class's grade level.
-    const studentsSnap = await getDocs(
-      query(collection(db, 'users'), where('role', '==', 'student')),
-    );
 
-    const byGrade: Record<number, number> = {};
-    let total = 0;
-    studentsSnap.forEach((d: any) => {
-      const student = d.data() as UserDocument;
-      const code = student.studentData?.classCode;
-      if (!code) return;
-      const grade = codeToGrade.get(code);
-      if (grade === undefined) return;
-      byGrade[grade] = (byGrade[grade] || 0) + 1;
-      total++;
+    const byGrade: Record<number, { enrolled: number; unenrolled: number }> = {};
+    let totalEnrolled = 0;
+    let totalUnenrolled = 0;
+
+    // Helper to chunk arrays (Firestore 'in' queries are limited to 30)
+    const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
+      }
+      return chunks;
+    };
+
+    // 2. Run getCountFromServer chunks for each grade level (ENROLLED)
+    const enrolledPromises = Array.from(gradeToCodes.entries()).map(async ([grade, codes]) => {
+      const chunks = chunkArray(codes, 10);
+      const chunkPromises = chunks.map(chunk => 
+        getCountFromServer(query(
+          collection(db, 'users'),
+          where('role', '==', 'student'),
+          where('studentData.classCode', 'in', chunk)
+        ))
+      );
+      
+      const snaps = await Promise.all(chunkPromises);
+      const gradeTotal = snaps.reduce((acc, snap) => acc + snap.data().count, 0);
+      return { grade, count: gradeTotal };
     });
 
-    return { byGrade, total };
+    // 3. Run getCountFromServer for each grade level (UNENROLLED)
+    // Unenrolled students are identified by having no classCode but a specified gradeLevel
+    const supportedGrades = [1, 2, 3];
+    const unenrolledPromises = supportedGrades.map(async (grade) => {
+      const snap = await getCountFromServer(query(
+        collection(db, 'users'),
+        where('role', '==', 'student'),
+        where('studentData.gradeLevel', '==', grade),
+        where('studentData.classCode', '==', '')
+      ));
+      return { grade, count: snap.data().count };
+    });
+
+    const enrolledResults = await Promise.all(enrolledPromises);
+    const unenrolledResults = await Promise.all(unenrolledPromises);
+
+    enrolledResults.forEach(({ grade, count }) => {
+      if (!byGrade[grade]) byGrade[grade] = { enrolled: 0, unenrolled: 0 };
+      byGrade[grade].enrolled += count;
+      totalEnrolled += count;
+    });
+
+    unenrolledResults.forEach(({ grade, count }) => {
+      if (!byGrade[grade]) byGrade[grade] = { enrolled: 0, unenrolled: 0 };
+      byGrade[grade].unenrolled += count;
+      totalUnenrolled += count;
+    });
+
+    return { 
+      byGrade, 
+      total: totalEnrolled + totalUnenrolled, 
+      totalEnrolled, 
+      totalUnenrolled 
+    };
   } catch (error: any) {
     throw new Error('Failed to get grade-level distribution: ' + error.message);
   }

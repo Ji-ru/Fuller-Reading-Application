@@ -1,7 +1,7 @@
 // components/Admin/StudentsPerGradeChart.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
-import { BarChart } from 'react-native-chart-kit';
+import { StackedBarChart } from 'react-native-chart-kit';
 import { sw, sh, sf } from '../../Utils/responsive';
 import { FacultyColors } from '../../Utilities/Theme';
 import {
@@ -43,12 +43,19 @@ const chartConfig = {
 };
 
 /**
- * Bar chart of enrolled students grouped by the grade level of their class.
+ * Stacked bar chart of students grouped by their grade level.
+ * Displays both Enrolled students (who have joined a class) and 
+ * Unenrolled students (who have registered but are orphaned).
  * Self-fetching via getStudentGradeLevelDistribution; honors the dashboard's
  * academic-year filter.
  */
 const StudentsPerGradeChart: React.FC<StudentsPerGradeChartProps> = ({ acadYear }) => {
-  const [data, setData] = useState<GradeLevelDistribution>({ byGrade: {}, total: 0 });
+  const [data, setData] = useState<GradeLevelDistribution>({ 
+    byGrade: {}, 
+    total: 0,
+    totalEnrolled: 0,
+    totalUnenrolled: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -102,13 +109,17 @@ const StudentsPerGradeChart: React.FC<StudentsPerGradeChartProps> = ({ acadYear 
   ).sort((a, b) => a - b);
 
   const labels = sortedGrades.map(grade => `G${grade}`);
-  const dataValues = sortedGrades.map(grade => data.byGrade[grade] ?? 0);
-  const maxValue = Math.max(0, ...dataValues);
-  const segments = maxValue > 0 ? Math.min(6, maxValue) : 1;
+
+  const dataValues = sortedGrades.map(grade => {
+    const counts = data.byGrade[grade] || { enrolled: 0, unenrolled: 0 };
+    return [counts.enrolled, counts.unenrolled];
+  });
 
   const barData = {
     labels,
-    datasets: [{ data: dataValues }],
+    legend: ['Enrolled', 'Unenrolled'],
+    data: dataValues,
+    barColors: [FacultyColors.primaryLight, FacultyColors.orange],
   };
 
   return (
@@ -117,26 +128,24 @@ const StudentsPerGradeChart: React.FC<StudentsPerGradeChartProps> = ({ acadYear 
         <View style={styles.accentBar} />
         <View>
           <Text style={styles.title}>Students per Grade Level</Text>
-          <Text style={styles.subtitle}>Total Students: {data.total}</Text>
+          <Text style={styles.subtitle}>Enrolled: {data.totalEnrolled} | Unenrolled: {data.totalUnenrolled}</Text>
           <Text style={styles.description}>
-            Number of enrolled students grouped by their class's grade level.
+            Number of enrolled and unenrolled students grouped by grade level.
           </Text>
         </View>
       </View>
 
       <View style={styles.chartWrapper}>
-        <BarChart
+        <StackedBarChart
           data={barData}
           width={screenWidth - sw(48)}
           height={sh(200)}
           chartConfig={chartConfig}
-          segments={segments}
           yAxisLabel=""
           yAxisSuffix=""
           style={{ marginVertical: sh(8), borderRadius: sw(16) }}
-          fromZero
-          showValuesOnTopOfBars
-          withInnerLines={true}
+          hideLegend={false}
+          decimalPlaces={0}
         />
       </View>
     </View>

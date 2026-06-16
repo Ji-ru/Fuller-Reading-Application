@@ -44,9 +44,11 @@ interface AccuracyTrendsChartProps {
   startDate?: Date;
   /** Optional explicit end of the date range. */
   endDate?: Date;
+  /** Optional prefetched miscue reports to prevent redundant Firebase queries */
+  prefetchedReports?: any[];
 }
 
-const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studentId, role = 'faculty', timeRange: externalTimeRange, anchor, startDate, endDate }) => {
+const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studentId, role = 'faculty', timeRange: externalTimeRange, anchor, startDate, endDate, prefetchedReports }) => {
   const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>('week');
   const timeRange = externalTimeRange ?? internalTimeRange;
 
@@ -57,7 +59,7 @@ const StudentAccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({ studen
     grandTotalWords,
     grandAccuracySum,
     grandTotalMinutes,
-  } = useStudentAccuracyTrends(studentId, timeRange, anchor, startDate, endDate);
+  } = useStudentAccuracyTrends(studentId, timeRange, anchor, startDate, endDate, prefetchedReports);
 
   // ── Normalized data ────────────────────────────────────────────────────────
   const chartData = useMemo(

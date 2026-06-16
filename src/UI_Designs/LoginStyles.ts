@@ -374,11 +374,86 @@ const login = StyleSheet.create({
     backgroundColor: C.disabled,
     opacity: 0.7,
   },
-  forgotPassButton: {
-    alignSelf: 'flex-end',
-    marginEnd: sw(25),
-    marginBottom: sh(10),
+  // ========== FORGOT PASSWORD MODAL ==========
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '85%',
+    maxWidth: sw(340),
+    backgroundColor: C.white,
+    borderRadius: sw(16),
+    padding: sw(24),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.15,
+    shadowRadius: sw(12),
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: sf(18),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+    marginBottom: sh(16),
+    textAlign: 'center',
+  },
+  modalDescription: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+    marginBottom: sh(20),
+    textAlign: 'center',
+  },
+  modalInput: {
+    width: '100%',
+    backgroundColor: C.inputBg,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: sw(12),
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(12),
+    fontSize: sf(15),
+    fontFamily: 'Nunito-Medium',
+    color: C.ink,
+    marginBottom: sh(24),
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: sw(12),
+  },
+  modalCancelBtn: {
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(16),
+    borderRadius: sw(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Bold',
+    color: C.slate,
+  },
+  modalSendBtn: {
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(20),
+    borderRadius: sw(10),
+    backgroundColor: C.green,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalSendBtnDisabled: {
+    backgroundColor: C.disabled,
+  },
+  modalSendText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Bold',
+    color: C.white,
   },
 });
 
 export default login;
+

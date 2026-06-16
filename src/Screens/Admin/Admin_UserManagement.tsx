@@ -22,12 +22,7 @@ import { UserDocument, UserRole } from '../../Interfaces/dataInterfaces';
 import adminUserManagment from '../../UI_Designs/AdminUserManagementStyles';
 import { FacultyColors } from '../../Utilities/Theme';
 import { Icon } from '../../Components/GlobalUse/Icon';
-import {
-    updateUserByAdmin,
-    deleteUserByAdmin,
-    createUserByAdmin,
-    sendAdminPasswordResetEmail,
-} from '../../Controller/AuthenticationController';
+import { updateUserByAdmin, deleteUserByAdmin, createUserByAdmin, sendPasswordResetEmail } from '../../Controller/AuthenticationController';
 import Sidebar from '../../Components/GlobalUse/Sidebar';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { buildAdminMenuItems } from '../../Utilities/adminMenuItems';
@@ -200,7 +195,7 @@ export default function AdminUserManagement() {
                     text: 'Send',
                     onPress: async () => {
                         try {
-                            await sendAdminPasswordResetEmail(editingUser.email!);
+                            await sendPasswordResetEmail(editingUser.email!);
                             Alert.alert('Sent', 'Password reset email sent successfully.');
                         } catch (err: any) {
                             Alert.alert('Failed', err?.message || 'Could not send reset email.');

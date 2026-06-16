@@ -895,7 +895,7 @@ export default function ReadingActivityScreenPage() {
 
               {/* Header */}
               <StudentHeader 
-                title="My Class"
+                title="Reading Activity"
                 onBackPress={handleBackStep}
                 onAboutPress={() => handleNextStep('About')}
                 onLogoutPress={() => setLogoutVisible(true)}
