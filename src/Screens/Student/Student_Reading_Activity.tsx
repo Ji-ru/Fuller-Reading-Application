@@ -131,7 +131,7 @@ export default function ReadingActivityScreenPage() {
     formatTime,
   } = useAudioRecording();
 
-  const { isLoading, getSimulatedResponse, processAudioWithAssemblyAI, processAudioWithDeepgram, processAudioWithHubert, processAudioWithWav2Vec2, processAudioWithWhisper, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
+  const { isLoading, processAudioWithDeepgram, sttErrorVisible, sttErrorMessage, clearSttError } = useSpeechToText();
 
   // Access Global Music Context
   const { playMusic, pauseMusic } = useGlobalMusic();
@@ -427,13 +427,8 @@ export default function ReadingActivityScreenPage() {
       if (!audioFile) {
         throw new Error('No audio file provided');
       }
-      // const transcription = await processAudioWithGoogle(audioFile);
       // const transcription = await processAudioWithAssemblyAI(audioFile);
       const transcription = await processAudioWithDeepgram(audioFile);
-      // const transcription = await processAudioWithPuter(audioFile);
-      // const transcription = await processAudioWithWav2Vec2(audioFile);
-      // const transcription = await processAudioWithHubert(audioFile);
-      // const transcription = await processAudioWithWhisper(audioFile);
       setSpokenText(transcription.fulltext.toLowerCase());
       console.log('THIS IS THE SPOKEN: ' + transcription);
       // console.log('THIS IS THE UTTERANCES: ' + transcription);
@@ -453,7 +448,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithDeepgram, getSimulatedResponse, targetText]);
+  }, [processAudioWithDeepgram, targetText]);
 
   /**
    * Handles the record/play toggle for recording user speech:

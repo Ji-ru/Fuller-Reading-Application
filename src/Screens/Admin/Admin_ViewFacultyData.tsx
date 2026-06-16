@@ -15,7 +15,6 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
 import ActiveHoursChart from '../../Components/Faculty/Dashboard/ActiveHoursChart';
 import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
-import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
 import AccuracyTrendsChart from '../../Components/Faculty/Dashboard/AccuracyTrends';
 import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/NumberOFClassesAndStudents';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
@@ -190,7 +189,6 @@ export default function AdminViewFacultyData() {
 
                         <ClassWordMastery facultyId={facultyId} filter={filter} />
 
-                        <ClassReadingStatus facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
 
                         <AccuracyTrendsChart facultyId={facultyId} filter={filter} />
 

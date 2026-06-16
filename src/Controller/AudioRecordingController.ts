@@ -1,9 +1,3 @@
-// React Hooks used in this controller:
-// useState: Manage component state, triggers re-render on change.
-// useEffect: Handle side effects after render (API calls, timers, etc).
-// useRef: Store a mutable value that persists between renders, doesn’t cause re-render.
-// useCallback: Return a memoized callback, only changes if dependencies change.
-// useMemo (not used in this file): Cache expensive computations between renders.
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { AudioPermissionService } from './PermissionsController';
