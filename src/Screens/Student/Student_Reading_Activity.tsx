@@ -1,8 +1,8 @@
 // React
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, Image, StyleSheet } from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { View, Text, TouchableOpacity, ImageBackground, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, Image, StyleSheet, BackHandler } from 'react-native';
+import { RouteProp, useRoute, useFocusEffect } from '@react-navigation/native';
 
 // Styles
 import readingStyles from '../../UI_Designs/ReadingActivityStyles';
@@ -18,6 +18,7 @@ import { MiscueAnalysisService } from '../../Controller/MiscueAnalysisServiceCon
 import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
 import { RecordingControls } from '../../Components/Student/Reading/RecordingControls';
 import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
+import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
 import { Miscue } from '../../Interfaces/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { uploadRecording } from '../../Controller/DriveUploadController';
@@ -27,6 +28,7 @@ import { useGlobalMusic } from '../../Components/GlobalUse/Background/GlobalMusi
 import { BubbleBackgroundUpper } from '../../Components/GlobalUse/BubbleBackground';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 import { StudentHeader } from '../../Components/Student/StudentHeader';
+import { useAllPassages } from '../../Hooks/Student/useAllPassages';
 
 // Auth Firebase
 import { getAuth } from '@react-native-firebase/auth';
@@ -42,6 +44,10 @@ export default function ReadingActivityScreenPage() {
   // Ref: Store a retry timeout id for feedback modal
   const route = useRoute<ReadingActivityScreenRouteProp>();
   const { readingMaterial, type, wordContext } = route.params;
+
+  const { dynamicPassages } = useAllPassages();
+  const staticPassages = (readingMaterialData?.Passages || []);
+  const allPassages = [...staticPassages, ...dynamicPassages];
 
   // State
   const [spokenText, setSpokenText] = useState('');
@@ -60,6 +66,12 @@ export default function ReadingActivityScreenPage() {
   // Track if we've already shown the modal for this reading attempt
   const [hasShownModalForCurrentAttempt, setHasShownModalForCurrentAttempt] =
     useState(false);
+
+  const [alertModalConfig, setAlertModalConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Calculate words per minute (simplified - you'll need to implement this properly)
   const [wordPerMin, setWordPerMin] = useState(0);
@@ -82,6 +94,7 @@ export default function ReadingActivityScreenPage() {
 
   // State for storing Word Sessions 
   const wordSessionIdRef = useRef<string | null>(null);
+  const isSubmittingRef = useRef(false);
   const wordAttemptedSetRef = useRef(new Set<string>()); // prevents retry inflation
   const correctWordSetRef = useRef(new Set<string>());
   const incorrectWordSetRef = useRef(new Set<string>());
@@ -160,6 +173,23 @@ export default function ReadingActivityScreenPage() {
     return { index: 0, total: 1, lessonWords: [], lesson: null };
   }, [readingMaterial, type, wordContext]);
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (isRecording) {
+          setAlertModalConfig({
+            visible: true,
+            title: 'Recording in Progress',
+            message: 'Please stop the recording before going back.',
+          });
+          return true; // Block default back behavior
+        }
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [isRecording])
+  );
+
   const getNextReadingItem = useCallback(() => {
     // if (type === 'alphabet' && isAlphabet(readingMaterial)) {
     //   const alphaList = readingMaterialData.Alphabet;
@@ -169,10 +199,9 @@ export default function ReadingActivityScreenPage() {
     //   }
     // } else
     if (type === 'passage' && isPassage(readingMaterial)) {
-      const passList = readingMaterialData.Passages;
-      const index = passList.findIndex(p => p.title === readingMaterial.title);
-      if (index >= 0 && index < passList.length - 1) {
-        return { type: 'passage', readingMaterial: passList[index + 1], wordContext: undefined };
+      const index = allPassages.findIndex((p: any) => p.title === readingMaterial.title);
+      if (index >= 0 && index < allPassages.length - 1) {
+        return { type: 'passage', readingMaterial: allPassages[index + 1], wordContext: undefined };
       }
     } else if (type === 'word' && isWords(readingMaterial) && wordContext) {
       const { index, total, lessonWords, lesson } = wordPositionInfo;
@@ -201,10 +230,9 @@ export default function ReadingActivityScreenPage() {
     //   }
     // } else
     if (type === 'passage' && isPassage(readingMaterial)) {
-      const passList = readingMaterialData.Passages;
-      const index = passList.findIndex(p => p.title === readingMaterial.title);
+      const index = allPassages.findIndex((p: any) => p.title === readingMaterial.title);
       if (index > 0) {
-        return { type: 'passage', readingMaterial: passList[index - 1], wordContext: undefined };
+        return { type: 'passage', readingMaterial: allPassages[index - 1], wordContext: undefined };
       }
     } else if (type === 'word' && isWords(readingMaterial) && wordContext) {
       const { index, lessonWords, lesson } = wordPositionInfo;
@@ -219,7 +247,7 @@ export default function ReadingActivityScreenPage() {
       }
     }
     return null;
-  }, [readingMaterial, type, wordContext, wordPositionInfo]);
+  }, [readingMaterial, type, wordContext, wordPositionInfo, allPassages]);
 
   useEffect(() => {
     setNextItem(getNextReadingItem());
@@ -420,7 +448,242 @@ export default function ReadingActivityScreenPage() {
    * Updates states and triggers analysis and UI changes.
    * @param audioFile - Path to the recorded audio file
    * @param duration - Duration of the recording (seconds)
+  /**
+   * Stores a miscue report (Firebase) if user attempt is valid (not already stored, not empty, etc).
+   * Uses miscues, accuracy, reading speed, and time spent for tracking.
+   * @param accuracyNum - Numeric accuracy rate (0-100)
+   * @param duration - Time spent reading (seconds)
+   * @param miscues - Array of detected Miscue objects
+   * @param wpm - Words per minute metric
    */
+  const storeMiscueReport = useCallback(async (
+    accuracyNum: number,
+    duration: number,
+    miscues: Miscue[],
+    wpm: number,
+    wcpm: number,
+    spokenTextParam: string,
+  ) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    try {
+      // Restriction: if duration is < 1s (0:00), don't store
+      if (duration < 1) {
+        console.log('Skipping report storage: duration is too short (0:00)');
+        return;
+      }
+
+      // if this attempt is already stored, stop
+
+      const mins = Math.floor(duration / 60);
+      const seconds = Math.floor(duration % 60);
+      const formattedDuration = `${mins}:${seconds
+        .toString()
+        .padStart(2, '0')}`;
+
+      console.log('Storing report with data:', {
+        title: getTitle(),
+        miscueCount: miscues.length,
+        accuracy: accuracyNum,
+        wpm: wpm,
+        wcpm: wcpm,
+        duration: formattedDuration,
+      });
+
+      // Store the data from the MiscueReportController
+      await MiscueReportController.storeReport(
+        getTitle(),
+        miscues,
+        accuracyNum,
+        wpm,
+        wcpm,
+        totalWords,
+        formattedDuration
+      );
+
+      setHasStoredReport(true);
+    } catch (error: any) {
+      throw new Error('Failed to store miscue report: ' + error.message);
+    } finally {
+      isSubmittingRef.current = false;
+    }
+  }, [hasStoredReport, getTitle, totalWords]);
+  /**
+   * Analyzes user transcription depending on reading type (alphabet, word, passage).
+   * Calculates and sets miscues, accuracy, feedback, and stores report if eligible.
+   * Shows feedback modal if not already shown for a given attempt.
+   *
+   * @param transcription - The transcription of spoken audio
+   * @param duration - Recording duration (in seconds)
+   */
+  const analyzeReading = useCallback(async (transcription: string, duration: number, audioFile: string) => {
+    let accuracyNum = 0;
+    let isWordAlphabetCorrect = false; // Track correct status locally
+    // PASSAGE READING ANALYZATION AND DATABASE STORING
+    /* else */ if (type === 'passage' && isPassage(readingMaterial)) {
+      // Passage miscue detection
+      const detectedMiscues = MiscueAnalysisService.detectMiscues(
+        readingMaterial.text,
+        transcription,
+      );
+      // Calculate accuracy
+      const calculatedAccuracy = MiscueAnalysisService.calculateAccuracy(
+        readingMaterial.text,
+        transcription,
+      );
+      // Accuracy Feedback after calculation
+      const accuracyFeedback =
+        MiscueAnalysisService.getAccuracyFeedback(calculatedAccuracy);
+      setMiscues(detectedMiscues);
+      setAccuracyString(calculatedAccuracy); // String: "85.5"
+      setFeedback(accuracyFeedback);
+      // Calculate accuracy number for storage
+      accuracyNum = convertAccuracyStringToNumber(calculatedAccuracy);
+      const wpm = calculateWordsPerMin(totalWords, duration);
+      setWordPerMin(wpm);
+
+      // Calculate WCPM
+      const errorCount = detectedMiscues.filter(
+        m => m.type === 'substitution' || m.type === 'omission'
+      ).length;
+      const wcpm = calculateWCPM(totalWords, errorCount, duration);
+      setWordCorrectPerMin(wcpm);
+
+      console.log('This is WPM: ' + wpm + ' | WCPM: ' + wcpm);
+      // To avoid duplication it needs to check if it was already stored
+      if (!hasStoredReport && duration > 0) {
+        await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm, wcpm, transcription);
+      }
+      if (audioFile && duration >= 1) {
+        uploadRecording(audioFile, {
+          kind: 'passage',
+          passageTitle: getTitle(),
+          miscueCount: detectedMiscues.length,
+          accuracyRate: accuracyNum,
+          spokenText: transcription,
+        });
+      }
+    }
+
+    // WORD READING ANALYZATION AND DATABASE STORING
+    else if (type === 'word' && isWords(readingMaterial)) {
+      const correct = isTextPerfect(transcription, targetText);
+      accuracyNum = correct ? 100 : 0;
+      isWordAlphabetCorrect = correct;
+      const result = MiscueAnalysisService.checkWordAccuracy(targetText, transcription);
+      setIsCorrectAttempt(result.isCorrect);
+      setAccuracyString(result.accuracy);
+      setFeedback(
+        correct
+          ? 'Great job! You pronounced the word correctly.'
+          : 'Try again. Practice makes perfect.',
+      );
+      // Only record session stats and mastery if duration > 0
+      if (duration > 0) {
+        const sessionId =
+          wordSessionIdRef.current ?? (await MiscueReportController.startWordSession());
+        wordSessionIdRef.current = sessionId;
+        const attemptKey = `${wordContext?.chapterId ?? 'ch?'}::${wordContext?.lessonId ?? 'ls?'}::${targetText.toLowerCase()}`;
+        const firstAttempt = !wordAttemptedSetRef.current.has(attemptKey);
+        if (firstAttempt) wordAttemptedSetRef.current.add(attemptKey);
+        const firstCorrect = correct && !correctWordSetRef.current.has(attemptKey);
+        if (firstCorrect) correctWordSetRef.current.add(attemptKey);
+        const firstIncorrect =
+          !correct &&
+          !incorrectWordSetRef.current.has(attemptKey) &&
+          !correctWordSetRef.current.has(attemptKey); // don’t mark incorrect if already correct
+        if (firstIncorrect) incorrectWordSetRef.current.add(attemptKey);
+        // --- Attempted (once) + record that this word belongs to the lesson
+        if (firstAttempt) {
+          await MiscueReportController.recordWordAttempt(
+            sessionId,
+            {
+              chapterId: wordContext?.chapterId || 0,
+              chapterTitle: wordContext?.chapterTitle || '',
+              lessonId: wordContext?.lessonId || 0,
+              lessonTitle: wordContext?.lessonTitle || '',
+              targetWord: targetText,
+            },
+            {
+              incAttempted: true,
+              addTargetWord: true,
+              // if first attempt is incorrect, add incorrect
+              addIncorrectWord: firstIncorrect,
+            },
+          );
+        } else if (firstIncorrect) {
+          // if you want incorrectWords even when it wasn't the first attempt:
+          await MiscueReportController.recordWordAttempt(
+            sessionId,
+            {
+              chapterId: wordContext?.chapterId || 0,
+              chapterTitle: wordContext?.chapterTitle || '',
+              lessonId: wordContext?.lessonId || 0,
+              lessonTitle: wordContext?.lessonTitle || '',
+              targetWord: targetText,
+            },
+            { addIncorrectWord: true },
+          );
+        }
+
+        // --- Correct (once) + move incorrect -> correct
+        if (firstCorrect) {
+          await MiscueReportController.recordWordAttempt(
+            sessionId,
+            {
+              chapterId: wordContext?.chapterId || 0,
+              chapterTitle: wordContext?.chapterTitle || '',
+              lessonId: wordContext?.lessonId || 0,
+              lessonTitle: wordContext?.lessonTitle || '',
+              targetWord: targetText,
+            },
+            {
+              incCorrect: true,
+              addCorrectWord: true,
+              removeIncorrectWord: true, // important: “updates everytime it becomes correct”
+            },
+          );
+        }
+
+        // --- Global mastery (wordCompleted)
+        if (correct && !hasStoredCorrectAttempt && !alreadyCompleted) {
+          await MiscueReportController.storeWordCorrectAttempt(
+            wordContext?.chapterId || 0,
+            wordContext?.chapterTitle || '',
+            wordContext?.lessonId || 0,
+            wordContext?.lessonTitle || '',
+            targetText,
+          );
+          setHasStoredCorrectAttempt(true);
+          setAlreadyCompleted(true);
+        }
+      }
+
+      if (audioFile && duration >= 1) {
+        uploadRecording(audioFile, {
+          kind: 'word',
+          chapterId: wordContext?.chapterId || 0,
+          lessonId: wordContext?.lessonId || 0,
+          targetWord: targetText,
+          miscueCount: correct ? 0 : 1,
+          accuracyRate: accuracyNum,
+          spokenText: transcription,
+        });
+      }
+    }
+
+    // Show feedback modal
+    if (!hasShownModalForCurrentAttempt) {
+      setTimeout(() => {
+        displayFeedbackModal(
+          accuracyNum,
+          /* type === 'alphabet' || */ type === 'word',
+          isWordAlphabetCorrect,
+        );
+      }, 500);
+    }
+  }, [type, readingMaterial, getTitle, totalWords, hasStoredReport, targetText, storeMiscueReport, hasStoredCorrectAttempt, alreadyCompleted, wordContext]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleAudioProcessing = useCallback(async (audioFile: string, duration: number) => {
     try {
@@ -429,6 +692,23 @@ export default function ReadingActivityScreenPage() {
       }
       // const transcription = await processAudioWithAssemblyAI(audioFile);
       const transcription = await processAudioWithDeepgram(audioFile);
+
+      if (!transcription.fulltext || transcription.fulltext === '') {
+        if (type === 'passage') {
+          setAlertModalConfig({
+            visible: true,
+            title: 'Warning',
+            message: 'No speech detected. Please try again.',
+          });
+          setIsReadingCompleted(true);
+          return;
+        } else {
+          setSpokenText('');
+          setIsReadingCompleted(true);
+          return;
+        }
+      }
+
       setSpokenText(transcription.fulltext.toLowerCase());
       console.log('THIS IS THE SPOKEN: ' + transcription);
       // console.log('THIS IS THE UTTERANCES: ' + transcription);
@@ -448,7 +728,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     }
     // Note: analyzeReading is defined later in the component but used here
-  }, [processAudioWithDeepgram, targetText]);
+  }, [processAudioWithDeepgram, targetText, analyzeReading, type]);
 
   /**
    * Handles the record/play toggle for recording user speech:
@@ -460,6 +740,15 @@ export default function ReadingActivityScreenPage() {
       try {
         const currentRecordTime = recordTime;
         const audioFile = await stopRecording();
+
+        if (currentRecordTime < 1) {
+          setAlertModalConfig({
+            visible: true,
+            title: 'Warning',
+            message: 'Recording too short. Please try again!',
+          });
+          return;
+        }
 
         // Set Recording Duration
         setRecordingDuration(currentRecordTime);
@@ -615,235 +904,6 @@ export default function ReadingActivityScreenPage() {
 
 
 
-  /**
-   * Analyzes user transcription depending on reading type (alphabet, word, passage).
-   * Calculates and sets miscues, accuracy, feedback, and stores report if eligible.
-   * Shows feedback modal if not already shown for a given attempt.
-   *
-   * @param transcription - The transcription of spoken audio
-   * @param duration - Recording duration (in seconds)
-   */
-  const analyzeReading = async (transcription: string, duration: number, audioFile: string) => {
-    let accuracyNum = 0;
-    let isWordAlphabetCorrect = false; // Track correct status locally
-    // PASSAGE READING ANALYZATION AND DATABASE STORING
-    /* else */ if (type === 'passage' && isPassage(readingMaterial)) {
-      // Passage miscue detection
-      const detectedMiscues = MiscueAnalysisService.detectMiscues(
-        readingMaterial.text,
-        transcription,
-      );
-      // Calculate accuracy
-      const calculatedAccuracy = MiscueAnalysisService.calculateAccuracy(
-        readingMaterial.text,
-        transcription,
-      );
-      // Accuracy Feedback after calculation
-      const accuracyFeedback =
-        MiscueAnalysisService.getAccuracyFeedback(calculatedAccuracy);
-      setMiscues(detectedMiscues);
-      setAccuracyString(calculatedAccuracy); // String: "85.5"
-      setFeedback(accuracyFeedback);
-      // Calculate accuracy number for storage
-      accuracyNum = convertAccuracyStringToNumber(calculatedAccuracy);
-      const wpm = calculateWordsPerMin(totalWords, duration);
-      setWordPerMin(wpm);
-
-      // Calculate WCPM
-      const errorCount = detectedMiscues.filter(
-        m => m.type === 'substitution' || m.type === 'omission'
-      ).length;
-      const wcpm = calculateWCPM(totalWords, errorCount, duration);
-      setWordCorrectPerMin(wcpm);
-
-      console.log('This is WPM: ' + wpm + ' | WCPM: ' + wcpm);
-      // To avoid duplication it needs to check if it was already stored
-      if (!hasStoredReport && duration > 0) {
-        await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm, wcpm);
-      }
-      if (audioFile && duration >= 1) {
-        uploadRecording(audioFile, {
-          kind: 'passage',
-          passageTitle: getTitle(),
-          miscueCount: detectedMiscues.length,
-          accuracyRate: accuracyNum,
-        });
-      }
-    }
-
-    // WORD READING ANALYZATION AND DATABASE STORING
-    else if (type === 'word' && isWords(readingMaterial)) {
-      const correct = isTextPerfect(transcription, targetText);
-      accuracyNum = correct ? 100 : 0;
-      isWordAlphabetCorrect = correct;
-      const result = MiscueAnalysisService.checkWordAccuracy(targetText, transcription);
-      setIsCorrectAttempt(result.isCorrect);
-      setAccuracyString(result.accuracy);
-      setFeedback(
-        correct
-          ? 'Great job! You pronounced the word correctly.'
-          : 'Try again. Practice makes perfect.',
-      );
-      // Only record session stats and mastery if duration > 0
-      if (duration > 0) {
-        const sessionId =
-          wordSessionIdRef.current ?? (await MiscueReportController.startWordSession());
-        wordSessionIdRef.current = sessionId;
-        const attemptKey = `${wordContext?.chapterId ?? 'ch?'}::${wordContext?.lessonId ?? 'ls?'}::${targetText.toLowerCase()}`;
-        const firstAttempt = !wordAttemptedSetRef.current.has(attemptKey);
-        if (firstAttempt) wordAttemptedSetRef.current.add(attemptKey);
-        const firstCorrect = correct && !correctWordSetRef.current.has(attemptKey);
-        if (firstCorrect) correctWordSetRef.current.add(attemptKey);
-        const firstIncorrect =
-          !correct &&
-          !incorrectWordSetRef.current.has(attemptKey) &&
-          !correctWordSetRef.current.has(attemptKey); // don’t mark incorrect if already correct
-        if (firstIncorrect) incorrectWordSetRef.current.add(attemptKey);
-        // --- Attempted (once) + record that this word belongs to the lesson
-        if (firstAttempt) {
-          await MiscueReportController.recordWordAttempt(
-            sessionId,
-            {
-              chapterId: wordContext?.chapterId || 0,
-              chapterTitle: wordContext?.chapterTitle || '',
-              lessonId: wordContext?.lessonId || 0,
-              lessonTitle: wordContext?.lessonTitle || '',
-              targetWord: targetText,
-            },
-            {
-              incAttempted: true,
-              addTargetWord: true,
-              // if first attempt is incorrect, add incorrect
-              addIncorrectWord: firstIncorrect,
-            },
-          );
-        } else if (firstIncorrect) {
-          // if you want incorrectWords even when it wasn't the first attempt:
-          await MiscueReportController.recordWordAttempt(
-            sessionId,
-            {
-              chapterId: wordContext?.chapterId || 0,
-              chapterTitle: wordContext?.chapterTitle || '',
-              lessonId: wordContext?.lessonId || 0,
-              lessonTitle: wordContext?.lessonTitle || '',
-              targetWord: targetText,
-            },
-            { addIncorrectWord: true },
-          );
-        }
-
-        // --- Correct (once) + move incorrect -> correct
-        if (firstCorrect) {
-          await MiscueReportController.recordWordAttempt(
-            sessionId,
-            {
-              chapterId: wordContext?.chapterId || 0,
-              chapterTitle: wordContext?.chapterTitle || '',
-              lessonId: wordContext?.lessonId || 0,
-              lessonTitle: wordContext?.lessonTitle || '',
-              targetWord: targetText,
-            },
-            {
-              incCorrect: true,
-              addCorrectWord: true,
-              removeIncorrectWord: true, // important: “updates everytime it becomes correct”
-            },
-          );
-        }
-
-        // --- Global mastery (wordCompleted)
-        if (correct && !hasStoredCorrectAttempt && !alreadyCompleted) {
-          await MiscueReportController.storeWordCorrectAttempt(
-            wordContext?.chapterId || 0,
-            wordContext?.chapterTitle || '',
-            wordContext?.lessonId || 0,
-            wordContext?.lessonTitle || '',
-            targetText,
-          );
-          setHasStoredCorrectAttempt(true);
-          setAlreadyCompleted(true);
-        }
-      }
-
-      if (audioFile && duration >= 1) {
-        uploadRecording(audioFile, {
-          kind: 'word',
-          chapterId: wordContext?.chapterId || 0,
-          lessonId: wordContext?.lessonId || 0,
-          targetWord: targetText,
-          miscueCount: correct ? 0 : 1,
-          accuracyRate: accuracyNum,
-        });
-      }
-    }
-
-    // Show feedback modal
-    if (!hasShownModalForCurrentAttempt) {
-      setTimeout(() => {
-        displayFeedbackModal(
-          accuracyNum,
-          /* type === 'alphabet' || */ type === 'word',
-          isWordAlphabetCorrect,
-        );
-      }, 500);
-    }
-  };
-
-  /**
-   * Stores a miscue report (Firebase) if user attempt is valid (not already stored, not empty, etc).
-   * Uses miscues, accuracy, reading speed, and time spent for tracking.
-   * @param accuracyNum - Numeric accuracy rate (0-100)
-   * @param duration - Time spent reading (seconds)
-   * @param miscues - Array of detected Miscue objects
-   * @param wpm - Words per minute metric
-   */
-  const storeMiscueReport = useCallback(async (
-    accuracyNum: number,
-    duration: number,
-    miscues: Miscue[],
-    wpm: number,
-    wcpm: number,
-  ) => {
-    try {
-      // Restriction: if duration is < 1s (0:00), don't store
-      if (duration < 1) {
-        console.log('Skipping report storage: duration is too short (0:00)');
-        return;
-      }
-
-      // if this attempt is already stored, stop
-
-      const mins = Math.floor(duration / 60);
-      const seconds = Math.floor(duration % 60);
-      const formattedDuration = `${mins}:${seconds
-        .toString()
-        .padStart(2, '0')}`;
-
-      console.log('Storing report with data:', {
-        title: getTitle(),
-        miscueCount: miscues.length,
-        accuracy: accuracyNum,
-        wpm: wpm,
-        wcpm: wcpm,
-        duration: formattedDuration,
-      });
-
-      // Store the data from the MiscueReportController
-      await MiscueReportController.storeReport(
-        getTitle(),
-        miscues,
-        accuracyNum,
-        wpm,
-        wcpm,
-        totalWords,
-        formattedDuration
-      );
-
-      setHasStoredReport(true);
-    } catch (error: any) {
-      throw new Error('Failed to store miscue report: ' + error.message);
-    }
-  }, [hasStoredReport, spokenText, getTitle, totalWords]);
 
 
   /**
@@ -1018,6 +1078,13 @@ export default function ReadingActivityScreenPage() {
             </View>
           </View>
         )}
+
+        <AlertModal
+          visible={alertModalConfig.visible}
+          title={alertModalConfig.title}
+          message={alertModalConfig.message}
+          onClose={() => setAlertModalConfig(prev => ({ ...prev, visible: false }))}
+        />
 
         {/* ── STT Error Modal ──────────────────────────────────────────────── */}
         {/* Shown when AssemblyAI transcription fails, replacing the old Alert. */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   StyleSheet,
   RefreshControl,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
@@ -122,12 +123,13 @@ export default function ReadingHistoryScreen() {
 
   // Fetch the student's grade level once for the benchmark card
   useEffect(() => {
+    let isMounted = true;
     const fetchGradeLevel = async () => {
       const user = auth.currentUser;
       if (!user) return;
       try {
         const snap = await getDoc(doc(getFirestore(), 'users', user.uid));
-        if (snap.exists()) {
+        if (snap.exists() && isMounted) {
           const data = snap.data() as any;
           setGradeLevel(data?.studentData?.gradeLevel ?? undefined);
         }
@@ -136,6 +138,7 @@ export default function ReadingHistoryScreen() {
       }
     };
     fetchGradeLevel();
+    return () => { isMounted = false; };
   }, []);
 
   const { handleLogout, handleBackStep, handleNextStep } = useNavigationHelper();
@@ -145,23 +148,35 @@ export default function ReadingHistoryScreen() {
   const confirmLogoout = async () => { setLogoutVisible(false); await handleLogout(); };
   const cancelLogout = () => setLogoutVisible(false);
 
-  useEffect(() => { fetchReports(); }, []);
+  const isMountedRef = React.useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
-      setIsLoading(true);
+      if (isMountedRef.current) setIsLoading(true);
       const user = auth.currentUser;
       if (!user) { Alert.alert('Error', 'No authenticated user found'); return; }
       const reports = await MiscueReportController.getStudentReports(user.uid);
-      setRawReports(reports);
-      setGroupedReports(groupReportsByPassage(reports));
+      if (isMountedRef.current) {
+        setRawReports(reports);
+        setGroupedReports(groupReportsByPassage(reports));
+      }
     } catch (error) {
-      console.error('Failed to fetch reports:', error);
-      Alert.alert('Error', 'Failed to load reading history');
+      if (isMountedRef.current) {
+        console.error('Failed to fetch reports:', error);
+        Alert.alert('Error', 'Failed to load reading history');
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   const groupReportsByPassage = (reports: MiscueReportDocument[]): GroupedReport[] => {
     const groupMap = new Map<string, ReportData[]>();
@@ -439,15 +454,15 @@ export default function ReadingHistoryScreen() {
 
                             {isExpanded && (
                               <View style={historyStyles.reportsContainer}>
-                                <ScrollView
+                                <FlatList
+                                  data={group.reports}
+                                  keyExtractor={item => item.id}
                                   style={historyStyles.nestedScroll}
-                                  nestedScrollEnabled={true}
                                   showsVerticalScrollIndicator={false}
-                                >
-                                  {group.reports.map((report, reportIndex) => {
+                                  renderItem={({ item: report, index: reportIndex }: { item: any, index: number }) => {
                                     const totalMiscues = getTotalMiscues(report);
                                     return (
-                                      <View key={report.id} style={historyStyles.reportCard}>
+                                      <View style={historyStyles.reportCard}>
                                         <View style={historyStyles.reportDateRow}>
                                           <Text style={historyStyles.reportDate}>
                                             {formatDate(report.timestamp)}
@@ -526,8 +541,8 @@ export default function ReadingHistoryScreen() {
                                         )}
                                       </View>
                                     );
-                                  })}
-                                </ScrollView>
+                                  }}
+                                />
 
                                 {group.reports.length > 5 && (
                                   <Text style={historyStyles.viewMoreText}>

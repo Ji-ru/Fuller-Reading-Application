@@ -35,9 +35,13 @@ const getActiveHours = async (
     const totals: Record<string, number> = {};
     periodLabels.forEach(label => { totals[label] = 0; });
 
-    // Process each student
-    for (const studentId of studentIds) {
-      const reports = await getRecordingDuration(studentId); // or getStudentReports? Use appropriate method
+    // Process all students in parallel
+    const reportsArrays = await Promise.all(
+      studentIds.map(studentId => getRecordingDuration(studentId))
+    );
+
+    // Process all collected reports
+    for (const reports of reportsArrays) {
       for (const report of reports) {
         let reportDate: Date | null = null;
 

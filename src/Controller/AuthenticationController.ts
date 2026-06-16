@@ -230,7 +230,7 @@ export const createClass = async (
     const classId = `Class_${Date.now()}_${Math.random()
       .toString(36)
       .substring(2, 9)}`;
-    const classCode = generateClassCode();
+    const classCode = await generateUniqueClassCode();
 
     const classDocument: ClassDocument = {
       classId,
@@ -265,11 +265,20 @@ export const createClass = async (
 /* -------------------------------------------------------------
    CLASS CODE GENERATOR
 ------------------------------------------------------------- */
-const generateClassCode = () => {
+const generateUniqueClassCode = async (): Promise<string> => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let isUnique = false;
   let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  while (!isUnique) {
+    code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const q = query(collection(db, 'classes'), where('classCode', '==', code), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      isUnique = true;
+    }
   }
   return code;
 };
@@ -298,7 +307,7 @@ export const createCustomClass = async (
     const classId = `Class_${Date.now()}_${Math.random()
       .toString(36)
       .substring(2, 9)}`;
-    const classCode = generateClassCode();
+    const classCode = await generateUniqueClassCode();
     const classDocument: ClassDocument = {
       classId,
       classCode,
@@ -714,44 +723,32 @@ const STUDENT_DATA_COLLECTIONS = [
   'wordCompleted',
 ] as const;
 
-const deleteDocsWhereStudentId = async (
-  collectionName: string,
-  studentId: string,
-) => {
-  const snap = await getDocs(
-    query(collection(db, collectionName), where('studentId', '==', studentId)),
-  );
-  if (snap.empty) return;
-  // Firestore batch limit is 500 ops.
-  const docs = snap.docs;
-  for (let i = 0; i < docs.length; i += 500) {
-    const batch = writeBatch(db);
-    docs.slice(i, i + 500).forEach((d: any) => batch.delete(d.ref));
-    await batch.commit();
-  }
-};
-
 const cascadeDeleteStudent = async (uid: string) => {
   const studentSnap = await getDoc(doc(db, 'users', uid));
   const classCode: string | undefined = (
     studentSnap.data() as UserDocument | undefined
   )?.studentData?.classCode;
 
+  // Collect all references that need updating or deleting
+  const updateRefs: { ref: any; data: any }[] = [];
+  const deleteRefs: any[] = [];
+
   if (classCode) {
     const classQuerySnap = await getDocs(
       query(collection(db, 'classes'), where('classCode', '==', classCode)),
     );
     for (const cls of classQuerySnap.docs) {
-      await updateDoc(cls.ref, {
-        studentIds: arrayRemove(uid),
-        updatedAt: serverTimestamp() as Timestamp,
+      updateRefs.push({
+        ref: cls.ref,
+        data: {
+          studentIds: arrayRemove(uid),
+          updatedAt: serverTimestamp() as Timestamp,
+        },
       });
     }
   }
 
-  // ─── Added for student acceptance or rejection to a class by faculty ───────
-  // Strip this UID from any class's pendingStudentIds so it doesn't dangle
-  // after the user account is gone.
+  // Strip this UID from any class's pendingStudentIds
   const pendingMatchesSnap = await getDocs(
     query(
       collection(db, 'classes'),
@@ -759,18 +756,38 @@ const cascadeDeleteStudent = async (uid: string) => {
     ),
   );
   for (const cls of pendingMatchesSnap.docs) {
-    await updateDoc(cls.ref, {
-      pendingStudentIds: arrayRemove(uid),
-      updatedAt: serverTimestamp() as Timestamp,
+    updateRefs.push({
+      ref: cls.ref,
+      data: {
+        pendingStudentIds: arrayRemove(uid),
+        updatedAt: serverTimestamp() as Timestamp,
+      },
     });
   }
-  // ─── End ──────────────────────────────────────────────────────────────────
 
+  // Collect all student data documents
   for (const coll of STUDENT_DATA_COLLECTIONS) {
-    await deleteDocsWhereStudentId(coll, uid);
+    const snap = await getDocs(
+      query(collection(db, coll), where('studentId', '==', uid)),
+    );
+    for (const d of snap.docs) {
+      deleteRefs.push(d.ref);
+    }
   }
 
-  await deleteDoc(doc(db, 'users', uid));
+  // Add the user document itself
+  deleteRefs.push(doc(db, 'users', uid));
+
+  // Execute all accumulated operations in chunks of 500
+  const allOps = [...updateRefs.map(u => ({ type: 'update', ...u })), ...deleteRefs.map(r => ({ type: 'delete', ref: r }))];
+  for (let i = 0; i < allOps.length; i += 500) {
+    const batch = writeBatch(db);
+    allOps.slice(i, i + 500).forEach((op: any) => {
+      if (op.type === 'update') batch.update(op.ref, op.data);
+      else batch.delete(op.ref);
+    });
+    await batch.commit();
+  }
 };
 
 const cascadeDeleteFaculty = async (uid: string) => {

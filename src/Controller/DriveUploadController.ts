@@ -17,7 +17,7 @@ type PassageUploadMetadata = {
   accuracyRate: number;
 };
 
-export type UploadMetadata = WordUploadMetadata | PassageUploadMetadata;
+export type UploadMetadata = (WordUploadMetadata | PassageUploadMetadata) & { spokenText?: string };
 
 type UploadResult =
   | { ok: true; fileId: string; finalName: string }
@@ -28,6 +28,11 @@ export async function uploadRecording(
   metadata: UploadMetadata,
 ): Promise<UploadResult> {
   try {
+    if (!metadata.spokenText || metadata.spokenText.trim() === '' || metadata.spokenText.trim() === 'No Speech Detected!') {
+      console.log('[DriveUpload] Skipping upload: No speech detected.');
+      return { ok: false, error: 'no_speech_detected' };
+    }
+
     if (!APPS_SCRIPT_URL || !UPLOAD_SECRET) {
       return { ok: false, error: 'env_not_configured' };
     }

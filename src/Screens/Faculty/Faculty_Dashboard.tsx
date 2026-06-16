@@ -56,25 +56,14 @@ export default function FacultyDashboard() {
   const { classes: facultyClasses } = useFacultyClassesFilter(auth.currentUser?.uid || '');
 
   // ── Data Fetching ──────────────────────────────────────────────────────────
-  const fetchStats = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error('No authenticated user found');
-      const [classCount, studentCount] = await Promise.all([
-        getNumberOfClasses(currentUser.uid),
-        getNumbersOfAllStudents(currentUser.uid),
-      ]);
+  useEffect(() => {
+    if (facultyClasses) {
+      const classCount = facultyClasses.length;
+      const studentCount = facultyClasses.reduce((acc, c) => acc + (c.totalStudents || 0), 0);
       setStats({ classCount, studentCount });
-    } catch (error: any) {
-      throw new Error('Failed to fetch stats: ' + error.message);
-    } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  }, [facultyClasses]);
 
   useEffect(() => {
     const loadName = async () => {

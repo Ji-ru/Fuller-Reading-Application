@@ -261,13 +261,10 @@ export const MiscueReportController = {
       // Use setDoc with document reference
       await setDoc(wordDocRef, wordData);
 
-      // Read back the document to get the actual Timestamp (and ensure full data)
-      const newWordSnap = await getDoc(wordDocRef);
-      if (!newWordSnap.exists()) {
-        throw new Error('Document was created but could not be retrieved.');
-      }
-
-      return newWordSnap.data() as WordReportDocument;
+      return {
+        ...wordData,
+        createdAt: new Date(), // Provide a fallback Date since serverTimestamp is a token
+      } as unknown as WordReportDocument;
     } catch (error: any) {
       throw Error('Failed to store correct word attempt:' + error.message);
     }

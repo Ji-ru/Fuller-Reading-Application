@@ -14,7 +14,7 @@ export class MiscueAnalysisService {
   }
 
   static detectMiscues(passageText: string, spokenText: string): Miscue[] {
-    if (!spokenText || spokenText === 'No Speech Detected!') {
+    if (!spokenText) {
       return [];
     }
 
@@ -254,7 +254,7 @@ export class MiscueAnalysisService {
 
   // Enhanced accuracy calculation that considers miscues
   static calculateAccuracy(passageText: string, spokenText: string): string {
-    if (!spokenText || spokenText === 'No speech detected') return '0';
+    if (!spokenText) return '0';
 
     const targetWords = passageText
       .toLowerCase()
@@ -374,11 +374,9 @@ export class MiscueAnalysisService {
     const cleanSpoken = normalizedSpoken.replace(/[^A-Z\s]/g, '').trim();
     const cleanTarget = normalizedTarget.replace(/[^A-Z\s]/g, '').trim();
 
-    // For words: check if spoken contains the word (more tolerant)
-    const isCorrect =
-      cleanSpoken === cleanTarget || // Exact match
-      cleanSpoken.includes(cleanTarget); // Word appears within spoken text
-
+    // Ensure exact match to prevent false mastery (e.g. "CATS" for "CAT")
+    const spokenWords = cleanSpoken.split(/\s+/);
+    const isCorrect = spokenWords.includes(cleanTarget);
     return {
       isCorrect,
       accuracy: isCorrect ? '100' : '0',

@@ -1,7 +1,7 @@
 // This file is a custom hook, named with the convention "use..." so it can use React hooks like useState, useEffect, useRef, useCallback, useMemo.
 // useState: manage internal status (e.g. isLoading), useEffect: handle side effects, useRef: persistent mutable values, useCallback/useMemo: memoize event handlers or calculations.
 import { useState, useCallback } from 'react';
-import { readFile } from 'react-native-fs';
+import { readFile, stat } from 'react-native-fs';
 import { API_KEY, BASE_URL, DEEPGRAM_API, DEEPGRAM_URL } from '@env';
 import { Buffer } from 'buffer';
 
@@ -54,7 +54,7 @@ export const useSpeechToText = () => {
   /**
    * Upload audio file to AssemblyAI
    */
-  const uploadAudio = async (audioFile: string): Promise<string> => {
+  const uploadAudio = async (audioFile: string, signal?: AbortSignal): Promise<string> => {
     // Read file as base64
     const base64Audio = await readFile(audioFile, 'base64');
 
@@ -68,6 +68,7 @@ export const useSpeechToText = () => {
         'content-type': 'application/octet-stream',
       },
       body: binaryAudio,
+      signal,
     });
 
     if (!uploadResponse.ok) {
@@ -82,7 +83,7 @@ export const useSpeechToText = () => {
   /**
    * Request transcription
    */
-  const requestTranscription = async (audioUrl: string): Promise<string> => {
+  const requestTranscription = async (audioUrl: string, signal?: AbortSignal): Promise<string> => {
     const response = await fetch(`${BASE_URL}/transcript`, {
       method: 'POST',
       headers: {
@@ -95,6 +96,7 @@ export const useSpeechToText = () => {
         format_text: true,
         language_detection: true,
       }),
+      signal,
     });
 
     const data = await response.json();
@@ -104,12 +106,15 @@ export const useSpeechToText = () => {
   /**
    * Poll transcription result
    */
-  const pollTranscription = async (id: string): Promise<string> => {
-    while (true) {
+  const pollTranscription = async (id: string, signal?: AbortSignal): Promise<string> => {
+    let attempts = 0;
+    while (attempts < 20) {
+      attempts++;
       const response = await fetch(`${BASE_URL}/transcript/${id}`, {
         headers: {
           authorization: API_KEY,
         },
+        signal,
       });
 
       const data = await response.json();
@@ -124,6 +129,7 @@ export const useSpeechToText = () => {
 
       await new Promise<void>(resolve => setTimeout(resolve, 2500));
     }
+    throw new Error('AssemblyAI transcription polling timed out.');
   };
 
   /**
@@ -134,22 +140,30 @@ export const useSpeechToText = () => {
    */
   const processAudioWithAssemblyAI = useCallback(
     async (audioFile: string): Promise<string> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
       try {
         setIsLoading(true);
 
-        const uploadUrl = await uploadAudio(audioFile);
-        const transcriptId = await requestTranscription(uploadUrl);
-        const transcriptText = await pollTranscription(transcriptId);
+        const fileStats = await stat(audioFile);
+        if (fileStats.size < 5000) {
+          console.log('Audio file too small (silence), skipping API call.');
+          setIsLoading(false);
+          return '';
+        }
 
-        return transcriptText || 'No speech detected';
+        const uploadUrl = await uploadAudio(audioFile, controller.signal);
+        const transcriptId = await requestTranscription(uploadUrl, controller.signal);
+        const transcriptText = await pollTranscription(transcriptId, controller.signal);
+
+        setIsLoading(false);
+        return transcriptText || '';
       } catch (error: any) {
         // Surface the error through state instead of Alert so the calling
         // screen can show a styled, dismissible modal with retry support.
         setSttErrorVisible(true);
         setSttErrorMessage(
-          error?.message
-            ? `Transcription failed: ${error.message}`
-            : 'Failed to transcribe audio. Please check your internet connection and try again.',
+          "Oops! Something went wrong while listening. Let's try again! 🛑"
         );
         console.log('STT Error: ' + error.message);
         throw error;
@@ -162,51 +176,79 @@ export const useSpeechToText = () => {
 
   // DEEPGRAM SPEECH TO TEXT IMPLEMENTATION
   const processAudioWithDeepgram = useCallback(async (audioFile: string) => {
-    try {
-      setIsLoading(true);
-      console.log('1. Starting Deepgram processing...');
-      // Determine mime type
-      const fileExt = audioFile.split('.').pop() || 'wav';
-      const mimeType = fileExt === 'm4a' ? 'audio/mp4' : `audio/${fileExt}`;
-      // 1. Read file natively using react-native-fs (Proven to work!)
-      console.log('2. Reading file...');
-      const base64Audio = await readFile(audioFile, 'base64');
-      // 2. Convert Base64 to Binary Buffer
-      console.log('3. Converting to buffer...');
-      const binaryAudio = Buffer.from(base64Audio, 'base64');
-      // 3. Send raw binary to Deepgram
-      console.log('4. Sending to Deepgram API...');
-      const response = await fetch(getDeepgramUrl(), {
-        method: 'POST',
-        headers: {
-          Authorization: `Token ${DEEPGRAM_API.trim()}`,
-          // You can use the specific mimeType, or fallback to octet-stream
-          'Content-Type': mimeType,
-        },
-        body: binaryAudio,
-      });
-      console.log('5. Status received:', response.status);
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Deepgram API failed (${response.status}): ${errText}`);
+    let attemptCount = 0;
+    const MAX_RETRIES = 1;
+
+    while (attemptCount <= MAX_RETRIES) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      try {
+        setIsLoading(true);
+        console.log(`1. Starting Deepgram processing... (Attempt ${attemptCount + 1})`);
+        
+        const fileStats = await stat(audioFile);
+        if (fileStats.size < 5000) {
+          console.log('Audio file too small (silence), skipping API call.');
+          setIsLoading(false);
+          return { fulltext: '', utterances: [] };
+        }
+
+        // Determine mime type
+        const fileExt = audioFile.split('.').pop() || 'wav';
+        const mimeType = fileExt === 'm4a' ? 'audio/mp4' : `audio/${fileExt}`;
+        // 1. Read file natively using react-native-fs (Proven to work!)
+        console.log('2. Reading file...');
+        const base64Audio = await readFile(audioFile, 'base64');
+        // 2. Convert Base64 to Binary Buffer
+        console.log('3. Converting to buffer...');
+        const binaryAudio = Buffer.from(base64Audio, 'base64');
+        // 3. Send raw binary to Deepgram
+        console.log('4. Sending to Deepgram API...');
+        const response = await fetch(getDeepgramUrl(), {
+          method: 'POST',
+          headers: {
+            Authorization: `Token ${DEEPGRAM_API.trim()}`,
+            // You can use the specific mimeType, or fallback to octet-stream
+            'Content-Type': mimeType,
+          },
+          body: binaryAudio,
+          signal: controller.signal,
+        });
+        
+        console.log('5. Status received:', response.status);
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Deepgram API failed (${response.status}): ${errText}`);
+        }
+        const data: DeepgramResponse = await response.json();
+        const alt = data?.results?.channels?.[0]?.alternatives?.[0];
+        console.log('6. Success!');
+        
+        setIsLoading(false);
+        return {
+          fulltext: alt?.transcript?.trim() || '',
+          utterances: alt?.utterances || [],
+        };
+      } catch (error: any) {
+        if (attemptCount < MAX_RETRIES) {
+          attemptCount++;
+          console.log(`Deepgram failed, retrying... (${attemptCount}/${MAX_RETRIES})`, error.message);
+          continue;
+        }
+        setIsLoading(false);
+        setSttErrorVisible(true);
+        setSttErrorMessage(
+          "Oops! Something went wrong while listening. Let's try again! 🛑"
+        );
+        console.log('STT Error Deepgram:', error.message);
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
       }
-      const data: DeepgramResponse = await response.json();
-      const alt = data?.results?.channels?.[0]?.alternatives?.[0];
-      console.log('6. Success!');
-      return {
-        fulltext: alt?.transcript?.trim() || 'No speech detected',
-        utterances: alt?.utterances || [],
-      };
-    } catch (error: any) {
-      setSttErrorVisible(true);
-      setSttErrorMessage(
-        error?.message
-          ? `Transcription failed: ${error.message}`
-          : 'Failed to transcribe audio. Please check your internet connection and try again.',
-      );
-      console.log('STT Error Deepgram:', error.message);
-      throw error;
-    } finally { setIsLoading(false);}
+    }
+    
+    setIsLoading(false);
+    return { fulltext: '', utterances: [] };
   }, []);
 
   return {

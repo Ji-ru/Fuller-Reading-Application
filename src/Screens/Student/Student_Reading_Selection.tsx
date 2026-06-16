@@ -258,7 +258,7 @@ export default function PageSelectionScreen() {
   
   // Custom Hook to fetch dynamic passages
   const { dynamicPassages, loading: passagesLoading } = useAllPassages();
-  const allPassages = [...dynamicPassages, ...staticPassages];
+  const allPassages = [...staticPassages, ...dynamicPassages];
 
   // const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
   // const isAlphabetCompleted = (letter: string) => completedAlphabets.some(a => a.letter === letter);
