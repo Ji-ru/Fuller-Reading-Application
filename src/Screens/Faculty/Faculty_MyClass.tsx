@@ -97,7 +97,6 @@ export default function MyClass() {
     fetchClasses();
   }, [fetchClasses]);
 
-
   // ========================================================================
   // EVENT HANDLERS
   // ========================================================================
@@ -380,7 +379,6 @@ export default function MyClass() {
       <View style={myClass.insideContainer}>
         {/* BUBBLE DECORATIONS */}
         <BubbleBackground />
-
 
         {/* UNIFIED HEADER ROW: spacer | SVG title | menu button */}
         <View style={facultyDashboard.header}>

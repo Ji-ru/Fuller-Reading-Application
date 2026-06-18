@@ -617,7 +617,6 @@ function buildProgressSectionHtml(
   </div>`;
 }
 
-
 function buildWordMasterySectionHtml(
   chapters: any[],
   slots: any[],
@@ -1411,7 +1410,6 @@ function buildPdfHtml(opts: BuildOpts): string {
   .bar-track.sm { height: 5px; }
   .bar-fill { height: 100%; border-radius: 5px; }
 
-
   /* ── Chapter / lesson rows ── */
   .chapter-card {
     background: #F3F8FF;
@@ -1436,7 +1434,6 @@ function buildPdfHtml(opts: BuildOpts): string {
   .lesson-label-row { display: flex; justify-content: space-between; align-items: center; }
   .lesson-title { font-size: 11px; color: #1F2937; font-weight: 500; }
   .lesson-frac { font-size: 11px; font-weight: 700; }
-
 
   /* ── Word mastery sub-blocks ── */
   .word-chapter {

@@ -194,7 +194,6 @@ export const useAccuracyTrends = (
     setError(null);
 
     try {
-      console.log(`Fetching accuracy trends for faculty: ${facultyId}, params:`, params);
 
       const filterOptions: FilterOptions = {
         type: params.filterType,
@@ -203,7 +202,6 @@ export const useAccuracyTrends = (
       };
 
       const { studentIds } = await getFilteredStudentIds(facultyId, filterOptions);
-      console.log(`Found ${studentIds?.length || 0} students`);
 
       if (!studentIds || studentIds.length === 0) {
         setChartData(emptyPeriods(params.timeRange));
@@ -231,7 +229,6 @@ export const useAccuracyTrends = (
       const { progressData, grandTotalWords: gtw, grandAccuracySum: gas, grandTotalMinutes: gtm } =
         bucketsToResult(periodLabels, totals);
 
-      console.log('Final accuracy trends data:', progressData);
       setChartData(progressData);
       setGrandTotalWords(gtw);
       setGrandAccuracySum(gas);
@@ -277,13 +274,11 @@ export const getAccuracyTrends = () => {
     filter?: FilterOptions,
   ): Promise<{ progressData: ProgressData[] } & AccuracyTrendsGrandTotals> => {
     try {
-      console.log(`Fetching accuracy trends for faculty: ${facultyId}, timeRange: ${timeRange}`);
 
       const { studentIds } = await getFilteredStudentIds(
         facultyId,
         filter || { type: 'overall' },
       );
-      console.log(`Found ${studentIds?.length || 0} students`);
 
       if (!studentIds || studentIds.length === 0) {
         return {
@@ -311,7 +306,7 @@ export const getAccuracyTrends = () => {
       });
 
       const result = bucketsToResult(periodLabels, totals);
-      console.log('Final accuracy trends data:', result.progressData);
+
       return result;
     } catch (error: any) {
       console.error('Error in getStudentsAccuracy:', error);

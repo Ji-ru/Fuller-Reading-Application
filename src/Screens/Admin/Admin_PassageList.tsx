@@ -362,7 +362,7 @@ export default function AdminPassageList() {
                     {selectedPassage?.author ? `By ${selectedPassage.author}` : 'Unknown Author'}
                   </Text>
                 </View>
-                
+
                 <Text style={{ fontFamily: 'Satoshi-Medium', fontSize: sf(15), color: FacultyColors.ink, lineHeight: sf(22) }}>
                   {selectedPassage?.passageText}
                 </Text>

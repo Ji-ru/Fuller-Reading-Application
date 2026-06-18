@@ -25,19 +25,22 @@ export const useFacultyClassesFilter = (facultyId: string | null) => {
   const { getFacultyClasses } = getFacultyClasses_Student;
 
   useEffect(() => {
+    let alive = true;
     const fetchClasses = async () => {
       try {
         setLoading(true);
         setError(null);
 
         if (!facultyId) {
-          setClasses([]);
-          setLoading(false);
+          if (alive) {
+            setClasses([]);
+            setLoading(false);
+          }
           return;
         }
 
         const data = await getFacultyClasses(facultyId);
-        
+
         // Transform to the format needed for the filter
         const formattedClasses = data.map(cls => ({
           classId: cls.classId,
@@ -46,18 +49,26 @@ export const useFacultyClassesFilter = (facultyId: string | null) => {
           acadYear: cls.acadYear,
           totalStudents: cls.studentIds?.length || 0,
         }));
-        
-        setClasses(formattedClasses);
+
+        if (alive) {
+          setClasses(formattedClasses);
+        }
       } catch (error: any) {
-        setError('Error fetching classes: ' + error.message);
-        setClasses([]);
+        if (alive) {
+          setError('Error fetching classes: ' + error.message);
+          setClasses([]);
+        }
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     };
     fetchClasses();
+
+    return () => {
+      alive = false;
+    };
   }, [facultyId]);
-  
+
   return { classes, loading, error };
 };
 
@@ -83,7 +94,7 @@ export const useMiscueAnalystics = (
         setError(null);
 
         if (!facultyId) {
-          console.log('No facultyId provided for miscue analytics');
+
           setMiscueData([]);
           setLoading(false);
           return;
@@ -127,7 +138,7 @@ export const useTopMiscueIdentifier = (
         setError(null);
 
         if (!facultyId) {
-          console.log('No facultyId provided for top miscue identifier');
+
           setTopMiscue(null);
           setLoading(false);
           return;
@@ -170,7 +181,7 @@ export const useOverallAverageWPMandAccuracy = (
         setError(null);
 
         if (!facultyId) {
-          console.log('No facultyId provided for overall averages');
+
           setAverages(null);
           setLoading(false);
           return;

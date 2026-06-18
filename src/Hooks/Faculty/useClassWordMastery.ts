@@ -33,7 +33,7 @@ export function useClassWordMastery(facultyId: string, filter: ReadingStatusFilt
           : { type: 'class', classId: filter.selectedView };
 
         const { studentIds } = await getFacultyClasses_Student.getFilteredStudentIds(facultyId, miscueFilter);
-        
+
         if (studentIds.length === 0) {
           if (alive) {
             setSessions([]);
@@ -45,7 +45,7 @@ export function useClassWordMastery(facultyId: string, filter: ReadingStatusFilt
         // Fetch all one-shot sessions for all students
         const promises = studentIds.map(id => wordSessionsByRange(id, { timeRange }) as Promise<WordSessionData[]>);
         const results = await Promise.all(promises);
-        
+
         if (alive) {
           const allSessions = results.flat();
           setSessions(allSessions);

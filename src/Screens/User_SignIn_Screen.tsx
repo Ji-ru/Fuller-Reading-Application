@@ -21,6 +21,8 @@ import Video from 'react-native-video';
 // Styles
 import login from '../UI_Designs/LoginStyles';
 
+import AlertModal from '../Components/GlobalUse/Modal/AlertModal';
+
 // Controllers (Hooks)
 import { useNavigationHelper } from '../Controller/NavigationController';
 import { loginUser, sendPasswordResetEmail } from '../Controller/AuthenticationController';
@@ -40,6 +42,11 @@ export default function LoginScreen() {
   const [forgotPasswordVisible, setForgotPasswordVisible] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+
+  // Alert Modal State
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   // Rate limiting & Network Resilience States
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -229,7 +236,9 @@ export default function LoginScreen() {
     setForgotPasswordLoading(true);
     try {
       await sendPasswordResetEmail(forgotPasswordEmail.trim());
-      Alert.alert('Success', 'A password reset link has been sent to your email.');
+      setAlertTitle('Success');
+      setAlertMessage('A password reset link has been sent to your email. Please check your spam folder as the link may be sent there.');
+      setAlertVisible(true);
       setForgotPasswordVisible(false);
       setForgotPasswordEmail('');
     } catch (error: any) {
@@ -329,9 +338,6 @@ export default function LoginScreen() {
                     returnKeyType="done"
                     onSubmitEditing={handleLogin}
                   />
-                  <TouchableOpacity onPress={() => setForgotPasswordVisible(true)}>
-                    <Text style={login.forgotpass}>Forgot Password?</Text>
-                  </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => setShowPassword((prev) => !prev)}
                     disabled={loading}
@@ -344,6 +350,12 @@ export default function LoginScreen() {
                     />
                   </TouchableOpacity>
                 </View>
+                <TouchableOpacity 
+                  onPress={() => setForgotPasswordVisible(true)}
+                  style={login.forgotpassTouchable}
+                >
+                  <Text style={login.forgotpass}>Forgot Password?</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Login Button */}
@@ -457,6 +469,13 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
+
+      <AlertModal
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </SafeAreaProvider>
   );
 }

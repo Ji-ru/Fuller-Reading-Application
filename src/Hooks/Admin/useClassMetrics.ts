@@ -73,7 +73,7 @@ export const useClassMetrics = (acadYear?: string): ClassMetrics => {
       setActiveClassCount(activeCount);
       setArchivedClassCount(archivedCount);
       setGradeDistribution(gradeMap);
-      
+
       // Total enrolled students requires array length aggregation which is expensive in NoSQL.
       // Since it's currently unused in the UI charts, we set it to 0 to save massive document read costs.
       setTotalEnrolledStudents(0);

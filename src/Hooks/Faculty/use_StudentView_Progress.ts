@@ -87,7 +87,6 @@ export const useStudentAccuracyTrends = (
   };
 };
 
-
 interface MiscueData {
   type: string;
   count: number;
@@ -221,7 +220,6 @@ export const useStudentMiscueStats = (
     error,
   };
 };
-
 
 /**
  * Used to get the students top miscued passage and top 5 miscued words for all the passage
@@ -399,7 +397,6 @@ interface UseStudentActiveHoursOptions {
  * @returns hartData, loading, error, totalHours, averageHoursPerPeriod, trendComparison
  */
 
-
 export function useStudentActiveHours(
   studentId: string,
   { timeRange }: UseStudentActiveHoursOptions,
@@ -498,5 +495,5 @@ export function useStudentActiveHours(
 }
 
 export function CountStudentCompletedReading() {
-  
+
 }

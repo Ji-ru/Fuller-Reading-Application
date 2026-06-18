@@ -55,7 +55,6 @@ export default function AdminViewFacultyData() {
     const route = useRoute<ReadingActivityScreenRouteProp>();
     const { facultyId, facultyName } = route.params;
 
-    console.log('facultyId', facultyId);
     // STATE MANAGEMENT
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(false);
     const [logoutVisible, setLogoutVisible] = useState<boolean>(false);
@@ -188,7 +187,6 @@ export default function AdminViewFacultyData() {
                         {/* <ClassAlphabetMastery facultyId={facultyId} filter={filter} /> */}
 
                         <ClassWordMastery facultyId={facultyId} filter={filter} />
-
 
                         <AccuracyTrendsChart facultyId={facultyId} filter={filter} />
 

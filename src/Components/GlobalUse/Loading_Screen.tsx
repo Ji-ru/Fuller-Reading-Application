@@ -18,15 +18,13 @@ export default function LoadingScreen() {
     let verifyTimer: ReturnType<typeof setTimeout>;
     let progressInterval: ReturnType<typeof setInterval>;
 
-    console.log('LoadingScreen: Starting verification...');
-
     const verifyUserAndNavigate = async () => {
       try {
         // Check authentication
         const currentUser = auth.currentUser;
 
         if (!currentUser) {
-          console.log('LoadingScreen: No user found, going to Login');
+
           if (isMounted.current) {
             setStatusMessage('No user found. Redirecting...');
             setTimeout(() => {

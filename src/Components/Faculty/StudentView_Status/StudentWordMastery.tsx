@@ -566,7 +566,6 @@ export default function StudentWordMastery({ studentId }: Props) {
   return (
     <View style={{ backgroundColor: T.bg }}>
 
-
       {/* ── Range filter ─────────────────────────────────────────────── */}
       <RangeTab active={timeRange} onPress={setTimeRange} />
 

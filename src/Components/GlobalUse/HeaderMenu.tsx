@@ -32,7 +32,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({ onLogout }) => {
 
             {menuVisible && (
                 <View style={upperNav.dropdownMenu}>
-                    
+
                     <TouchableOpacity
                         onPress={handleLogoutPress}
                         style={upperNav.logoutButton}

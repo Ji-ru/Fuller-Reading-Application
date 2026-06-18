@@ -27,7 +27,6 @@ import { useAllPassages } from '../../Hooks/Student/useAllPassages';
 import { ActivityIndicator } from 'react-native';
 import { StudentHeader } from '../../Components/Student/StudentHeader';
 
-const currentStudentId = getAuth().currentUser?.uid ?? '';
 const { width: SW } = Dimensions.get('window');
 
 const C = {
@@ -254,8 +253,9 @@ export const READING_COLORS = [
 ];
 
 export default function PageSelectionScreen() {
+  const currentStudentId = getAuth().currentUser?.uid ?? '';
   const { handleLogout, handleBackStep, handleReadingNext, handleNextStep } = useNavigationHelper();
-  
+
   // Custom Hook to fetch dynamic passages
   const { dynamicPassages, loading: passagesLoading } = useAllPassages();
   const allPassages = [...staticPassages, ...dynamicPassages];
@@ -350,7 +350,7 @@ export default function PageSelectionScreen() {
   //       >
   //         {/* Gloss dot */}
   //         <View style={selection.alphabetHighlightDot} />
-  
+
   //         {/* Uppercase + lowercase side by side, baseline-aligned */}
   //         <View style={selection.alphabetContainer}>
   //           <Text
@@ -368,7 +368,7 @@ export default function PageSelectionScreen() {
   //             {item.letter.toLowerCase()}
   //           </Text>
   //         </View>
-  
+
   //         {/* Completed badge — top-right */}
   //         {completed && (
   //           <View style={selection.completedBadge}>

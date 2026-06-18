@@ -521,7 +521,6 @@ export default function MyStudents() {
           />
         )}
 
-
         {/* LOGOUT MODAL */}
         <LogoutModal
           visible={logoutVisible}

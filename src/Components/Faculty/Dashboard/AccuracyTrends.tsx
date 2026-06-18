@@ -167,7 +167,6 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
     }
     : null;
 
-
   return (
     <View style={S.container}>
       <Text style={S.title}>Accuracy & Speed Trends</Text>

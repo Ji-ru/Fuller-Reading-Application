@@ -147,7 +147,7 @@ export const useSpeechToText = () => {
 
         const fileStats = await stat(audioFile);
         if (fileStats.size < 5000) {
-          console.log('Audio file too small (silence), skipping API call.');
+
           setIsLoading(false);
           return '';
         }
@@ -165,7 +165,7 @@ export const useSpeechToText = () => {
         setSttErrorMessage(
           "Oops! Something went wrong while listening. Let's try again! 🛑"
         );
-        console.log('STT Error: ' + error.message);
+
         throw error;
       } finally {
         setIsLoading(false);
@@ -184,11 +184,10 @@ export const useSpeechToText = () => {
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
       try {
         setIsLoading(true);
-        console.log(`1. Starting Deepgram processing... (Attempt ${attemptCount + 1})`);
-        
+
         const fileStats = await stat(audioFile);
         if (fileStats.size < 5000) {
-          console.log('Audio file too small (silence), skipping API call.');
+
           setIsLoading(false);
           return { fulltext: '', utterances: [] };
         }
@@ -197,13 +196,13 @@ export const useSpeechToText = () => {
         const fileExt = audioFile.split('.').pop() || 'wav';
         const mimeType = fileExt === 'm4a' ? 'audio/mp4' : `audio/${fileExt}`;
         // 1. Read file natively using react-native-fs (Proven to work!)
-        console.log('2. Reading file...');
+
         const base64Audio = await readFile(audioFile, 'base64');
         // 2. Convert Base64 to Binary Buffer
-        console.log('3. Converting to buffer...');
+
         const binaryAudio = Buffer.from(base64Audio, 'base64');
         // 3. Send raw binary to Deepgram
-        console.log('4. Sending to Deepgram API...');
+
         const response = await fetch(getDeepgramUrl(), {
           method: 'POST',
           headers: {
@@ -214,16 +213,14 @@ export const useSpeechToText = () => {
           body: binaryAudio,
           signal: controller.signal,
         });
-        
-        console.log('5. Status received:', response.status);
+
         if (!response.ok) {
           const errText = await response.text();
           throw new Error(`Deepgram API failed (${response.status}): ${errText}`);
         }
         const data: DeepgramResponse = await response.json();
         const alt = data?.results?.channels?.[0]?.alternatives?.[0];
-        console.log('6. Success!');
-        
+
         setIsLoading(false);
         return {
           fulltext: alt?.transcript?.trim() || '',
@@ -232,7 +229,7 @@ export const useSpeechToText = () => {
       } catch (error: any) {
         if (attemptCount < MAX_RETRIES) {
           attemptCount++;
-          console.log(`Deepgram failed, retrying... (${attemptCount}/${MAX_RETRIES})`, error.message);
+
           continue;
         }
         setIsLoading(false);
@@ -240,13 +237,13 @@ export const useSpeechToText = () => {
         setSttErrorMessage(
           "Oops! Something went wrong while listening. Let's try again! 🛑"
         );
-        console.log('STT Error Deepgram:', error.message);
+
         throw error;
       } finally {
         clearTimeout(timeoutId);
       }
     }
-    
+
     setIsLoading(false);
     return { fulltext: '', utterances: [] };
   }, []);

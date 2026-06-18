@@ -239,7 +239,7 @@ export default function SignUpTwoScreen() {
             Create Account
           </SvgText>
         </Svg>
-      
+
       <View style={{ width: 45 }} />  
       </View>
 

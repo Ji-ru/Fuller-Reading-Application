@@ -94,7 +94,6 @@ export interface AverageWPMandAccuracy {
   totalStudents: number;
 }
 
-
 export interface ClassMiscueStats {
   classId: string;
   className: string;

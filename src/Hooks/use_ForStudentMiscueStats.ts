@@ -11,7 +11,7 @@ import { convertDurationToHours } from '../Utilities/convertDurationToHours';
 import { getLabelForDate, getPeriodLabels, resolveDateRange, filterReportsByDateRange, getDateRangeForAcadYear } from '../Utilities/activityGroupingDate';
 
 export const getForStudentsMiscueStats = () => {
-  const { getStudentReports, formatMiscueType, getRecordingDuration } =
+  const { getStudentReports, formatMiscueType } =
     MiscueReportController;
   const { getFacultyClasses, getFilteredStudentIds } = getFacultyClasses_Student;
 
@@ -37,7 +37,7 @@ const getActiveHours = async (
 
     // Process all students in parallel
     const reportsArrays = await Promise.all(
-      studentIds.map(studentId => getRecordingDuration(studentId))
+      studentIds.map(studentId => getStudentReports(studentId))
     );
 
     // Process all collected reports
@@ -190,7 +190,7 @@ const getActiveHours = async (
                   miscueCounts.repetition++;
                   break;
                 default:
-                  console.log('Unknown miscue type:', miscue.type);
+
               }
             }
           }
@@ -336,10 +336,10 @@ const getOverallTopMiscueType = async (
               attemptCount: 0,
             };
           }
-          
+
           passageMap[passageTitle].attemptCount++;
           passageMap[passageTitle].accuracySum += report.accuracyRate || 0;
-          
+
           // Add total miscues from this report to passage count
           const totalReportMiscues = calculateTotalMiscues(report);
           passageMap[passageTitle].miscueCount += totalReportMiscues;
@@ -389,7 +389,7 @@ const getOverallTopMiscueType = async (
 
     // Check if we have any data
     const totalAllMiscues = Object.values(miscueTypeTotals).reduce((a, b) => a + b, 0);
-    
+
     if (totalAllMiscues === 0) {
       return [getEmptyOverallResponse()];
     }

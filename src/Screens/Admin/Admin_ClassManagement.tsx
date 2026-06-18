@@ -502,7 +502,7 @@ export default function AdminClassManagement() {
 
       <View style={adminUserManagment.container}>
         <BubbleBackground />
-       
+
         {/* COMPACT HEADER */}
         <View style={adminUserManagment.headerRow}>
           {/* Spacer to balance the menu button so the title stays centered */}
@@ -535,7 +535,7 @@ export default function AdminClassManagement() {
 
         {/* MAIN CONTENT */}
         <View style={adminUserManagment.content}>
-          
+
           {/* CREATE NEW CLASS BUTTON */}
           <TouchableOpacity
             style={myClass.createButton}

@@ -65,11 +65,11 @@ const SECONDARY_APP_NAME = 'AdminCreateUser';
 const getOrInitSecondaryApp = async () => {
   const existing = getApps().find(a => a.name === SECONDARY_APP_NAME);
   if (existing) return existing;
-  
+
   // Extract the config dynamically from the default app instance
   // This is safely populated by google-services.json at runtime
   const primaryAppConfig = firebase.app().options;
-  
+
   return await initializeApp(primaryAppConfig, SECONDARY_APP_NAME);
 };
 
@@ -412,6 +412,13 @@ export const DeletePassage = async (pid: string) => {
 
 /**
  * Fetches all passages, ordered by creation date (newest first).
+ *
+ * ARCHITECTURAL DECISION (A-5):
+ * Passages are expected to remain primarily local/static per manuscript constraints.
+ * This Firestore fetch intentionally omits a `.limit()` because dynamic passages
+ * should be kept to a strict minimum by design. If this architectural constraint
+ * changes and thousands of passages are migrated to Firestore, a `.limit()` and
+ * pagination must be implemented here.
  *
  * @returns - array of PassageDocument
  */
@@ -799,7 +806,7 @@ const cascadeDeleteFaculty = async (uid: string) => {
   for (const classId of assignedClassIds) {
     const classRef = doc(db, 'classes', classId);
     const classSnap = await getDoc(classRef);
-    if (!classSnap.exists) continue;
+    if (!classSnap.exists()) continue;
 
     const studentIds: string[] =
       (classSnap.data() as ClassDocument | undefined)?.studentIds || [];
@@ -893,21 +900,6 @@ export const createUserByAdmin = async (
 
 /* -------------------------------------------------------------
    JOIN CLASS
-   ─── Modified for instant-rejoin enrollment flow ──────────────────────────
-   Two branches:
-     A) FIRST-TIME: student has never been in this class's studentIds.
-        Adds to pendingStudentIds AND preemptively writes student.classCode
-        so the resolver has an anchor for showing pending/active state.
-     B) REJOIN: student is already in this class's studentIds (historical
-        member returning after a leave). Skips pending entirely — just sets
-        student.classCode = target.code. Faculty already approved this
-        student previously, so re-approval would be redundant.
-
-   Preconditions:
-     - student.classCode must be empty (must leave current class first)
-     - no pending request anywhere
-     - target class must be active
-   ─── End ──────────────────────────────────────────────────────────────────
 ------------------------------------------------------------- */
 export const joinClass = async (studentId: string, joinClassCode: string) => {
   try {
@@ -1096,10 +1088,22 @@ export const acceptStudent = async (classId: string, studentId: string) => {
  */
 export const rejectStudent = async (classId: string, studentId: string) => {
   try {
-    await updateDoc(doc(db, 'classes', classId), {
+    const batch = writeBatch(db);
+
+    const classRef = doc(db, 'classes', classId);
+    batch.update(classRef, {
       pendingStudentIds: arrayRemove(studentId),
-      updatedAt: serverTimestamp() as Timestamp,
+      updatedAt: serverTimestamp(),
     });
+
+    const userRef = doc(db, 'users', studentId);
+    batch.update(userRef, {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+
     return { success: true };
   } catch (error: any) {
     throw new Error('Failed to reject student: ' + error.message);
@@ -1447,14 +1451,12 @@ export const createMiscueReport = async (
 ------------------------------------------------------------- */
 export const getStudentClass = async (studentId: string) => {
   try {
-    console.log('This is studentId: ' + studentId);
 
     // 1. Get student’s document to retrieve the stored classCode
     const studentRef = doc(db, 'users', studentId);
     const studentSnap = await getDoc(studentRef);
     const studentData = studentSnap.data() as UserDocument;
     const classCode = studentData?.studentData?.classCode;
-    console.log('This is class code: ' + classCode);
 
     // No class enrolled
     if (!classCode) return null;
@@ -1890,7 +1892,7 @@ export const getStudentGenderDistribution = async (
       // Firestore caps `in` queries at 30 elements, so chunk the codes.
       for (let i = 0; i < codes.length; i += 30) {
         const chunk = codes.slice(i, i + 30);
-        
+
         // 1. Get total students in chunk
         const totalSnap = await getCountFromServer(query(
           collection(db, 'users'), 
@@ -2003,7 +2005,6 @@ export const getStudentGradeLevelDistribution = async (
       }
     });
 
-
     const byGrade: Record<number, { enrolled: number; unenrolled: number }> = {};
     let totalEnrolled = 0;
     let totalUnenrolled = 0;
@@ -2027,7 +2028,7 @@ export const getStudentGradeLevelDistribution = async (
           where('studentData.classCode', 'in', chunk)
         ))
       );
-      
+
       const snaps = await Promise.all(chunkPromises);
       const gradeTotal = snaps.reduce((acc, snap) => acc + snap.data().count, 0);
       return { grade, count: gradeTotal };
@@ -2095,5 +2096,4 @@ export const getCurrentUserSex = async (): Promise<string | null> => {
     return null; // fallback
   }
 };
-
 

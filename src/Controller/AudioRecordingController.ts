@@ -111,7 +111,7 @@ export const useAudioRecording = () => {
         });
 
         AudioRecord.start();
-          
+
         const expectedDuration = calculateExpectedDuration(passageText);
 
         const interval = setInterval(() => {

@@ -39,7 +39,6 @@ type ReadingActivityScreenRouteProp = RouteProp<
   'ReadingActivity'
 >;
 
-
 export default function ReadingActivityScreenPage() {
   // Ref: Store a retry timeout id for feedback modal
   const route = useRoute<ReadingActivityScreenRouteProp>();
@@ -47,7 +46,7 @@ export default function ReadingActivityScreenPage() {
 
   const { dynamicPassages } = useAllPassages();
   const staticPassages = (readingMaterialData?.Passages || []);
-  const allPassages = [...staticPassages, ...dynamicPassages];
+  const allPassages = useMemo(() => [...staticPassages, ...dynamicPassages], [staticPassages, dynamicPassages]);
 
   // State
   const [spokenText, setSpokenText] = useState('');
@@ -216,10 +215,7 @@ export default function ReadingActivityScreenPage() {
       }
     }
     return null;
-  }, [readingMaterial, type, wordContext, wordPositionInfo]);
-
-  const [nextItem, setNextItem] = useState<{ type: any; readingMaterial: any; wordContext: any } | null>(null);
-  const [prevItem, setPrevItem] = useState<{ type: any; readingMaterial: any; wordContext: any } | null>(null);
+  }, [readingMaterial, type, wordContext, wordPositionInfo, allPassages]);
 
   const getPreviousReadingItem = useCallback(() => {
     // if (type === 'alphabet' && isAlphabet(readingMaterial)) {
@@ -249,10 +245,8 @@ export default function ReadingActivityScreenPage() {
     return null;
   }, [readingMaterial, type, wordContext, wordPositionInfo, allPassages]);
 
-  useEffect(() => {
-    setNextItem(getNextReadingItem());
-    setPrevItem(getPreviousReadingItem());
-  }, [getNextReadingItem, getPreviousReadingItem]);
+  const nextItem = getNextReadingItem();
+  const prevItem = getPreviousReadingItem();
   /**
    * Handler to reset all reading states (text, miscues, accuracy, modal, etc).
    * Used for retrying the activity cleanly.
@@ -356,8 +350,6 @@ export default function ReadingActivityScreenPage() {
     return 'Unknown';
   }, [readingMaterial, type]);
 
-
-
   // useMemo: Memoize word count calculation for performance
   const passageWordCount = useMemo(() => {
     if (type === 'passage' && isPassage(readingMaterial)) {
@@ -365,7 +357,6 @@ export default function ReadingActivityScreenPage() {
     }
     return 0;
   }, [readingMaterial, type]);
-
 
   /**
    * Effects to mount or initialize the permission and audio recording
@@ -392,16 +383,9 @@ export default function ReadingActivityScreenPage() {
   const isTextPerfect = useCallback((spoken: string, target: string): boolean => {
     const cleanSpoken = spoken.replace(/[^a-zA-Z]/g, '').toLowerCase();
     const cleanTarget = target.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    console.log('isTextPerfect comparison:', {
-      spoken,
-      target,
-      cleanSpoken,
-      cleanTarget,
-      match: cleanSpoken === cleanTarget,
-    });
+
     return cleanSpoken === cleanTarget;
   }, []);
-
 
   /**
    * Opens the feedback modal with the appropriate message and modal type,
@@ -469,7 +453,7 @@ export default function ReadingActivityScreenPage() {
     try {
       // Restriction: if duration is < 1s (0:00), don't store
       if (duration < 1) {
-        console.log('Skipping report storage: duration is too short (0:00)');
+
         return;
       }
 
@@ -480,15 +464,6 @@ export default function ReadingActivityScreenPage() {
       const formattedDuration = `${mins}:${seconds
         .toString()
         .padStart(2, '0')}`;
-
-      console.log('Storing report with data:', {
-        title: getTitle(),
-        miscueCount: miscues.length,
-        accuracy: accuracyNum,
-        wpm: wpm,
-        wcpm: wcpm,
-        duration: formattedDuration,
-      });
 
       // Store the data from the MiscueReportController
       await MiscueReportController.storeReport(
@@ -549,7 +524,6 @@ export default function ReadingActivityScreenPage() {
       const wcpm = calculateWCPM(totalWords, errorCount, duration);
       setWordCorrectPerMin(wcpm);
 
-      console.log('This is WPM: ' + wpm + ' | WCPM: ' + wcpm);
       // To avoid duplication it needs to check if it was already stored
       if (!hasStoredReport && duration > 0) {
         await storeMiscueReport(accuracyNum, duration, detectedMiscues, wpm, wcpm, transcription);
@@ -697,8 +671,8 @@ export default function ReadingActivityScreenPage() {
         if (type === 'passage') {
           setAlertModalConfig({
             visible: true,
-            title: 'Warning',
-            message: 'No speech detected. Please try again.',
+            title: 'Please try again',
+            message: 'No speech detected.',
           });
           setIsReadingCompleted(true);
           return;
@@ -710,8 +684,8 @@ export default function ReadingActivityScreenPage() {
       }
 
       setSpokenText(transcription.fulltext.toLowerCase());
-      console.log('THIS IS THE SPOKEN: ' + transcription);
-      // console.log('THIS IS THE UTTERANCES: ' + transcription);
+
+      // 
 
       // Also update the state for display if needed
       setRecordingDuration(duration);
@@ -720,7 +694,7 @@ export default function ReadingActivityScreenPage() {
       setIsReadingCompleted(true);
     } catch (error) {
       // Fallback on error: 0% accuracy instead of 100% simulated response
-      console.log('Audio processing failed, falling back to 0%', error);
+
       setSpokenText('');
       setRecordingDuration(duration);
       // Send an empty string to trigger 0% accuracy analysis
@@ -858,6 +832,7 @@ export default function ReadingActivityScreenPage() {
    * Sets state if completed.
    */
   useEffect(() => {
+    let alive = true;
     setAlreadyCompleted(false);
     setHasStoredCorrectAttempt(false);
 
@@ -874,8 +849,8 @@ export default function ReadingActivityScreenPage() {
         //       readingMaterial.letter,
         //     );
         //   if (existing) {
-        //     console.log('Alphabet already completed:', readingMaterial.letter);
-        //     setAlreadyCompleted(true);
+        //     
+        //     if (alive) setAlreadyCompleted(true);
         //   }
         // } else
         if (type === 'word' && isWords(readingMaterial)) {
@@ -887,24 +862,24 @@ export default function ReadingActivityScreenPage() {
             wordContext?.lessonTitle || '',
             targetText,
           );
-          if (existing) {
-            console.log('Word already completed:', targetText);
+          if (existing && alive) {
+
             setAlreadyCompleted(true);
           }
         }
       } catch (error) {
         console.error('Failed to check existing completion:', error);
       } finally {
-        setHasCheckedExisting(true);
+        if (alive) setHasCheckedExisting(true);
       }
     };
 
     checkIfAlreadyCompleted();
+
+    return () => {
+      alive = false;
+    };
   }, [type, readingMaterial, getTargetText]);
-
-
-
-
 
   /**
    * Handler to close the feedback modal dialog.
@@ -973,7 +948,6 @@ export default function ReadingActivityScreenPage() {
                 currentWordIndex={wordPositionInfo.index}
                 lessonWordCount={wordPositionInfo.total}
               />
-
 
               {!isLoading && !isRecording && isReadingCompleted && type === 'passage' && (
                 <FeedbackResult

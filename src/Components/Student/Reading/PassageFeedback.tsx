@@ -525,7 +525,7 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
           {hasNoTranscription ? (
             <View style={[S.miscueRow, { backgroundColor: '#FDE8E8', borderColor: '#E53935' }]}>
               <Text style={[S.miscueValue, { textAlign: 'center', color: '#E53935', fontFamily: 'Nunito-Bold' }]}>
-                Network Problem. Please try again.
+                Please try again.
               </Text>
             </View>
           ) : miscues.length === 0 && (

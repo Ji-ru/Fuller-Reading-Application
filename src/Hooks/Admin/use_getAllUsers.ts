@@ -11,7 +11,6 @@ export const useGetUsers = () => {
     const [error, setError] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
 
-
     const fetchUsers = useCallback(async (
         role?: UserRole,
         searchTerm?: string,

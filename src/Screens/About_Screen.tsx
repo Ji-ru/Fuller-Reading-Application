@@ -194,7 +194,7 @@ export default function AboutScreen() {
               time.
             </Text>
             <Text style={[S.bodyText, { marginTop: sh(10) }]}>
-              The app supports three reading modes — word
+              The app supports two reading modes — word
               pronunciation and passage reading — each with automatic accuracy
               scoring and miscue analysis (substitution, omission, insertion,
               and repetition).

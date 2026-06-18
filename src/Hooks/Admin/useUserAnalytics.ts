@@ -95,7 +95,7 @@ export const useUserAnalytics = (acadYear?: string, filterByAcadYear: boolean = 
               query(collection(db, 'users'), where('role', '==', 'student'), where('studentData.classCode', 'in', chunk))
             )
           );
-          
+
           const facultyPromises = facultyChunks.map(chunk =>
             getCountFromServer(
               query(collection(db, 'users'), where('role', '==', 'faculty'), where('facultyData.assignedClassIds', 'array-contains-any', chunk))

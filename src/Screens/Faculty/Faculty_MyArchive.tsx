@@ -6,6 +6,7 @@ import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { getAuth } from '@react-native-firebase/auth';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
+import { useFocusEffect } from '@react-navigation/native';
 // ─── Added for studentIds/assignedClassIds source-of-truth refactor ────────
 // Archive view now fetched via getAssignedClasses (filtered by status='archived')
 // rather than the previous facultyId-only realtime listener.
@@ -55,9 +56,11 @@ export default function MyArchive() {
     }
   }, [currentUser]);
 
-  useEffect(() => {
-    fetchClasses();
-  }, [fetchClasses]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchClasses();
+    }, [fetchClasses])
+  );
 
   // ========================================================================
   // EVENT HANDLER
@@ -215,7 +218,6 @@ export default function MyArchive() {
     </TouchableOpacity>
   );
 
-
   const handleDeletePress = async (classItem: ClassDocument) => {
     Alert.alert(
       'Delete Class',
@@ -249,8 +251,6 @@ export default function MyArchive() {
     );
   };
 
-
-
   return (
     <SafeAreaView style={myClass.container}>
       {ellipsisVisible && (
@@ -263,7 +263,6 @@ export default function MyArchive() {
       <View style={myClass.insideContainer}>
         {/* BUBBLE DECORATIONS */}
         <BubbleBackground />
-
 
         {/* UNIFIED HEADER ROW: spacer | SVG title | menu button */}
         <View style={facultyDashboard.header}>
@@ -393,7 +392,6 @@ export default function MyArchive() {
             </>
           )}
 
-
           {/* CLASS COUNT */}
           {classes.length > 0 && (
             <Text style={myClass.classCount}>
@@ -432,7 +430,6 @@ export default function MyArchive() {
               )}
             </View>
           </TouchableOpacity>
-
 
         </View>
       </View>

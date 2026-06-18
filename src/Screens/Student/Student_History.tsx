@@ -78,7 +78,6 @@ const headerStyles = StyleSheet.create({
   },
 });
 
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface GroupedReport {
   passageTitle: string;
@@ -253,8 +252,6 @@ export default function ReadingHistoryScreen() {
       (report.insertionCount || 0) + (report.repetitionCount || 0);
   };
 
-
-
   // ── Filtered reports (client-side, no extra Firestore calls) ─────────────
   const filteredReports = useMemo(() => {
     if (!historyBounds) return groupedReports;
@@ -327,7 +324,7 @@ export default function ReadingHistoryScreen() {
             onAboutPress={() => handleNextStep('About')}
             onLogoutPress={() => setLogoutVisible(true)}
           />
-          
+
           {/* ── TAB BAR ────────────────────────────────────────────────────── */}
           <FadeSlideIn delay={60}>
             <View style={tabStyles.tabGrid}>
@@ -723,4 +720,4 @@ const tabStyles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: sh(10),
   },
-});
+});

@@ -29,7 +29,7 @@ export async function uploadRecording(
 ): Promise<UploadResult> {
   try {
     if (!metadata.spokenText || metadata.spokenText.trim() === '' || metadata.spokenText.trim() === 'No Speech Detected!') {
-      console.log('[DriveUpload] Skipping upload: No speech detected.');
+
       return { ok: false, error: 'no_speech_detected' };
     }
 
@@ -61,7 +61,7 @@ export async function uploadRecording(
 
     const json = (await res.json()) as UploadResult & { version?: string };
     if (json.ok) {
-      console.log('[DriveUpload] uploaded as', json.finalName, '| server version:', json.version ?? '(none)');
+
     } else {
       console.warn('[DriveUpload] server rejected:', json.error);
     }

@@ -138,7 +138,6 @@ const DOTS: Array<{ cx: number; cy: number; r: number }> = [
 //   );
 // };
 
-
 interface WordCharacterProps {
   word: string;
 }

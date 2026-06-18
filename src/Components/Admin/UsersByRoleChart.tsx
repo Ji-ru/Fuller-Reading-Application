@@ -76,7 +76,7 @@ const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
           <Text style={styles.description}>Shows the distribution of system users between students and faculty.</Text>
         </View>
       </View>
-      
+
       <View style={styles.chartWrapper}>
         <PieChart
           data={pieData}

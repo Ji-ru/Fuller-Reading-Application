@@ -28,6 +28,7 @@ import {
   arrayRemove,
   updateDoc,
   orderBy,
+  limit,
 } from '@react-native-firebase/firestore';
 import { StudentProgressResult } from '../Interfaces/miscue';
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
@@ -117,7 +118,7 @@ export const MiscueReportController = {
         repetitionCount: miscues.filter(m => m.type === 'repetition').length,
         createdAt: serverTimestamp(),
       };
-      
+
       await setDoc(miscueDocRef, reportData);
       // Triggered after every completed passage. Does NOT block the return value.
       // A failed recalculation is non-fatal — the report is already saved above.
@@ -127,8 +128,6 @@ export const MiscueReportController = {
           err,
         ),
       );
-
-      console.log('Storing Complete!: ' + reportData.passageTitle);
 
       return reportId;
     } catch (error: any) {
@@ -240,7 +239,7 @@ export const MiscueReportController = {
         word,
       );
       if (existing) {
-        console.log('The Word already completed, skipping storage');
+
         return existing;
       }
       // Create document reference with auto-generated ID
@@ -444,7 +443,7 @@ export const MiscueReportController = {
       return [];
     }
   },
-  
+
   /**
    * Finalizes the current word session and triggers a reading level recalculation.
    * Used when The student navigates away from the word exercise screen.
@@ -455,19 +454,23 @@ export const MiscueReportController = {
 
     const sessionRef = doc(db, 'wordSessions', sessionId);
 
-    // Mark as completed and set the end time
+    // Read the session first
+    const snap = await getDoc(sessionRef);
+    if (!snap.exists()) {
+      throw new Error('Session not found during finalization.');
+    }
+
+    const sessionData = snap.data() as WordSessionReport;
+
+    // Mark as completed in memory
+    sessionData.isCompleted = true;
+    sessionData.sessionCompletedAt = new Date(); // local approximation for return value
+
+    // Update Firestore
     await updateDoc(sessionRef, {
       sessionCompletedAt: serverTimestamp(),
       isCompleted: true,
     });
-
-    // Read back the final session
-    const snap = await getDoc(sessionRef);
-    if (!snap.exists()) {
-      throw new Error('Session not found after finalization.');
-    }
-
-    const sessionData = snap.data() as WordSessionReport;
 
     // Trigger reading level recalculation (fire-and-forget)
     recalculateStudentReadingLevel(user.uid).catch(err =>
@@ -507,7 +510,7 @@ export const MiscueReportController = {
         letter,
       );
       if (existing) {
-        console.log('The current alphabet already completed, skipping storage');
+
         return existing;
       }
 
@@ -667,7 +670,6 @@ export const MiscueReportController = {
     return sessionData;
   },
 
-
   // ==========================================================================
   // STUDENT PASSAGE DOCUMENT RETRIEVING
   // ==========================================================================
@@ -685,14 +687,18 @@ export const MiscueReportController = {
    * @throws Error - If Firestore query fails
    * ==========================================================================
    */
-  async getStudentReports(studentId: string): Promise<MiscueReportDocument[]> {
+  async getStudentReports(studentId: string, limitCount: number = 50): Promise<MiscueReportDocument[]> {
     try {
       const reportRef = collection(db, 'miscueReports');
-      const studentMiscueReport = query(
+      let studentMiscueReport = query(
         reportRef,
         where('studentId', '==', studentId),
         orderBy('createdAt', 'desc')
       );
+
+      if (limitCount > 0) {
+        studentMiscueReport = query(studentMiscueReport, limit(limitCount));
+      }
 
       const studentReportSnapshot = await getDocs(studentMiscueReport);
 
@@ -703,42 +709,6 @@ export const MiscueReportController = {
     } catch (error: any) {
       console.error('Failed to fetch student reports:', error);
       throw new Error(`Failed to fetch reports: ${error.message}`);
-    }
-  },
-
-  /**
-   * UPDATED TO React Native Firebase v22
-   * Get all recording duration in a class
-   *
-   * @param studentId
-   * @returns - all recording duration
-   */
-  async getRecordingDuration(
-    studentId: string,
-  ): Promise<MiscueReportDocument[]> {
-    try {
-      const recordRef = collection(db, 'miscueReports');
-      const studentRecordingQuery = query(
-        recordRef,
-        where('studentId', '==', studentId),
-      );
-
-      const studentRecordingSnapshot = await getDocs(studentRecordingQuery);
-
-      return studentRecordingSnapshot.docs.map((doc: any) => {
-        const data = doc.data();
-        return {
-          reportId: doc.id,
-          ...data,
-          // Ensure all required fields are included
-          miscues: data.miscues || [],
-          accuracyRate: data.accuracyRate || 0,
-          wordPerMin: data.wordPerMin || 0,
-          recordingDuration: data.recordingDuration || '00:00:00',
-        } as MiscueReportDocument;
-      });
-    } catch (error: any) {
-      throw new Error('Failed to fetch duration: ' + error.message);
     }
   },
 
@@ -767,13 +737,13 @@ export const MiscueReportController = {
             alphabetId: doc.id,
           }),
         ) as AlphabetReportDocument[];
-        console.log('Alphebet objects retrieved: ' + JSON.stringify(alphabets));
+
         onUpdate(alphabets);
       }, (error: any) => {
-        console.log('Failed to retrieved alphabets data: ' + error.message);
+
       });
     } catch (error: any) {
-      console.log('Failed to retrieved alphabets data: ' + error.any);
+
       throw new Error('Failed to retrieved alphabets data: ' + error.any);
     }
   },
@@ -805,10 +775,10 @@ export const MiscueReportController = {
         ) as WordReportDocument[];
         onUpdate(words);
       }, (error: any) => {
-        console.log('Failed to retrieved words data: ' + error.message);
+
       });
     } catch (error: any) {
-      console.log('Failed to retrieved words data: ' + error.any);
+
       throw new Error('Failed to retrieved words data: ' + error.any);
     }
   },
@@ -857,9 +827,6 @@ export const MiscueReportController = {
 
       // Step 2: Get date range for filtering
       const { start, end } = getDateRangeForTimeFilter(timeRange);
-      console.log(
-        `Date range for ${timeRange}: ${start.toDateString()} to ${end.toDateString()}`,
-      );
 
       // Step 3: Filter reports by time range
       const filteredReports = allReports.filter(report => {

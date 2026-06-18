@@ -37,7 +37,7 @@ export const AudioPermissionService = {
         ];
 
         const grants = await PermissionsAndroid.requestMultiple(androidPermissions);
-        
+
         const allGranted = androidPermissions.every(
           permission => grants[permission] === PermissionsAndroid.RESULTS.GRANTED
         );
@@ -46,7 +46,7 @@ export const AudioPermissionService = {
           const deniedPermissions = androidPermissions.filter(
             permission => grants[permission] !== PermissionsAndroid.RESULTS.GRANTED
           );
-          
+
           console.warn('Denied permissions:', deniedPermissions);
         }
 

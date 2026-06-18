@@ -246,6 +246,8 @@ export interface WordSessionReport {
   studentId: string;
   dateKey: string; // YYYYMMDD (for range queries)
   startedAt: Timestamp;
+  isCompleted?: boolean;
+  sessionCompletedAt?: Timestamp | Date;
 
   totals: {
     attempted: number;

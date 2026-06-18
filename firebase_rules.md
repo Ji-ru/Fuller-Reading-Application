@@ -55,6 +55,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow read:  if isAuth();
       allow write: if isOwner(userId) || isAdmin();
+      allow update: if isFaculty() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentData', 'updatedAt']) &&
+        request.resource.data.studentData.classCode == '';
     }
     
     match /passages/{passageId} {

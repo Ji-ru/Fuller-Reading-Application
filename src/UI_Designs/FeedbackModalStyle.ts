@@ -74,5 +74,5 @@ const feedbackModal = StyleSheet.create({
 
     },
   });
-  
+
   export default feedbackModal;

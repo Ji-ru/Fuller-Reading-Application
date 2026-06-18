@@ -132,7 +132,6 @@ function buildRangeQuery(
   const db = getFirestore();
   const { start, end } = getDateRangeForTimeFilter(timeRange);
 
-
   const startKey = typeof start === 'string' ? start : toKey(start);
   const endKey = typeof end === 'string' ? end : toKey(end);
 
@@ -141,7 +140,7 @@ function buildRangeQuery(
     where('studentId', '==', studentId),
     where('dateKey', '>=', startKey),
     where('dateKey', '<=', endKey),
-    
+
     orderBy('dateKey', 'asc'),
     limit(maxDocs),
   );
@@ -375,7 +374,6 @@ export function getDefaultSlotIndex(slots: AlphabetPeriodSlot[]): number {
   }
   return Math.max(0, slots.length - 1);
 }
-
 
 // ==========================================================================================
 // WORD SESSION

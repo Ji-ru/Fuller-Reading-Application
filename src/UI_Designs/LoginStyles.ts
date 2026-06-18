@@ -236,7 +236,7 @@ const login = StyleSheet.create({
     shadowColor: C.greenDark,
     shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.3,
-    
+
     shadowRadius: sw(8),
     elevation: 5,
   },
@@ -275,8 +275,11 @@ const login = StyleSheet.create({
     fontFamily: 'Nunito-Medium',
     fontSize: sf(15),
   },
-  forgotpass: {
+  forgotpassTouchable: {
     alignSelf: 'flex-end',
+    marginTop: sh(8),
+  },
+  forgotpass: {
     marginBottom: sh(10),
     fontSize: sf(13),
     fontFamily: 'Nunito-Regular',
