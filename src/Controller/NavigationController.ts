@@ -68,6 +68,7 @@ export type RootStackParamList = {
    AdminClassDashboard: undefined;
    AdminClassManagement: undefined;
    AdminViewFacultyData: { classId?: string; facultyId?: string };
+   AdminReadingMaterials: undefined;
 
    // ASSESSMENT NAVIGATION
   FacultyAssessments: undefined;

@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial.json';
 import { StudentColors as C, Radii, Shadows, ACCENT_COLORS as LETTER_COLORS } from '../../Utilities/Theme';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { 
+import {
   CheckCircleIcon, 
   BookOpenIcon, 
   QuoteIcon, 
@@ -25,8 +25,10 @@ import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import auth from '@react-native-firebase/auth';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
-import { Alphabet, Contrasts, Passage, Word } from '../../Interfaces/passage';
+import { Alphabet, Contrasts, Passage, Word, ReadingMaterialData } from '../../Interfaces/passage';
 import bubbles from '../../UI_Designs/BubblesDesign';
+import { getUserProfile } from '../../Controller/AuthenticationController';
+import { getMergedReadingMaterials, mergeCustomReadingMaterials } from '../../Controller/ReadingMaterialController';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -202,19 +204,38 @@ export default function PageSelectionScreen() {
   const [completedPassages, setCompletedPassages] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [lockModalVisible, setLockModalVisible] = useState(false);
+  const [customLoading, setCustomLoading] = useState(false);
+  const [effectiveReadingMaterialData, setEffectiveReadingMaterialData] = useState<ReadingMaterialData | null>(null);
+
+  const [studentClassCodes, setStudentClassCodes] = useState<string[]>([]);
+
+  const alphabetData: Alphabet[] = effectiveReadingMaterialData?.Alphabet || readingMaterialData?.Alphabet || [];
+  const passages: Passage[] = effectiveReadingMaterialData?.Passages || readingMaterialData?.Passages || [];
+  const wordsData: Word[] = effectiveReadingMaterialData?.Words || readingMaterialData?.Words || [];
 
   useEffect(() => {
     let isMounted = true;
-    const fetchMastery = async () => {
+    const fetchMasteryAndCustom = async () => {
       try {
         const user = auth().currentUser;
         if (user) {
-          const { completedAlpha: alpha, completedWords: words, completedPassages: passages } = 
+          const { completedAlpha: alpha, completedWords: words, completedPassages: passed } = 
             await MiscueReportController.getStudentDetailedCompletion(user.uid);
+
+          const studentProfile = await getUserProfile(user.uid);
+          const codes: string[] = [];
+          if (studentProfile?.studentData?.classCode) {
+            codes.push(studentProfile.studentData.classCode.toUpperCase());
+          }
+          setStudentClassCodes(codes);
+
           if (isMounted) {
             setCompletedAlpha(alpha);
             setCompletedWordsMap(words);
-            setCompletedPassages(passages);
+            setCompletedPassages(passed);
+
+            const merged = await getMergedReadingMaterials(user.uid, codes);
+            setEffectiveReadingMaterialData(merged);
           }
         }
       } catch (err) {
@@ -223,7 +244,7 @@ export default function PageSelectionScreen() {
         if (isMounted) setLoading(false);
       }
     };
-    fetchMastery();
+    fetchMasteryAndCustom();
     return () => { isMounted = false; };
   }, []);
 

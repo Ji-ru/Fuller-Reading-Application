@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AdminSideMenu from '../../Components/Admin/AdminSideMenu';
 import { BounceIn } from '../../Components/GlobalUse/Animations';
-import { BookOpenIcon, UsersIcon, TrophyIcon, BriefcaseIcon, BurgerIcon, ClipboardListIcon } from '../../Components/GlobalUse/Icons';
+import { BookOpenIcon, UsersIcon, TrophyIcon, BriefcaseIcon, BurgerIcon, ClipboardListIcon, EditIcon } from '../../Components/GlobalUse/Icons';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getUserProfile } from '../../Controller/AuthenticationController';
@@ -205,13 +205,20 @@ const [stats, setStats] = useState<{
                    <ClipboardListIcon size={20} color={F.white} />
                    <Text style={S.quickActionText}>Pamamahala ng Klase</Text>
                  </TouchableOpacity>
-                 <TouchableOpacity 
-                   style={S.quickActionBtn}
-                   onPress={() => handleNavigateStep('AdminViewFacultyData')}
-                 >
-                   <BriefcaseIcon size={20} color={F.white} />
-                   <Text style={S.quickActionText}>Faculty Data</Text>
-                 </TouchableOpacity>
+<TouchableOpacity 
+                    style={S.quickActionBtn}
+                    onPress={() => handleNavigateStep('AdminViewFacultyData')}
+                  >
+                    <BriefcaseIcon size={20} color={F.white} />
+                    <Text style={S.quickActionText}>Faculty Data</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={S.quickActionBtn}
+                    onPress={() => handleNavigateStep('AdminReadingMaterials')}
+                  >
+                    <EditIcon size={20} color={F.white} />
+                    <Text style={S.quickActionText}>Pamamahala ng Pagbasa</Text>
+                  </TouchableOpacity>
                </View>
              </View>
           </View>

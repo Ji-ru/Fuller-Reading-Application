@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isFaculty() {
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    // =====================================================
+    // USERS — anyone can create/update their own, admin full access
+    // =====================================================
+    match /users/{userId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+
+      match /{document=**} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // =====================================================
+    // CLASSES — any authenticated user can read/write
+    // =====================================================
+    match /classes/{classId} {
+      allow read, write: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // =====================================================
+    // ACTIVITIES
+    // =====================================================
+    match /activities/{activityId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    // =====================================================
+    // ACTIVITY RESULTS
+    // =====================================================
+    match /activityResults/{resultId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // =====================================================
+    // MISCUE REPORTS
+    // =====================================================
+    match /miscueReports/{reportId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // =====================================================
+    // ALPHABET SESSIONS
+    // =====================================================
+    match /alphabetSessions/{sessionId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // =====================================================
+    // WORD COMPLETED
+    // =====================================================
+    match /wordCompleted/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // =====================================================
+    // STUDENT ANALYTICS
+    // =====================================================
+    match /studentAnalytics/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // =====================================================
+    // DAILY SESSIONS
+    // =====================================================
+    match /dailySessions/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // =====================================================
+    // CUSTOM READING MATERIALS
+    // =====================================================
+    match /customReadingMaterials/{materialId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    // =====================================================
+    // ALPHABET COMPLETED
+    // =====================================================
+    match /alphabetCompleted/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+  }
+}

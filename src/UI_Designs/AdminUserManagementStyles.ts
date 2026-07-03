@@ -85,6 +85,7 @@ const adminUserManagement = StyleSheet.create({
     marginBottom: 12,
     alignItems: 'center',
     ...Shadows.card,
+    overflow: 'visible',
   },
   userCardContent: {
     flex: 1,
@@ -164,6 +165,7 @@ const adminUserManagement = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 4,
     position: 'relative',
+    alignSelf: 'stretch',
   },
   arrowButton: {
     width: 32,
@@ -184,12 +186,13 @@ const adminUserManagement = StyleSheet.create({
   optionsMenu: {
     position: 'absolute',
     right: 0,
-    top: 36,
+    top: 8,
     backgroundColor: FacultyColors.white,
     borderRadius: 12,
     ...Shadows.card,
     minWidth: 140,
-    zIndex: 10,
+    zIndex: 9999,
+    elevation: 10,
     overflow: 'hidden',
   },
   optionsMenuItem: {
@@ -262,6 +265,8 @@ const adminUserManagement = StyleSheet.create({
     borderRadius: 32,
     width: '100%',
     maxHeight: '90%',
+    padding: 24,
+    flexShrink: 1,
   },
   modalHeader: {
     flexDirection: 'row',

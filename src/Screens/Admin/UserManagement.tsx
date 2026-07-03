@@ -141,21 +141,17 @@ export default function UserManagement() {
       };
 
       if (selectedUser?.role === 'student') {
-        if (editGradeLevel !== undefined) {
-          updateData['studentData.gradeLevel'] = editGradeLevel;
-        }
-        if (editBirthdate.trim()) {
-          updateData['studentData.dateOfBirth'] = editBirthdate;
-        }
+        updateData.studentData = {
+          gradeLevel: editGradeLevel,
+          dateOfBirth: editBirthdate,
+        };
       }
 
       if (selectedUser?.role === 'faculty') {
-        if (editAssignedGradeLevels !== undefined) {
-          updateData['facultyData.assignedGradeLevels'] = editAssignedGradeLevels;
-        }
-        if (editBirthdate.trim()) {
-          updateData['facultyData.dateOfBirth'] = editBirthdate;
-        }
+        updateData.facultyData = {
+          assignedGradeLevels: editAssignedGradeLevels,
+          dateOfBirth: editBirthdate,
+        };
       }
 
       await updateUserProfile(selectedUser!.uid, updateData);
@@ -185,7 +181,10 @@ export default function UserManagement() {
     const isMenuOpen = optionsMenuUid === item.uid;
 
     return (
-      <View style={adminUserManagment.userCard}>
+      <View style={[
+        adminUserManagment.userCard,
+        isMenuOpen && { zIndex: 9999 }
+      ]}>
         <View style={adminUserManagment.userCardContent}>
           <View style={adminUserManagment.avatarContainer}>
             {item.profileImageUrl ? (
@@ -414,181 +413,188 @@ export default function UserManagement() {
       </View>
 
       <ConfirmationModal
-          visible={deleteModalVisible}
-          type="danger"
-          title="Burahin ang User?"
-          message={selectedUser ? `Sigurado ka ba na gusto mong burahin si ${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}? Hindi na ito mababalik.` : 'Sigurado ka ba na gusto mong burahin? Hindi na ito mababalik.'}
-          confirmText="Burahin"
-          onCancel={() => setDeleteModalVisible(false)}
-          onConfirm={handleConfirmDelete}
+        visible={deleteModalVisible}
+        type="danger"
+        title="Burahin ang User?"
+        message={selectedUser ? `Sigurado ka ba na gusto mong burahin si ${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}? Hindi na ito mababalik.` : 'Sigurado ka ba na gusto mong burahin? Hindi na ito mababalik.'}
+      confirmText="Burahin"
+      onCancel={() => setDeleteModalVisible(false)}
+      onConfirm={handleConfirmDelete}
         />
 
-        <Modal visible={editModalVisible} transparent animationType="slide">
-          <View style={adminUserManagment.fullScreenModal}>
-            <View style={adminUserManagment.fullScreenContainer}>
-              <View style={adminUserManagment.modalHeader}>
-                <Text style={adminUserManagment.modalTitle}>Ayusin ang Profile</Text>
-                <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-                  <Text style={adminUserManagment.closeTxt}>✕</Text>
-                </TouchableOpacity>
+      <Modal visible={editModalVisible} transparent animationType="slide">
+        <View style={adminUserManagment.fullScreenModal}>
+          <View style={adminUserManagment.fullScreenContainer}>
+            <View style={adminUserManagment.modalHeader}>
+              <Text style={adminUserManagment.modalTitle}>Ayusin ang Profile</Text>
+              <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                <Text style={adminUserManagment.closeTxt}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={{ flexGrow: 1, flexShrink: 1 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 30 }}
+            >
+              <View style={adminUserManagment.field}>
+                <Text style={adminUserManagment.fieldLabel}>Pangalan (First Name)</Text>
+                <TextInput
+                  style={adminUserManagment.modalInput}
+                  value={editFirstName}
+                  onChangeText={setEditFirstName}
+                />
               </View>
 
-              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 30, paddingBottom: 50 }}>
-                <View style={adminUserManagment.field}>
-                  <Text style={adminUserManagment.fieldLabel}>Pangalan (First Name)</Text>
-                  <TextInput
-                    style={adminUserManagment.modalInput}
-                    value={editFirstName}
-                    onChangeText={setEditFirstName}
-                  />
-                </View>
+              <View style={adminUserManagment.field}>
+                <Text style={adminUserManagment.fieldLabel}>Gitnang Pangalan (Middle Name)</Text>
+                <TextInput
+                  style={adminUserManagment.modalInput}
+                  value={editMiddleName}
+                  onChangeText={setEditMiddleName}
+                />
+              </View>
 
-                <View style={adminUserManagment.field}>
-                  <Text style={adminUserManagment.fieldLabel}>Gitnang Pangalan (Middle Name)</Text>
-                  <TextInput
-                    style={adminUserManagment.modalInput}
-                    value={editMiddleName}
-                    onChangeText={setEditMiddleName}
-                  />
-                </View>
+              <View style={adminUserManagment.field}>
+                <Text style={adminUserManagment.fieldLabel}>Apelyido (Last Name)</Text>
+                <TextInput
+                  style={adminUserManagment.modalInput}
+                  value={editLastName}
+                  onChangeText={setEditLastName}
+                />
+              </View>
 
-                <View style={adminUserManagment.field}>
-                  <Text style={adminUserManagment.fieldLabel}>Apelyido (Last Name)</Text>
-                  <TextInput
-                    style={adminUserManagment.modalInput}
-                    value={editLastName}
-                    onChangeText={setEditLastName}
-                  />
-                </View>
+              <View style={adminUserManagment.field}>
+                <Text style={adminUserManagment.fieldLabel}>Email Address</Text>
+                <TextInput
+                  style={adminUserManagment.modalInput}
+                  value={editEmail}
+                  onChangeText={setEditEmail}
+                  keyboardType="email-address"
+                  placeholderTextColor={F.slate + '80'}
+                />
+              </View>
 
-                <View style={adminUserManagment.field}>
-                  <Text style={adminUserManagment.fieldLabel}>Email Address</Text>
-                  <TextInput
-                    style={adminUserManagment.modalInput}
-                    value={editEmail}
-                    onChangeText={setEditEmail}
-                    keyboardType="email-address"
-                    placeholderTextColor={F.slate + '80'}
-                  />
-                </View>
+              <View style={adminUserManagment.field}>
+                <Text style={adminUserManagment.fieldLabel}>Birthdate</Text>
+                <TextInput
+                  style={adminUserManagment.modalInput}
+                  value={editBirthdate}
+                  onChangeText={setEditBirthdate}
+                  placeholder="MM/DD/YYYY"
+                  placeholderTextColor={F.slate + '80'}
+                  keyboardType="default"
+                />
+              </View>
 
-                <View style={adminUserManagment.field}>
-                  <Text style={adminUserManagment.fieldLabel}>Birthdate</Text>
-                  <TextInput
-                    style={adminUserManagment.modalInput}
-                    value={editBirthdate}
-                    onChangeText={setEditBirthdate}
-                    placeholder="MM/DD/YYYY"
-                    placeholderTextColor={F.slate + '80'}
-                    keyboardType="default"
-                  />
+              <View style={adminUserManagment.field}>
+                <Text style={adminUserManagment.fieldLabel}>Kasarian (Sex)</Text>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={[
+                      adminUserManagment.modalInput,
+                      { flex: 1 },
+                      editSex === 'male' ? { backgroundColor: F.primaryLight } : { backgroundColor: F.bg },
+                      { padding: 14, marginRight: 8, borderRadius: 12, borderWidth: 1, borderColor: '#eee' }
+                    ]}
+                    onPress={() => setEditSex('male')}
+                  >
+                    <Text style={{ color: editSex === 'male' ? F.primaryDeep : F.ink, fontFamily: 'Andika-Regular' }}>
+                      Male
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      adminUserManagment.modalInput,
+                      { flex: 1 },
+                      editSex === 'female' ? { backgroundColor: F.primaryLight } : { backgroundColor: F.bg },
+                      { padding: 14, marginLeft: 8, borderRadius: 12, borderWidth: 1, borderColor: '#eee' }
+                    ]}
+                    onPress={() => setEditSex('female')}
+                  >
+                    <Text style={{ color: editSex === 'female' ? F.primaryDeep : F.ink, fontFamily: 'Andika-Regular' }}>
+                      Female
+                    </Text>
+                  </TouchableOpacity>
                 </View>
+              </View>
 
+              {selectedUser?.role === 'student' && (
                 <View style={adminUserManagment.field}>
-                  <Text style={adminUserManagment.fieldLabel}>Kasarian (Sex)</Text>
-                  <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity
-                      style={[
-                        adminUserManagment.modalInput,
-                        editSex === 'male' ? { backgroundColor: F.primaryLight } : { backgroundColor: F.bg },
-                        { padding: 14, marginRight: 8, borderRadius: 12, borderWidth: 1, borderColor: '#eee' }
-                      ]}
-                      onPress={() => setEditSex('male')}
-                    >
-                      <Text style={{ color: editSex === 'male' ? F.primaryDeep : F.ink, fontFamily: 'Andika-Regular' }}>
-                        Male
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        adminUserManagment.modalInput,
-                        editSex === 'female' ? { backgroundColor: F.primaryLight } : { backgroundColor: F.bg },
-                        { padding: 14, marginLeft: 8, borderRadius: 12, borderWidth: 1, borderColor: '#eee' }
-                      ]}
-                      onPress={() => setEditSex('female')}
-                    >
-                      <Text style={{ color: editSex === 'female' ? F.primaryDeep : F.ink, fontFamily: 'Andika-Regular' }}>
-                        Female
-                      </Text>
-                    </TouchableOpacity>
+                  <Text style={adminUserManagment.fieldLabel}>Antas ng Baitang (Grade Level)</Text>
+                  <View style={{ width: '100%' }}>
+                    {['Baitang 1', 'Baitang 2', 'Baitang 3'].map((level, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          adminUserManagment.modalInput,
+                          {
+                            backgroundColor: editGradeLevel === index + 1 ? F.primaryLight : F.bg,
+                            marginBottom: 8,
+                          }
+                        ]}
+                        onPress={() => setEditGradeLevel(index + 1)}
+                      >
+                        <Text style={{
+                          color: editGradeLevel === index + 1 ? F.primaryDeep : F.ink,
+                          fontFamily: 'Andika-Regular',
+                        }}>
+                          {level}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 </View>
+              )}
 
-                {selectedUser?.role === 'student' && (
-                  <View style={adminUserManagment.field}>
-                    <Text style={adminUserManagment.fieldLabel}>Antas ng Baitang (Grade Level)</Text>
-                    <View style={{ width: '100%' }}>
-                      {['Baitang 1', 'Baitang 2', 'Baitang 3'].map((level, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={[
-                            adminUserManagment.modalInput,
-                            {
-                              backgroundColor: editGradeLevel === index + 1 ? F.primaryLight : F.bg,
-                              marginBottom: 8,
-                            }
-                          ]}
-                          onPress={() => setEditGradeLevel(index + 1)}
-                        >
-                          <Text style={{ 
-                            color: editGradeLevel === index + 1 ? F.primaryDeep : F.ink,
-                            fontFamily: 'Andika-Regular',
-                          }}>
-                            {level}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
+              {selectedUser?.role === 'faculty' && (
+                <View style={adminUserManagment.field}>
+                  <Text style={adminUserManagment.fieldLabel}>Itinalagang Baitang (Assigned Grade Levels)</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {[1, 2, 3].map((level) => (
+                      <TouchableOpacity
+                        key={level}
+                        style={{
+                          paddingVertical: 8,
+                          paddingHorizontal: 16,
+                          borderRadius: 12,
+                          backgroundColor: editAssignedGradeLevels.includes(level) ? F.primaryDeep : F.bg,
+                          borderWidth: 1,
+                          borderColor: F.primaryDeep,
+                        }}
+                        onPress={() => {
+                          if (editAssignedGradeLevels.includes(level)) {
+                            setEditAssignedGradeLevels(editAssignedGradeLevels.filter(l => l !== level));
+                          } else {
+                            setEditAssignedGradeLevels([...editAssignedGradeLevels, level]);
+                          }
+                        }}
+                      >
+                        <Text style={{
+                          color: editAssignedGradeLevels.includes(level) ? F.white : F.primaryDeep,
+                          fontFamily: 'Andika-Bold',
+                          fontSize: 14,
+                        }}>
+                          Baitang {level}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                )}
+                </View>
+              )}
 
-                {selectedUser?.role === 'faculty' && (
-                  <View style={adminUserManagment.field}>
-                    <Text style={adminUserManagment.fieldLabel}>Itinalagang Baitang (Assigned Grade Levels)</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                      {[1, 2, 3].map((level) => (
-                        <TouchableOpacity
-                          key={level}
-                          style={{
-                            paddingVertical: 8,
-                            paddingHorizontal: 16,
-                            borderRadius: 12,
-                            backgroundColor: editAssignedGradeLevels.includes(level) ? F.primaryDeep : F.bg,
-                            borderWidth: 1,
-                            borderColor: F.primaryDeep,
-                          }}
-                          onPress={() => {
-                            if (editAssignedGradeLevels.includes(level)) {
-                              setEditAssignedGradeLevels(editAssignedGradeLevels.filter(l => l !== level));
-                            } else {
-                              setEditAssignedGradeLevels([...editAssignedGradeLevels, level]);
-                            }
-                          }}
-                        >
-                          <Text style={{ 
-                            color: editAssignedGradeLevels.includes(level) ? F.white : F.primaryDeep,
-                            fontFamily: 'Andika-Bold',
-                            fontSize: 14,
-                          }}>
-                            Baitang {level}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={[adminUserManagment.saveActionBtn, editLoading && { opacity: 0.7 }]}
-                  onPress={handleSaveEdit}
-                  disabled={editLoading}
-                >
-                  {editLoading ? <ActivityIndicator color={F.white} /> : <Text style={adminUserManagment.saveActionTxt}>I-update ang User</Text>}
-                </TouchableOpacity>
-               </ScrollView>
-            </View>
+              <TouchableOpacity
+                style={[adminUserManagment.saveActionBtn, editLoading && { opacity: 0.7 }]}
+                onPress={handleSaveEdit}
+                disabled={editLoading}
+              >
+                {editLoading ? <ActivityIndicator color={F.white} /> : <Text style={adminUserManagment.saveActionTxt}>I-update ang User</Text>}
+              </TouchableOpacity>
+            </ScrollView>
           </View>
-        </Modal>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
+

@@ -43,6 +43,7 @@ import UserManagement from './src/Screens/Admin/UserManagement';
 import AdminClassDashboard from './src/Screens/Admin/AdminClassDashboard';
 import AdminClassManagement from './src/Screens/Admin/AdminClassManagement';
 import AdminViewFacultyData from './src/Screens/Admin/AdminViewFacultyData';
+import AdminReadingMaterials from './src/Screens/Admin/AdminReadingMaterials';
 
 // ASSESSMENT PAGE
 import FacultyAssessments from './src/Screens/Faculty/Faculty_Assessments';
@@ -96,12 +97,13 @@ function App() {
             <Stack.Screen name="FacultyStudentMonitor" component={FacultyStudentMonitor} />
             {/* <Stack.Screen name="Faculty" component={FacultyStack} />  */}
 
-            {/* ADMIN PAGES */}
-            <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
-            <Stack.Screen name="UserManagement" component={UserManagement} />
-            <Stack.Screen name="AdminClassDashboard" component={AdminClassDashboard} />
-            <Stack.Screen name="AdminClassManagement" component={AdminClassManagement} />
-            <Stack.Screen name="AdminViewFacultyData" component={AdminViewFacultyData} />
+{/* ADMIN PAGES */}
+             <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
+             <Stack.Screen name="UserManagement" component={UserManagement} />
+             <Stack.Screen name="AdminClassDashboard" component={AdminClassDashboard} />
+             <Stack.Screen name="AdminClassManagement" component={AdminClassManagement} />
+             <Stack.Screen name="AdminViewFacultyData" component={AdminViewFacultyData} />
+             <Stack.Screen name="AdminReadingMaterials" component={AdminReadingMaterials} />
 
 
           </Stack.Navigator>

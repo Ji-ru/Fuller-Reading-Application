@@ -7,19 +7,21 @@ import {
   Dimensions,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  ScrollView,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import {
-  LayoutIcon,
-  UsersIcon,
-  UserProfileIcon,
-  LogoutIcon,
-  ChevronRightIcon,
-  BookOpenIcon,
-  ClipboardListIcon,
-  BriefcaseIcon,
-  InfoIcon
-} from '../GlobalUse/Icons';
+    LayoutIcon,
+    UsersIcon,
+    UserProfileIcon,
+    LogoutIcon,
+    ChevronRightIcon,
+    BookOpenIcon,
+    ClipboardListIcon,
+    BriefcaseIcon,
+    InfoIcon,
+    EditIcon
+  } from '../GlobalUse/Icons';
 import { FacultyColors as F, Radii, Shadows } from '../../Utilities/Theme';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { getUserProfile } from '../../Controller/AuthenticationController';
@@ -103,6 +105,7 @@ const AdminSideMenu: React.FC<AdminSideMenuProps> = ({
     { id: 'UserManagement', label: 'Pamamahala ng User', icon: UsersIcon },
     { id: 'AdminClassDashboard', label: 'Class Dashboard', icon: BookOpenIcon },
     { id: 'AdminClassManagement', label: 'Pamamahala ng Klase', icon: ClipboardListIcon },
+    { id: 'AdminReadingMaterials', label: 'Pamamahala ng Pagbasa', icon: EditIcon },
     { id: 'AdminViewFacultyData', label: 'Faculty Data', icon: BriefcaseIcon },
     { id: 'Tungkol', label: 'Tungkol', icon: InfoIcon },
   ];
@@ -142,30 +145,34 @@ const AdminSideMenu: React.FC<AdminSideMenuProps> = ({
         </View>
 
         <View style={styles.navSection}>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentRoute === item.id;
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentRoute === item.id;
 
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.navItem, isActive && styles.navItemActive]}
-                onPress={() => handleNavigate(item.id)}
-              >
-                <View style={[styles.iconBox, isActive && styles.iconBoxActive]}>
-                  <Icon size={20} color={isActive ? F.white : F.primary} />
-                </View>
-                <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
-                  {item.label}
-                </Text>
-                {isActive && <ChevronRightIcon size={16} color={F.primary} />}
-              </TouchableOpacity>
-            );
-          })}
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.navItem, isActive && styles.navItemActive]}
+                  onPress={() => handleNavigate(item.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.iconBox, isActive && styles.iconBoxActive]}>
+                    <Icon size={20} color={isActive ? F.white : F.primary} />
+                  </View>
+                  <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
+                    {item.label}
+                  </Text>
+                  {isActive && <ChevronRightIcon size={16} color={F.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
+          <View style={styles.spacer} />
+          <TouchableOpacity style={styles.logoutBtn} onPress={onLogout} activeOpacity={0.7}>
             <View style={styles.logoutIconBox}>
               <LogoutIcon size={20} color={F.red} />
             </View>
@@ -212,23 +219,27 @@ const styles = StyleSheet.create({
   navSection: { flex: 1, paddingHorizontal: 16 },
   navItem: {
     flexDirection: 'row', alignItems: 'center',
-    padding: 14, borderRadius: Radii.lg,
-    marginBottom: 8,
+    paddingVertical: 12, paddingHorizontal: 8, borderRadius: Radii.lg,
+    marginBottom: 4,
+    minHeight: 44,
   },
   navItemActive: { backgroundColor: F.white, ...Shadows.subtle },
   iconBox: {
-    width: 40, height: 40, borderRadius: 12,
+    width: 36, height: 36, borderRadius: 10,
     backgroundColor: '#E8F5F5', justifyContent: 'center',
-    alignItems: 'center', marginRight: 14
+    alignItems: 'center', marginRight: 10
   },
   iconBoxActive: { backgroundColor: F.primary },
-  navLabel: { fontSize: 15, fontWeight: '700', color: F.ink },
+  navLabel: { fontSize: 15, fontWeight: '700', color: F.ink, flex: 1 },
   navLabelActive: { color: F.primaryDeep, flex: 1 },
 
   footer: {
     padding: 24,
     borderTopWidth: 1,
     borderTopColor: '#EDF1F7',
+  },
+  spacer: {
+    height: 16,
   },
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center',

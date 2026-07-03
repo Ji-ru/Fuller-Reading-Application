@@ -109,34 +109,37 @@ const createUserDocument = async (
       classCode: userData.classCode || '',
       reading_Level: 'beginner',
     };
-
-    // Auto-enroll student in class if classCode provided
-    if (userData.classCode) {
-      try {
-        const classData = await getClassByCode(userData.classCode.toUpperCase());
-        if (classData && classData.isActive) {
-          await updateDoc(doc(db, 'users', uid), {
-            'studentData.classCode': userData.classCode,
-            updatedAt: serverTimestamp(),
-          });
-
-          await updateDoc(doc(db, 'classes', classData.classId), {
-            studentIds: arrayUnion(uid),
-            updatedAt: serverTimestamp(),
-          });
-        }
-      } catch (e) {
-        console.error('Auto-enroll error:', e);
-      }
-    }
   } else if (userData.role === 'faculty') {
     userDocument.facultyData = {
       assignedGradeLevels: userData.assignedGradeLevels || [],
       assignedClassIds: [],
     };
+  }
 
-    // Auto-create class for faculty
-    if (userData.assignedGradeLevels && userData.assignedGradeLevels.length > 0) {
+  const userRef = doc(db, 'users', uid);
+  await setDoc(userRef, userDocument);
+
+  if (userData.role === 'student' && userData.classCode) {
+    try {
+      const classData = await getClassByCode(userData.classCode.toUpperCase());
+      if (classData && classData.isActive) {
+        await updateDoc(userRef, {
+          'studentData.classCode': userData.classCode,
+          updatedAt: serverTimestamp(),
+        });
+
+        await updateDoc(doc(db, 'classes', classData.classId), {
+          studentIds: arrayUnion(uid),
+          updatedAt: serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      console.error('Auto-enroll error:', e);
+    }
+  }
+
+  if (userData.role === 'faculty' && userData.assignedGradeLevels && userData.assignedGradeLevels.length > 0) {
+    try {
       const initialAssignedGrade = userData.assignedGradeLevels[0];
       await createClass(
         uid,
@@ -144,11 +147,11 @@ const createUserDocument = async (
         userData.lastName,
         initialAssignedGrade,
       );
+    } catch (classError: any) {
+      console.error('Class creation failed (non-fatal):', classError);
+      // Continue registration - user can create class manually later
     }
   }
-
-  const userRef = doc(db, 'users', uid);
-  await setDoc(userRef, userDocument);
 };
 
 export const updateUserProfile = async (
@@ -269,11 +272,10 @@ export const createClass = async (
     const classRef = doc(db, 'classes', classId);
     await setDoc(classRef, classDocument);
 
-    // Update faculty document - MODULAR API
+    // Update faculty document - only update assignedClassIds (assignedGradeLevels already set in createUserDocument)
     const facultyRef = doc(db, 'users', facultyId);
     await updateDoc(facultyRef, {
       'facultyData.assignedClassIds': arrayUnion(classId),
-      'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
       updatedAt: serverTimestamp(),
     });
 

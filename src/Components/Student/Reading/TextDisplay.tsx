@@ -34,15 +34,6 @@ const CheckmarkBadge = () => (
   </View>
 );
 
-const ErrorBadge = () => (
-  <View style={[readingStyles.completionBadge, { backgroundColor: '#e74c3c' }]}>
-    <View style={{ position: 'relative', width: 14, height: 14, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={{ position: 'absolute', width: 2, height: 14, backgroundColor: '#fff', transform: [{ rotate: '45deg' }] }} />
-      <View style={{ position: 'absolute', width: 2, height: 14, backgroundColor: '#fff', transform: [{ rotate: '-45deg' }] }} />
-    </View>
-  </View>
-);
-
 export const PassageDisplay: React.FC<PassageDisplayProps> = ({
   material,
   type,
@@ -141,15 +132,17 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     });
   };
 
-  // ALPHABET DISPLAY
-  if (type === 'alphabet' && isAlphabet(material)) {
-    return (
-      <View style={readingStyles.wordCardContainer}>
-        <View style={[
-          readingStyles.wordCard, 
-        ]}>
+// ALPHABET DISPLAY
+   if (type === 'alphabet' && isAlphabet(material)) {
+     return (
+       <View style={readingStyles.wordCardContainer}>
+         <View style={[
+           readingStyles.wordCard, 
+           isCompleted && isCorrect && readingStyles.completedCard
+         ]}>
+           {isCompleted && isCorrect && <CheckmarkBadge />}
 
-          <View style={readingStyles.clipContainer}>
+           <View style={readingStyles.clipContainer}>
             {/* Decorative shapes to match Hero */}
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.05)', top: -20, right: -20, width: 90, height: 90 }]} />
             <View style={[readingStyles.circleDecor, { backgroundColor: 'rgba(26,122,69,0.03)', bottom: -15, left: -15, width: 60, height: 60 }]} />
@@ -169,15 +162,17 @@ export const PassageDisplay: React.FC<PassageDisplayProps> = ({
     );
   }
 
-  // WORD DISPLAY
-  if (type === 'word' && isWords(material)) {
-    const allWords = material.contrasts.flatMap(c => c.words);
-  
-    return (
-      <View style={readingStyles.wordCardContainer}>
-        <View style={[
-          readingStyles.wordCard, 
-        ]}>
+// WORD DISPLAY
+   if (type === 'word' && isWords(material)) {
+     const allWords = material.contrasts.flatMap(c => c.words);
+    
+     return (
+       <View style={readingStyles.wordCardContainer}>
+         <View style={[
+           readingStyles.wordCard, 
+           isCompleted && isCorrect && readingStyles.completedCard
+         ]}>
+           {isCompleted && isCorrect && <CheckmarkBadge />}
 
           <View style={readingStyles.clipContainer}>
             {/* Decorative shapes to match Hero */}

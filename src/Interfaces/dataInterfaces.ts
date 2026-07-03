@@ -277,3 +277,34 @@ export interface PassageReportDocument {
   wordPerMin?: number;
   totalMiscues?: number;
 }
+
+// =============================================================================
+// CUSTOM READING MATERIAL INTERFACE
+// =============================================================================
+
+export interface CustomReadingMaterial {
+  materialId: string;
+  type: 'word' | 'passage';
+  aralinIndex: number;
+  letter: string;
+
+  // For type === 'word'
+  word?: string;
+  phoneme?: string;
+  ipa?: string;
+
+  // For type === 'passage'
+  title?: string;
+  text?: string;
+  author?: string;
+  category?: string;
+
+  createdBy: string;
+  updatedBy: string;
+  createdAt: any;
+  updatedAt: any;
+
+  scopeType: 'student' | 'class' | 'all';
+  studentIds?: string[];
+  classCodes?: string[];
+}
