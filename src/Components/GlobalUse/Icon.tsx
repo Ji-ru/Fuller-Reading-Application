@@ -50,7 +50,12 @@ export type IconName =
   | 'eye'
   | 'eye-off'
   | 'calendar'
-  | 'unarchive';
+  | 'unarchive'
+  | 'user-alert'
+  | 'success-alert'
+  | 'error-alert'
+  | 'warning-alert'
+  | 'info-alert';
 
 interface IconProps {
   name: IconName;
@@ -857,6 +862,54 @@ const UnarchiveIcon: React.FC<{ size: number; color: string; filled: boolean }> 
   </Svg>
 );
 
+const UserAlertIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    {/* User silhouette */}
+    <Path
+      d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill={filled ? `${color}30` : 'none'}
+    />
+    <Circle cx="8.5" cy="7" r="4" stroke={color} strokeWidth={1.8} fill={filled ? `${color}30` : 'none'} />
+    {/* Warning Exclamation */}
+    <Line x1="20" y1="7" x2="20" y2="13" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
+    <Circle cx="20" cy="17" r="2" fill={color} />
+  </Svg>
+);
+
+const SuccessAlertIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={2} fill={filled ? `${color}30` : 'none'} />
+    <Path d="M8 12.5l3 3 5-6" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const ErrorAlertIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={2} fill={filled ? `${color}30` : 'none'} />
+    <Path d="M15 9l-6 6M9 9l6 6" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const WarningAlertIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 3L2 21h20L12 3z" stroke={color} strokeWidth={2} fill={filled ? `${color}30` : 'none'} strokeLinejoin="round" />
+    <Line x1="12" y1="9" x2="12" y2="15" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
+    <Circle cx="12" cy="18" r="1.5" fill={color} />
+  </Svg>
+);
+
+const InfoAlertIcon: React.FC<{ size: number; color: string; filled: boolean }> = ({ size, color, filled }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={2} fill={filled ? `${color}30` : 'none'} />
+    <Line x1="12" y1="11" x2="12" y2="17" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
+    <Circle cx="12" cy="7" r="1.5" fill={color} />
+  </Svg>
+);
+
 // ─── Icon Router ──────────────────────────────────────────────────────────────
 
 export const Icon: React.FC<IconProps> = ({
@@ -900,6 +953,11 @@ export const Icon: React.FC<IconProps> = ({
     case 'eye-off':   return <EyeOffIcon    size={size} color={color} filled={filled} />;
     case 'calendar':  return <CalendarIcon  size={size} color={color} filled={filled} />;
     case 'unarchive': return <UnarchiveIcon size={size} color={color} filled={filled} />;
+    case 'user-alert':return <UserAlertIcon size={size} color={color} filled={filled} />;
+    case 'success-alert': return <SuccessAlertIcon size={size} color={color} filled={filled} />;
+    case 'error-alert':   return <ErrorAlertIcon size={size} color={color} filled={filled} />;
+    case 'warning-alert': return <WarningAlertIcon size={size} color={color} filled={filled} />;
+    case 'info-alert':    return <InfoAlertIcon size={size} color={color} filled={filled} />;
     default:          return null;
   }
 };

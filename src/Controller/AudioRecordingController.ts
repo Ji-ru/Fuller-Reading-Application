@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Alert } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import { AudioPermissionService } from './PermissionsController';
 import AudioRecord from 'react-native-audio-record';
 
@@ -17,8 +17,18 @@ export const useAudioRecording = () => {
   useEffect(() => {
     initializeAudio();
 
+    // Listen for app state changes (e.g., returning from Settings) to refresh permission status
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        AudioPermissionService.checkPermission()
+          .then(granted => setHasPermission(granted))
+          .catch(err => console.error('Failed to refresh permission on app active:', err));
+      }
+    });
+
     // Cleanup on unmount
     return () => {
+      subscription.remove();
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
       }
@@ -37,24 +47,15 @@ export const useAudioRecording = () => {
     }
   }, []);
 
-  const requestPermission = useCallback(async () => {
-    try {
-      const granted = await AudioPermissionService.ensurePermission();
-      setHasPermission(granted);
-      return granted;
-    } catch (error) {
-      Alert.alert('Error', 'Failed to request microphone permission');
-      return false;
-    }
-  }, []);
-
   const initializeAudio = useCallback(async () => {
     try {
-      await requestPermission();
+      // Use ensurePermission on mount to proactively ask for permission
+      const granted = await AudioPermissionService.ensurePermission();
+      setHasPermission(granted);
     } catch (error) {
-      Alert.alert('Error', 'Failed to initialize audio recording');
+      console.error('Failed to initialize audio recording:', error);
     }
-  }, [requestPermission]);
+  }, []);
 
   /**
    * Caclulate the expected duration of reading the passage
@@ -85,12 +86,10 @@ export const useAudioRecording = () => {
     async (passageText: string) => {
       // Check if granted permission
       if (!hasPermission) {
-        const grantedPermission = await requestPermission();
+        const grantedPermission = await AudioPermissionService.ensurePermission();
+        setHasPermission(grantedPermission);
         if (!grantedPermission) {
-          Alert.alert(
-            'Permission Denied',
-            'Cannot record without microphone permission',
-          );
+          // Alert is already handled by AudioPermissionService.ensurePermission
           return false;
         }
       }
@@ -106,7 +105,7 @@ export const useAudioRecording = () => {
           sampleRate: 16000,
           channels: 1,
           bitsPerSample: 16,
-          audioSource: 6,
+          audioSource: 1, // 1 = MIC (standard), bypasses OEM voice recognition restrictions
           wavFile,
         });
 
@@ -114,21 +113,25 @@ export const useAudioRecording = () => {
 
         const expectedDuration = calculateExpectedDuration(passageText);
 
-        const interval = setInterval(() => {
+        // Clear any pre-existing interval before creating a new one
+        if (recordingIntervalRef.current) {
+          clearInterval(recordingIntervalRef.current);
+        }
+
+        recordingIntervalRef.current = setInterval(() => {
           setRecordTime(prev => {
             const newTime = prev + 1;
             if (newTime > expectedDuration + 10) {
-              clearInterval(interval);
+              if (recordingIntervalRef.current) {
+                clearInterval(recordingIntervalRef.current);
+                recordingIntervalRef.current = null;
+              }
               return newTime;
             }
             return newTime;
           });
         }, 1000);
 
-        if (recordingIntervalRef.current) {
-          clearInterval(recordingIntervalRef.current);
-          recordingIntervalRef.current = null;
-        }
         return true;
       } catch (error) {
         Alert.alert('Recording Error', 'Failed to start recording');
@@ -136,7 +139,7 @@ export const useAudioRecording = () => {
         return false;
       }
     },
-    [hasPermission, requestPermission, calculateExpectedDuration],
+    [hasPermission, calculateExpectedDuration],
   );
 
   /**
@@ -150,6 +153,7 @@ export const useAudioRecording = () => {
 
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
       }
 
       return audioFile;

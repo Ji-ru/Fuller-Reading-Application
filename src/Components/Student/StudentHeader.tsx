@@ -8,6 +8,7 @@ import { StudentColors } from '../../Utilities/Theme';
 
 interface StudentHeaderProps {
   title?: string;
+  leftTitle?: string;
   onBackPress?: () => void;
   onAboutPress: () => void;
   onLogoutPress: () => void;
@@ -27,6 +28,7 @@ function MenuBars() {
 
 export const StudentHeader: React.FC<StudentHeaderProps> = ({ 
   title, 
+  leftTitle,
   onBackPress, 
   onAboutPress, 
   onLogoutPress,
@@ -38,8 +40,10 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({
   return (
     <View style={{ zIndex: 100 }}>
       <View style={upperNav.header}>
-        {/* Back Button */}
-        {onBackPress ? (
+        {/* Back Button or Left Title */}
+        {leftTitle ? (
+          <Text style={styles.headerLogo}>{leftTitle}</Text>
+        ) : onBackPress ? (
           <TouchableOpacity style={styles.backBtn} onPress={onBackPress} activeOpacity={0.7}>
             <Text style={styles.backArrowText}>‹</Text>
           </TouchableOpacity>
@@ -117,6 +121,12 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({
 };
 
 const styles = StyleSheet.create({
+  headerLogo: {
+    fontSize: sf(18),
+    fontFamily: 'Nunito-Black',
+    color: '#2ca96a',
+    letterSpacing: 0.5,
+  },
   menuBtn: {
     width: sw(48), height: sw(48),
     borderRadius: sw(14),

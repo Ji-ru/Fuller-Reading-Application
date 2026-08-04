@@ -511,6 +511,7 @@ export default function PageSelectionScreen() {
         {/* Header */}
         <StudentHeader 
           title="Reading Selection"
+          svgWidth={260}
           onBackPress={handleBackStep}
           onAboutPress={() => handleNextStep('About')}
           onLogoutPress={() => setLogoutVisible(true)}

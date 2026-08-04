@@ -167,7 +167,6 @@ function getTimeGreeting(): string {
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function UserHomeScreen() {
-  const [menuVisible, setMenuVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [firstName, setFirstName] = useState('Learner');
 
@@ -194,46 +193,10 @@ export default function UserHomeScreen() {
 
       {/* Header */}
       <StudentHeader 
-        title="CISC KIDS" 
+        leftTitle="CISC KIDS" 
         onAboutPress={() => handleNextStep('About')}
         onLogoutPress={() => setLogoutVisible(true)}
       />
-
-      {/* Dropdown */}
-      {menuVisible && (
-        <>
-          <TouchableOpacity
-            style={StyleSheet.absoluteFillObject as any}
-            onPress={() => setMenuVisible(false)}
-            activeOpacity={1}
-          />
-          <View style={S.dropdown}>
-            <TouchableOpacity
-              onPress={() => {
-                setMenuVisible(false);
-                handleNextStep('About');
-              }}
-              style={S.dropdownItem}
-              activeOpacity={0.75}
-            >
-              <Icon name="info" size={sw(20)} color={C.slate} filled />
-              <Text style={[S.dropdownText, S.aboutText]}>About</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
-              style={S.dropdownItem}
-              activeOpacity={0.75}
-            >
-              <Image
-                source={require('../../../assets/icons/Logout-icon.png')}
-                style={S.dropdownIcon}
-              />
-              <Text style={S.dropdownText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
 
       {/* ── Responsive Scaled Content ──────────────────────────────────── */}
       <View style={S.mainContent}>
@@ -341,22 +304,6 @@ const S = StyleSheet.create({
     shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
 
-  // Dropdown
-  dropdown: {
-    position: 'absolute', top: sh(72), right: sw(20),
-    backgroundColor: C.white, borderRadius: sw(14),
-    shadowColor: '#000', shadowOffset: { width: 0, height: sh(4) },
-    shadowOpacity: 0.14, shadowRadius: 12, elevation: 10,
-    minWidth: sw(160), zIndex: 1000, paddingVertical: sh(4),
-  },
-  dropdownItem: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: sw(16), paddingVertical: sh(14),
-  },
-  dropdownIcon: { width: sw(20), height: sw(20), marginRight: sw(12), tintColor: C.coral },
-  dropdownText: { fontSize: sf(15), fontFamily: 'Nunito-Bold', color: C.coral },
-  aboutText: { color: C.slate, marginLeft: sw(12) },
-
   mainContent: {
     flex: 1,
     paddingBottom: sh(20),
@@ -390,7 +337,8 @@ const S = StyleSheet.create({
     fontSize: sf(38),
     fontFamily: 'Andika-Bold',
     color: C.ink,
-    lineHeight: sh(46),
+    lineHeight: sh(56),
+    paddingBottom: 4,
     marginBottom: sh(8),
   },
   greetSub: {

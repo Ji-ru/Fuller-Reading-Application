@@ -119,19 +119,26 @@ export default function SignUpTwoScreen() {
   const handleProfilePicChange = () => setActionSheetVisible(true);
 
   const openCamera = () => {
-    launchCamera({ mediaType: 'photo', quality: 0.8, saveToPhotos: true }, handleImageResponse);
+    launchCamera(
+      { mediaType: 'photo', quality: 0.5, maxWidth: 300, maxHeight: 300, includeBase64: true, saveToPhotos: true },
+      handleImageResponse
+    );
   };
 
   const openGallery = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, handleImageResponse);
+    launchImageLibrary(
+      { mediaType: 'photo', quality: 0.5, maxWidth: 300, maxHeight: 300, includeBase64: true },
+      handleImageResponse
+    );
   };
 
   const handleImageResponse = (response: ImagePickerResponse) => {
     if (response.didCancel) return;
     if (response.errorCode) {
       showAlert('Error', 'Failed to pick image. Please try again.');
-    } else if (response.assets?.[0]?.uri) {
-      setProfileImage(response.assets[0].uri);
+    } else if (response.assets?.[0]?.base64) {
+      const base64Image = `data:${response.assets[0].type || 'image/jpeg'};base64,${response.assets[0].base64}`;
+      setProfileImage(base64Image);
     }
   };
 
@@ -205,10 +212,18 @@ export default function SignUpTwoScreen() {
     } catch (error: any) {
       if (!isMounted.current) return;
       setModalVisible(false);
-      const msg = error.message && error.message.includes('timeout-error')
-        ? 'Connection timed out. Please check your internet connection.'
-        : error.message;
-      showAlert('Registration Error', msg);
+
+      let title = 'Registration Error';
+      let msg = error.message;
+
+      if (msg && msg.includes('timeout-error')) {
+        msg = 'Connection timed out. Please check your internet connection.';
+      } else if (msg && msg.includes('auth/email-already-in-use')) {
+        title = 'Account Already Exists';
+        msg = 'This email address is already in use. Please use a different one or log in instead.';
+      }
+
+      showAlert(title, msg);
     }
   };
 
@@ -272,9 +287,11 @@ export default function SignUpTwoScreen() {
                   }
                   style={signup.defaultProfile}
                 />
+                {/* Add image button commented out
                 <TouchableOpacity onPress={handleProfilePicChange} style={signup.cameraBackground}>
                   <Image source={require('../../../assets/icons/Camera-add.png')} style={signup.cameraIcon} />
                 </TouchableOpacity>
+                */}
               </View>
 
               {/* Form */}
@@ -366,6 +383,7 @@ export default function SignUpTwoScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
+      {/* ActionSheetModal (Commented out)
       <ActionSheetModal
         visible={actionSheetVisible}
         onClose={() => setActionSheetVisible(false)}
@@ -376,6 +394,7 @@ export default function SignUpTwoScreen() {
           { text: 'Cancel', onPress: () => setActionSheetVisible(false), isCancel: true }
         ]}
       />
+      */}
 
       <AlertModal
         visible={alertVisible}

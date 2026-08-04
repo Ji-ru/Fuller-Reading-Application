@@ -160,7 +160,7 @@ const S = StyleSheet.create({
   },
   flipCard: {
     width: '100%',
-    minHeight: sh(90),
+    minHeight: sh(110),
     borderRadius: sw(16),
     backgroundColor: C.inputBg,
     borderWidth: 1,
@@ -181,8 +181,7 @@ const S = StyleSheet.create({
   flipText: {
     marginBottom: 0,
     textAlign: 'center',
-    lineHeight: sf(60),
-    includeFontPadding: false,
+    lineHeight: sf(80),
     textAlignVertical: 'center',
   },
   flipTextBack: {
@@ -396,7 +395,11 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
                   style={[
                     S.flipSide, { transform: [{ perspective: 1000 }, { rotateY: flipFrontRotation }] },]}
                 >
-                  <Text style={[S.largeText, S.flipText, !isCorrect && S.flipTextFrontWarning]}>
+                  <Text 
+                    style={[S.largeText, S.flipText, !isCorrect && S.flipTextFrontWarning]}
+                    adjustsFontSizeToFit={true}
+                    numberOfLines={1}
+                  >
                     {targetText}
                   </Text>
                 </Animated.View>
@@ -410,6 +413,8 @@ export const FeedbackResult: React.FC<ReadingFeedbackProps> = ({
                     style={[
                       S.largeText, S.flipText, S.flipTextBack, !isCorrect && S.flipTextBackWarning,
                     ]}
+                    adjustsFontSizeToFit={true}
+                    numberOfLines={1}
                   >
                     {spokenWord}
                   </Text>

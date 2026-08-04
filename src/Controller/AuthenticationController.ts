@@ -556,6 +556,7 @@ export const updateFacultyProfile = async (
     lastName: string;
     email: string;
     sex?: string;
+    profileImageUrl?: string;
   },
 ) => {
   try {
@@ -584,6 +585,7 @@ export const updateFacultyProfile = async (
       lastName: updates.lastName,
       email: updates.email,
       ...(updates.sex ? { sex: updates.sex } : {}),
+      ...(updates.profileImageUrl ? { profileImageUrl: updates.profileImageUrl } : {}),
       updatedAt: serverTimestamp() as Timestamp,
     });
     return { success: true };
@@ -603,6 +605,7 @@ export const updateStudentBasicInfo = async (
     lastName: string;
     sex: string;
     dateOfBirth?: string;
+    profileImageUrl?: string;
   },
 ) => {
   try {
@@ -614,6 +617,7 @@ export const updateStudentBasicInfo = async (
       lastName: updates.lastName,
       sex: updates.sex,
       'studentData.dateOfBirth': updates.dateOfBirth,
+      ...(updates.profileImageUrl ? { profileImageUrl: updates.profileImageUrl } : {}),
       updatedAt: serverTimestamp() as Timestamp,
     });
     return { success: true };

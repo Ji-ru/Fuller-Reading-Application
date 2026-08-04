@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { sw, sh, sf } from '../../../Utils/responsive';
+import { Icon, IconName } from '../Icon';
 
 interface AlertModalProps {
   visible: boolean;
@@ -19,7 +20,7 @@ interface AlertModalProps {
 }
 
 // ─── Theme resolver ───────────────────────────────────────────────────────────
-type ModalTheme = 'success' | 'error' | 'warning' | 'default';
+type ModalTheme = 'success' | 'error' | 'warning' | 'duplicate' | 'default';
 
 function resolveTheme(title: string): ModalTheme {
   const t = title.toLowerCase();
@@ -27,16 +28,19 @@ function resolveTheme(title: string): ModalTheme {
     return 'success';
   if (t.includes('error') || t.includes('failed') || t.includes('invalid') || t.includes('denied'))
     return 'error';
-  if (t.includes('warning') || t.includes('caution') || t.includes('already'))
+  if (t.includes('already'))
+    return 'duplicate';
+  if (t.includes('warning') || t.includes('caution'))
     return 'warning';
   return 'default';
 }
 
-const THEME = {
+const THEME: Record<ModalTheme, { iconBg: string; iconBorder: string; emoji: string; iconName?: IconName; titleColor: string; btnBg: string; btnShadow: string }> = {
   success: {
     iconBg:      '#F0FDF4',
     iconBorder:  '#BBF7D0',
-    emoji:       '✅',
+    emoji:       '',
+    iconName:    'success-alert',
     titleColor:  '#14532D',
     btnBg:       '#16a34a',
     btnShadow:   '#15803d',
@@ -44,7 +48,8 @@ const THEME = {
   error: {
     iconBg:      '#FFF0F0',
     iconBorder:  '#FECACA',
-    emoji:       '❌',
+    emoji:       '',
+    iconName:    'error-alert',
     titleColor:  '#7F1D1D',
     btnBg:       '#DC2626',
     btnShadow:   '#B91C1C',
@@ -52,7 +57,17 @@ const THEME = {
   warning: {
     iconBg:      '#FFFBEB',
     iconBorder:  '#FDE68A',
-    emoji:       '⚠️',
+    emoji:       '',
+    iconName:    'warning-alert',
+    titleColor:  '#78350F',
+    btnBg:       '#D97706',
+    btnShadow:   '#B45309',
+  },
+  duplicate: {
+    iconBg:      '#FFFBEB',
+    iconBorder:  '#FDE68A',
+    emoji:       '',
+    iconName:    'user-alert',
     titleColor:  '#78350F',
     btnBg:       '#D97706',
     btnShadow:   '#B45309',
@@ -60,7 +75,8 @@ const THEME = {
   default: {
     iconBg:      '#EFF6FF',
     iconBorder:  '#BFDBFE',
-    emoji:       'ℹ️',
+    emoji:       '',
+    iconName:    'info-alert',
     titleColor:  '#1E3A5F',
     btnBg:       '#3B7FC9',
     btnShadow:   '#2563EB',
@@ -97,7 +113,11 @@ export default function AlertModal({
 
           {/* Icon circle */}
           <View style={[styles.iconCircle, { backgroundColor: theme.iconBg, borderColor: theme.iconBorder }]}>
-            <Text style={styles.iconEmoji}>{theme.emoji}</Text>
+            {theme.iconName ? (
+              <Icon name={theme.iconName} size={36} color={theme.btnBg} />
+            ) : (
+              <Text style={styles.iconEmoji}>{theme.emoji}</Text>
+            )}
           </View>
 
           {/* Title */}

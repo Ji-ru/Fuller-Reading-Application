@@ -15,6 +15,8 @@ import { useNavigationHelper } from '../../Controller/NavigationController';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
+import ActionSheetModal from '../../Components/GlobalUse/Modal/ActionSheetModal';
+import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { getCurrentUser, getUserProfile, updateFacultyProfile } from '../../Controller/AuthenticationController';
 import { UserDocument } from '../../Interfaces/dataInterfaces';
@@ -158,6 +160,8 @@ export default function FacultyProfile() {
   const [email, setEmail] = useState('');
   const [sex, setSex] = useState('');
   const [profileData, setProfileData] = useState<UserDocument | null>(null);
+  const [newProfileImage, setNewProfileImage] = useState<string | null>(null);
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
 
   const { handleBackStep, handleLogout, handleNextStep } = useNavigationHelper();
 
@@ -203,10 +207,14 @@ export default function FacultyProfile() {
           lastName: lastName.trim(),
           email: email.trim(),
           sex: sex.trim(),
+          profileImageUrl: newProfileImage || profileData?.profileImageUrl,
         });
-        setIsEditing(false);
+        
+        const updatedProfile = await getUserProfile(user.uid);
         showAlert('Success', 'Profile updated successfully!');
         fetchProfileData();
+        setNewProfileImage(null);
+        setIsEditing(false);
       }
     } catch (error: any) {
       showAlert('Update Failed', error.message || 'An error occurred while updating.');
@@ -217,7 +225,34 @@ export default function FacultyProfile() {
 
   const handleCancel = () => {
     setIsEditing(false);
+    setNewProfileImage(null);
     fetchProfileData();
+  };
+
+  const handleImageResponse = (response: ImagePickerResponse) => {
+    if (response.didCancel) return;
+    if (response.errorCode) {
+      showAlert('Error', 'Failed to pick image. Please try again.');
+    } else if (response.assets?.[0]?.base64) {
+      const base64Image = `data:${response.assets[0].type || 'image/jpeg'};base64,${response.assets[0].base64}`;
+      setNewProfileImage(base64Image);
+    }
+  };
+
+  const openCamera = () => {
+    launchCamera(
+      { mediaType: 'photo', quality: 0.5, maxWidth: 300, maxHeight: 300, includeBase64: true, saveToPhotos: true },
+      handleImageResponse
+    );
+    setActionSheetVisible(false);
+  };
+
+  const openGallery = () => {
+    launchImageLibrary(
+      { mediaType: 'photo', quality: 0.5, maxWidth: 300, maxHeight: 300, includeBase64: true },
+      handleImageResponse
+    );
+    setActionSheetVisible(false);
   };
 
   const toggleMenu = () => setMenuVisible(v => !v);
@@ -316,18 +351,35 @@ export default function FacultyProfile() {
             {/* ── Avatar Card ─────────────────────────────────────────────── */}
             <FadeSlideIn delay={60}>
               <View style={S.avatarCard}>
-                <View style={S.avatarRing}>
+                <TouchableOpacity 
+                  activeOpacity={0.8} 
+                  disabled={!isEditing} 
+                  onPress={() => setActionSheetVisible(true)}
+                  style={S.avatarRing}
+                >
                   <Image
                     source={
-                      profileData?.profileImageUrl
-                        ? { uri: profileData.profileImageUrl }
-                        : profileData?.sex === 'male'
-                        ? require('../../../assets/images/Male-profile.png')
-                        : require('../../../assets/images/Female-profile.png')
+                      newProfileImage 
+                        ? { uri: newProfileImage }
+                        : profileData?.profileImageUrl
+                          ? { uri: profileData.profileImageUrl }
+                          : profileData?.sex === 'male'
+                          ? require('../../../assets/images/Male-profile.png')
+                          : require('../../../assets/images/Female-profile.png')
                     }
                     style={S.avatarImage}
                   />
-                </View>
+                  {isEditing && (
+                    <View style={{
+                      position: 'absolute', bottom: 0, right: 0,
+                      backgroundColor: C.primary, width: 32, height: 32, borderRadius: 16,
+                      justifyContent: 'center', alignItems: 'center',
+                      borderWidth: 2, borderColor: '#FFF'
+                    }}>
+                      <Text style={{ fontSize: 16 }}>📷</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
                 <Text style={S.studentName}>
                   {profileData?.firstName} {profileData?.lastName}
                 </Text>
@@ -413,11 +465,21 @@ export default function FacultyProfile() {
         message={alertMessage}
         onClose={() => setAlertVisible(false)}
       />
+
+      <ActionSheetModal
+        visible={actionSheetVisible}
+        title="Update Profile Picture"
+        options={[
+          { text: 'Take Photo', onPress: openCamera },
+          { text: 'Choose from Gallery', onPress: openGallery },
+          { text: 'Cancel', onPress: () => setActionSheetVisible(false), isCancel: true }
+        ]}
+        onClose={() => setActionSheetVisible(false)}
+      />
     </SafeAreaView>
   );
 }
 
-// ─── Hamburger icon ─────────────────────────────────────────────────────────
 function MenuBars() {
   return (
     <View style={{ width: 22, height: 16, justifyContent: 'space-between' }}>

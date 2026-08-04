@@ -19,6 +19,7 @@ import { PassageDisplay } from '../../Components/Student/Reading/TextDisplay';
 import { RecordingControls } from '../../Components/Student/Reading/RecordingControls';
 import { FeedbackResult } from '../../Components/Student/Reading/PassageFeedback';
 import AlertModal from '../../Components/GlobalUse/Modal/AlertModal';
+import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { Miscue } from '../../Interfaces/miscue';
 import { MiscueReportController } from '../../Controller/MiscueReportController';
 import { uploadRecording } from '../../Controller/DriveUploadController';
@@ -200,7 +201,7 @@ export default function ReadingActivityScreenPage() {
     if (type === 'passage' && isPassage(readingMaterial)) {
       const index = allPassages.findIndex((p: any) => p.title === readingMaterial.title);
       if (index >= 0 && index < allPassages.length - 1) {
-        return { type: 'passage', readingMaterial: allPassages[index + 1], wordContext: undefined };
+        return { type: 'passage' as const, readingMaterial: allPassages[index + 1], wordContext: undefined };
       }
     } else if (type === 'word' && isWords(readingMaterial) && wordContext) {
       const { index, total, lessonWords, lesson } = wordPositionInfo;
@@ -211,7 +212,7 @@ export default function ReadingActivityScreenPage() {
           contrasts: [{ phoneme: lesson.title, ipa: '', words: [nextWordText] }]
         };
         const nextContext = { ...wordContext, targetWord: nextWordText };
-        return { type: 'word', readingMaterial: nextWordData, wordContext: nextContext };
+        return { type: 'word' as const, readingMaterial: nextWordData, wordContext: nextContext };
       }
     }
     return null;
@@ -228,7 +229,7 @@ export default function ReadingActivityScreenPage() {
     if (type === 'passage' && isPassage(readingMaterial)) {
       const index = allPassages.findIndex((p: any) => p.title === readingMaterial.title);
       if (index > 0) {
-        return { type: 'passage', readingMaterial: allPassages[index - 1], wordContext: undefined };
+        return { type: 'passage' as const, readingMaterial: allPassages[index - 1], wordContext: undefined };
       }
     } else if (type === 'word' && isWords(readingMaterial) && wordContext) {
       const { index, lessonWords, lesson } = wordPositionInfo;
@@ -239,7 +240,7 @@ export default function ReadingActivityScreenPage() {
           contrasts: [{ phoneme: lesson.title, ipa: '', words: [prevWordText] }]
         };
         const prevContext = { ...wordContext, targetWord: prevWordText };
-        return { type: 'word', readingMaterial: prevWordData, wordContext: prevContext };
+        return { type: 'word' as const, readingMaterial: prevWordData, wordContext: prevContext };
       }
     }
     return null;
@@ -674,11 +675,14 @@ export default function ReadingActivityScreenPage() {
             title: 'Please try again',
             message: 'No speech detected.',
           });
-          setIsReadingCompleted(true);
           return;
         } else {
           setSpokenText('');
-          setIsReadingCompleted(true);
+          setAlertModalConfig({
+            visible: true,
+            title: 'Please try again',
+            message: 'No speech detected.',
+          });
           return;
         }
       }
@@ -1129,6 +1133,12 @@ export default function ReadingActivityScreenPage() {
             </View>
           </View>
         )}
+
+        <LogoutModal
+          visible={logoutVisible}
+          onCancel={() => setLogoutVisible(false)}
+          onConfirm={async () => { setLogoutVisible(false); await handleLogout(); }}
+        />
       </ImageBackground>
     </SafeAreaView >
   );
