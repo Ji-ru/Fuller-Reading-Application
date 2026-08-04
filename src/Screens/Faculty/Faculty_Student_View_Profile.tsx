@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -23,12 +24,15 @@ import { sw, sh, sf } from '../../Utils/responsive';
 import StudentActivityTrackingCard from '../../Components/Faculty/StudentView_Status/Student_TimeTrack';
 import StudentAccuracyTrendsChart from '../../Components/Faculty/StudentView_Status/Student_Accuracy_Chart';
 import StudentMiscueInsights from '../../Components/Faculty/StudentView_Status/Student_MiscueInsights';
-import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
+// import StudentAlphabetMastery from '../../Components/Faculty/StudentView_Status/StudentAlphabetMastery';
 import StudentWordMastery from '../../Components/Faculty/StudentView_Status/StudentWordMastery';
 import StudentCompletionProgress from '../../Components/Faculty/StudentView_Status/StudentCompletionProgress';
 import StudentTotalActivityToday from '../../Components/Faculty/StudentView_Status/StudentTotalActivityToday';
 import FadeSlideIn from '../../Components/GlobalUse/FadeSlideIn';
 import { DateRangeFilter, DateBounds } from '../../Components/GlobalUse/DateRangeFilter';
+import ExportPdf from '../../Components/GlobalUse/ExportPdf';
+import { Icon, IconName } from '../../Components/GlobalUse/Icon';
+import { FacultyColors } from '../../Utilities/Theme';
 
 const C = {
   ink: '#1b2e23',
@@ -95,6 +99,7 @@ export default function StudentViewProfile() {
   // --- Tabs State ---
   const [activeTab, setActiveTab] = useState<ActiveTab>('completion');
   const [isLoadingReports, setIsLoadingReports] = useState(false);
+  const [rawReports, setRawReports] = useState<MiscueReportDocument[]>([]);
   const [groupedReports, setGroupedReports] = useState<GroupedReport[]>([]);
   const [expandedPassages, setExpandedPassages] = useState<Set<number>>(new Set());
 
@@ -112,6 +117,7 @@ export default function StudentViewProfile() {
     try {
       setIsLoadingReports(true);
       const reports = await MiscueReportController.getStudentReports(studentId);
+      setRawReports(reports);
       setGroupedReports(groupReportsByPassage(reports));
     } catch (error) {
       console.error('Failed to fetch reports:', error);
@@ -225,7 +231,17 @@ export default function StudentViewProfile() {
 
   return (
     <SafeAreaView style={facultyStudentView.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingReports}
+            onRefresh={fetchReports}
+            colors={['#008443']}
+            tintColor="#008443"
+          />
+        }
+      >
         <View style={facultyStudentView.innerContainer}>
           <BubbleBackground />
 
@@ -271,38 +287,51 @@ export default function StudentViewProfile() {
             {/* Preserved Block as requested */}
             <View style={facultyStudentView.profileInfoColumn}>
               <Text style={facultyStudentView.studentName}>{studentName}</Text>
-              {/* <View style={facultyStudentView.readingLevelBadge}>
-                <View style={facultyStudentView.readingLevelDot} />
-                <Text style={facultyStudentView.readingLevelText}>
-                  Level {readingLevel}
-                </Text>
-              </View> */}
             </View>
           </View>
 
           {/* TAB SWITCHER (Reused from Student_History) */}
           <FadeSlideIn delay={60}>
+            <View style={tabStyles.exportRow}>
+              <ExportPdf
+                studentId={studentId}
+                gradeLevel={gradeLevel}
+                historyFilter={historyBounds?.range ?? 'week'}
+                historyAnchor={historyBounds?.start ?? new Date()}
+                perfTimeRange={perfBounds?.range ?? 'week'}
+                perfAnchor={perfBounds?.start ?? new Date()}
+              />
+            </View>
+            {/* <View style={tabStyles.tabGrid}></View> */}
             <View style={tabStyles.tabGrid}>
               {(
                 [
-                  { key: 'completion', icon: '📋', label: 'Progress' },
-                  { key: 'sessions', icon: '📚', label: 'Sessions' },
-                  { key: 'performance', icon: '📊', label: 'Analytics' },
-                  { key: 'history', icon: '🕓', label: 'History' },
-                ] as { key: ActiveTab; icon: string; label: string }[]
-              ).map(tab => (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={[tabStyles.tab, activeTab === tab.key && tabStyles.tabActive]}
-                  onPress={() => setActiveTab(tab.key)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={tabStyles.tabIcon}>{tab.icon}</Text>
-                  <Text style={[tabStyles.tabText, activeTab === tab.key && tabStyles.tabTextActive]}>
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                  { key: 'completion', icon: 'progress', label: 'Progress' },
+                  { key: 'sessions', icon: 'sessions', label: 'Sessions' },
+                  { key: 'performance', icon: 'analytics', label: 'Analytics' },
+                  { key: 'history', icon: 'history', label: 'History' },
+                ] as { key: ActiveTab; icon: IconName; label: string }[]
+              ).map(tab => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <TouchableOpacity
+                    key={tab.key}
+                    style={[tabStyles.tab, isActive && tabStyles.tabActive]}
+                    onPress={() => setActiveTab(tab.key)}
+                    activeOpacity={0.8}
+                  >
+                    <Icon
+                      name={tab.icon}
+                      size={sf(18)}
+                      color={isActive ? '#ffffff' : FacultyColors.primary}
+                      filled={isActive}
+                    />
+                    <Text style={[tabStyles.tabText, isActive && tabStyles.tabTextActive]}>
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </FadeSlideIn>
 
@@ -322,21 +351,21 @@ export default function StudentViewProfile() {
             {/* --- SESSIONS TAB --- */}
             {activeTab === 'sessions' && (
               <>
-                <FadeSlideIn delay={80}>
+                {/* <FadeSlideIn delay={80}>
                   <View style={tabStyles.section}>
                     <Text style={tabStyles.sectionTitle}>Total Activity Today</Text>
                     <StudentTotalActivityToday studentId={studentId} />
                   </View>
-                </FadeSlideIn>
-                <FadeSlideIn delay={160}>
+                </FadeSlideIn> */}
+                {/* <FadeSlideIn delay={160}>
                   <View style={tabStyles.section}>
                     <Text style={tabStyles.sectionTitle}>Alphabet Mastery</Text>
                     <StudentAlphabetMastery studentId={studentId} />
                   </View>
-                </FadeSlideIn>
+                </FadeSlideIn> */}
                 <FadeSlideIn delay={240}>
                   <View style={tabStyles.section}>
-                    <Text style={tabStyles.sectionTitle}>Word Mastery</Text>
+                    <Text style={tabStyles.sectionTitle}>Words Completed Today</Text>
                     <StudentWordMastery studentId={studentId} />
                   </View>
                 </FadeSlideIn>
@@ -348,18 +377,18 @@ export default function StudentViewProfile() {
               <>
                 <FadeSlideIn delay={60}>
                   <View style={tabStyles.section}>
-                    <Text style={tabStyles.sectionTitle}>Performance Analytics</Text>
+                    <Text style={tabStyles.sectionTitle}>Date Filter</Text>
                     <DateRangeFilter onRangeChange={setPerfBounds} />
                   </View>
                 </FadeSlideIn>
-                <FadeSlideIn delay={120}>
+                <FadeSlideIn delay={80}>
                   <View style={tabStyles.section}>
-                    <StudentMiscueInsights studentId={studentId} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} />
+                    <StudentAccuracyTrendsChart studentId={studentId} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} prefetchedReports={rawReports} />
                   </View>
                 </FadeSlideIn>
-                <FadeSlideIn delay={180}>
+                <FadeSlideIn delay={160}>
                   <View style={tabStyles.section}>
-                    <StudentAccuracyTrendsChart studentId={studentId} gradeLevel={gradeLevel} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} />
+                    <StudentMiscueInsights studentId={studentId} role="faculty" timeRange={perfBounds?.range ?? 'week'} anchor={perfBounds?.start ?? new Date()} startDate={perfBounds?.start} endDate={perfBounds?.end} prefetchedReports={rawReports} />
                   </View>
                 </FadeSlideIn>
               </>
@@ -370,7 +399,7 @@ export default function StudentViewProfile() {
               <>
                 <FadeSlideIn delay={60}>
                   <View style={tabStyles.section}>
-                    <Text style={tabStyles.sectionTitle}>Reading History Filter</Text>
+                    <Text style={tabStyles.sectionTitle}>Date Filter</Text>
                     <DateRangeFilter onRangeChange={setHistoryBounds} />
                   </View>
                 </FadeSlideIn>
@@ -390,7 +419,7 @@ export default function StudentViewProfile() {
                       </Text>
                       <TouchableOpacity
                         style={historyTabStyles.emptyButton}
-                        onPress={() => { setSelectedDay(null); setSelectedWeekOfMonth(null); setFilterAnchor(new Date()); }}
+                        onPress={() => setHistoryBounds(null)}
                         activeOpacity={0.8}
                       >
                         <Text style={historyTabStyles.emptyButtonText}>Go to Today</Text>
@@ -409,16 +438,6 @@ export default function StudentViewProfile() {
                         <View style={historyTabStyles.statItem}>
                           <Text style={historyTabStyles.statValue}>{getTotalAttempts()}</Text>
                           <Text style={historyTabStyles.statLabel}>Attempts</Text>
-                        </View>
-                        <View style={historyTabStyles.statDivider} />
-                        <View style={historyTabStyles.statItem}>
-                          <Text style={historyTabStyles.statValue}>{getAverageAccuracy()}%</Text>
-                          <Text style={historyTabStyles.statLabel}>Avg. Accuracy</Text>
-                        </View>
-                        <View style={historyTabStyles.statDivider} />
-                        <View style={historyTabStyles.statItem}>
-                          <Text style={historyTabStyles.statValue}>{getBestWPM()}</Text>
-                          <Text style={historyTabStyles.statLabel}>Best WPM</Text>
                         </View>
                       </View>
                     </FadeSlideIn>
@@ -589,154 +608,15 @@ const tabStyles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: sf(15), fontFamily: 'Nunito-Bold', color: '#1B5E20', marginBottom: sh(10),
-  }
-});
-
-const filterStyles = StyleSheet.create({
-  rangeBar: {
+  },
+  exportRow: {
     flexDirection: 'row',
-    backgroundColor: '#E8F5E9',
-    borderRadius: sw(10),
-    padding: sw(3),
-    marginBottom: sh(10),
-  },
-  rangeBtn: {
-    flex: 1,
-    paddingVertical: sh(8),
-    alignItems: 'center',
-    borderRadius: sw(8),
-  },
-  rangeBtnActive: {
-    backgroundColor: '#388E3C',
-    elevation: 2,
-    shadowColor: '#1B5E20',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.2,
-    shadowRadius: sw(2),
-  },
-  rangeBtnText: {
-    fontSize: sf(13),
-    fontFamily: 'Nunito-Bold',
-    color: '#388E3C',
-  },
-  rangeBtnTextActive: { color: '#ffffff' },
-  periodNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: sw(12),
-    paddingVertical: sh(6),
-    paddingHorizontal: sw(6),
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sh(1) },
-    shadowOpacity: 0.05,
-    shadowRadius: sw(2),
-  },
-  arrowBtn: {
-    width: sw(36),
-    height: sw(36),
-    borderRadius: sw(10),
-    backgroundColor: '#E8F5E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrowText: {
-    fontSize: sf(22),
-    fontFamily: 'Nunito-Bold',
-    color: '#388E3C',
-    lineHeight: sf(24),
-  },
-  periodLabelBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: sh(4),
-  },
-  periodLabel: {
-    fontSize: sf(14),
-    fontFamily: 'Nunito-Bold',
-    color: '#1F2937',
-  },
-  dayRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
+    marginHorizontal: sw(16),
+    gap: sw(8),
     marginTop: sh(10),
-    gap: sw(4),
+    marginBottom: sh(4),
   },
-  dayChip: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: sh(8),
-    borderRadius: sw(10),
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-  },
-  dayChipActive: {
-    backgroundColor: '#388E3C',
-    borderColor: '#388E3C',
-    elevation: 2,
-    shadowColor: '#1B5E20',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.2,
-    shadowRadius: sw(2),
-  },
-  dayChipToday: {
-    borderColor: '#388E3C',
-    borderWidth: 1.5,
-  },
-  dayChipLabel: {
-    fontSize: sf(10),
-    fontFamily: 'Nunito-Medium',
-    color: '#6B7280',
-    marginBottom: sh(2),
-  },
-  dayChipLabelActive: { color: '#ffffff' },
-  dayChipDate: {
-    fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
-    color: '#1F2937',
-  },
-  dayChipDateActive: { color: '#ffffff' },
-  activityDot: {
-    width: sw(5),
-    height: sw(5),
-    borderRadius: sw(3),
-    backgroundColor: '#388E3C',
-    marginTop: sh(3),
-  },
-  weekOfMonthRow: {
-    flexDirection: 'row',
-    marginTop: sh(10),
-    gap: sw(6),
-  },
-  weekChip: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: sh(8),
-    borderRadius: sw(8),
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-  },
-  weekChipActive: {
-    backgroundColor: '#388E3C',
-    borderColor: '#388E3C',
-    elevation: 2,
-    shadowColor: '#1B5E20',
-    shadowOffset: { width: 0, height: sw(1) },
-    shadowOpacity: 0.2,
-    shadowRadius: sw(2),
-  },
-  weekChipText: {
-    fontSize: sf(12),
-    fontFamily: 'Nunito-Bold',
-    color: '#388E3C',
-  },
-  weekChipTextActive: { color: '#ffffff' },
 });
 
 const historyTabStyles = StyleSheet.create({
@@ -799,4 +679,5 @@ const historyTabStyles = StyleSheet.create({
   perfectBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: sw(10), padding: sw(10), gap: sw(8), borderWidth: 1, borderColor: '#BBF7D0' },
   perfectIcon: { fontSize: sf(16) },
   perfectText: { fontSize: sf(12), fontFamily: 'Nunito-Bold', color: '#15803D', flex: 1 },
+
 });

@@ -1,29 +1,19 @@
-// React Hooks used in this controller:
-// useState: Manage component state, triggers re-render on change.
-// useEffect: Handle side effects after render (API calls, timers, etc).
-// useRef: Store a mutable value that persists between renders, doesn’t cause re-render.
-// useCallback: Return a memoized callback, only changes if dependencies change.
-// useMemo (not used in this file): Cache expensive computations between renders.
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { AudioPermissionService } from './PermissionsController';
 import AudioRecord from 'react-native-audio-record';
 
 export const useAudioRecording = () => {
-  // useState: Manage state/data in a component. Creates reactive variables.
   const [isRecording, setIsRecording] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
   const [audioPath, setAudioPath] = useState('');
+  const currentWavFileRef = useRef<string>('');
 
-  // useRef: Persist mutable values across renders without causing re-render. Useful for values like intervals.
-  // const recordingIntervalRef = useRef<number>(0);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
 
-  // useEffect: Runs after rendering (side effects: API calls, listeners, etc)
-  // With [] (empty dependency array), runs once after initial render, like componentDidMount.
   useEffect(() => {
     initializeAudio();
 
@@ -61,26 +51,14 @@ export const useAudioRecording = () => {
   const initializeAudio = useCallback(async () => {
     try {
       await requestPermission();
-
-      const options = {
-        sampleRate: 16000,
-        channels: 1,
-        bitsPerSample: 16,
-        audioSource: 6,
-        wavFile: 'reading_test.wav',
-      };
-
-      AudioRecord.init(options);
     } catch (error) {
       Alert.alert('Error', 'Failed to initialize audio recording');
     }
   }, [requestPermission]);
 
   /**
-   * UPDATED!!
    * Caclulate the expected duration of reading the passage
    *  - this is a general expected duration regardless of what alphabet, word, or passage the user selected.
-   * 
    */
   const calculateExpectedDuration = useCallback((passageText: string) => {
     const wordCount = passageText.split(/\s+/).length;
@@ -122,8 +100,18 @@ export const useAudioRecording = () => {
         setRecordTime(0);
         setAudioPath('');
 
+        const wavFile = `rec_${Date.now()}.wav`;
+        currentWavFileRef.current = wavFile;
+        AudioRecord.init({
+          sampleRate: 16000,
+          channels: 1,
+          bitsPerSample: 16,
+          audioSource: 6,
+          wavFile,
+        });
+
         AudioRecord.start();
-          
+
         const expectedDuration = calculateExpectedDuration(passageText);
 
         const interval = setInterval(() => {
@@ -173,7 +161,6 @@ export const useAudioRecording = () => {
 
   /**
    * Formats the time into 0:00 for counting the duration during the start of recording
-   * 
    */
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);

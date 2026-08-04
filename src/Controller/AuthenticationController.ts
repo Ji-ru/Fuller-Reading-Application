@@ -9,7 +9,11 @@ import {
   GoogleAuthProvider,
   signInWithCredential,
   updateEmail,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
 } from '@react-native-firebase/auth';
+import firebase, { initializeApp, getApps } from '@react-native-firebase/app';
 import {
   getFirestore,
   collection,
@@ -18,6 +22,7 @@ import {
   updateDoc,
   getDoc,
   getDocs,
+  getCountFromServer,
   query,
   where,
   limit,
@@ -27,6 +32,8 @@ import {
   startAfter,
   Timestamp,
   orderBy,
+  deleteDoc,
+  writeBatch,
 } from '@react-native-firebase/firestore';
 import {
   UserDocument,
@@ -34,6 +41,11 @@ import {
   ClassDocument,
   UserRole,
   PassageDocument,
+  // ─── Added for student acceptance or rejection to a class by faculty ───────
+  // Migrated to a pendingStudentIds array on ClassDocument; the
+  // EnrollmentRequestDocument type is no longer used.
+  StudentClassState,
+  // ─── End ──────────────────────────────────────────────────────────────────
 } from '../Interfaces/dataInterfaces';
 import { getCurrentAcademicYear } from '../Utilities/acadYearUtils';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
@@ -42,6 +54,24 @@ import { signOutFromGoogle } from '../Utilities/googleAuthUtils';
 // Initialize Firebase instances once
 const auth = getAuth();
 const db = getFirestore();
+
+/* -------------------------------------------------------------
+   SECONDARY APP — used only for admin "Add User" so the primary
+   admin session is never displaced by createUserWithEmailAndPassword.
+   Config mirrors values from google-services.json / GoogleService-Info.plist.
+------------------------------------------------------------- */
+const SECONDARY_APP_NAME = 'AdminCreateUser';
+
+const getOrInitSecondaryApp = async () => {
+  const existing = getApps().find(a => a.name === SECONDARY_APP_NAME);
+  if (existing) return existing;
+
+  // Extract the config dynamically from the default app instance
+  // This is safely populated by google-services.json at runtime
+  const primaryAppConfig = firebase.app().options;
+
+  return await initializeApp(primaryAppConfig, SECONDARY_APP_NAME);
+};
 
 /* -------------------------------------------------------------
    CREATE USER ACCOUNT USING REGULAR
@@ -200,7 +230,7 @@ export const createClass = async (
     const classId = `Class_${Date.now()}_${Math.random()
       .toString(36)
       .substring(2, 9)}`;
-    const classCode = generateClassCode();
+    const classCode = await generateUniqueClassCode();
 
     const classDocument: ClassDocument = {
       classId,
@@ -235,11 +265,20 @@ export const createClass = async (
 /* -------------------------------------------------------------
    CLASS CODE GENERATOR
 ------------------------------------------------------------- */
-const generateClassCode = () => {
+const generateUniqueClassCode = async (): Promise<string> => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let isUnique = false;
   let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  while (!isUnique) {
+    code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const q = query(collection(db, 'classes'), where('classCode', '==', code), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      isUnique = true;
+    }
   }
   return code;
 };
@@ -250,27 +289,39 @@ export const createCustomClass = async (
   gradeLevel: number,
 ) => {
   try {
+    const currentAcadYear = getCurrentAcademicYear();
+    // 1. Check for duplicate class names in the current academic year
+    const classesRef = collection(db, 'classes');
+    const duplicateQuery = query(
+      classesRef,
+      where('className', '==', className),
+      where('acadYear', '==', currentAcadYear),
+    );
+    const duplicateSnapshot = await getDocs(duplicateQuery);
+    if (!duplicateSnapshot.empty) {
+      throw new Error(
+        `The class name "${className}" is already taken for the ${currentAcadYear} academic year.`,
+      );
+    }
+    // 2. Proceed with normal creation
     const classId = `Class_${Date.now()}_${Math.random()
       .toString(36)
       .substring(2, 9)}`;
-    const classCode = generateClassCode();
-
+    const classCode = await generateUniqueClassCode();
     const classDocument: ClassDocument = {
       classId,
       classCode,
       className: className,
       gradeLevel,
-      acadYear: getCurrentAcademicYear(),
+      acadYear: currentAcadYear,
       facultyId,
       studentIds: [],
       status: 'active',
       createdAt: serverTimestamp() as Timestamp,
     };
-
     // Store class - MODULAR API
     const classRef = doc(db, 'classes', classId);
     await setDoc(classRef, classDocument);
-
     // Update faculty document - MODULAR API
     const facultyRef = doc(db, 'users', facultyId);
     await updateDoc(facultyRef, {
@@ -278,10 +329,13 @@ export const createCustomClass = async (
       'facultyData.assignedGradeLevels': arrayUnion(gradeLevel),
       updatedAt: serverTimestamp() as Timestamp,
     });
-
     return classCode;
   } catch (error: any) {
-    throw new Error(`Automatic Class Registration Failed: ${error.message}`);
+    // If it's our custom duplicate error, we throw it cleanly
+    if (error.message.includes('already taken')) {
+      throw error;
+    }
+    throw new Error(`Class Creation Failed: ${error.message}`);
   }
 };
 
@@ -318,6 +372,70 @@ export const AddPassage = async (
   }
 };
 
+/**
+ * Updates an existing passage by its pid.
+ *
+ * @param pid - the passage ID to update
+ * @param updates - the fields to update (title, author, gradeLevel, passageText)
+ * @returns - success flag
+ */
+export const UpdatePassage = async (
+  pid: string,
+  updates: Partial<Omit<PassageDocument, 'pid' | 'createdAt'>>,
+) => {
+  try {
+    const passageRef = doc(db, 'passages', pid);
+    await updateDoc(passageRef, { ...updates });
+    return { success: true };
+  } catch (error: any) {
+    console.error('Updating Passage Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Deletes a passage by its pid.
+ *
+ * @param pid - the passage ID to delete
+ * @returns - success flag
+ */
+export const DeletePassage = async (pid: string) => {
+  try {
+    const passageRef = doc(db, 'passages', pid);
+    await deleteDoc(passageRef);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Deleting Passage Error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Fetches all passages, ordered by creation date (newest first).
+ *
+ * ARCHITECTURAL DECISION (A-5):
+ * Passages are expected to remain primarily local/static per manuscript constraints.
+ * This Firestore fetch intentionally omits a `.limit()` because dynamic passages
+ * should be kept to a strict minimum by design. If this architectural constraint
+ * changes and thousands of passages are migrated to Firestore, a `.limit()` and
+ * pagination must be implemented here.
+ *
+ * @returns - array of PassageDocument
+ */
+export const GetAllPassages = async (): Promise<PassageDocument[]> => {
+  try {
+    const passagesRef = collection(db, 'passages');
+    const q = query(passagesRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(
+      (d: QueryDocumentSnapshot) => d.data() as PassageDocument,
+    );
+  } catch (error: any) {
+    console.error('Fetching Passages Error:', error.message);
+    return [];
+  }
+};
+
 /* -------------------------------------------------------------
    CLASS ARCHIVING AND UNARCHIVING
 ------------------------------------------------------------- */
@@ -335,6 +453,11 @@ export const archiveClass = async (classId: string, facultyId: string) => {
     archivedAt: serverTimestamp() as Timestamp,
     archivedBy: facultyId,
     updatedAt: serverTimestamp() as Timestamp,
+    // ─── Added for student acceptance or rejection to a class by faculty ───
+    // Clear pending join requests so students don't sit in limbo on an
+    // archived class. They can re-request after unarchive if needed.
+    pendingStudentIds: [],
+    // ─── End ──────────────────────────────────────────────────────────────
   });
 };
 
@@ -363,7 +486,7 @@ export const getClassByCode = async (classCode: string) => {
     const q = query(
       classesRef,
       where('classCode', '==', classCode),
-      where('status', '==', 'active'),
+      // where('status', '==', 'active'),
       limit(1),
     );
 
@@ -500,63 +623,755 @@ export const updateStudentBasicInfo = async (
 };
 
 /* -------------------------------------------------------------
+   ADMIN: UPDATE USER (Firestore only)
+   - Updates Firestore fields directly.
+   - Auth email can only be changed for the currently-signed-in user
+     (Firebase client SDK limitation); other users' Firestore email
+     field is updated for display, but their Auth email is unchanged.
+   - Password changes are NOT handled here — use
+     sendAdminPasswordResetEmail() instead (Pattern A).
+------------------------------------------------------------- */
+export const updateUserByAdmin = async (
+  uid: string,
+  updates: {
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    dateOfBirth?: string;
+    email?: string;
+    sex?: string;
+    role?: UserRole;
+    gradeLevel?: number;
+    assignedGradeLevels?: number[];
+  },
+) => {
+  try {
+    const userRef = doc(db, 'users', uid);
+
+    // Use dotted field paths for nested updates so Firestore preserves
+    // sibling fields (e.g. studentData.classCode, studentData.reading_Level,
+    // facultyData.assignedClassIds) instead of replacing the parent map.
+    const payload: Record<string, unknown> = {
+      ...(updates.firstName ? { firstName: updates.firstName } : {}),
+      ...(updates.middleName ? { middleName: updates.middleName } : {}),
+      ...(updates.lastName ? { lastName: updates.lastName } : {}),
+      ...(updates.email ? { email: updates.email } : {}),
+      ...(updates.sex ? { sex: updates.sex } : {}),
+      ...(updates.role ? { role: updates.role } : {}),
+      updatedAt: serverTimestamp() as Timestamp,
+    };
+
+    if (typeof updates.dateOfBirth === 'string') {
+      payload['studentData.dateOfBirth'] = updates.dateOfBirth;
+    }
+
+    if (typeof updates.gradeLevel === 'number') {
+      payload['studentData.gradeLevel'] = updates.gradeLevel;
+    }
+
+    if (updates.assignedGradeLevels) {
+      payload['facultyData.assignedGradeLevels'] = updates.assignedGradeLevels;
+    }
+
+    await updateDoc(userRef, payload);
+
+    // Auth email can only be changed for the currently signed-in user.
+    const currentUser = auth.currentUser;
+    if (
+      currentUser &&
+      currentUser.uid === uid &&
+      updates.email &&
+      currentUser.email !== updates.email
+    ) {
+      await updateEmail(currentUser, updates.email);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Admin user update failed: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   SEND PASSWORD RESET EMAIL (Pattern A)
+   The target user receives a Firebase password-reset email and
+   sets their own new password. Works for any user without admin
+   privilege.
+------------------------------------------------------------- */
+export const sendPasswordResetEmail = async (email: string) => {
+  try {
+    await firebaseSendPasswordResetEmail(auth, email);
+    return { success: true };
+  } catch (error: any) {
+    throw new Error(
+      'Password reset email failed: ' + (error?.message || 'unknown error'),
+    );
+  }
+};
+
+/* -------------------------------------------------------------
+   ADMIN: DELETE USER (client-side Firestore cascade)
+   - Student: remove from any class, delete reports across
+     miscueReports, alphabetSessionReports, alphabetReports,
+     wordSessionReports, wordReports, then delete the user doc.
+   - Faculty: for each owned class, unenroll every student
+     (clear their classCode), delete the class doc, then delete
+     the faculty user doc.
+   - Admin: blocked.
+   NOTE: The Firebase Auth account is NOT removed (client SDK
+   limitation). The orphan Auth row can be cleaned up manually
+   from the Firebase console.
+------------------------------------------------------------- */
+const STUDENT_DATA_COLLECTIONS = [
+  'miscueReports',
+  'alphabetSessions',
+  'alphabetCompleted',
+  'wordSessions',
+  'wordCompleted',
+] as const;
+
+const cascadeDeleteStudent = async (uid: string) => {
+  const studentSnap = await getDoc(doc(db, 'users', uid));
+  const classCode: string | undefined = (
+    studentSnap.data() as UserDocument | undefined
+  )?.studentData?.classCode;
+
+  // Collect all references that need updating or deleting
+  const updateRefs: { ref: any; data: any }[] = [];
+  const deleteRefs: any[] = [];
+
+  if (classCode) {
+    const classQuerySnap = await getDocs(
+      query(collection(db, 'classes'), where('classCode', '==', classCode)),
+    );
+    for (const cls of classQuerySnap.docs) {
+      updateRefs.push({
+        ref: cls.ref,
+        data: {
+          studentIds: arrayRemove(uid),
+          updatedAt: serverTimestamp() as Timestamp,
+        },
+      });
+    }
+  }
+
+  // Strip this UID from any class's pendingStudentIds
+  const pendingMatchesSnap = await getDocs(
+    query(
+      collection(db, 'classes'),
+      where('pendingStudentIds', 'array-contains', uid),
+    ),
+  );
+  for (const cls of pendingMatchesSnap.docs) {
+    updateRefs.push({
+      ref: cls.ref,
+      data: {
+        pendingStudentIds: arrayRemove(uid),
+        updatedAt: serverTimestamp() as Timestamp,
+      },
+    });
+  }
+
+  // Collect all student data documents
+  for (const coll of STUDENT_DATA_COLLECTIONS) {
+    const snap = await getDocs(
+      query(collection(db, coll), where('studentId', '==', uid)),
+    );
+    for (const d of snap.docs) {
+      deleteRefs.push(d.ref);
+    }
+  }
+
+  // Add the user document itself
+  deleteRefs.push(doc(db, 'users', uid));
+
+  // Execute all accumulated operations in chunks of 500
+  const allOps = [...updateRefs.map(u => ({ type: 'update', ...u })), ...deleteRefs.map(r => ({ type: 'delete', ref: r }))];
+  for (let i = 0; i < allOps.length; i += 500) {
+    const batch = writeBatch(db);
+    allOps.slice(i, i + 500).forEach((op: any) => {
+      if (op.type === 'update') batch.update(op.ref, op.data);
+      else batch.delete(op.ref);
+    });
+    await batch.commit();
+  }
+};
+
+const cascadeDeleteFaculty = async (uid: string) => {
+  const facultySnap = await getDoc(doc(db, 'users', uid));
+  const assignedClassIds: string[] =
+    (facultySnap.data() as UserDocument | undefined)?.facultyData
+      ?.assignedClassIds || [];
+
+  for (const classId of assignedClassIds) {
+    const classRef = doc(db, 'classes', classId);
+    const classSnap = await getDoc(classRef);
+    if (!classSnap.exists()) continue;
+
+    const studentIds: string[] =
+      (classSnap.data() as ClassDocument | undefined)?.studentIds || [];
+
+    for (const studentId of studentIds) {
+      await updateDoc(doc(db, 'users', studentId), {
+        'studentData.classCode': '',
+        updatedAt: serverTimestamp() as Timestamp,
+      });
+    }
+
+    await deleteDoc(classRef);
+  }
+
+  await deleteDoc(doc(db, 'users', uid));
+};
+
+export const deleteUserByAdmin = async (uid: string) => {
+  try {
+    const userSnap = await getDoc(doc(db, 'users', uid));
+    if (!userSnap.exists) throw new Error('User not found');
+
+    const role: UserRole = (userSnap.data() as UserDocument).role;
+    if (role === 'admin') throw new Error('Admin accounts cannot be deleted');
+
+    if (role === 'student') {
+      await cascadeDeleteStudent(uid);
+    } else if (role === 'faculty') {
+      await cascadeDeleteFaculty(uid);
+    } else {
+      throw new Error(`Unknown role: ${role}`);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error(
+      'Admin user delete failed: ' + (error?.message || 'unknown error'),
+    );
+  }
+};
+
+/* -------------------------------------------------------------
+   ADMIN: CREATE USER (Pattern B — secondary Firebase app)
+   Uses an isolated secondary app instance so that
+   createUserWithEmailAndPassword does NOT displace the admin's
+   primary session. After creation we sign the secondary app out.
+------------------------------------------------------------- */
+export const createUserByAdmin = async (
+  email: string,
+  password: string,
+  userData: {
+    role: UserRole;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    sex: string;
+    profileImageUrl?: string;
+    gradeLevel?: number;
+    dateOfBirth?: string;
+    assignedGradeLevels?: number[];
+  },
+) => {
+  const secondaryApp = await getOrInitSecondaryApp();
+  const secondaryAuth = getAuth(secondaryApp);
+
+  try {
+    const credential = await createUserWithEmailAndPassword(
+      secondaryAuth,
+      email,
+      password,
+    );
+    const newUid = credential.user.uid;
+
+    await createUserDocument(newUid, email, userData);
+
+    // Sign out the secondary instance so it holds no session.
+    await signOut(secondaryAuth);
+
+    return { success: true, uid: newUid };
+  } catch (error: any) {
+    try {
+      await signOut(secondaryAuth);
+    } catch {
+      /* ignore */
+    }
+    throw new Error(
+      'Admin create user failed: ' + (error?.message || 'unknown error'),
+    );
+  }
+};
+
+/* -------------------------------------------------------------
    JOIN CLASS
 ------------------------------------------------------------- */
 export const joinClass = async (studentId: string, joinClassCode: string) => {
   try {
-    // Search class by code - MODULAR API
+    // 1. Verify student has no active enrollment
+    const studentSnap = await getDoc(doc(db, 'users', studentId));
+    if (!studentSnap.exists()) throw new Error('Student profile not found.');
+    const studentDocData = studentSnap.data() as UserDocument;
+    if (studentDocData.studentData?.classCode) {
+      throw new Error('You are already enrolled in a class. Leave it first.');
+    }
+
+    // 2. Resolve the class by code
     const classesRef = collection(db, 'classes');
     const classQuery = query(
       classesRef,
       where('classCode', '==', joinClassCode),
       limit(1),
     );
+    const classQuerySnap = await getDocs(classQuery);
+    if (classQuerySnap.empty) throw new Error('Invalid class code.');
 
-    const querySnapshot = await getDocs(classQuery);
-
-    if (querySnapshot.empty) throw new Error('Invalid or inactive class code');
-
-    const classDoc = querySnapshot.docs[0];
+    const classDoc = classQuerySnap.docs[0];
     const classData = classDoc.data() as ClassDocument;
-    const classId = classData.classId;
 
-    // Already enrolled?
-    if (classData.studentIds.includes(studentId))
-      throw new Error('Already enrolled in this class');
+    // 3. Only active classes accept new requests / rejoins
+    if (classData.status !== 'active') {
+      throw new Error('This class is no longer accepting new students.');
+    }
 
-    // Add student to class - MODULAR API
-    const classRef = doc(db, 'classes', classId);
-    await updateDoc(classRef, {
-      studentIds: arrayUnion(studentId),
-      updatedAt: serverTimestamp(),
+    // 4. Block if student already has a pending request anywhere
+    const existingPendingSnap = await getDocs(
+      query(
+        collection(db, 'classes'),
+        where('pendingStudentIds', 'array-contains', studentId),
+        limit(1),
+      ),
+    );
+    if (!existingPendingSnap.empty) {
+      throw new Error(
+        'You already have a pending request to another class. Cancel it before requesting a new one.',
+      );
+    }
+
+    // 5. Branch on whether this is a REJOIN or a FIRST-TIME join.
+    //    studentIds preserves historical members across the academic year,
+    //    so presence here means the student was previously approved by faculty.
+    const isReturningMember =
+      classData.studentIds?.includes(studentId) === true;
+
+    if (isReturningMember) {
+      // ─── REJOIN PATH ─────────────────────────────────────────────────────
+      // Instant rejoin — single user-doc write. No pending, no faculty action.
+      await updateDoc(doc(db, 'users', studentId), {
+        'studentData.classCode': classData.classCode,
+        updatedAt: serverTimestamp() as Timestamp,
+      });
+      return {
+        success: true,
+        classId: classData.classId,
+        className: classData.className,
+        status: 'active' as const,
+      };
+    }
+
+    // ─── FIRST-TIME PATH ─────────────────────────────────────────────────────
+    // Atomic batch: pendingStudentIds gets the student, and the student's
+    // own classCode is set preemptively so the resolver can show 'pending'
+    // and later detect accept/reject without ambiguity.
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'classes', classData.classId), {
+      pendingStudentIds: arrayUnion(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
     });
-
-    // Update student's classId - MODULAR API
-    const studentRef = doc(db, 'users', studentId);
-    await updateDoc(studentRef, {
-      'studentData.classCode': joinClassCode,
-      updatedAt: serverTimestamp(),
+    batch.update(doc(db, 'users', studentId), {
+      'studentData.classCode': classData.classCode,
+      updatedAt: serverTimestamp() as Timestamp,
     });
+    await batch.commit();
 
-    return { success: true, classId, className: classData.className };
+    return {
+      success: true,
+      classId: classData.classId,
+      className: classData.className,
+      status: 'pending' as const,
+    };
   } catch (error: any) {
     throw new Error('Failed to join class: ' + error.message);
   }
 };
 
 /* -------------------------------------------------------------
-   LEAVE CLASS
+   ─── Added for student acceptance or rejection to a class by faculty ───
+   ENROLLMENT FUNCTIONS (array-on-class implementation)
+   - cancelJoinRequest:        student withdraws their own pending request
+   - getPendingStudents:       faculty reads the pending UIDs and resolves them
+                                to UserDocument profiles for rendering
+   - acceptStudent:            faculty approves — single atomic batched update
+                                (arrayRemove from pendingStudentIds + arrayUnion
+                                 into studentIds in one operation)
+   - rejectStudent:            faculty declines — arrayRemove only; no trace
+                                remains by design (no audit history)
+   - resolveStudentClassState: Student_MyClass entry point; returns the
+                                discriminated state pending/active/none and
+                                self-heals the student's classCode after a
+                                faculty accept (since faculty cannot write to
+                                the student's user doc under existing rules).
+   ─── End ──────────────────────────────────────────────────────────────────
 ------------------------------------------------------------- */
-export const leaveClass = async (studentId: string, classId: string) => {
+
+// ─── Added for student acceptance or rejection to a class by faculty ─────────
+// ─── Modified for instant-rejoin enrollment flow ─────────────────────────────
+// Batched: arrayRemove from pendingStudentIds AND clear the student's classCode
+// (which was preemptively set by joinClass). Both writes commit atomically.
+export const cancelJoinRequest = async (studentId: string, classId: string) => {
   try {
-    // Remove student from class - MODULAR API
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'classes', classId), {
+      pendingStudentIds: arrayRemove(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    batch.update(doc(db, 'users', studentId), {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    await batch.commit();
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to cancel request: ' + error.message);
+  }
+};
+// ─── End ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Faculty-side: read the pending UIDs from a class doc, then batch-fetch each
+ * student profile so the UI can render names/grade levels.
+ * Firestore `in` queries are limited to 30 elements per query, so we chunk.
+ */
+export const getPendingStudents = async (
+  classId: string,
+): Promise<UserDocument[]> => {
+  try {
+    const classSnap = await getDoc(doc(db, 'classes', classId));
+    if (!classSnap.exists()) return [];
+    const classData = classSnap.data() as ClassDocument;
+    const uids = classData.pendingStudentIds || [];
+    if (uids.length === 0) return [];
+
+    const results: UserDocument[] = [];
+    for (let i = 0; i < uids.length; i += 30) {
+      const chunk = uids.slice(i, i + 30);
+      const chunkSnap = await getDocs(
+        query(collection(db, 'users'), where('uid', 'in', chunk)),
+      );
+      chunkSnap.forEach((d: any) => {
+        results.push(d.data() as UserDocument);
+      });
+    }
+    return results;
+  } catch (error: any) {
+    throw new Error('Failed to fetch pending students: ' + error.message);
+  }
+};
+
+/**
+ * Faculty accepts: atomically move the student from pendingStudentIds to
+ * studentIds on the class doc. The student's own client reconciles their
+ * `studentData.classCode` field on next visit via resolveStudentClassState
+ * (since faculty cannot write to user docs under existing security rules).
+ */
+export const acceptStudent = async (classId: string, studentId: string) => {
+  try {
+    await updateDoc(doc(db, 'classes', classId), {
+      pendingStudentIds: arrayRemove(studentId),
+      studentIds: arrayUnion(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    return { success: true, classId, studentId };
+  } catch (error: any) {
+    throw new Error('Failed to accept student: ' + error.message);
+  }
+};
+
+/**
+ * Faculty rejects: drop the UID from pendingStudentIds. No history is kept.
+ * The student's UI returns to the "No Class Yet" state on next read.
+ */
+export const rejectStudent = async (classId: string, studentId: string) => {
+  try {
+    const batch = writeBatch(db);
+
     const classRef = doc(db, 'classes', classId);
-    await updateDoc(classRef, {
-      studentIds: arrayRemove(studentId),
+    batch.update(classRef, {
+      pendingStudentIds: arrayRemove(studentId),
       updatedAt: serverTimestamp(),
     });
 
-    // Update student's classCode to empty - MODULAR API
+    const userRef = doc(db, 'users', studentId);
+    batch.update(userRef, {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to reject student: ' + error.message);
+  }
+};
+
+// ─── Added for instant-rejoin enrollment flow ─────────────────────────────────
+/**
+ * Faculty manually removes a student from the class roster. This drops the UID
+ * from studentIds — the only path that touches that array now. The student's
+ * own classCode (if still pointing here) self-heals to empty on their next
+ * visit via resolveStudentClassState. After removal, the student's rejoin
+ * via joinClass goes through the FIRST-TIME path (pending → re-approval).
+ */
+export const removeStudentFromClass = async (
+  classId: string,
+  studentId: string,
+) => {
+  try {
+    await updateDoc(doc(db, 'classes', classId), {
+      studentIds: arrayRemove(studentId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to remove student: ' + error.message);
+  }
+};
+// ─── End ──────────────────────────────────────────────────────────────────────
+
+/* -------------------------------------------------------------
+   GET ENROLLED STUDENTS BY CLASS ROSTER
+   ─── Added for studentIds/assignedClassIds source-of-truth refactor ─────
+   Replaces the previous classCode-based query for Faculty_MyStudents.tsx.
+   Source of truth is now the class doc's studentIds array, which:
+     - excludes pending students (they live in pendingStudentIds)
+     - excludes removed students (arrayRemove drops them)
+   Pattern mirrors getPendingStudents: read class doc → chunked `in` queries
+   on users (Firestore caps `in` at 30 elements per query).
+   ─── End ────────────────────────────────────────────────────────────────
+------------------------------------------------------------- */
+export const getEnrolledStudents = async (
+  classId: string,
+): Promise<UserDocument[]> => {
+  try {
+    const classSnap = await getDoc(doc(db, 'classes', classId));
+    if (!classSnap.exists()) return [];
+    const classData = classSnap.data() as ClassDocument;
+    const uids = classData.studentIds || [];
+    if (uids.length === 0) return [];
+
+    const results: UserDocument[] = [];
+    for (let i = 0; i < uids.length; i += 30) {
+      const chunk = uids.slice(i, i + 30);
+      const chunkSnap = await getDocs(
+        query(collection(db, 'users'), where('uid', 'in', chunk)),
+      );
+      chunkSnap.forEach((d: any) => {
+        results.push(d.data() as UserDocument);
+      });
+    }
+    return results;
+  } catch (error: any) {
+    throw new Error('Failed to fetch enrolled students: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   GET FACULTY ASSIGNED CLASSES
+   ─── Added for studentIds/assignedClassIds source-of-truth refactor ─────
+   Replaces the previous facultyId-based query for Faculty_MyClass.tsx and
+   Faculty_MyArchive.tsx. Reads the faculty user doc's assignedClassIds and
+   resolves each ID to its ClassDocument via chunked `in` queries.
+   Callers filter by status='active' / 'archived' as needed.
+   ─── End ────────────────────────────────────────────────────────────────
+------------------------------------------------------------- */
+export const getAssignedClasses = async (
+  facultyId: string,
+): Promise<ClassDocument[]> => {
+  try {
+    const facultySnap = await getDoc(doc(db, 'users', facultyId));
+    if (!facultySnap.exists()) return [];
+    const facultyData = facultySnap.data() as UserDocument;
+    const classIds = facultyData.facultyData?.assignedClassIds || [];
+    if (classIds.length === 0) return [];
+
+    const results: ClassDocument[] = [];
+    for (let i = 0; i < classIds.length; i += 30) {
+      const chunk = classIds.slice(i, i + 30);
+      const chunkSnap = await getDocs(
+        query(collection(db, 'classes'), where('classId', 'in', chunk)),
+      );
+      chunkSnap.forEach((d: any) => {
+        results.push(d.data() as ClassDocument);
+      });
+    }
+    return results;
+  } catch (error: any) {
+    throw new Error('Failed to fetch assigned classes: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   DELETE CLASS BY FACULTY
+   ─── Added for studentIds/assignedClassIds source-of-truth refactor ─────
+   Atomic deletion of a class owned by the calling faculty:
+     1. Remove classId from faculty's assignedClassIds
+     2. Delete the class document
+   Both writes are batched, so either both succeed or both roll back.
+
+   The previous hook-based deleteClass silently failed at step 2 because
+   the security rule blocked faculty deletion. This function relies on the
+   updated rule that allows faculty to delete classes where they are the
+   owning facultyId.
+
+   Student cleanup: any student whose classCode points to this deleted
+   class self-heals on their next visit via resolveStudentClassState
+   (classCode → non-existent class → cleared).
+   ─── End ────────────────────────────────────────────────────────────────
+------------------------------------------------------------- */
+export const deleteClassByFaculty = async (
+  classId: string,
+  facultyId: string,
+) => {
+  try {
+    const classRef = doc(db, 'classes', classId);
+    const classSnap = await getDoc(classRef);
+    if (!classSnap.exists()) {
+      throw new Error('Class not found.');
+    }
+    const classData = classSnap.data() as ClassDocument;
+    if (classData.facultyId !== facultyId) {
+      throw new Error('Not authorized to delete this class.');
+    }
+
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'users', facultyId), {
+      'facultyData.assignedClassIds': arrayRemove(classId),
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    batch.delete(classRef);
+    await batch.commit();
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to delete class: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   DELETE CLASS BY ADMIN
+   Admin-authority deletion of any class (no owner-match guard).
+   Reads the class doc to find its owning facultyId, then atomically:
+     1. Remove classId from that faculty's assignedClassIds
+     2. Delete the class document
+   Students whose classCode points here self-heal on their next
+   visit via resolveStudentClassState (same as deleteClassByFaculty).
+------------------------------------------------------------- */
+export const deleteClassByAdmin = async (classId: string) => {
+  try {
+    const classRef = doc(db, 'classes', classId);
+    const classSnap = await getDoc(classRef);
+    if (!classSnap.exists()) {
+      throw new Error('Class not found.');
+    }
+    const classData = classSnap.data() as ClassDocument;
+
+    const batch = writeBatch(db);
+    if (classData.facultyId) {
+      batch.update(doc(db, 'users', classData.facultyId), {
+        'facultyData.assignedClassIds': arrayRemove(classId),
+        updatedAt: serverTimestamp() as Timestamp,
+      });
+    }
+    batch.delete(classRef);
+    await batch.commit();
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error('Failed to delete class: ' + error.message);
+  }
+};
+
+/**
+ * ─── Modified for instant-rejoin enrollment flow ───────────────────────────
+ * Anchored on the student's own classCode. joinClass and cancelJoinRequest
+ * keep it in sync; resolver reads the referenced class doc to decide whether
+ * the student is pending, active, or got rejected (in which case it self-heals
+ * classCode back to empty).
+ *
+ * - classCode empty            → 'none'
+ * - classCode set, in pending  → 'pending'
+ * - classCode set, in studentIds AND active → 'active'
+ * - classCode set, neither     → faculty rejected / archived / kicked
+ *                                → clear classCode, return 'none'
+ * ─── End ───────────────────────────────────────────────────────────────────
+ */
+export const resolveStudentClassState = async (
+  studentId: string,
+): Promise<StudentClassState> => {
+  try {
+    // 1. Pull the student's profile to read classCode anchor
+    const studentSnap = await getDoc(doc(db, 'users', studentId));
+    if (!studentSnap.exists()) throw new Error('Student profile not found.');
+    const student = studentSnap.data() as UserDocument;
+    const currentCode = student.studentData?.classCode || '';
+
+    if (!currentCode) {
+      return { kind: 'none' };
+    }
+
+    // 2. Fetch the referenced class. We deliberately do NOT filter by
+    //    status='active' here so we can detect 'archived' and self-heal.
+    const classSnap = await getDocs(
+      query(
+        collection(db, 'classes'),
+        where('classCode', '==', currentCode),
+        limit(1),
+      ),
+    );
+
+    // 2a. classCode points to a class that no longer exists → clear it
+    if (classSnap.empty) {
+      await updateDoc(doc(db, 'users', studentId), {
+        'studentData.classCode': '',
+        updatedAt: serverTimestamp() as Timestamp,
+      });
+      return { kind: 'none' };
+    }
+
+    const cls = classSnap.docs[0].data() as ClassDocument;
+
+    // 3. Pending? Faculty hasn't decided yet.
+    if (cls.pendingStudentIds?.includes(studentId)) {
+      return { kind: 'pending', class: cls };
+    }
+
+    // 4. Active enrollment? In studentIds AND class is active.
+    if (cls.status === 'active' && cls.studentIds?.includes(studentId)) {
+      return { kind: 'active', class: cls };
+    }
+
+    // 5. Otherwise: rejected, archived, or faculty kicked them — clear the
+    //    stale classCode so the student can join a new class cleanly.
+    await updateDoc(doc(db, 'users', studentId), {
+      'studentData.classCode': '',
+      updatedAt: serverTimestamp() as Timestamp,
+    });
+    return { kind: 'none' };
+  } catch (error: any) {
+    throw new Error('Failed to resolve student class state: ' + error.message);
+  }
+};
+// ─── End — student acceptance or rejection to a class by faculty ─────────────
+
+/* -------------------------------------------------------------
+   LEAVE CLASS
+------------------------------------------------------------- */
+export const leaveClass = async (studentId: string, _classId: string) => {
+  try {
+    // ─── Modified for instant-rejoin enrollment flow ─────────────────────────
+    // Lightweight leave: only clear the student's classCode. studentIds on the
+    // class doc is left intact so the year's roster is preserved, and so a
+    // returning student can rejoin instantly via the REJOIN path in joinClass.
+    // Faculty's removeStudentFromClass() is the only way to truly drop a UID
+    // from studentIds (and that's their explicit, manual action).
+    // _classId is kept in the signature for caller compatibility.
+    // ─── End ─────────────────────────────────────────────────────────────────
     const studentRef = doc(db, 'users', studentId);
     await updateDoc(studentRef, {
       'studentData.classCode': '',
@@ -566,6 +1381,45 @@ export const leaveClass = async (studentId: string, classId: string) => {
     return { success: true };
   } catch (error: any) {
     throw new Error('Failed to leave class: ' + error.message);
+  }
+};
+
+/* -------------------------------------------------------------
+   VERIFY CURRENT USER PASSWORD
+------------------------------------------------------------- */
+export const verifyCurrentUserPassword = async (password: string) => {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('No authenticated user found.');
+    if (!currentUser.email) throw new Error('User has no email.');
+
+    // Check if user has a password provider
+    const hasPasswordProvider = currentUser.providerData.some(
+      provider => provider.providerId === 'password',
+    );
+
+    // If user only signed in with Google (no password provider), bypass password check
+    if (!hasPasswordProvider) {
+      return { success: true, bypassed: true };
+    }
+
+    const credential = EmailAuthProvider.credential(
+      currentUser.email,
+      password,
+    );
+    await reauthenticateWithCredential(currentUser, credential);
+    return { success: true, bypassed: false };
+  } catch (error: any) {
+    let errorMessage = 'Password verification failed.';
+    if (
+      error.code === 'auth/wrong-password' ||
+      error.code === 'auth/invalid-credential'
+    ) {
+      errorMessage = 'Incorrect password.';
+    } else if (error.code === 'auth/too-many-requests') {
+      errorMessage = 'Too many failed attempts. Please try again later.';
+    }
+    throw new Error(errorMessage);
   }
 };
 
@@ -597,14 +1451,12 @@ export const createMiscueReport = async (
 ------------------------------------------------------------- */
 export const getStudentClass = async (studentId: string) => {
   try {
-    console.log('This is studentId: ' + studentId);
 
     // 1. Get student’s document to retrieve the stored classCode
     const studentRef = doc(db, 'users', studentId);
     const studentSnap = await getDoc(studentRef);
     const studentData = studentSnap.data() as UserDocument;
     const classCode = studentData?.studentData?.classCode;
-    console.log('This is class code: ' + classCode);
 
     // No class enrolled
     if (!classCode) return null;
@@ -652,28 +1504,30 @@ export const loginUser = async (email: string, password: string) => {
   } catch (error: any) {
     let errorMessage = 'Login failed. Please try again.';
 
-    // Handle specific Firebase errors
     switch (error.code) {
       case 'auth/invalid-email':
-        errorMessage = 'Invalid email address.';
-        break;
       case 'auth/user-not-found':
-        errorMessage = 'No account found with this email.';
-        break;
       case 'auth/wrong-password':
-        errorMessage = 'Incorrect password. Please try again.';
+      case 'auth/invalid-credential':
+        errorMessage = 'Invalid email or password.';
+        break;
+      case 'auth/network-request-failed':
+        errorMessage = 'Network error. Please check your connection.';
         break;
       case 'auth/too-many-requests':
-        errorMessage = 'Too many failed attempts. Please try again later.';
+        errorMessage =
+          'Too many failed attempts. Please try again in a few minutes.';
         break;
       case 'auth/user-disabled':
         errorMessage = 'This account has been disabled.';
         break;
       default:
-        errorMessage = error.message || 'Login failed. Please try again.';
+        errorMessage = 'Login failed. Please try again.';
     }
 
-    throw new Error(errorMessage);
+    const err = new Error(errorMessage);
+    (err as any).code = error.code;
+    throw err;
   }
 };
 
@@ -694,7 +1548,7 @@ export const logoutUser = async () => {
     if (currentUser) {
       // Check if the user is signed in via Google
       const isGoogleUser = currentUser.providerData.some(
-        (profile) => profile.providerId === 'google.com',
+        profile => profile.providerId === 'google.com',
       );
 
       if (isGoogleUser) {
@@ -975,6 +1829,251 @@ export const getUsersByRole = async (role?: UserRole, acadYear?: string) => {
 };
 
 // ==============================================================================================================
+// GET STUDENT GENDER DISTRIBUTION
+// ==============================================================================================================
+
+export interface GenderDistribution {
+  male: number;
+  female: number;
+  other: number;
+  total: number;
+}
+
+/**
+ * Counts enrolled students by sex (male / female / other).
+ *
+ * Scope is driven by the options:
+ *  - classId  → only students on that class's roster (studentIds)
+ *  - acadYear → only students whose classCode belongs to a class in that
+ *               academic year
+ *  - neither  → all students system-wide
+ *
+ * Used by the gender pie chart on the Admin dashboard (acadYear scope),
+ * the Faculty dashboard, and the Admin per-class dashboard (classId scope).
+ */
+export const getStudentGenderDistribution = async (
+  options: { classId?: string; acadYear?: string } = {},
+): Promise<GenderDistribution> => {
+  try {
+    const tally = (students: UserDocument[]): GenderDistribution => {
+      let male = 0;
+      let female = 0;
+      let other = 0;
+      students.forEach(student => {
+        const sex = (student.sex || '').toLowerCase();
+        if (sex === 'male') male++;
+        else if (sex === 'female') female++;
+        else other++;
+      });
+      return { male, female, other, total: students.length };
+    };
+
+    // Class-scoped: reuse the roster resolver (reads studentIds → profiles).
+    if (options.classId) {
+      const students = await getEnrolledStudents(options.classId);
+      return tally(students);
+    }
+
+    // We check both lowercase and Capitalized versions to ensure accuracy
+    const MALE_KEYS = ['male', 'Male'];
+    const FEMALE_KEYS = ['female', 'Female'];
+
+    let maleCount = 0;
+    let femaleCount = 0;
+    let otherCount = 0;
+    let totalStudents = 0;
+
+    if (options.acadYear) {
+      // Limit to students whose classCode belongs to a class in this acad year.
+      const { classCodes } = await getClassesByAcadYear(options.acadYear);
+      const codes = Array.from(classCodes);
+      if (codes.length === 0) return { male: 0, female: 0, other: 0, total: 0 };
+
+      // Firestore caps `in` queries at 30 elements, so chunk the codes.
+      for (let i = 0; i < codes.length; i += 30) {
+        const chunk = codes.slice(i, i + 30);
+
+        // 1. Get total students in chunk
+        const totalSnap = await getCountFromServer(query(
+          collection(db, 'users'), 
+          where('role', '==', 'student'), 
+          where('studentData.classCode', 'in', chunk)
+        ));
+        const chunkTotal = totalSnap.data().count;
+
+        // 2. Count males and females explicitly
+        const countGendersInChunk = async (sexKeys: string[]) => {
+          const promises = sexKeys.map(sexKey => 
+            getCountFromServer(query(
+              collection(db, 'users'), 
+              where('role', '==', 'student'), 
+              where('studentData.classCode', 'in', chunk),
+              where('sex', '==', sexKey)
+            ))
+          );
+          const snaps = await Promise.all(promises);
+          return snaps.reduce((acc, snap) => acc + snap.data().count, 0);
+        };
+
+        const [m, f] = await Promise.all([
+          countGendersInChunk(MALE_KEYS),
+          countGendersInChunk(FEMALE_KEYS),
+        ]);
+
+        maleCount += m;
+        femaleCount += f;
+        totalStudents += chunkTotal;
+      }
+      otherCount = totalStudents - maleCount - femaleCount;
+    } else {
+      // System-wide: every student.
+      const totalSnap = await getCountFromServer(query(
+        collection(db, 'users'), 
+        where('role', '==', 'student')
+      ));
+      totalStudents = totalSnap.data().count;
+
+      const countSystemGenders = async (sexKeys: string[]) => {
+        const promises = sexKeys.map(sexKey => 
+          getCountFromServer(query(
+            collection(db, 'users'), 
+            where('role', '==', 'student'), 
+            where('sex', '==', sexKey)
+          ))
+        );
+        const snaps = await Promise.all(promises);
+        return snaps.reduce((acc, snap) => acc + snap.data().count, 0);
+      };
+
+      const [m, f] = await Promise.all([
+        countSystemGenders(MALE_KEYS),
+        countSystemGenders(FEMALE_KEYS),
+      ]);
+
+      maleCount = m;
+      femaleCount = f;
+      otherCount = totalStudents - maleCount - femaleCount;
+    }
+
+    return { male: maleCount, female: femaleCount, other: otherCount, total: totalStudents };
+  } catch (error: any) {
+    throw new Error('Failed to get gender distribution: ' + error.message);
+  }
+};
+
+// ==============================================================================================================
+// GET STUDENT GRADE-LEVEL DISTRIBUTION
+// ==============================================================================================================
+
+export interface GradeLevelDistribution {
+  byGrade: Record<number, { enrolled: number; unenrolled: number }>;
+  total: number;
+  totalEnrolled: number;
+  totalUnenrolled: number;
+}
+
+/**
+ * Counts enrolled students grouped by the grade level of the class they are
+ * enrolled in (NOT the student's own studentData.gradeLevel).
+ *
+ *  - acadYear provided → only classes in that academic year
+ *  - acadYear omitted  → all classes (every academic year)
+ *
+ * Only students whose studentData.classCode currently points to one of those
+ * classes are counted, so the result reflects active enrollment (students who
+ * left, clearing their classCode, are excluded).
+ *
+ * Used by the "Students per Grade Level" chart on the Admin dashboard.
+ */
+export const getStudentGradeLevelDistribution = async (
+  acadYear?: string,
+): Promise<GradeLevelDistribution> => {
+  try {
+    // 1. Resolve the relevant classes and group class codes by grade level
+    const classesQuery = acadYear
+      ? query(collection(db, 'classes'), where('acadYear', '==', acadYear))
+      : query(collection(db, 'classes'));
+    const classesSnap = await getDocs(classesQuery);
+
+    const gradeToCodes = new Map<number, string[]>();
+    classesSnap.forEach((d: any) => {
+      const data = d.data() as ClassDocument;
+      if (data.classCode && typeof data.gradeLevel === 'number') {
+        const codes = gradeToCodes.get(data.gradeLevel) || [];
+        codes.push(data.classCode);
+        gradeToCodes.set(data.gradeLevel, codes);
+      }
+    });
+
+    const byGrade: Record<number, { enrolled: number; unenrolled: number }> = {};
+    let totalEnrolled = 0;
+    let totalUnenrolled = 0;
+
+    // Helper to chunk arrays (Firestore 'in' queries are limited to 30)
+    const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
+      }
+      return chunks;
+    };
+
+    // 2. Run getCountFromServer chunks for each grade level (ENROLLED)
+    const enrolledPromises = Array.from(gradeToCodes.entries()).map(async ([grade, codes]) => {
+      const chunks = chunkArray(codes, 10);
+      const chunkPromises = chunks.map(chunk => 
+        getCountFromServer(query(
+          collection(db, 'users'),
+          where('role', '==', 'student'),
+          where('studentData.classCode', 'in', chunk)
+        ))
+      );
+
+      const snaps = await Promise.all(chunkPromises);
+      const gradeTotal = snaps.reduce((acc, snap) => acc + snap.data().count, 0);
+      return { grade, count: gradeTotal };
+    });
+
+    // 3. Run getCountFromServer for each grade level (UNENROLLED)
+    // Unenrolled students are identified by having no classCode but a specified gradeLevel
+    const supportedGrades = [1, 2, 3];
+    const unenrolledPromises = supportedGrades.map(async (grade) => {
+      const snap = await getCountFromServer(query(
+        collection(db, 'users'),
+        where('role', '==', 'student'),
+        where('studentData.gradeLevel', '==', grade),
+        where('studentData.classCode', '==', '')
+      ));
+      return { grade, count: snap.data().count };
+    });
+
+    const enrolledResults = await Promise.all(enrolledPromises);
+    const unenrolledResults = await Promise.all(unenrolledPromises);
+
+    enrolledResults.forEach(({ grade, count }) => {
+      if (!byGrade[grade]) byGrade[grade] = { enrolled: 0, unenrolled: 0 };
+      byGrade[grade].enrolled += count;
+      totalEnrolled += count;
+    });
+
+    unenrolledResults.forEach(({ grade, count }) => {
+      if (!byGrade[grade]) byGrade[grade] = { enrolled: 0, unenrolled: 0 };
+      byGrade[grade].unenrolled += count;
+      totalUnenrolled += count;
+    });
+
+    return { 
+      byGrade, 
+      total: totalEnrolled + totalUnenrolled, 
+      totalEnrolled, 
+      totalUnenrolled 
+    };
+  } catch (error: any) {
+    throw new Error('Failed to get grade-level distribution: ' + error.message);
+  }
+};
+
+// ==============================================================================================================
 // GET CURRENT USER RETRIEVAL
 // ==============================================================================================================
 
@@ -997,3 +2096,4 @@ export const getCurrentUserSex = async (): Promise<string | null> => {
     return null; // fallback
   }
 };
+

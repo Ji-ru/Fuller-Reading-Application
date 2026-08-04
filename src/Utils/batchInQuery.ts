@@ -32,5 +32,5 @@ export async function batchGetDocsByStudentIds(
     ),
   );
 
-  return results.flatMap(snap => snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  return results.flatMap((snap: any) => snap.docs.map((d: any) => ({ id: d.id, ...d.data() })));
 }

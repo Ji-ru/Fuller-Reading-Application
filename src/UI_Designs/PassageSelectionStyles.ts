@@ -33,7 +33,7 @@ const selection = StyleSheet.create({
   // ==========================================
   label: {
     fontSize: sf(35),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: '#3B7FC9',
     elevation: 5,
     shadowColor: '#000',
@@ -43,8 +43,8 @@ const selection = StyleSheet.create({
     textAlign: 'center',
   },
   sublabel: {
-    fontFamily: 'Nunito-Bold',
-    fontSize: sf(20),
+    fontFamily: 'Andika-Bold',
+    fontSize: sf(18),
     color: '#388E3C',
     alignSelf: 'flex-start',
   },
@@ -99,7 +99,7 @@ const selection = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: sh(12),
+    paddingVertical: sh(8),
     alignItems: 'center',
     borderRadius: sw(8),
   },
@@ -119,12 +119,12 @@ const selection = StyleSheet.create({
     shadowOffset: { width: 0, height: sw(2) },
     shadowOpacity: 0.25,
     shadowRadius: sw(3.84),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
   },
   activeTabText: {
     color: '#FFFFFF',
     fontSize: sf(18),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
   },
 
   // ==========================================
@@ -223,7 +223,7 @@ const selection = StyleSheet.create({
   },
   letterListContainer: {
     paddingHorizontal: sw(10),
-    paddingBottom: sh(20),
+    paddingBottom: sh(5),
   },
   letterCard: {
     backgroundColor: '#FFFFFF',
@@ -239,13 +239,13 @@ const selection = StyleSheet.create({
   letterCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: sw(16),
+    padding: sw(10),
   },
   letterIconContainer: {
     width: sw(56),
     height: sw(56),
     borderRadius: sw(28),
-    backgroundColor: '#81C784',
+    backgroundColor: '#c0e8f2',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: sw(16),
@@ -260,19 +260,19 @@ const selection = StyleSheet.create({
   },
   letterTitle: {
     fontSize: sf(18),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#1F2937',
-    marginBottom: sh(4),
+    // marginBottom: sh(1),
   },
   letterSubtitle: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: '#6B7280',
-    marginBottom: sh(4),
+    // marginBottom: sh(1),
   },
   letterProgress: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#2CA96A',
   },
   letterArrowContainer: {
@@ -294,7 +294,7 @@ const selection = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#c0e8f2',
-    paddingVertical: sh(12),
+    paddingVertical: sh(10),
     paddingHorizontal: sw(14),
     borderRadius: sw(16),
     marginHorizontal: sw(10),
@@ -308,7 +308,7 @@ const selection = StyleSheet.create({
   combinedBackBtn: {
     width: sw(44),
     height: sw(44),
-    borderRadius: sw(22),
+    borderRadius: sw(16),
     backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
@@ -320,9 +320,9 @@ const selection = StyleSheet.create({
     shadowRadius: sw(2),
   },
   combinedBackArrow: {
-    fontSize: sf(22),
+    fontSize: sf(30),
     color: '#3B7FC9',
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-ExtraBold',
     lineHeight: sf(24),
   },
   combinedTitleCol: {
@@ -330,14 +330,14 @@ const selection = StyleSheet.create({
   },
   combinedTitle: {
     fontSize: sf(16),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#1F2937',
     marginBottom: sh(4),
     lineHeight: sf(22),
   },
   combinedSubtitle: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: '#6B7280',
   },
   phonemeListContainer: {
@@ -367,7 +367,7 @@ const selection = StyleSheet.create({
     width: sw(44),
     height: sw(44),
     borderRadius: sw(22),
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#c0e8f2',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: sw(12),
@@ -379,14 +379,14 @@ const selection = StyleSheet.create({
     flex: 1,
   },
   phonemeTitle: {
-    fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
+    fontSize: sf(20),
+    fontFamily: 'Andika-Bold',
     color: '#374151',
     marginBottom: sh(2),
   },
   phonemeIPA: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: '#6B7280',
   },
   wordsGrid: {
@@ -397,7 +397,7 @@ const selection = StyleSheet.create({
   wordBubble: {
     backgroundColor: '#F3F4F6',
     paddingVertical: sh(12),
-    paddingHorizontal: sw(18),
+    paddingHorizontal: sw(15),
     borderRadius: sw(20),
     marginBottom: sh(8),
     borderWidth: 2,
@@ -410,7 +410,7 @@ const selection = StyleSheet.create({
   },
   wordBubbleText: {
     fontSize: sf(20),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: '#374151',
   },
   wordBubbleTextCompleted: {
@@ -503,11 +503,11 @@ const selection = StyleSheet.create({
   title: {
     fontSize: sf(20),
     color: '#008443',
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
   },
   author: {
     color: '#2CA96A',
-    fontFamily: 'Nunito-Regular',
+    fontFamily: 'Andika-Regular',
     fontSize: sf(15),
   },
   arrowContainer: {

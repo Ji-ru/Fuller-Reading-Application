@@ -6,7 +6,6 @@ import {
   ClassReadingHealth,
 } from '../Interfaces/miscue';
 import { getForStudentsMiscueStats } from './use_ForStudentMiscueStats';
-import { useClassReadingHealth } from './use_ClassReadingHealth';
 import { getFacultyClasses_Student } from './use_FacultyClasses_Students';
 import { FilterOptions } from '../Interfaces/miscue';
 
@@ -18,43 +17,58 @@ export const useFacultyClassesFilter = (facultyId: string | null) => {
     classId: string;
     className: string;
     gradeLevel: number;
+    acadYear: string;
+    totalStudents: number;
   }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { getFacultyClasses } = getFacultyClasses_Student;
 
   useEffect(() => {
+    let alive = true;
     const fetchClasses = async () => {
       try {
         setLoading(true);
         setError(null);
 
         if (!facultyId) {
-          setClasses([]);
-          setLoading(false);
+          if (alive) {
+            setClasses([]);
+            setLoading(false);
+          }
           return;
         }
 
         const data = await getFacultyClasses(facultyId);
-        
+
         // Transform to the format needed for the filter
         const formattedClasses = data.map(cls => ({
           classId: cls.classId,
           className: cls.className || `Grade ${cls.gradeLevel}`,
           gradeLevel: cls.gradeLevel,
+          acadYear: cls.acadYear,
+          totalStudents: cls.studentIds?.length || 0,
         }));
-        
-        setClasses(formattedClasses);
+
+        if (alive) {
+          setClasses(formattedClasses);
+        }
       } catch (error: any) {
-        setError('Error fetching classes: ' + error.message);
-        setClasses([]);
+        if (alive) {
+          setError('Error fetching classes: ' + error.message);
+          setClasses([]);
+        }
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     };
     fetchClasses();
+
+    return () => {
+      alive = false;
+    };
   }, [facultyId]);
-  
+
   return { classes, loading, error };
 };
 
@@ -80,7 +94,7 @@ export const useMiscueAnalystics = (
         setError(null);
 
         if (!facultyId) {
-          console.log('No facultyId provided for miscue analytics');
+
           setMiscueData([]);
           setLoading(false);
           return;
@@ -124,7 +138,7 @@ export const useTopMiscueIdentifier = (
         setError(null);
 
         if (!facultyId) {
-          console.log('No facultyId provided for top miscue identifier');
+
           setTopMiscue(null);
           setLoading(false);
           return;
@@ -167,7 +181,7 @@ export const useOverallAverageWPMandAccuracy = (
         setError(null);
 
         if (!facultyId) {
-          console.log('No facultyId provided for overall averages');
+
           setAverages(null);
           setLoading(false);
           return;
@@ -189,41 +203,3 @@ export const useOverallAverageWPMandAccuracy = (
   return { averages, loading, error };
 };
 
-export const useFetchClassReadingHealth = (facultyId: string | null) => {
-  const [loading, setLoading] = useState(true);
-  const [classHealthData, setClassHealthData] = useState<ClassReadingHealth[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const { getClassReadingHealth } = useClassReadingHealth();
-
-  useEffect(() => {
-    // Always call useState hooks, but conditionally execute the fetch
-    const fetchClassReadingHealth = async () => {
-      if (!facultyId) {
-        setError('No faculty ID provided');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getClassReadingHealth(facultyId);
-        setClassHealthData(data);
-      } catch (err: any) {
-        console.error('Error fetching class reading health:', err);
-        setError(err.message || 'Failed to fetch reading health data');
-        setClassHealthData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClassReadingHealth();
-  }, [facultyId]);
-
-  return {
-    loading,
-    classHealthData,
-    error,
-  };
-};

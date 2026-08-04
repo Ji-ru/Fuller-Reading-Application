@@ -61,7 +61,7 @@ export const GlobalMusicProvider: React.FC<{ children: React.ReactNode }> = ({ c
       return prev;
     });
   }, []);
-  
+
   // Listen to auth state changes – stop music on logout
   useEffect(() => {
     const auth = getAuth();

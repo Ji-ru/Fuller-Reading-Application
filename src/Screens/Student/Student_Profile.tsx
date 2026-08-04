@@ -22,12 +22,12 @@ import {
 } from '../../Controller/AuthenticationController';
 import { getAuth } from '@react-native-firebase/auth';
 import { UserDocument, ClassDocument } from '../../Interfaces/dataInterfaces';
-import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { sw, sh, sf } from '../../Utils/responsive';
-import Svg, { Text as SvgText } from 'react-native-svg';
+import { StudentColors } from '../../Utilities/Theme';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 
-// ─── Palette (aligned with Reading Selection blue/cyan theme) ─────────────────
+// Palette (aligned with Reading Selection blue/cyan theme)
 const C = {
   bg: '#F1FBF4',
   primary: '#008443',
@@ -92,6 +92,18 @@ const headerStyles = StyleSheet.create({
   backArrowText: {
     fontSize: 40, fontFamily: 'Nunito-Bold',
     color: C.card, lineHeight: 28, marginLeft: -2, paddingBottom: 2
+  },
+  aboutRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: sw(16), paddingVertical: sh(14),
+  },
+  aboutText: {
+    fontSize: sf(15), fontFamily: 'Nunito-Bold',
+    color: StudentColors.slate, marginLeft: sw(12),
+  },
+  dropdownDivider: {
+    height: 1, marginHorizontal: sw(12),
+    backgroundColor: '#E3F0E7',
   },
 });
 
@@ -172,7 +184,7 @@ export default function Profile() {
   };
 
   // ── Hooks ───────────────────────────────────────────────────────────────────
-  const { handleLogout, handleBackStep } = useNavigationHelper();
+  const { handleLogout, handleBackStep, handleNextStep } = useNavigationHelper();
 
   useEffect(() => { fetchProfileData(); }, []);
 
@@ -289,47 +301,12 @@ export default function Profile() {
       <BubbleBackground />
 
       {/* HEADER */}
-      <View style={S.headerWrapper}>
-        <View style={upperNav.header}>
-          <TouchableOpacity style={headerStyles.backBtn} onPress={() => handleBackStep()} activeOpacity={0.7}>
-            <Text style={headerStyles.backArrowText}>‹</Text>
-          </TouchableOpacity>
-
-          <Svg height={60} width={200}>
-            <SvgText
-              x={100} y={35} fontSize={23}
-              fontFamily="Nunito-Black" textAnchor="middle"
-              fill="none" stroke={C.primaryLight}
-              strokeWidth={8} strokeLinejoin="round"
-            >
-              My Profile
-            </SvgText>
-            <SvgText
-              x={100} y={35} fontSize={23}
-              fontFamily="Nunito-Black" textAnchor="middle"
-              fill={C.primary}
-            >
-              My Profile
-            </SvgText>
-          </Svg>
-
-          <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
-            <MenuBars />
-          </TouchableOpacity>
-        </View>
-
-        {menuVisible && (
-          <View style={upperNav.dropdownMenu}>
-            <TouchableOpacity onPress={handleLogoutPress} style={upperNav.logoutButton}>
-              <Image source={require('../../../assets/icons/Logout-icon.png')} style={upperNav.logoutIcon} />
-              <Text style={upperNav.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        {menuVisible && (
-          <TouchableOpacity style={upperNav.closeMenu} onPress={() => setMenuVisible(false)} activeOpacity={1} />
-        )}
-      </View>
+      <StudentHeader 
+        title="My Class"
+        onBackPress={handleBackStep}
+        onAboutPress={() => handleNextStep('About')}
+        onLogoutPress={() => setLogoutVisible(true)}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -417,7 +394,7 @@ export default function Profile() {
         </FadeSlideIn>
 
         {/* ── Academic Information ──────────────────────────────────────── */}
-        <FadeSlideIn delay={300}>
+        {/* <FadeSlideIn delay={300}>
           <View style={S.section}>
             <View style={S.sectionTitleRow}>
               <Text style={S.sectionTitle}>Academic Information</Text>
@@ -440,7 +417,7 @@ export default function Profile() {
               />
             </View>
           </View>
-        </FadeSlideIn>
+        </FadeSlideIn> */}
 
         {/* bottom spacer */}
         <View style={{ height: sh(24) }} />
@@ -530,12 +507,12 @@ const S = StyleSheet.create({
   loadingText: {
     marginTop: sh(12),
     fontSize: sf(16),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.inkLight,
   },
   errorText: {
     fontSize: sf(16),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.coral,
     textAlign: 'center',
     marginBottom: sh(16),
@@ -550,7 +527,7 @@ const S = StyleSheet.create({
   retryButtonText: {
     color: C.card,
     fontSize: sf(16),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
   },
 
   // Header
@@ -595,7 +572,7 @@ const S = StyleSheet.create({
   },
   studentName: {
     fontSize: sf(24),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
     marginBottom: sh(6),
   },
@@ -607,7 +584,7 @@ const S = StyleSheet.create({
   },
   roleBadgeText: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.primary,
   },
 
@@ -640,7 +617,7 @@ const S = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: sf(18),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
   },
 
@@ -653,7 +630,7 @@ const S = StyleSheet.create({
   },
   editPillText: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.primary,
   },
 
@@ -673,12 +650,12 @@ const S = StyleSheet.create({
   },
   infoLabel: {
     fontSize: sf(14),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.inkLight,
   },
   infoValue: {
     fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
   },
 
@@ -691,13 +668,13 @@ const S = StyleSheet.create({
   },
   inputLabel: {
     fontSize: sf(14),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.inkLight,
     marginBottom: sh(6),
   },
   optionalText: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Regular',
+    fontFamily: 'Andika-Regular',
     color: C.slate,
   },
   textInput: {
@@ -707,7 +684,7 @@ const S = StyleSheet.create({
     paddingHorizontal: sw(14),
     paddingVertical: sh(10),
     fontSize: sf(15),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.ink,
     backgroundColor: C.inputBg,
   },
@@ -727,7 +704,7 @@ const S = StyleSheet.create({
   },
   cancelButtonText: {
     color: C.orange,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
     fontSize: sf(14),
   },
   saveButton: {
@@ -747,6 +724,6 @@ const S = StyleSheet.create({
   saveButtonText: {
     fontSize: sf(14),
     color: C.card,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Andika-Bold',
   },
 });

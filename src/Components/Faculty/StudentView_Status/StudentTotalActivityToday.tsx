@@ -26,18 +26,18 @@ const F = {
 };
 
 // ─── Sub-Components ─────────────────────────────────────────────────────────
-const ActivityRow = ({ 
-  label, 
-  desc, 
-  percent, 
-  color, 
+const ActivityRow = ({
+  label,
+  desc,
+  percent,
+  color,
   icon,
-  delay = 0 
-}: { 
-  label: string; 
-  desc: string; 
-  percent: number; 
-  color: string; 
+  delay = 0
+}: {
+  label: string;
+  desc: string;
+  percent: number;
+  color: string;
   icon: React.ReactNode;
   delay?: number;
 }) => {
@@ -47,12 +47,12 @@ const ActivityRow = ({
   useEffect(() => {
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
-      Animated.spring(widthAnim, { 
-        toValue: percent, 
-        delay: delay + 100, 
-        useNativeDriver: false, 
-        tension: 30, 
-        friction: 8 
+      Animated.spring(widthAnim, {
+        toValue: percent,
+        delay: delay + 100,
+        useNativeDriver: false,
+        tension: 30,
+        friction: 8
       }),
     ]).start();
   }, [percent, delay]);
@@ -62,7 +62,7 @@ const ActivityRow = ({
       <View style={[styles.iconBox, { backgroundColor: color + '15' }]}>
         {icon}
       </View>
-      
+
       <View style={styles.contentCol}>
         <View style={styles.labelRow}>
           <View>
@@ -73,17 +73,17 @@ const ActivityRow = ({
         </View>
 
         <View style={styles.track}>
-          <Animated.View 
+          <Animated.View
             style={[
-              styles.fill, 
-              { 
+              styles.fill,
+              {
                 backgroundColor: color,
                 width: widthAnim.interpolate({
                   inputRange: [0, 100],
                   outputRange: ['0%', '100%'],
                 })
               }
-            ]} 
+            ]}
           />
         </View>
       </View>
@@ -137,28 +137,26 @@ export default function StudentTotalActivityToday({ studentId }: Props) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Today's Activity Breakdown</Text>
-      
-      <ActivityRow 
-        label="Alphabet" 
+      <ActivityRow
+        label="Alphabet"
         desc="Letter sounds recognition"
         percent={alphabetAccuracy ?? 0}
         color={T.alphabet}
         icon={<AlphabetIcon color={T.alphabet} />}
         delay={0}
       />
-      
-      <ActivityRow 
-        label="Words" 
+
+      <ActivityRow
+        label="Words"
         desc="Single word pronunciation"
         percent={wordAccuracy ?? 0}
         color={T.word}
         icon={<WordIcon color={T.word} />}
         delay={100}
       />
-      
-      <ActivityRow 
-        label="Passage" 
+
+      <ActivityRow
+        label="Passage"
         desc="Reading flow & comprehension"
         percent={passageAccuracy ?? 0}
         color={T.passage}

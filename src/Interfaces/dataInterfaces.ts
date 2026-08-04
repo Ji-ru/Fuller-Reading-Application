@@ -78,7 +78,12 @@ export interface ClassDocument {
   // References
   facultyId: string; // Reference to the faculty document (UID)
   studentIds: string[]; // Reference to the student documents (UIDs)
-
+  // ─── Added for student acceptance or rejection to a class by faculty ───
+  // pendingStudentIds — UIDs awaiting faculty approval. Promoted into
+  // studentIds on accept, simply dropped on reject. Optional for back-compat
+  // with classes created before this field existed.
+  pendingStudentIds?: string[];
+  // ─── End ──────────────────────────────────────────────────────────────
   status: 'active' | 'archived';
 
   archivedAt?: Timestamp;
@@ -88,6 +93,22 @@ export interface ClassDocument {
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }
+
+// ─── Added for student acceptance or rejection to a class by faculty ───────────
+/**
+ * STUDENT CLASS STATE
+ *  - Discriminated union returned by resolveStudentClassState().
+ *  - 'pending'  → student's UID is in some class's pendingStudentIds
+ *  - 'active'   → student is enrolled (in studentIds AND has classCode set)
+ *  - 'none'     → student has no class and no pending request
+ *  - No 'rejected' variant: rejection silently removes the UID from
+ *    pendingStudentIds, so the student simply returns to 'none' on next read.
+ */
+export type StudentClassState =
+  | { kind: 'pending'; class: ClassDocument }
+  | { kind: 'active'; class: ClassDocument }
+  | { kind: 'none' };
+// ─── End — student acceptance or rejection to a class by faculty ───────────────
 
 /**
  * MISCUE REPORT DOCUMENT INTERFACE
@@ -129,6 +150,7 @@ export interface MiscueReportDocument {
   totalWords: number;
   accuracyRate: number;
   wordPerMin: number;
+  wordCorrectPerMin?:number,
   recordingDuration?: string;
 
   substitutionCount: number;
@@ -142,13 +164,10 @@ export interface MiscueReportDocument {
 
 /**
  * Blueprint for creating a passage
+ * Passages are managed globally by Admins and categorised by grade level.
  */
 export interface PassageDocument {
   pid: string;
-  creatorId: string; // Faculty who added the Passage
-  creatorName: string; // Denormalized name for quick UI display (avoids extra fetching)
-  facultyIds: string[]; // Faculties who will add this passage
-  classId: string[]; // Classes that can view this passage
   title: string;
   author: string | null;
   passageText: string;
@@ -227,6 +246,8 @@ export interface WordSessionReport {
   studentId: string;
   dateKey: string; // YYYYMMDD (for range queries)
   startedAt: Timestamp;
+  isCompleted?: boolean;
+  sessionCompletedAt?: Timestamp | Date;
 
   totals: {
     attempted: number;

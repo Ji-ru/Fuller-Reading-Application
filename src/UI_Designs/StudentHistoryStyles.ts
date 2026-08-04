@@ -123,7 +123,7 @@ const historyStyles = StyleSheet.create({
     width: sw(48),
     height: sw(48),
     borderRadius: sw(24),
-    backgroundColor: C.primaryLight,
+    backgroundColor: C.tabBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: sw(12),

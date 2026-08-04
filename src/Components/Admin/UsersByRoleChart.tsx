@@ -17,13 +17,15 @@ const chartConfig = {
   useShadowColorFromDataset: false,
 };
 
+import { FacultyColors } from '../../Utilities/Theme';
+
 const COLORS = {
-  student: '#4ECDC4',
-  faculty: '#96CEB4',
-  cardBackground: '#FFFFFF',
-  textPrimary: '#2D3436',
-  textSecondary: '#636E72',
-  error: '#FF7675',
+  student: FacultyColors.teal,
+  faculty: FacultyColors.primary,
+  cardBackground: FacultyColors.white,
+  textPrimary: FacultyColors.ink,
+  textSecondary: FacultyColors.slate,
+  error: FacultyColors.red,
 };
 
 const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
@@ -74,7 +76,7 @@ const UsersByRoleChart: React.FC<UsersByRoleChartProps> = ({ acadYear }) => {
           <Text style={styles.description}>Shows the distribution of system users between students and faculty.</Text>
         </View>
       </View>
-      
+
       <View style={styles.chartWrapper}>
         <PieChart
           data={pieData}
@@ -120,17 +122,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: sf(18),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Medium',
     color: COLORS.textSecondary,
   },
   description: {
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Regular',
     color: '#7F8C8D',
     marginTop: sh(4),
   },
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Medium',
     marginTop: sh(10),
   },
 });

@@ -183,7 +183,6 @@ const StudentMiscueAnalytics: React.FC<MiscueAnalyticsProps> = ({
   );
 };
 
-
 const styles = StyleSheet.create({
     container: {
         marginVertical: sh(10),

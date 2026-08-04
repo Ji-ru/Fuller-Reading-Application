@@ -15,6 +15,7 @@ import {
 import { useStudentWordMastery } from '../../../Hooks/Student/useStudentWordMastery';
 import { WordPeriodSlot } from '../../../Interfaces/dataInterfaces';
 import { sw, sh, sf } from '../../../Utils/responsive';
+import { Icon } from '../../GlobalUse/Icon';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -101,16 +102,21 @@ const BarColumn = ({
   slot,
   isActive,
   index,
+  totalWords,
   onPress,
 }: {
   slot: WordPeriodSlot;
   isActive: boolean;
   index: number;
+  totalWords: number;
   onPress: () => void;
 }) => {
-  const acc = slot.accuracy;
-  const color = accentColor(acc);
-  const height = acc !== null ? (acc / 100) * BAR_MAX_H : 0;
+  const completionPct = totalWords > 0
+    ? Math.min(Math.round((slot.correctCount / totalWords) * 100), 100)
+    : 0;
+  const isEmpty = slot.correctCount === 0;
+  const color = accentColor(isEmpty ? null : completionPct);
+  const height = isEmpty ? 0 : (completionPct / 100) * BAR_MAX_H;
   const heightAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -122,8 +128,6 @@ const BarColumn = ({
       friction: sw(10),
     }).start();
   }, [height, heightAnim, index]);
-
-  const isEmpty = acc === null;
 
   return (
     <TouchableOpacity
@@ -137,7 +141,7 @@ const BarColumn = ({
           { color: isEmpty ? T.dim : isActive ? color : T.muted },
         ]}
       >
-        {isEmpty ? '—' : `${acc}%`}
+        {isEmpty ? '—' : `${completionPct}%`}
       </Text>
 
       <View style={styles.barBg}>
@@ -461,7 +465,7 @@ const WordGrid = ({ lesson }: { lesson: LessonProgress }) => {
 
 const EmptyState = () => (
   <View style={styles.emptyNotice}>
-    <Text style={styles.emptyIcon}>📚</Text>
+    <Icon name="bookStack" size={sf(36)} color={T.muted} />
     <Text style={styles.emptyTitle}>No chapters yet</Text>
     <Text style={styles.emptyBody}>
       Complete a word reading session to see progress here.
@@ -482,6 +486,7 @@ export default function StudentWordMastery({ studentId }: Props) {
     chapters.length > 0 ? chapters[0].chapter : null,
   );
   const [selLesson, setSelLesson] = useState<string | null>(null);
+  const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
 
   // ── Bar chart state ──
   const [selIdx, setSelIdx] = useState<number>(defaultIndex);
@@ -561,36 +566,11 @@ export default function StudentWordMastery({ studentId }: Props) {
   return (
     <View style={{ backgroundColor: T.bg }}>
 
-      {/* ── LAYER 1: Header ──────────────────────────────────────────── */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.compTitle}>Word Mastery</Text>
-          <Text style={styles.compSubtitle}>
-            {avgAccuracy !== null ? `${avgAccuracy}% avg accuracy · ` : ''}
-            {masteredTotal}/{totalWordSlots} words mastered
-          </Text>
-        </View>
-      </View>
-
       {/* ── Range filter ─────────────────────────────────────────────── */}
       <RangeTab active={timeRange} onPress={setTimeRange} />
 
       {/* ── LAYER 2: Summary strip ──────────────────────────────────── */}
       <View style={styles.summaryStrip}>
-        <View style={styles.summaryItem}>
-          <Text
-            style={[
-              styles.summaryVal,
-              { color: summary.avgAccuracy !== null ? accentColor(summary.avgAccuracy) : T.muted },
-            ]}
-          >
-            {summary.avgAccuracy !== null ? `${summary.avgAccuracy}%` : '—'}
-          </Text>
-          <Text style={styles.summaryLbl}>Avg Accuracy</Text>
-        </View>
-
-        <View style={styles.summarySep} />
-
         <View style={styles.summaryItem}>
           <Text style={[styles.summaryVal, { color: T.blue }]}>{summary.totalSessions}</Text>
           <Text style={styles.summaryLbl}>Sessions</Text>
@@ -599,23 +579,25 @@ export default function StudentWordMastery({ studentId }: Props) {
         <View style={styles.summarySep} />
 
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryVal, { color: T.green }]}>
-            {masteredTotal}
+          <Text>
+            <Text style={[styles.summaryVal, { color: T.green }]}>{masteredTotal}</Text>
+            <Text style={styles.summaryFractionDen}>/{totalWordSlots}</Text>
           </Text>
-          <Text style={styles.summaryLbl}>Mastered</Text>
+          <Text style={styles.summaryLbl}>Words</Text>
         </View>
       </View>
 
       {/* ── LAYER 2b: Bar chart ─────────────────────────────────────── */}
       {slots.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>Performance</Text>
+          {/* <Text style={styles.cardLabel}>Performance</Text> */}
           <View>
             <Text style={styles.cardTitle}>
-              Accuracy Per {timeRange === 'week' ? 'Day' : timeRange === 'month' ? 'Week' : 'Month'}
+              Completed Per {timeRange === 'week' ? 'Day' : timeRange === 'month' ? 'Week' : 'Month'}
             </Text>
             <View style={styles.tapHintBadge}>
-              <Text style={styles.tapHintText}>👆 Tap bars to view details</Text>
+              <Icon name="tap" size={sf(12)} color={T.violet} />
+              <Text style={styles.tapHintText}>Tap bars to view details</Text>
             </View>
           </View>
 
@@ -631,13 +613,14 @@ export default function StudentWordMastery({ studentId }: Props) {
                   slot={s}
                   isActive={i === selIdx}
                   index={i}
+                  totalWords={totalWordSlots}
                   onPress={() => setSelIdx(i)}
                 />
               ))}
             </View>
           </ScrollView>
 
-          <View style={styles.legend}>
+          {/* <View style={styles.legend}>
             {[
               { color: T.green, label: '≥ 85%  Excellent' },
               { color: T.amber, label: '≥ 60%  Good' },
@@ -648,7 +631,7 @@ export default function StudentWordMastery({ studentId }: Props) {
                 <Text style={styles.legTxt}>{l.label}</Text>
               </View>
             ))}
-          </View>
+          </View> */}
         </View>
       )}
 
@@ -663,30 +646,70 @@ export default function StudentWordMastery({ studentId }: Props) {
         <FillBar percent={overallPct} color={accentColor(avgAccuracy)} height={10} />
       </View>
 
-      {/* ── LAYER 3: Chapter pills ───────────────────────────────────── */}
+      {/* ── LAYER 3: Chapter dropdown ─────────────────────────────── */}
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Chapters</Text>
 
-        <ScrollView
-          ref={chapterStripRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chapterStripContent}
+        {/* Dropdown trigger button */}
+        <TouchableOpacity
+          style={styles.chapterDropdownBtn}
+          onPress={() => setChapterDropdownOpen(o => !o)}
+          activeOpacity={0.8}
         >
-          {chapters.map(c => (
-            <ChapterPill
-              key={c.chapter}
-              chapterId={c.chapter}
-              chapterTitle={c.chapterTitle}
-              isActive={c.chapter === selChapter}
-              isComplete={
-                c.completedLessons === c.lessons.length && c.lessons.length > 0
-              }
-              hasData={c.lessons.length > 0}
-              onPress={() => setSelChapter(c.chapter)}
-            />
-          ))}
-        </ScrollView>
+          <Text style={styles.chapterDropdownBtnText} numberOfLines={1}>
+            {chapters.find(c => c.chapter === selChapter)?.chapterTitle
+              || (selChapter ? `Chapter ${selChapter}` : 'Select a Chapter')}
+          </Text>
+          <Icon
+            name={chapterDropdownOpen ? 'chevron-down' : 'chevron-right'}
+            size={16}
+            color={T.muted}
+          />
+        </TouchableOpacity>
+
+        {/* Inline dropdown list */}
+        {chapterDropdownOpen && (
+          <View style={styles.chapterDropdownMenu}>
+            {chapters.map((c, idx) => {
+              const isActive = c.chapter === selChapter;
+              const isComplete =
+                c.completedLessons === c.lessons.length && c.lessons.length > 0;
+              const hasData = c.lessons.length > 0;
+              const isLast = idx === chapters.length - 1;
+              return (
+                <TouchableOpacity
+                  key={c.chapter}
+                  style={[
+                    styles.chapterDropdownItem,
+                    isActive && styles.chapterDropdownItemActive,
+                    isLast && { borderBottomWidth: 0 },
+                  ]}
+                  onPress={() => {
+                    setSelChapter(c.chapter);
+                    setChapterDropdownOpen(false);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text
+                    style={[
+                      styles.chapterDropdownItemText,
+                      isActive && styles.chapterDropdownItemTextActive,
+                      !hasData && styles.chapterDropdownItemTextEmpty,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {c.chapterTitle || `Chapter ${c.chapter}`}
+                  </Text>
+                  {isComplete && (
+                    <View style={[styles.badge, { backgroundColor: T.greenDim, borderColor: T.greenBd }]}>
+                      <Text style={[styles.badgeText, { color: T.green }]}>✓ Done</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       {/* ── LAYER 4a: Lesson list ────────────────────────────────────── */}
@@ -1020,6 +1043,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: T.muted,
   },
+  summaryFractionDen: {
+    ...F.medium,
+    fontSize: sf(14),
+    color: T.muted,
+  },
   summarySep: {
     width: sw(1),
     height: sw(32),
@@ -1087,6 +1115,9 @@ const styles = StyleSheet.create({
     marginBottom: sh(14),
   },
   tapHintBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(6),
     backgroundColor: T.violetDim,
     paddingHorizontal: sw(10),
     paddingVertical: sh(6),
@@ -1100,5 +1131,60 @@ const styles = StyleSheet.create({
     ...F.medium,
     fontSize: sf(10),
     color: T.violet,
+  },
+
+  // ─── Chapter Dropdown ──────────────────────────────────────────────────────
+  chapterDropdownBtn: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    backgroundColor: T.surface,
+    borderRadius: sw(10),
+    borderWidth: 1,
+    borderColor: T.border,
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(12),
+    marginTop: sh(10),
+  },
+  chapterDropdownBtnText: {
+    ...F.medium,
+    fontSize: sf(14),
+    color: T.text,
+    flex: 1,
+    marginRight: sw(8),
+  },
+  chapterDropdownMenu: {
+    marginTop: sh(6),
+    borderRadius: sw(12),
+    borderWidth: 1,
+    borderColor: T.border,
+    backgroundColor: T.bg,
+    overflow: 'hidden' as const,
+  },
+  chapterDropdownItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    paddingHorizontal: sw(14),
+    paddingVertical: sh(13),
+    borderBottomWidth: 1,
+    borderBottomColor: T.dim,
+  },
+  chapterDropdownItemActive: {
+    backgroundColor: T.greenDim,
+  },
+  chapterDropdownItemText: {
+    ...F.medium,
+    fontSize: sf(14),
+    color: T.text,
+    flex: 1,
+    marginRight: sw(8),
+  },
+  chapterDropdownItemTextActive: {
+    ...F.bold,
+    color: T.green,
+  },
+  chapterDropdownItemTextEmpty: {
+    color: T.muted,
   },
 });

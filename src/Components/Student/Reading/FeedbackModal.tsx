@@ -69,7 +69,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   const playSoundsForType = (t: FeedbackModalProps['type']) => {
     // stop anything currently playing (previous modal)
     stopAllSounds();
-  
+
     if (t === 'tryAgain') {
       const sad = sadRef.current;
       if (!sad) return;
@@ -78,12 +78,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
       sad.play();
       return;
     }
-  
+
     // For "good job" / "excellent" / "congratulations" style: overlap two sounds
     if (t === 'congratulations' || t === 'passageSuccess' || t === 'goodJob') {
       const celebration = celebrationRef.current;
       const crowd = crowdRef.current;
-  
+
       if (celebration) {
         celebration.stop(() => {
           celebration.setNumberOfLoops(0);
@@ -91,7 +91,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           celebration.play();
         });
       }
-  
+
       // Optional: small delay makes it feel like a layered “cheer follows celebration”
       if (crowd) {
         crowd.stop(() => {

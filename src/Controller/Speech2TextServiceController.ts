@@ -1,16 +1,9 @@
 // This file is a custom hook, named with the convention "use..." so it can use React hooks like useState, useEffect, useRef, useCallback, useMemo.
 // useState: manage internal status (e.g. isLoading), useEffect: handle side effects, useRef: persistent mutable values, useCallback/useMemo: memoize event handlers or calculations.
 import { useState, useCallback } from 'react';
-import { readFile } from 'react-native-fs';
-import { API_KEY, DEEPGRAM_API } from '@env';
+import { readFile, stat } from 'react-native-fs';
+import { API_KEY, BASE_URL, DEEPGRAM_API, DEEPGRAM_URL } from '@env';
 import { Buffer } from 'buffer';
-
-// ASSEMBLY API AND URL
-const ASSEMBLYAI_API_KEY = API_KEY;
-const BASE_URL = 'https://api.assemblyai.com/v2';
-
-// DEEPGRAM API, URL and KEY
-const DEEPGRAM_URL = 'https://api.deepgram.com/v1/listen';
 
 type Utterance = {
   transcript: string;
@@ -31,25 +24,10 @@ type DeepgramResponse = {
   };
 };
 
-const extractTranscript = (data: any): string => {
-  const candidate =
-    data?.text ??
-    data?.transcript ??
-    data?.transcription ??
-    data?.result?.text ??
-    data?.result?.transcript ??
-    data?.results?.[0]?.text ??
-    data?.results?.[0]?.transcript ??
-    data?.[0]?.text ??
-    data?.[0]?.transcript ??
-    (typeof data === 'string' ? data : '');
-
-  return typeof candidate === 'string' ? candidate.trim() : '';
-};
 // I recommend moving query params into a URLSearchParams object for readability
 const getDeepgramUrl = () => {
   const params = new URLSearchParams({
-    model: 'nova-2', // Nova-2 is currently the fastest/most accurate
+    model: 'nova-3',
     smart_format: 'true',
     punctuate: 'true',
     utterances: 'true',
@@ -76,7 +54,7 @@ export const useSpeechToText = () => {
   /**
    * Upload audio file to AssemblyAI
    */
-  const uploadAudio = async (audioFile: string): Promise<string> => {
+  const uploadAudio = async (audioFile: string, signal?: AbortSignal): Promise<string> => {
     // Read file as base64
     const base64Audio = await readFile(audioFile, 'base64');
 
@@ -86,10 +64,11 @@ export const useSpeechToText = () => {
     const uploadResponse = await fetch(`${BASE_URL}/upload`, {
       method: 'POST',
       headers: {
-        authorization: ASSEMBLYAI_API_KEY,
+        authorization: API_KEY,
         'content-type': 'application/octet-stream',
       },
       body: binaryAudio,
+      signal,
     });
 
     if (!uploadResponse.ok) {
@@ -104,11 +83,11 @@ export const useSpeechToText = () => {
   /**
    * Request transcription
    */
-  const requestTranscription = async (audioUrl: string): Promise<string> => {
+  const requestTranscription = async (audioUrl: string, signal?: AbortSignal): Promise<string> => {
     const response = await fetch(`${BASE_URL}/transcript`, {
       method: 'POST',
       headers: {
-        authorization: ASSEMBLYAI_API_KEY,
+        authorization: API_KEY,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
@@ -117,6 +96,7 @@ export const useSpeechToText = () => {
         format_text: true,
         language_detection: true,
       }),
+      signal,
     });
 
     const data = await response.json();
@@ -126,12 +106,15 @@ export const useSpeechToText = () => {
   /**
    * Poll transcription result
    */
-  const pollTranscription = async (id: string): Promise<string> => {
-    while (true) {
+  const pollTranscription = async (id: string, signal?: AbortSignal): Promise<string> => {
+    let attempts = 0;
+    while (attempts < 20) {
+      attempts++;
       const response = await fetch(`${BASE_URL}/transcript/${id}`, {
         headers: {
-          authorization: ASSEMBLYAI_API_KEY,
+          authorization: API_KEY,
         },
+        signal,
       });
 
       const data = await response.json();
@@ -146,6 +129,7 @@ export const useSpeechToText = () => {
 
       await new Promise<void>(resolve => setTimeout(resolve, 2500));
     }
+    throw new Error('AssemblyAI transcription polling timed out.');
   };
 
   /**
@@ -156,24 +140,32 @@ export const useSpeechToText = () => {
    */
   const processAudioWithAssemblyAI = useCallback(
     async (audioFile: string): Promise<string> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
       try {
         setIsLoading(true);
 
-        const uploadUrl = await uploadAudio(audioFile);
-        const transcriptId = await requestTranscription(uploadUrl);
-        const transcriptText = await pollTranscription(transcriptId);
+        const fileStats = await stat(audioFile);
+        if (fileStats.size < 5000) {
 
-        return transcriptText || 'No speech detected';
+          setIsLoading(false);
+          return '';
+        }
+
+        const uploadUrl = await uploadAudio(audioFile, controller.signal);
+        const transcriptId = await requestTranscription(uploadUrl, controller.signal);
+        const transcriptText = await pollTranscription(transcriptId, controller.signal);
+
+        setIsLoading(false);
+        return transcriptText || '';
       } catch (error: any) {
         // Surface the error through state instead of Alert so the calling
         // screen can show a styled, dismissible modal with retry support.
         setSttErrorVisible(true);
         setSttErrorMessage(
-          error?.message
-            ? `Transcription failed: ${error.message}`
-            : 'Failed to transcribe audio. Please check your internet connection and try again.',
+          "Oops! Something went wrong while listening. Let's try again! 🛑"
         );
-        console.log('STT Error: ' + error.message);
+
         throw error;
       } finally {
         setIsLoading(false);
@@ -181,295 +173,85 @@ export const useSpeechToText = () => {
     },
     [],
   );
-
-  const getSimulatedResponse = (targetText: string) => {
-    return targetText; // your existing fallback logic
-  };
 
   // DEEPGRAM SPEECH TO TEXT IMPLEMENTATION
   const processAudioWithDeepgram = useCallback(async (audioFile: string) => {
-    try {
-      setIsLoading(true);
-      console.log('1. Starting Deepgram processing...');
+    let attemptCount = 0;
+    const MAX_RETRIES = 1;
 
-      // Determine mime type
-      const fileExt = audioFile.split('.').pop() || 'wav';
-      const mimeType = fileExt === 'm4a' ? 'audio/mp4' : `audio/${fileExt}`;
-
-      // 1. Read file natively using react-native-fs (Proven to work!)
-      console.log('2. Reading file...');
-      const base64Audio = await readFile(audioFile, 'base64');
-
-      // 2. Convert Base64 to Binary Buffer
-      console.log('3. Converting to buffer...');
-      const binaryAudio = Buffer.from(base64Audio, 'base64');
-
-      // 3. Send raw binary to Deepgram
-      console.log('4. Sending to Deepgram API...');
-      const response = await fetch(getDeepgramUrl(), {
-        method: 'POST',
-        headers: {
-          Authorization: `Token ${DEEPGRAM_API.trim()}`,
-          // You can use the specific mimeType, or fallback to octet-stream
-          'Content-Type': mimeType,
-        },
-        body: binaryAudio,
-      });
-
-      console.log('5. Status received:', response.status);
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Deepgram API failed (${response.status}): ${errText}`);
-      }
-
-      const data: DeepgramResponse = await response.json();
-      const alt = data?.results?.channels?.[0]?.alternatives?.[0];
-
-      console.log('6. Success!');
-      return {
-        fulltext: alt?.transcript?.trim() || 'No speech detected',
-        utterances: alt?.utterances || [],
-      };
-    } catch (error: any) {
-      setSttErrorVisible(true);
-      setSttErrorMessage(
-        error?.message
-          ? `Transcription failed: ${error.message}`
-          : 'Failed to transcribe audio. Please check your internet connection and try again.',
-      );
-      console.log('STT Error Deepgram:', error.message);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // WAV2VEC2 SPEECH TO TEXT IMPLEMENTATION
-  const processAudioWithHubert = useCallback(
-    async (audioFile: string): Promise<string> => {
+    while (attemptCount <= MAX_RETRIES) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
       try {
         setIsLoading(true);
 
-        const formData = new FormData();
-        const fileUri = audioFile.startsWith('file://')
-          ? audioFile
-          : `file://${audioFile}`;
+        const fileStats = await stat(audioFile);
+        if (fileStats.size < 5000) {
 
-        // ✅ Field name "file" matches HuggingFace Space endpoint
-        formData.append('file', {
-          uri: fileUri,
-          name: 'audio.wav',
-          type: 'audio/wav',
-        } as any);
-
-        const response = await fetch(
-          'https://cisckids-hubertapi.hf.space/transcribe',
-          {
-            method: 'POST',
-            // ✅ No Content-Type header — fetch auto-sets multipart boundary
-            headers: {
-              Accept: 'application/json',
-            },
-            body: formData,
-          },
-        );
-
-        // ✅ Read raw text first so errors are always readable
-        const responseText = await response.text();
-
-        if (!response.ok) {
-          throw new Error(
-            `Upload failed ${response.status}: ${responseText.substring(
-              0,
-              200,
-            )}`,
-          );
+          setIsLoading(false);
+          return { fulltext: '', utterances: [] };
         }
 
-        let data: any = responseText;
-        try {
-          data = JSON.parse(responseText);
-        } catch {
-          // Some endpoints can return plain text; keep raw body as fallback.
-        }
-        const transcript = extractTranscript(data);
-
-        if (!transcript?.trim()) {
-          throw new Error('Walang natukoy na pagbigkas!');
-        }
-
-        return transcript;
-      } catch (error: any) {
-        setSttErrorVisible(true);
-        setSttErrorMessage(
-          error?.message
-            ? `Transcription failed: ${error.message}`
-            : 'Failed to transcribe audio. Please check your internet connection and try again.',
-        );
-        console.log('STT Error (Wav2Vec2): ' + error.message);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
-  );
-
-  // WAV2VEC2 SPEECH TO TEXT IMPLEMENTATION
-  const processAudioWithWav2Vec2 = useCallback(
-    async (audioFile: string): Promise<string> => {
-      try {
-        setIsLoading(true);
-
-        const formData = new FormData();
-        const fileUri = audioFile.startsWith('file://')
-          ? audioFile
-          : `file://${audioFile}`;
-
-        // ✅ Field name "file" matches HuggingFace Space endpoint
-        formData.append('file', {
-          uri: fileUri,
-          name: 'audio.wav',
-          type: 'audio/wav',
-        } as any);
-
-        const response = await fetch(
-          'https://cisckids-wav2vec2api.hf.space/transcribe',
-          {
-            method: 'POST',
-            // ✅ No Content-Type header — fetch auto-sets multipart boundary
-            headers: {
-              Accept: 'application/json',
-            },
-            body: formData,
-          },
-        );
-
-        // ✅ Read raw text first so errors are always readable
-        const responseText = await response.text();
-
-        if (!response.ok) {
-          throw new Error(
-            `Upload failed ${response.status}: ${responseText.substring(
-              0,
-              200,
-            )}`,
-          );
-        }
-
-        let data: any = responseText;
-        try {
-          data = JSON.parse(responseText);
-        } catch {
-          // Some endpoints can return plain text; keep raw body as fallback.
-        }
-        const transcript = extractTranscript(data);
-
-        if (!transcript?.trim()) {
-          throw new Error('Walang natukoy na pagbigkas!');
-        }
-
-        return transcript;
-      } catch (error: any) {
-        setSttErrorVisible(true);
-        setSttErrorMessage(
-          error?.message
-            ? `Transcription failed: ${error.message}`
-            : 'Failed to transcribe audio. Please check your internet connection and try again.',
-        );
-        console.log('STT Error (Wav2Vec2): ' + error.message);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
-  );
-
-  // WHISPER SPEECH TO TEXT IMPLEMENTATION
-  const processAudioWithWhisper = useCallback(
-    async (audioFile: string): Promise<string> => {
-      try {
-        setIsLoading(true);
-
-        const formData = new FormData();
+        // Determine mime type
         const fileExt = audioFile.split('.').pop() || 'wav';
         const mimeType = fileExt === 'm4a' ? 'audio/mp4' : `audio/${fileExt}`;
-        const fileUri = audioFile.startsWith('file://')
-          ? audioFile
-          : `file://${audioFile}`;
+        // 1. Read file natively using react-native-fs (Proven to work!)
 
-        // ✅ Field name "file" matches HuggingFace Space endpoint
-        formData.append('file', {
-          uri: fileUri,
-          name: `audio.${fileExt}`,
-          type: mimeType,
-        } as any);
+        const base64Audio = await readFile(audioFile, 'base64');
+        // 2. Convert Base64 to Binary Buffer
 
-        const response = await fetch(
-          'https://cisckids-whisperapi.hf.space/transcribe',
-          {
-            method: 'POST',
-            // ✅ No Content-Type header — fetch auto-sets multipart boundary
-            headers: {
-              Accept: 'application/json',
-            },
-            body: formData,
+        const binaryAudio = Buffer.from(base64Audio, 'base64');
+        // 3. Send raw binary to Deepgram
+
+        const response = await fetch(getDeepgramUrl(), {
+          method: 'POST',
+          headers: {
+            Authorization: `Token ${DEEPGRAM_API.trim()}`,
+            // You can use the specific mimeType, or fallback to octet-stream
+            'Content-Type': mimeType,
           },
-        );
-
-        // ✅ Read raw text first so errors are always readable
-        const responseText = await response.text();
+          body: binaryAudio,
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
-          throw new Error(
-            `Upload failed ${response.status}: ${responseText.substring(
-              0,
-              200,
-            )}`,
-          );
+          const errText = await response.text();
+          throw new Error(`Deepgram API failed (${response.status}): ${errText}`);
         }
+        const data: DeepgramResponse = await response.json();
+        const alt = data?.results?.channels?.[0]?.alternatives?.[0];
 
-        let data: any = responseText;
-        try {
-          data = JSON.parse(responseText);
-        } catch {
-          // Some endpoints can return plain text; keep raw body as fallback.
-        }
-        const transcript = extractTranscript(data);
-
-        if (!transcript?.trim()) {
-          console.log('Whisper Unparsed API Response:', JSON.stringify(data));
-          throw new Error('No Speech Detected!');
-        }
-
-        return transcript;
+        setIsLoading(false);
+        return {
+          fulltext: alt?.transcript?.trim() || '',
+          utterances: alt?.utterances || [],
+        };
       } catch (error: any) {
+        if (attemptCount < MAX_RETRIES) {
+          attemptCount++;
+
+          continue;
+        }
+        setIsLoading(false);
         setSttErrorVisible(true);
         setSttErrorMessage(
-          error?.message
-            ? `Transcription failed: ${error.message}`
-            : 'Failed to transcribe audio. Please check your internet connection and try again.',
+          "Oops! Something went wrong while listening. Let's try again! 🛑"
         );
-        console.log('STT Error (Whisper): ' + error.message);
+
         throw error;
       } finally {
-        setIsLoading(false);
+        clearTimeout(timeoutId);
       }
-    },
-    [],
-  );
+    }
+
+    setIsLoading(false);
+    return { fulltext: '', utterances: [] };
+  }, []);
 
   return {
     isLoading,
     processAudioWithAssemblyAI,
     processAudioWithDeepgram,
-    processAudioWithWav2Vec2,
-    processAudioWithWhisper,
-    processAudioWithHubert,
-    getSimulatedResponse,
-    // ── STT error modal ──────────────────────────────────────────────────────
     sttErrorVisible,
     sttErrorMessage,
     clearSttError,

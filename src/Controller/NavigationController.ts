@@ -68,12 +68,23 @@ export type RootStackParamList = {
   // ADMIN NAVIGATION
   AdminDashboard: undefined;
   AdminUserManagement: undefined;
+  AdminClassManagement: undefined;
+  AdminPassageList: undefined;
   AdminViewFacultyData: {
     facultyId: string;
     facultyName: string;
   };
+  AdminClassDashboard: {
+    classId: string;
+    className?: string;
+    acadYear: string;
+    facultyId: string;
+    gradeLevel: number;
+    studentCount: number;
+  };
 
   FacultyTabs: undefined;
+  About: undefined;
 };
 
 // A list of all the screens within RootStackParamList
@@ -254,6 +265,7 @@ export const useNavigationHelper = () => {
     email,
     role,
     sex,
+    gradeLevel,
     reading_Level,
   }: {
     uid: string;
@@ -263,12 +275,14 @@ export const useNavigationHelper = () => {
     email?: string;
     role?: UserRole;
     sex: string;
+    gradeLevel?: number;
     reading_Level?: 'beginner' | 'emerging' | 'intermediate' | 'advanced';
   }) => {
     if (role === 'student') {
       handleStudentViewStats({
         studentId: uid,
         studentName: `${firstName} ${middleName ?? ''} ${lastName}`.trim(),
+        gradeLevel: gradeLevel ?? 1,
         readingLevel: reading_Level || '',
       });
     } else if (role === 'faculty') {
@@ -320,11 +334,24 @@ export const useNavigationHelper = () => {
     navigation.navigate('AdminViewFacultyData', facultyData);
   };
 
+  // Handles admin navigation into a single class' analytics dashboard
+  const handleAdminClassDashboard = (classData: {
+    classId: string;
+    className?: string;
+    acadYear: string;
+    facultyId: string;
+    gradeLevel: number;
+    studentCount: number;
+  }) => {
+    navigation.navigate('AdminClassDashboard', classData);
+  };
+
   // Handles navigation to view students progress
   const handleStudentViewStats = (studentData: {
     studentId: string;
     studentName: string;
     readingLevel: string;
+    gradeLevel: number;
   }) => {
     navigation.navigate('StudentViewProfile', studentData);
   };
@@ -374,6 +401,7 @@ export const useNavigationHelper = () => {
   return {
     routeParams: route.params,
     handleNavigateToUserDetail,
+    handleAdminClassDashboard,
     handleNextStep,
     handleReplaceStep,
     handleSignUpNavigationWithData,

@@ -11,7 +11,7 @@ import { convertDurationToHours } from '../Utilities/convertDurationToHours';
 import { getLabelForDate, getPeriodLabels, resolveDateRange, filterReportsByDateRange, getDateRangeForAcadYear } from '../Utilities/activityGroupingDate';
 
 export const getForStudentsMiscueStats = () => {
-  const { getStudentReports, formatMiscueType, getRecordingDuration } =
+  const { getStudentReports, formatMiscueType } =
     MiscueReportController;
   const { getFacultyClasses, getFilteredStudentIds } = getFacultyClasses_Student;
 
@@ -35,9 +35,13 @@ const getActiveHours = async (
     const totals: Record<string, number> = {};
     periodLabels.forEach(label => { totals[label] = 0; });
 
-    // Process each student
-    for (const studentId of studentIds) {
-      const reports = await getRecordingDuration(studentId); // or getStudentReports? Use appropriate method
+    // Process all students in parallel
+    const reportsArrays = await Promise.all(
+      studentIds.map(studentId => getStudentReports(studentId))
+    );
+
+    // Process all collected reports
+    for (const reports of reportsArrays) {
       for (const report of reports) {
         let reportDate: Date | null = null;
 
@@ -186,7 +190,7 @@ const getActiveHours = async (
                   miscueCounts.repetition++;
                   break;
                 default:
-                  console.log('Unknown miscue type:', miscue.type);
+
               }
             }
           }
@@ -332,10 +336,10 @@ const getOverallTopMiscueType = async (
               attemptCount: 0,
             };
           }
-          
+
           passageMap[passageTitle].attemptCount++;
           passageMap[passageTitle].accuracySum += report.accuracyRate || 0;
-          
+
           // Add total miscues from this report to passage count
           const totalReportMiscues = calculateTotalMiscues(report);
           passageMap[passageTitle].miscueCount += totalReportMiscues;
@@ -385,7 +389,7 @@ const getOverallTopMiscueType = async (
 
     // Check if we have any data
     const totalAllMiscues = Object.values(miscueTypeTotals).reduce((a, b) => a + b, 0);
-    
+
     if (totalAllMiscues === 0) {
       return [getEmptyOverallResponse()];
     }
@@ -501,6 +505,7 @@ const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
       );
       let totalStudentAverageAccuracy = 0;
       let totalStudentAverageWPM = 0;
+      let totalStudentAverageWCPM = 0;
       let totalStudentsWithReports = 0;
       let totalStudents = 0;
       let totalReports = 0;
@@ -528,14 +533,20 @@ const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
             (sum, report) => sum + (report.wordPerMin || 0),
             0,
           );
+          const studentTotalWCPM = reports.reduce(
+            (sum, report) => sum + (report.wordCorrectPerMin || 0),
+            0,
+          );
 
           const studentAverageAccuracy =
             studentTotalAccuracy / studentReportsCount;
           const studentAverageWPM = studentTotalWPM / studentReportsCount;
+          const studentAverageWCPM = studentTotalWCPM / studentReportsCount;
 
           // Add this student's averages to the overall totals
           totalStudentAverageAccuracy += studentAverageAccuracy;
           totalStudentAverageWPM += studentAverageWPM;
+          totalStudentAverageWCPM += studentAverageWCPM;
           totalStudentsWithReports++;
         }
 
@@ -559,9 +570,17 @@ const getEmptyOverallResponse = (): OverAllStudentTopMiscue => ({
             )
           : 0;
 
+      const averageWCPM =
+        totalStudentsWithReports > 0
+          ? parseFloat(
+              (totalStudentAverageWCPM / totalStudentsWithReports).toFixed(2),
+            )
+          : 0;
+
       return {
         averageAccuracy,
         averageWPM,
+        averageWCPM,
         totalReports,
         totalStudents: processedStudents.size,
       };

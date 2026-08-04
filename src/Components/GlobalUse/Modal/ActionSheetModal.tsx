@@ -40,10 +40,10 @@ export default function ActionSheetModal({
         <View style={styles.modalContainer}>
           {/* Header Title */}
           <Text style={styles.titleText}>{title}</Text>
-          
+
           {/* Optional Message */}
           {message ? <Text style={styles.messageText}>{message}</Text> : null}
-          
+
           <View style={styles.optionsContainer}>
             {options.map((option, index) => (
               <TouchableOpacity

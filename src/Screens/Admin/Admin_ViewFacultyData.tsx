@@ -15,12 +15,12 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { getForStudentsMiscueStats } from '../../Hooks/use_ForStudentMiscueStats';
 import ActiveHoursChart from '../../Components/Faculty/Dashboard/ActiveHoursChart';
 import MiscueAnalytics from '../../Components/Faculty/Dashboard/MiscueChart';
-import ClassReadingStatus from '../../Components/Faculty/Dashboard/ClassReadingStatus';
 import AccuracyTrendsChart from '../../Components/Faculty/Dashboard/AccuracyTrends';
 import NumberOfClassesAndStudents from '../../Components/Faculty/Dashboard/NumberOFClassesAndStudents';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
+// import ClassAlphabetMastery from '../../Components/Faculty/Dashboard/ClassAlphabetMastery';
 import ClassWordMastery from '../../Components/Faculty/Dashboard/ClassWordMastery';
+import { buildAdminMenuItems } from '../../Utilities/adminMenuItems';
 
 /**
  * BASIC INFORMATION
@@ -55,7 +55,6 @@ export default function AdminViewFacultyData() {
     const route = useRoute<ReadingActivityScreenRouteProp>();
     const { facultyId, facultyName } = route.params;
 
-    console.log('facultyId', facultyId);
     // STATE MANAGEMENT
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(false);
     const [logoutVisible, setLogoutVisible] = useState<boolean>(false);
@@ -75,36 +74,7 @@ export default function AdminViewFacultyData() {
     const { handleLogout, handleBackStep, handleReplaceStep } = useNavigationHelper();
     const { getNumberOfClasses, getNumbersOfAllStudents } = getForStudentsMiscueStats();
 
-    // SIDEBAR MENU ITEMS
-    const menuItems = [
-        {
-            id: 'dashboard',
-            label: 'Dashboard',
-            icon: require('../../../assets/icons/Dashboard-icon.png'), // Add your icon
-            onPress: () => handleReplaceStep('AdminDashboard'),
-        },
-        {
-            id: 'user-management',
-            label: 'User Management',
-            icon: require('../../../assets/icons/UserManagement-icon.png'), // Add your icon
-            onPress: () => handleReplaceStep('AdminUserManagement'),
-            // onPress: () => { }
-        },
-        {
-            id: 'activity-logs',
-            label: 'Activity Logs',
-            icon: require('../../../assets/icons/Logs-icon.png'), // Add your icon
-            // onPress: () => handleReplaceStep('ActivityLogs'),
-            onPress: () => { }
-        },
-        {
-            id: 'settings',
-            label: 'Settings',
-            icon: require('../../../assets/icons/Settings-icon.png'), // Add your icon
-            // onPress: () => handleReplaceStep('Settings'),
-            onPress: () => { }
-        },
-    ];
+    const menuItems = buildAdminMenuItems(handleReplaceStep);
 
     // ========================================================================
     // DATA FETCHING
@@ -195,7 +165,7 @@ export default function AdminViewFacultyData() {
                         visible={sidebarVisible}
                         onClose={() => setSidebarVisible(false)}
                         onLogout={handleLogoutPress}
-                        currentRoute="dashboard"
+                        currentRoute="user-management"
                         menuItems={menuItems}
                     />
 
@@ -214,13 +184,11 @@ export default function AdminViewFacultyData() {
                             studentCount={stats.studentCount}
                         />
 
-                        <ClassAlphabetMastery facultyId={facultyId} filter={filter} />
+                        {/* <ClassAlphabetMastery facultyId={facultyId} filter={filter} /> */}
 
                         <ClassWordMastery facultyId={facultyId} filter={filter} />
 
-                        <ClassReadingStatus facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
-
-                        <AccuracyTrendsChart facultyId={facultyId} filter={filter} onFilterChange={handleFilterChange} />
+                        <AccuracyTrendsChart facultyId={facultyId} filter={filter} />
 
                         <ActiveHoursChart facultyId={facultyId} filter={filter} />
 

@@ -35,6 +35,7 @@ const upperNav = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: sw(10),
+    marginTop: sh(10)
   },
   backButtonIcon: {
     width: backIconSize,

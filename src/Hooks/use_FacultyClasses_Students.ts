@@ -67,11 +67,9 @@ export const getFacultyClasses_Student = {
         ...doc.data(),
         classId: doc.id,
       })) as ClassDocument[];
-      console.log('This is class object' + classes)
       onUpdate(classes);
     });
   },
-
 
   /**
  * Get student IDs based on filter
@@ -106,7 +104,6 @@ export const getFacultyClasses_Student = {
       throw new Error('Failed to get filtered students: ' + error.message);
     }
   },
-
 
   // ====================================================================
   // STUDENT RELATED FUNCTIONS
@@ -252,12 +249,12 @@ export const getFacultyClasses_Student = {
           if (!studentDoc.exists()) {
             throw new Error('Student not found');
           }
-          console.log('This is the studentId: ' + studentId);
+
           await updateDoc(studentRef, {
             'studentData.classCode': '',
             updatedAt: serverTimestamp(),
           });
-          console.log("Deleted the code from the student's Class Code!");
+
         } catch (error: any) {
           throw new Error(`Failed to update student: ${error.message}`);
         }

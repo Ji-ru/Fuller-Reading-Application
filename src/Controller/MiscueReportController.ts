@@ -28,6 +28,7 @@ import {
   arrayRemove,
   updateDoc,
   orderBy,
+  limit,
 } from '@react-native-firebase/firestore';
 import { StudentProgressResult } from '../Interfaces/miscue';
 import { getDateRangeForTimeFilter } from '../Utilities/dateRange';
@@ -58,6 +59,7 @@ export const MiscueReportController = {
     miscues: Miscue[],
     accuracy: number,
     wordPerMin: number,
+    wordCorrectPerMin: number,
     totalWords: number,
     recordingDuration?: string,
   ): Promise<string> {
@@ -106,6 +108,7 @@ export const MiscueReportController = {
         totalWords: totalWords,
         accuracyRate: accuracy,
         wordPerMin: wordPerMin,
+        wordCorrectPerMin: wordCorrectPerMin,
         recordingDuration: recordingDuration,
 
         substitutionCount: miscues.filter(m => m.type === 'substitution')
@@ -113,15 +116,10 @@ export const MiscueReportController = {
         omissionCount: miscues.filter(m => m.type === 'omission').length,
         insertionCount: miscues.filter(m => m.type === 'insertion').length,
         repetitionCount: miscues.filter(m => m.type === 'repetition').length,
-        // Firestore server timestamp
         createdAt: serverTimestamp(),
       };
 
-      // ======================================================================
-      // STEP 6: Store in Firestore
-      // ======================================================================
       await setDoc(miscueDocRef, reportData);
-      // ─── READING LEVEL RECALCULATION (fire-and-forget)
       // Triggered after every completed passage. Does NOT block the return value.
       // A failed recalculation is non-fatal — the report is already saved above.
       recalculateStudentReadingLevel(user.uid).catch(err =>
@@ -130,8 +128,6 @@ export const MiscueReportController = {
           err,
         ),
       );
-
-      console.log('Storing Complete!: ' + reportData.passageTitle);
 
       return reportId;
     } catch (error: any) {
@@ -243,7 +239,7 @@ export const MiscueReportController = {
         word,
       );
       if (existing) {
-        console.log('The Word already completed, skipping storage');
+
         return existing;
       }
       // Create document reference with auto-generated ID
@@ -264,13 +260,10 @@ export const MiscueReportController = {
       // Use setDoc with document reference
       await setDoc(wordDocRef, wordData);
 
-      // Read back the document to get the actual Timestamp (and ensure full data)
-      const newWordSnap = await getDoc(wordDocRef);
-      if (!newWordSnap.exists()) {
-        throw new Error('Document was created but could not be retrieved.');
-      }
-
-      return newWordSnap.data() as WordReportDocument;
+      return {
+        ...wordData,
+        createdAt: new Date(), // Provide a fallback Date since serverTimestamp is a token
+      } as unknown as WordReportDocument;
     } catch (error: any) {
       throw Error('Failed to store correct word attempt:' + error.message);
     }
@@ -450,7 +443,7 @@ export const MiscueReportController = {
       return [];
     }
   },
-  
+
   /**
    * Finalizes the current word session and triggers a reading level recalculation.
    * Used when The student navigates away from the word exercise screen.
@@ -461,19 +454,23 @@ export const MiscueReportController = {
 
     const sessionRef = doc(db, 'wordSessions', sessionId);
 
-    // Mark as completed and set the end time
+    // Read the session first
+    const snap = await getDoc(sessionRef);
+    if (!snap.exists()) {
+      throw new Error('Session not found during finalization.');
+    }
+
+    const sessionData = snap.data() as WordSessionReport;
+
+    // Mark as completed in memory
+    sessionData.isCompleted = true;
+    sessionData.sessionCompletedAt = new Date(); // local approximation for return value
+
+    // Update Firestore
     await updateDoc(sessionRef, {
       sessionCompletedAt: serverTimestamp(),
       isCompleted: true,
     });
-
-    // Read back the final session
-    const snap = await getDoc(sessionRef);
-    if (!snap.exists()) {
-      throw new Error('Session not found after finalization.');
-    }
-
-    const sessionData = snap.data() as WordSessionReport;
 
     // Trigger reading level recalculation (fire-and-forget)
     recalculateStudentReadingLevel(user.uid).catch(err =>
@@ -513,7 +510,7 @@ export const MiscueReportController = {
         letter,
       );
       if (existing) {
-        console.log('The current alphabet already completed, skipping storage');
+
         return existing;
       }
 
@@ -673,7 +670,6 @@ export const MiscueReportController = {
     return sessionData;
   },
 
-
   // ==========================================================================
   // STUDENT PASSAGE DOCUMENT RETRIEVING
   // ==========================================================================
@@ -691,14 +687,18 @@ export const MiscueReportController = {
    * @throws Error - If Firestore query fails
    * ==========================================================================
    */
-  async getStudentReports(studentId: string): Promise<MiscueReportDocument[]> {
+  async getStudentReports(studentId: string, limitCount: number = 50): Promise<MiscueReportDocument[]> {
     try {
       const reportRef = collection(db, 'miscueReports');
-      const studentMiscueReport = query(
+      let studentMiscueReport = query(
         reportRef,
         where('studentId', '==', studentId),
         orderBy('createdAt', 'desc')
       );
+
+      if (limitCount > 0) {
+        studentMiscueReport = query(studentMiscueReport, limit(limitCount));
+      }
 
       const studentReportSnapshot = await getDocs(studentMiscueReport);
 
@@ -709,42 +709,6 @@ export const MiscueReportController = {
     } catch (error: any) {
       console.error('Failed to fetch student reports:', error);
       throw new Error(`Failed to fetch reports: ${error.message}`);
-    }
-  },
-
-  /**
-   * UPDATED TO React Native Firebase v22
-   * Get all recording duration in a class
-   *
-   * @param studentId
-   * @returns - all recording duration
-   */
-  async getRecordingDuration(
-    studentId: string,
-  ): Promise<MiscueReportDocument[]> {
-    try {
-      const recordRef = collection(db, 'miscueReports');
-      const studentRecordingQuery = query(
-        recordRef,
-        where('studentId', '==', studentId),
-      );
-
-      const studentRecordingSnapshot = await getDocs(studentRecordingQuery);
-
-      return studentRecordingSnapshot.docs.map((doc: any) => {
-        const data = doc.data();
-        return {
-          reportId: doc.id,
-          ...data,
-          // Ensure all required fields are included
-          miscues: data.miscues || [],
-          accuracyRate: data.accuracyRate || 0,
-          wordPerMin: data.wordPerMin || 0,
-          recordingDuration: data.recordingDuration || '00:00:00',
-        } as MiscueReportDocument;
-      });
-    } catch (error: any) {
-      throw new Error('Failed to fetch duration: ' + error.message);
     }
   },
 
@@ -766,17 +730,20 @@ export const MiscueReportController = {
         orderBy('createdAt', 'asc')
       );
       return onSnapshot(alphabetQuery, snapshot => {
+        if (!snapshot) return;
         const alphabets = snapshot.docs.map(
           (doc: QueryDocumentSnapshot<DocumentData>) => ({
             ...doc.data(),
             alphabetId: doc.id,
           }),
         ) as AlphabetReportDocument[];
-        console.log('Alphebet objects retrieved: ' + JSON.stringify(alphabets));
+
         onUpdate(alphabets);
+      }, (error: any) => {
+
       });
     } catch (error: any) {
-      console.log('Failed to retrieved alphabets data: ' + error.any);
+
       throw new Error('Failed to retrieved alphabets data: ' + error.any);
     }
   },
@@ -799,143 +766,22 @@ export const MiscueReportController = {
         orderBy('createdAt', 'asc')
       );
       return onSnapshot(wordQuery, snapshot => {
+        if (!snapshot) return;
         const words = snapshot.docs.map(
           (doc: QueryDocumentSnapshot<DocumentData>) => ({
             ...doc.data(),
             alphabetId: doc.id,
           }),
         ) as WordReportDocument[];
-        console.log('Words objects retrieved: ' + words);
         onUpdate(words);
+      }, (error: any) => {
+
       });
     } catch (error: any) {
-      console.log('Failed to retrieved words data: ' + error.any);
+
       throw new Error('Failed to retrieved words data: ' + error.any);
     }
   },
-
-  /**
-   * ==========================================================================
-   * GET PASSAGE REPORTS
-   * ==========================================================================
-   * Retrieves reports for a specific passage, optionally filtered by student.
-   *
-   * @param passageTitle - Title of the passage
-   * @param studentId - Optional: filter by specific student
-   * @returns Array of MiscueReportDocument objects
-   * ==========================================================================
-   */
-  // async getPassageReports(
-  //   passageTitle: string,
-  //   studentId?: string,
-  // ): Promise<MiscueReportDocument[]> {
-  //   try {
-  //     let query = firestore()
-  //       .collection('miscueReports')
-  //       .where('passageTitle', '==', passageTitle);
-
-  //     if (studentId) {
-  //       query = query.where('studentId', '==', studentId);
-  //     }
-
-  //     const snapshot = await query.orderBy('timestamp', 'desc').get();
-
-  //     return snapshot.docs.map(
-  //       doc =>
-  //         ({
-  //           reportId: doc.id,
-  //           ...doc.data(),
-  //         } as MiscueReportDocument),
-  //     );
-  //   } catch (error: any) {
-  //     console.error('Failed to fetch passage reports:', error);
-  //     throw new Error(`Failed to fetch passage reports: ${error.message}`);
-  //   }
-  // },
-
-  /**
-   * ==========================================================================
-   * GET REPORT BY ID
-   * ==========================================================================
-   * Retrieves a single report by its document ID.
-   *
-   * @param reportId - Firestore document ID
-   * @returns MiscueReportDocument or null if not found
-   * ==========================================================================
-   */
-  // async getReportById(reportId: string): Promise<MiscueReportDocument | null> {
-  //   try {
-  //     const doc = await firestore()
-  //       .collection('miscueReports')
-  //       .doc(reportId)
-  //       .get();
-
-  //     if (!doc.exists) {
-  //       return null;
-  //     }
-
-  //     return {
-  //       reportId: doc.id,
-  //       ...doc.data(),
-  //     } as MiscueReportDocument;
-  //   } catch (error: any) {
-  //     console.error('Failed to fetch report by ID:', error);
-  //     throw new Error(`Failed to fetch report: ${error.message}`);
-  //   }
-  // },
-
-  /**
-   * ==========================================================================
-   * DELETE REPORT
-   * ==========================================================================
-   * Permanently deletes a report from Firestore.
-   *
-   * @param reportId - Document ID to delete
-   * @throws Error - If Firestore operation fails
-   * ==========================================================================
-   */
-  // async deleteReport(reportId: string): Promise<void> {
-  //   try {
-  //     await firestore().collection('miscueReports').doc(reportId).delete();
-
-  //     console.log(`âœ… Report ${reportId} deleted successfully`);
-  //   } catch (error: any) {
-  //     console.error('Failed to delete report:', error);
-  //     throw new Error(`Failed to delete report: ${error.message}`);
-  //   }
-  // },
-
-  /**
-   * ==========================================================================
-   * UPDATE REPORT
-   * ==========================================================================
-   * Updates an existing report with new data.
-   *
-   * @param reportId - Document ID to update
-   * @param updates - Partial data to update
-   * @throws Error - If Firestore operation fails
-   * ==========================================================================
-   */
-  // async updateReport(
-  //   reportId: string,
-  //   updates: Partial<Omit<MiscueReportDocument, 'reportId' | 'timestamp'>>,
-  // ): Promise<void> {
-  //   try {
-  //     await firestore()
-  //       .collection('miscueReports')
-  //       .doc(reportId)
-  //       .update({
-  //         ...updates,
-  //         updatedAt: firestore.FieldValue.serverTimestamp(),
-  //       });
-
-  //     console.log(`âœ… Report ${reportId} updated successfully`);
-  //   } catch (error: any) {
-  //     console.error('Failed to update report:', error);
-  //     throw new Error(`Failed to update report: ${error.message}`);
-  //   }
-  // },
-  // =====================================
 
   // Add these functions to your DatabaseController
 
@@ -981,9 +827,6 @@ export const MiscueReportController = {
 
       // Step 2: Get date range for filtering
       const { start, end } = getDateRangeForTimeFilter(timeRange);
-      console.log(
-        `Date range for ${timeRange}: ${start.toDateString()} to ${end.toDateString()}`,
-      );
 
       // Step 3: Filter reports by time range
       const filteredReports = allReports.filter(report => {
@@ -1010,7 +853,13 @@ export const MiscueReportController = {
         0,
       );
 
+      const totalWCPM = filteredReports.reduce(
+        (sum, report) => sum + (report.wordCorrectPerMin || 0),
+        0,
+      );
+
       const averageWPM = totalWPM / filteredReports.length;
+      const averageWCPM = totalWCPM / filteredReports.length;
       const averageAccuracy = totalAccuracy / filteredReports.length;
 
       // Step 5: Generate timeline - USING THE CONSISTENT APPROACH
@@ -1025,6 +874,7 @@ export const MiscueReportController = {
       return {
         timeline,
         averageWPM,
+        averageWCPM,
         averageAccuracy,
         totalWords,
       };
@@ -1053,7 +903,7 @@ export const MiscueReportController = {
     // Step 2: Group reports by period
     const periodData = new Map<
       string,
-      { accuracySum: number; wpmSum: number; count: number }
+      { accuracySum: number; wpmSum: number; wcpmSum: number; count: number }
     >();
 
     for (const report of reports) {
@@ -1074,11 +924,13 @@ export const MiscueReportController = {
       if (existing) {
         existing.accuracySum += report.accuracyRate;
         existing.wpmSum += report.wordPerMin;
+        existing.wcpmSum += report.wordCorrectPerMin || 0;
         existing.count += 1;
       } else {
         periodData.set(periodKey, {
           accuracySum: report.accuracyRate,
           wpmSum: report.wordPerMin,
+          wcpmSum: report.wordCorrectPerMin || 0,
           count: 1,
         });
       }
@@ -1093,6 +945,7 @@ export const MiscueReportController = {
           date: period.displayDate,
           accuracy: data.accuracySum / data.count,
           wpm: data.wpmSum / data.count,
+          wcpm: data.wcpmSum / data.count,
         };
       }
 
@@ -1100,6 +953,7 @@ export const MiscueReportController = {
         date: period.displayDate,
         accuracy: 0,
         wpm: 0,
+        wcpm: 0,
       };
     });
   },

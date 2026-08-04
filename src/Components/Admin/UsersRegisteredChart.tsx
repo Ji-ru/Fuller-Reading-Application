@@ -11,23 +11,25 @@ interface UsersRegisteredProps {
   acadYear?: string;
 }
 
+import { FacultyColors } from '../../Utilities/Theme';
+
 const COLORS = {
-  primary: '#4ECDC4',
-  cardBackground: '#FFFFFF',
-  textPrimary: '#2D3436',
-  textSecondary: '#636E72',
-  error: '#FF7675',
+  primary: FacultyColors.primary,
+  cardBackground: FacultyColors.white,
+  textPrimary: FacultyColors.ink,
+  textSecondary: FacultyColors.slate,
+  error: FacultyColors.red,
 };
 
 const chartConfig = {
-  backgroundColor: '#FFFFFF',
-  backgroundGradientFrom: '#FFFFFF',
+  backgroundColor: FacultyColors.white,
+  backgroundGradientFrom: FacultyColors.white,
   backgroundGradientTo: '#F8F9FA',
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(78, 205, 196, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(45, 52, 54, ${opacity})`,
+  color: (opacity = 1) => `rgba(0, 132, 67, ${opacity})`, // primary
+  labelColor: (opacity = 1) => `rgba(27, 43, 34, ${opacity})`, // ink
   style: { borderRadius: 16 },
-  propsForDots: { r: '4', strokeWidth: '2', stroke: '#4ECDC4' },
+  propsForDots: { r: '4', strokeWidth: '2', stroke: FacultyColors.primary },
   propsForBackgroundLines: {
     strokeDasharray: '', // solid background lines
     stroke: '#F1F2F6',
@@ -77,13 +79,15 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
     labels,
     datasets: [
       {
-        data: monthlyRegistrations.map(item => item.count),
-        color: (opacity = 1) => `rgba(78, 205, 196, ${opacity})`,
+        data: monthlyRegistrations.map(item => item.count ?? 0),
+        color: (opacity = 1) => `rgba(0, 132, 67, ${opacity})`, // primary
         strokeWidth: sw(3),
       },
     ],
     legend: ['New Users'],
   };
+  const maxValue = Math.max(0, ...monthlyRegistrations.map(item => item.count));
+  const segments = maxValue > 0 ? Math.min(6, maxValue) : 1;
 
   return (
     <View style={styles.card}>
@@ -102,6 +106,7 @@ const UsersRegisteredChart: React.FC<UsersRegisteredProps> = ({acadYear}) => {
           width={screenWidth - sw(48)}
           height={sh(200)}
           chartConfig={chartConfig}
+          segments={segments}
           bezier
           style={{ marginVertical: sh(8), borderRadius: sw(16) }}
           formatYLabel={(y) => Math.round(Number(y)).toString()}
@@ -142,17 +147,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: sf(18),
-    fontFamily: 'Comfortaa-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: COLORS.textPrimary,
   },
   subtitle: {
     fontSize: sf(13),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Medium',
     color: COLORS.textSecondary,
   },
   description: {
     fontSize: sf(12),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Regular',
     color: '#7F8C8D',
     marginTop: sh(4),
   },
@@ -163,14 +168,14 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: sf(14),
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Regular',
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: sh(20),
   },
   errorText: {
     color: COLORS.error,
-    fontFamily: 'Comfortaa-Regular',
+    fontFamily: 'Satoshi-Medium',
     marginTop: sh(10),
   },
 });

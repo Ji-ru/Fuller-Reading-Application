@@ -1,10 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { sw, sh, sf } from '../Utils/responsive';
+import { FacultyColors, Radii, Shadows } from '../Utilities/Theme';
 
 const myClass = StyleSheet.create({
+  // Updated to FacultyColors palette for the faculty theme
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFB',
+    backgroundColor: FacultyColors.bg,
   },
   insideContainer: {
     flex: 1,
@@ -23,22 +25,23 @@ const myClass = StyleSheet.create({
   pageTitle: {
     fontSize: sf(32),
     fontFamily: 'Satoshi-Black',
-    color: '#1A1A1A',
+    color: FacultyColors.ink,
     marginBottom: sh(4),
   },
   pageSubtitle: {
     fontSize: sf(15),
     fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    color: FacultyColors.inkLight,
   },
 
   // CREATE BUTTON
   createButton: {
-    backgroundColor: '#3D71D9',
+    backgroundColor: FacultyColors.primary,
     borderRadius: sw(12),
+    marginTop: sh(5),
     marginBottom: sh(20),
     elevation: 3,
-    shadowColor: '#4CAF50',
+    shadowColor: FacultyColors.primary,
     shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.2,
     shadowRadius: sw(8),
@@ -74,7 +77,7 @@ const myClass = StyleSheet.create({
   classCount: {
     fontSize: sf(15),
     fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    color: FacultyColors.inkLight,
     marginBottom: sh(12),
   },
 
@@ -87,15 +90,14 @@ const myClass = StyleSheet.create({
   },
   listContent: {
     paddingBottom: sh(24),
+    gap: sh(12),
   },
   classCard: {
-    backgroundColor: '#fff',
-    borderRadius: sw(14),
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.06,
-    shadowRadius: sw(8),
+    backgroundColor: FacultyColors.white,
+    borderRadius: Radii.md,
+    borderLeftWidth: sw(4),
+    borderLeftColor: FacultyColors.primary,
+    ...Shadows.subtle,
     overflow: 'hidden',
   },
   classCardContent: {
@@ -106,11 +108,11 @@ const myClass = StyleSheet.create({
   classIconContainer: {
     width: sw(48),
     height: sw(48),
-    borderRadius: sw(12),
-    backgroundColor: '#E8F5E9',
+    borderRadius: Radii.sm,
+    backgroundColor: 'rgba(0,132,67,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: sw(16),
+    marginRight: sw(14),
   },
   classIcon: {
     fontSize: sf(24),
@@ -122,7 +124,7 @@ const myClass = StyleSheet.create({
   className: {
     fontSize: sf(18),
     fontFamily: 'Satoshi-Bold',
-    color: '#1F2937',
+    color: FacultyColors.ink,
     lineHeight: sf(22),
   },
   classMetaRow: {
@@ -131,32 +133,32 @@ const myClass = StyleSheet.create({
     flexWrap: 'wrap',
   },
   classMetaChip: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(0,132,67,0.08)',
     paddingHorizontal: sw(10),
     paddingVertical: sh(4),
-    borderRadius: sw(8),
+    borderRadius: Radii.pill,
     flexDirection: 'row',
     alignItems: 'center',
     gap: sw(4),
   },
   classMetaLabel: {
-    fontSize: sf(11),
+    fontSize: sf(10),
     fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    color: FacultyColors.inkLight,
   },
   classMetaValue: {
-    fontSize: sf(12),
+    fontSize: sf(11),
     fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    color: FacultyColors.primary,
   },
   ellipsisButton: {
-    width: sw(32),
-    height: sw(32),
-    borderRadius: sw(16),
-    backgroundColor: '#E8F5E9',
+    width: sw(34),
+    height: sw(34),
+    borderRadius: sw(17),
+    backgroundColor: 'rgba(0,132,67,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: sw(12),
+    marginLeft: sw(10),
   },
   ellipsisIcon: {
     width: sw(16),
@@ -169,36 +171,36 @@ const myClass = StyleSheet.create({
   archivedClassCard: {
     backgroundColor: '#F9FAFB',
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: FacultyColors.slate,
     borderStyle: 'dashed',
   },
   archivedClassCardContent: {
     opacity: 0.75,
   },
   archivedClassIconContainer: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: FacultyColors.yellow,
   },
   archivedClassIcon: {
     fontSize: sf(24),
     opacity: 0.6,
   },
   archivedClassName: {
-    color: '#6B7280',
+    color: FacultyColors.inkLight,
   },
   archivedClassEmail: {
     color: '#9CA3AF',
   },
   archivedMetaChip: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: FacultyColors.yellow,
   },
   archivedMetaLabel: {
-    color: '#92400E',
+    color: FacultyColors.orange,
   },
   archivedMetaValue: {
-    color: '#B45309',
+    color: FacultyColors.orange,
   },
   archivedEllipsisButton: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: FacultyColors.yellow,
   },
   archivedOverlay: {
     position: 'absolute',
@@ -220,7 +222,7 @@ const myClass = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'transparent',
-    zIndex: 998,
+    zIndex: 9998,
   },
   overlay: {
     top: 0,
@@ -231,7 +233,7 @@ const myClass = StyleSheet.create({
   },
   contextMenu: {
     position: 'absolute',
-    backgroundColor: 'white',
+    backgroundColor: FacultyColors.white,
     borderRadius: sw(12),
     paddingVertical: sh(8),
     elevation: 8,
@@ -240,7 +242,7 @@ const myClass = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: sw(12),
     minWidth: sw(180),
-    zIndex: 1000,
+    zIndex: 9999,
   },
   contextMenuItem: {
     flexDirection: 'row',
@@ -252,11 +254,11 @@ const myClass = StyleSheet.create({
     width: sw(20),
     height: sw(20),
     marginRight: sw(12),
-    tintColor: '#374151',
+    tintColor: FacultyColors.ink,
   },
   contextMenuText: {
     fontSize: sf(15),
-    color: '#374151',
+    color: FacultyColors.ink,
     fontFamily: 'Satoshi-Bold',
   },
   deleteMenuItem: {
@@ -264,14 +266,14 @@ const myClass = StyleSheet.create({
     borderTopColor: '#F3F4F6',
   },
   deleteMenuText: {
-    color: '#EF4444',
+    color: FacultyColors.red,
   },
   archiveMenuItem: {
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
   },
   archiveMenuText: {
-    color: '#F59E0B',
+    color: FacultyColors.orange,
   },
 
   // MODAL STYLES
@@ -283,7 +285,7 @@ const myClass = StyleSheet.create({
     padding: sw(20),
   },
   modalContainer: {
-    backgroundColor: 'white',
+    backgroundColor: FacultyColors.white,
     borderRadius: sw(16),
     padding: sw(24),
     width: '100%',
@@ -294,18 +296,18 @@ const myClass = StyleSheet.create({
     fontSize: sf(22),
     fontFamily: 'Satoshi-Bold',
     marginBottom: sh(24),
-    color: '#1F2937',
+    color: FacultyColors.ink,
     textAlign: 'center',
   },
   modalInput: {
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: FacultyColors.slate,
     borderRadius: sw(10),
     padding: sw(14),
     fontSize: sf(16),
     fontFamily: 'Satoshi-Medium',
-    color: '#1F2937',
-    backgroundColor: '#F9FAFB',
+    color: FacultyColors.ink,
+    backgroundColor: FacultyColors.bg,
   },
   formGroup: {
     marginBottom: sh(20),
@@ -313,17 +315,17 @@ const myClass = StyleSheet.create({
   formLabel: {
     fontSize: sf(14),
     fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    color: FacultyColors.ink,
     marginBottom: sh(8),
   },
   formHelperText: {
     fontSize: sf(13),
     fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    color: FacultyColors.inkLight,
     marginTop: sh(6),
   },
   modalInfoBox: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: FacultyColors.primaryPale,
     borderRadius: sw(12),
     padding: sw(16),
     marginTop: sh(8),
@@ -333,12 +335,12 @@ const myClass = StyleSheet.create({
     fontSize: sf(14),
     fontFamily: 'Satoshi-Bold',
     marginBottom: sh(8),
-    color: '#1E40AF',
+    color: FacultyColors.primaryDeep,
   },
   modalInfoText: {
     fontSize: sf(13),
     fontFamily: 'Satoshi-Medium',
-    color: '#374151',
+    color: FacultyColors.ink,
     marginBottom: sh(4),
     lineHeight: sf(18),
   },
@@ -356,15 +358,15 @@ const myClass = StyleSheet.create({
     minHeight: sh(48),
   },
   cancelButton: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: FacultyColors.primaryPale,
   },
   cancelButtonText: {
     fontSize: sf(16),
     fontFamily: 'Satoshi-Bold',
-    color: '#6B7280',
+    color: FacultyColors.inkLight,
   },
   saveButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: FacultyColors.primary,
   },
   saveButtonText: {
     fontSize: sf(16),
@@ -372,10 +374,10 @@ const myClass = StyleSheet.create({
     color: '#fff',
   },
   createClassButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: FacultyColors.primary,
   },
   createClassButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: FacultyColors.slate,
     opacity: 0.6,
   },
   createClassButtonText: {
@@ -395,7 +397,7 @@ const myClass = StyleSheet.create({
     marginTop: sh(16),
     fontSize: sf(16),
     fontFamily: 'Satoshi-Medium',
-    color: '#6B7280',
+    color: FacultyColors.inkLight,
   },
   emptyContainer: {
     flex: 1,
@@ -411,14 +413,14 @@ const myClass = StyleSheet.create({
   emptyTitle: {
     fontSize: sf(20),
     fontFamily: 'Satoshi-Bold',
-    color: '#374151',
+    color: FacultyColors.ink,
     marginBottom: sh(8),
     textAlign: 'center',
   },
   emptyText: {
     fontSize: sf(15),
     fontFamily: 'Satoshi-Medium',
-    color: '#9CA3AF',
+    color: FacultyColors.slate,
     textAlign: 'center',
     lineHeight: sf(22),
   },
@@ -460,17 +462,17 @@ const myClass = StyleSheet.create({
     height: sw(25),
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#D4F1E8',
+    backgroundColor: FacultyColors.primaryPale,
     borderRadius: sw(10),
     marginBottom: sh(35),
   },
   classGrade: {
     fontFamily: 'Satoshi-Medium',
-    color: '#666',
+    color: FacultyColors.inkLight,
     fontSize: sf(12),
   },
   classCode: {
-    color: '#666',
+    color: FacultyColors.inkLight,
     fontSize: sf(12),
     fontFamily: 'Satoshi-Bold',
   },

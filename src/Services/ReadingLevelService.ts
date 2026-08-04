@@ -414,9 +414,7 @@ const updateReadingLevelIfChanged = async (
 
   // No-op: level hasn't changed, skip the write
   if (currentLevel === newLevel) {
-    console.log(
-      `[ReadingLevelService] Level unchanged (${currentLevel}) for student ${studentId}. No write needed.`,
-    );
+
     return;
   }
 
@@ -428,7 +426,4 @@ const updateReadingLevelIfChanged = async (
     updatedAt: serverTimestamp(),
   });
 
-  console.log(
-    `[ReadingLevelService] ✅ Level updated: "${currentLevel}" → "${newLevel}" for student ${studentId}`,
-  );
 };

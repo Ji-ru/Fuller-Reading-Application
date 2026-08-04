@@ -13,6 +13,8 @@ import { getCurrentUser, getUserProfile } from '../../Controller/AuthenticationC
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
 import { sw, sh, sf } from '../../Utils/responsive';
+import { Icon, IconName } from '../../Components/GlobalUse/Icon';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 
 // ─── Palette ─────────────────
 const C = {
@@ -91,14 +93,14 @@ function MenuBars() {
 
 // ─── Activity Button ──────────────────────────────────────────────────────────
 function ActivityButton({
-  emoji,
+  icon,
   label,
   sublabel,
   primary = false,
   onPress,
   delay = 0,
 }: {
-  emoji: string;
+  icon: IconName;
   label: string;
   sublabel?: string;
   primary?: boolean;
@@ -127,7 +129,12 @@ function ActivityButton({
         >
           {/* Icon bubble */}
           <View style={[S.actBtnIconBox, primary ? S.actBtnIconBoxPrimary : S.actBtnIconBoxSecondary]}>
-            <Text style={S.actBtnEmoji}>{emoji}</Text>
+            <Icon
+              name={icon}
+              size={sf(28)}
+              color={primary ? C.white : C.greenDark}
+              filled
+            />
           </View>
 
           {/* Text */}
@@ -185,17 +192,12 @@ export default function UserHomeScreen() {
     <SafeAreaView style={S.bg}>
       <BubbleBackground />
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <View style={S.header}>
-        <Text style={S.headerLogo}>CISC KIDS</Text>
-        <TouchableOpacity
-          style={S.menuBtn}
-          onPress={() => setMenuVisible(v => !v)}
-          activeOpacity={0.7}
-        >
-          <MenuBars />
-        </TouchableOpacity>
-      </View>
+      {/* Header */}
+      <StudentHeader 
+        title="CISC KIDS" 
+        onAboutPress={() => handleNextStep('About')}
+        onLogoutPress={() => setLogoutVisible(true)}
+      />
 
       {/* Dropdown */}
       {menuVisible && (
@@ -206,6 +208,18 @@ export default function UserHomeScreen() {
             activeOpacity={1}
           />
           <View style={S.dropdown}>
+            <TouchableOpacity
+              onPress={() => {
+                setMenuVisible(false);
+                handleNextStep('About');
+              }}
+              style={S.dropdownItem}
+              activeOpacity={0.75}
+            >
+              <Icon name="info" size={sw(20)} color={C.slate} filled />
+              <Text style={[S.dropdownText, S.aboutText]}>About</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
               style={S.dropdownItem}
@@ -254,7 +268,7 @@ export default function UserHomeScreen() {
         {/* ── Activity Buttons ───────────────────────────────────────────── */}
         <View style={S.btnsContainer}>
           <ActivityButton
-            emoji="📖"
+            icon="bookOpen"
             label="Start Reading"
             sublabel="Practice reading passages"
             primary
@@ -264,21 +278,21 @@ export default function UserHomeScreen() {
             delay={140}
           />
           <ActivityButton
-            emoji="📋"
-            label="Reading History"
+            icon="history"
+            label="Reading Performance"
             sublabel="View past reading sessions"
             onPress={() => handleNextStep('ReadingHistory')}
             delay={200}
           />
           <ActivityButton
-            emoji="🏫"
+            icon="myclass"
             label="My Class"
             sublabel="View your class and classmates"
             onPress={() => handleNextStep('StudentMyClass')}
             delay={260}
           />
           <ActivityButton
-            emoji="👤"
+            icon="profile"
             label="My Profile"
             sublabel="View your progress and details"
             onPress={() => handleNextStep('Profile')}
@@ -341,6 +355,7 @@ const S = StyleSheet.create({
   },
   dropdownIcon: { width: sw(20), height: sw(20), marginRight: sw(12), tintColor: C.coral },
   dropdownText: { fontSize: sf(15), fontFamily: 'Nunito-Bold', color: C.coral },
+  aboutText: { color: C.slate, marginLeft: sw(12) },
 
   mainContent: {
     flex: 1,
@@ -366,21 +381,21 @@ const S = StyleSheet.create({
   greetLeft: { flex: 1 },
   greetTime: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: C.green,
     letterSpacing: 1.2,
     marginBottom: sh(4),
   },
   greetName: {
     fontSize: sf(38),
-    fontFamily: 'Nunito-Black',
+    fontFamily: 'Andika-Bold',
     color: C.ink,
     lineHeight: sh(46),
     marginBottom: sh(8),
   },
   greetSub: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Andika-Regular',
     color: C.slate,
     lineHeight: sh(19),
     maxWidth: sw(160),
@@ -406,7 +421,7 @@ const S = StyleSheet.create({
   },
   sectionLabelText: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'Andika-Bold',
     color: C.inkLight,
     letterSpacing: 1.5,
   },
@@ -423,7 +438,7 @@ const S = StyleSheet.create({
     alignItems: 'center',
     borderRadius: sw(20),
     paddingHorizontal: sw(16),
-    paddingVertical: sh(18),
+    paddingVertical: sh(15),
     gap: sw(14),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: sh(3) },
@@ -438,7 +453,7 @@ const S = StyleSheet.create({
 
   // Icon box
   actBtnIconBox: {
-    width: sw(52), height: sw(52),
+    width: sw(52), height: sw(50),
     borderRadius: sw(16),
     justifyContent: 'center',
     alignItems: 'center',
@@ -453,10 +468,10 @@ const S = StyleSheet.create({
 
   // Button text
   actBtnLabel: {
-    fontSize: sf(17), fontFamily: 'Nunito-ExtraBold', color: C.white, marginBottom: sh(3),
+    fontSize: sf(17), fontFamily: 'Andika-Bold', color: C.white, marginBottom: sh(1),
   },
   actBtnSublabel: {
-    fontSize: sf(12), color: 'rgba(255,255,255,0.75)', fontFamily: 'Nunito-Medium',
+    fontSize: sf(12), color: 'rgba(255,255,255,0.75)', fontFamily: 'Andika-Regular',
   },
 
   // Arrow circle

@@ -9,16 +9,16 @@ export const getDateRangeForTimeFilter = (timeRange: 'week' | 'month' | 'year', 
       // Monday = 1, so days since Monday = (currentDay + 6) % 7, or 0 when Monday
       const currentDay = ref.getDay();
       const daysSinceMonday = currentDay === 0 ? 6 : currentDay - 1; // Sun=6 days back to Mon
-      
+
       // Start = Monday of the anchor's week
       start.setDate(ref.getDate() - daysSinceMonday);
       start.setHours(0, 0, 0, 0);
-      
+
       // End = Sunday of the anchor's week
       end.setDate(start.getDate() + 6);
       end.setHours(23, 59, 59, 999);
       break;
-      
+
     case 'month':
       // Full calendar month containing the anchor
       start.setDate(1);
@@ -26,7 +26,7 @@ export const getDateRangeForTimeFilter = (timeRange: 'week' | 'month' | 'year', 
       end.setMonth(end.getMonth() + 1, 0); // last day of month
       end.setHours(23, 59, 59, 999);
       break;
-      
+
     case 'year':
       // School year: June (start) through August of next year
       const year = ref.getFullYear();
@@ -52,6 +52,6 @@ export const getDateRangeForTimeFilter = (timeRange: 'week' | 'month' | 'year', 
       end.setHours(23, 59, 59, 999);
       break;
   }
-  
+
   return { start, end };
 };

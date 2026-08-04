@@ -8,23 +8,25 @@ interface ClassStatusChartProps {
   acadYear?: string;
 }
 
+import { FacultyColors } from '../../Utilities/Theme';
+
 // ─── Palette (aligned with the faculty UI theme) ─────────────────────────────
 const C = {
-  card: '#FFFFFF',
-  ink: '#1F2937',
-  inkLight: '#6B7280',
-  slate: '#9CA3AF',
+  card: FacultyColors.white,
+  ink: FacultyColors.ink,
+  inkLight: FacultyColors.inkLight,
+  slate: FacultyColors.slate,
   border: '#E5E7EB',
   surface: '#FAFAFA',
   track: '#F3F4F6',
 
-  active: '#2CA96A',
-  activeBg: '#E8F5E9',
-  archived: '#94A3B8',
+  active: FacultyColors.primaryLight,
+  activeBg: 'rgba(0, 132, 67, 0.08)',
+  archived: FacultyColors.slate,
   archivedBg: '#F1F5F9',
 
-  insightBg: '#E8F5E9',
-  error: '#EF4444',
+  insightBg: 'rgba(0, 132, 67, 0.08)',
+  error: FacultyColors.red,
   errorBg: '#FEE2E2',
   errorBorder: '#FECACA',
 };
@@ -146,10 +148,10 @@ const ClassStatusChart: React.FC<ClassStatusChartProps> = ({ acadYear }) => {
       </View>
 
       {/* ── Insight bar ────────────────────────────────────────────────── */}
-      <View style={S.insightBar}>
+      {/* <View style={S.insightBar}>
         <Text style={S.insightIcon}>📊</Text>
         <Text style={S.insightText}>{insightText}</Text>
-      </View>
+      </View> */}
     </View>
   );
 };
@@ -208,19 +210,19 @@ const S = StyleSheet.create({
   headerText: { flex: 1 },
   title: {
     fontSize: sf(17),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: C.ink,
     marginBottom: sh(2),
   },
   subtitle: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: C.active,
     marginBottom: sh(4),
   },
   description: {
     fontSize: sf(11),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Satoshi-Medium',
     color: C.inkLight,
     lineHeight: sf(16),
   },
@@ -264,11 +266,11 @@ const S = StyleSheet.create({
   },
   statIconText: {
     fontSize: sf(18),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Satoshi-Bold',
   },
   statLabel: {
     fontSize: sf(10),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: C.inkLight,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
@@ -276,12 +278,12 @@ const S = StyleSheet.create({
   },
   statValue: {
     fontSize: sf(28),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Satoshi-Bold',
     marginBottom: sh(2),
   },
   statPct: {
     fontSize: sf(11),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Satoshi-Medium',
     color: C.slate,
   },
 
@@ -301,7 +303,7 @@ const S = StyleSheet.create({
   insightText: {
     flex: 1,
     fontSize: sf(12),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Satoshi-Medium',
     color: C.ink,
     lineHeight: sf(18),
   },
@@ -314,7 +316,7 @@ const S = StyleSheet.create({
   loadingText: {
     marginTop: sh(10),
     fontSize: sf(13),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Satoshi-Medium',
     color: C.inkLight,
   },
 
@@ -333,13 +335,13 @@ const S = StyleSheet.create({
   },
   errorText: {
     fontSize: sf(13),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: C.error,
     marginBottom: sh(2),
   },
   errorSub: {
     fontSize: sf(11),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Satoshi-Medium',
     color: C.slate,
     textAlign: 'center',
   },
@@ -355,13 +357,13 @@ const S = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: sf(15),
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Satoshi-Bold',
     color: C.ink,
     marginBottom: sh(4),
   },
   emptyText: {
     fontSize: sf(12),
-    fontFamily: 'Nunito-Medium',
+    fontFamily: 'Satoshi-Medium',
     color: C.slate,
     textAlign: 'center',
   },

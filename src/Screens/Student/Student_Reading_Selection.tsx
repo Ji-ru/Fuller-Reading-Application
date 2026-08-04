@@ -14,17 +14,19 @@ import {
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import readingMaterialData from '../../../assets/ReadingMaterial/ReadingMaterial_new.json';
 import selection from '../../UI_Designs/PassageSelectionStyles';
-import { Alphabet, Passage, Word } from '../../Interfaces/passage';
+import { Passage, Word } from '../../Interfaces/passage';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
-import { useStudentCompletedAlphabet, useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
+import { useStudentCompletedWord } from '../../Hooks/Student/use_StudentCompletedReading';
 import { getAuth } from '@react-native-firebase/auth';
 import { WordContext } from '../../Interfaces/dataInterfaces';
-import Svg, { Text as SvgText } from 'react-native-svg';
 import { getPassageImage } from '../../Utilities/ReadingAssets';
+import { Icon } from '../../Components/GlobalUse/Icon';
+import { useAllPassages } from '../../Hooks/Student/useAllPassages';
+import { ActivityIndicator } from 'react-native';
+import { StudentHeader } from '../../Components/Student/StudentHeader';
 
-const currentStudentId = getAuth().currentUser?.uid ?? '';
 const { width: SW } = Dimensions.get('window');
 
 const C = {
@@ -80,6 +82,12 @@ const headerStyles = StyleSheet.create({
   },
   dropdownIcon: { width: 20, height: 20, marginRight: 12, tintColor: C.coral },
   dropdownText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.coral },
+  aboutRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14,
+  },
+  aboutText: { fontSize: 15, fontFamily: 'Nunito-Bold', color: C.slate, marginLeft: 12 },
+  dropdownDivider: { height: 1, marginHorizontal: 12, backgroundColor: '#E3F0E7' },
 });
 
 // ─── BounceIn ─────────────────────────────────────────────────────────────────
@@ -207,8 +215,8 @@ function FadeSlideIn({
   );
 }
 
-const alphabetData = readingMaterialData?.Alphabet || [];
-const passages = readingMaterialData?.Passages || [];
+// const alphabetData = readingMaterialData?.Alphabet || [];
+const staticPassages = (readingMaterialData?.Passages || []) as Passage[];
 
 // New structure: Words[0].chapters[]
 const wordsContainer = readingMaterialData?.Words?.[0];
@@ -245,17 +253,22 @@ export const READING_COLORS = [
 ];
 
 export default function PageSelectionScreen() {
-  const { handleLogout, handleBackStep, handleReadingNext } = useNavigationHelper();
+  const currentStudentId = getAuth().currentUser?.uid ?? '';
+  const { handleLogout, handleBackStep, handleReadingNext, handleNextStep } = useNavigationHelper();
 
-  const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
-  const isAlphabetCompleted = (letter: string) => completedAlphabets.some(a => a.letter === letter);
+  // Custom Hook to fetch dynamic passages
+  const { dynamicPassages, loading: passagesLoading } = useAllPassages();
+  const allPassages = [...staticPassages, ...dynamicPassages];
+
+  // const completedAlphabets = useStudentCompletedAlphabet(currentStudentId);
+  // const isAlphabetCompleted = (letter: string) => completedAlphabets.some(a => a.letter === letter);
 
   const completedWords = useStudentCompletedWord(currentStudentId);
   const normalize = (value: string) => value.trim().toLowerCase();
   const isWordCompleted = (word: string) => completedWords.some(a => normalize(a.word) === normalize(word));
 
   const [menuVisible, setMenuVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<'alphabet' | 'passage' | 'word'>('alphabet');
+  const [activeTab, setActiveTab] = useState<'passage' | 'word'>('word');
   const [logoutVisible, setLogoutVisible] = useState(false);
 
   // New state for chapter selection
@@ -279,9 +292,9 @@ export default function PageSelectionScreen() {
     setMenuVisible(!menuVisible);
   };
 
-  const handleAlphabetSelect = (alphabet: Alphabet) => {
-    handleReadingNext(alphabet, 'alphabet');
-  };
+  // const handleAlphabetSelect = (alphabet: Alphabet) => {
+  //   handleReadingNext(alphabet, 'alphabet');
+  // };
 
   // Updated word selection – find the lesson containing the word
   const handleWordSelect = (wordText: string, lesson: any, chapter: any) => {
@@ -321,48 +334,51 @@ export default function PageSelectionScreen() {
 
   // Color palette is defined at module level as READING_COLORS (reusable)
 
-  const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => {
-    const bgColor = READING_COLORS[index % READING_COLORS.length];
-    const completed = isAlphabetCompleted(item.letter);
-  
-    return (
-      <FadeSlideIn delay={60 + index * 25} style={{ width: '23%' }}>
-        <TouchableOpacity
-          style={[selection.alphabetItem, { backgroundColor: bgColor, width: '100%' }]}
-          onPress={() => handleAlphabetSelect(item)}
-          activeOpacity={0.78}
-        >
-          {/* Gloss dot */}
-          <View style={selection.alphabetHighlightDot} />
-  
-          {/* Uppercase + lowercase side by side, baseline-aligned */}
-          <View style={selection.alphabetContainer}>
-            <Text
-              style={selection.alphabetLetter}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {item.letter.toUpperCase()}
-            </Text>
-            <Text
-              style={selection.alphabetLetterSmall}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {item.letter.toLowerCase()}
-            </Text>
-          </View>
-  
-          {/* Completed badge — top-right */}
-          {completed && (
-            <View style={selection.completedBadge}>
-              <Text style={selection.completedCheckmark}>✓</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </FadeSlideIn>
-    );
-  };
+  // const renderAlphabetItem = ({ item, index }: { item: Alphabet; index: number }) => {
+  //   const completed = isAlphabetCompleted(item.letter);
+  //   // Completed letters keep their vibrant accent color; untried letters are muted gray.
+  //   const bgColor = completed
+  //     ? READING_COLORS[index % READING_COLORS.length]
+  //     : '#C7CCD1';
+
+  //   return (
+  //     <FadeSlideIn delay={60 + index * 25} style={{ width: '23%' }}>
+  //       <TouchableOpacity
+  //         style={[selection.alphabetItem, { backgroundColor: bgColor, width: '100%' }]}
+  //         onPress={() => handleAlphabetSelect(item)}
+  //         activeOpacity={0.78}
+  //       >
+  //         {/* Gloss dot */}
+  //         <View style={selection.alphabetHighlightDot} />
+
+  //         {/* Uppercase + lowercase side by side, baseline-aligned */}
+  //         <View style={selection.alphabetContainer}>
+  //           <Text
+  //             style={selection.alphabetLetter}
+  //             numberOfLines={1}
+  //             adjustsFontSizeToFit
+  //           >
+  //             {item.letter.toUpperCase()}
+  //           </Text>
+  //           <Text
+  //             style={selection.alphabetLetterSmall}
+  //             numberOfLines={1}
+  //             adjustsFontSizeToFit
+  //           >
+  //             {item.letter.toLowerCase()}
+  //           </Text>
+  //         </View>
+
+  //         {/* Completed badge — top-right */}
+  //         {completed && (
+  //           <View style={selection.completedBadge}>
+  //             <Text style={selection.completedCheckmark}>✓</Text>
+  //           </View>
+  //         )}
+  //       </TouchableOpacity>
+  //     </FadeSlideIn>
+  //   );
+  // };
 
   // --- CHAPTER CARD (Step 1) – reuses letterCard styles ---
   const renderChapterCard = ({ item, index }: { item: any; index: number }) => {
@@ -380,9 +396,9 @@ export default function PageSelectionScreen() {
           activeOpacity={0.7}
         >
           <View style={selection.letterCardContent}>
-            {/* Chapter icon (using book emoji, can be replaced with any icon) */}
+            {/* Chapter icon */}
             <View style={selection.letterIconContainer}>
-              <Text style={selection.letterIconText}>📙</Text>
+              <Icon name="bookStack" size={28} color="#008443" filled />
             </View>
 
             {/* Chapter info */}
@@ -421,7 +437,6 @@ export default function PageSelectionScreen() {
         <Text style={[
           selection.wordBubbleText,
           completed && selection.wordBubbleTextCompleted,
-          { fontFamily: 'Nunito-Bold' }
         ]}>
           {word}
         </Text>
@@ -434,7 +449,7 @@ export default function PageSelectionScreen() {
     );
   };
 
-  // --- LESSON CARD (Step 2) – reuses phonemeSection styles ---
+  // --- LESSON CARD (Step 2) ---
   const renderLesson = (lesson: any, index: number) => {
     const words = lesson.words || [];
     if (words.length === 0) return null;
@@ -444,7 +459,7 @@ export default function PageSelectionScreen() {
         <View style={selection.phonemeSection}>
           <View style={selection.phonemHeader}>
             <View style={selection.phonemeIconContainer}>
-              <Text style={selection.phonemeIcon}>📖</Text>
+              <Icon name="bookOpen" size={24} color="#008443" filled />
             </View>
             <View style={selection.phonemeInfo}>
               <Text style={selection.phonemeTitle}>{lesson.title}</Text>
@@ -493,46 +508,28 @@ export default function PageSelectionScreen() {
       <View style={selection.insideContainer}>
         <BubbleBackground />
 
-        {/* Header – unchanged */}
         {/* Header */}
-        <View style={{ zIndex: 100 }}>
-          <View style={upperNav.header}>
-            <TouchableOpacity style={headerStyles.backBtn} onPress={handleBackStep} activeOpacity={0.7}>
-              <Text style={headerStyles.backArrowText}>‹</Text>
-            </TouchableOpacity>
-            <Svg height={60} width={220}>
-              <SvgText
-                x={110}                 // center X
-                y={35}                  // baseline Y
-                fontSize={23}
-                fontFamily="Nunito-Black"
-                textAnchor="middle"     // center align
-                fill="none"          // inside color
-                stroke="#E8F5E9"        // outline color
-                strokeWidth={8}         // outline thickness
-                strokeLinejoin='round'
-              >
-                Reading Materials
-              </SvgText>
-              <SvgText
-                x={110}
-                y={35}
-                fontSize={23}
-                fontFamily="Nunito-Black"
-                textAnchor="middle"
-                fill="#1B5E20"
-              >
-                Reading Materials
-              </SvgText>
-            </Svg>
-            <TouchableOpacity style={headerStyles.menuBtn} onPress={toggleMenu} activeOpacity={0.7}>
-              <MenuBars />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <StudentHeader 
+          title="Reading Selection"
+          onBackPress={handleBackStep}
+          onAboutPress={() => handleNextStep('About')}
+          onLogoutPress={() => setLogoutVisible(true)}
+        />
 
         {menuVisible && (
           <View style={headerStyles.dropdown}>
+            <TouchableOpacity
+              onPress={() => {
+                setMenuVisible(false);
+                handleNextStep('About');
+              }}
+              style={headerStyles.aboutRow}
+              activeOpacity={0.75}
+            >
+              <Icon name="info" size={20} color={C.slate} filled />
+              <Text style={headerStyles.aboutText}>About</Text>
+            </TouchableOpacity>
+            <View style={headerStyles.dropdownDivider} />
             <TouchableOpacity onPress={handleLogoutPress} style={headerStyles.dropdownItem} activeOpacity={0.75}>
               <Image
                 source={require('../../../assets/icons/Logout-icon.png')}
@@ -570,7 +567,7 @@ export default function PageSelectionScreen() {
 
         {/* Tabs – unchanged */}
         <View style={selection.tabContainer}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[selection.tab, activeTab === 'alphabet' && selection.activeTab]}
             onPress={() => {
               setActiveTab('alphabet');
@@ -580,7 +577,7 @@ export default function PageSelectionScreen() {
             <Text style={[selection.tabText, activeTab === 'alphabet' && selection.activeTabText]}>
               Alphabet
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity
             style={[selection.tab, activeTab === 'word' && selection.activeTab]}
@@ -609,7 +606,7 @@ export default function PageSelectionScreen() {
 
         {/* Content */}
         <View style={selection.contentContainer}>
-          {activeTab === 'alphabet' && (
+          {/* {activeTab === 'alphabet' && (
             <>
               <FadeSlideIn delay={40}>
                 <Text style={selection.sublabel}>Select a letter to read:</Text>
@@ -624,7 +621,7 @@ export default function PageSelectionScreen() {
                 contentContainerStyle={selection.alphabetListContainer}
               />
             </>
-          )}
+          )} */}
 
           {/* WORDS TAB – new chapter/lesson navigation */}
           {activeTab === 'word' && (
@@ -683,9 +680,13 @@ export default function PageSelectionScreen() {
               <FadeSlideIn delay={40}>
                 <Text style={selection.sublabel}>Select a passage to read:</Text>
               </FadeSlideIn>
-              {passages.length > 0 ? (
+              {passagesLoading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#008443" />
+                </View>
+              ) : allPassages.length > 0 ? (
                 <FlatList
-                  data={passages}
+                  data={allPassages}
                   renderItem={renderPassageItem}
                   keyExtractor={(item, index) => index.toString()}
                   showsVerticalScrollIndicator={false}

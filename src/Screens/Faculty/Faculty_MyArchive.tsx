@@ -1,16 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, ActivityIndicator, FlatList, StyleSheet } from 'react-native';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, Image, TouchableOpacity, Alert, ActivityIndicator, FlatList, StyleSheet, Dimensions } from 'react-native';
 import { useNavigationHelper } from '../../Controller/NavigationController';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import upperNav from '../../UI_Designs/UpperNavigation';
 import LogoutModal from '../../Components/GlobalUse/Logout_Modal';
 import { getAuth } from '@react-native-firebase/auth';
-import { getFacultyClasses_Student } from '../../Hooks/use_FacultyClasses_Students';
 import { ClassDocument } from '../../Interfaces/dataInterfaces';
-import { unarchiveClass } from '../../Controller/AuthenticationController';
+import { useFocusEffect } from '@react-navigation/native';
+// ─── Added for studentIds/assignedClassIds source-of-truth refactor ────────
+// Archive view now fetched via getAssignedClasses (filtered by status='archived')
+// rather than the previous facultyId-only realtime listener.
+import { unarchiveClass, getAssignedClasses, deleteClassByFaculty } from '../../Controller/AuthenticationController';
+// ─── End ──────────────────────────────────────────────────────────────────
 import myClass from '../../UI_Designs/MyClassStyles';
 import facultyDashboard from '../../UI_Designs/FacultyDashboardStyles';
 import BubbleBackground from '../../Components/GlobalUse/BubbleBackground';
+import Svg, { Text as SvgText } from 'react-native-svg';
+import { Icon } from '../../Components/GlobalUse/Icon';
+import { sw } from '../../Utils/responsive';
+import { FacultyColors } from '../../Utilities/Theme';
 
 export default function MyArchive() {
   // ========================================================================
@@ -24,27 +32,35 @@ export default function MyArchive() {
   const [selectedClass, setSelectedClass] = useState<ClassDocument | null>(null);
   const [isUnarchiving, setIsUnarchiving] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const { handleLogout, handleClassStudents } = useNavigationHelper();
+  const { handleLogout, handleClassStudents, handleNextStep } = useNavigationHelper();
   const ignoreNextTouchRef = useRef(false);
   const currentUser = getAuth().currentUser;
 
   // ========================================================================
   // FETCH CLASSES
+  // ─── Modified for studentIds/assignedClassIds source-of-truth refactor ──
+  // One-shot fetch via assignedClassIds, then filter to archived. Manual
+  // refresh after unarchive to keep the list in sync.
+  // ─── End ────────────────────────────────────────────────────────────────
   // ========================================================================
-  useEffect(() => {
+  const fetchClasses = useCallback(async () => {
     if (!currentUser) return;
-
-    const unsubscribe =
-      getFacultyClasses_Student.getToFacultyClassesRealTime(
-        currentUser.uid,
-        classes => {
-          setClasses(classes.filter(c => c.status === 'archived'));
-          setLoading(false);
-        },
-      );
-
-    return unsubscribe;
+    try {
+      setLoading(true);
+      const all = await getAssignedClasses(currentUser.uid);
+      setClasses(all.filter(c => c.status === 'archived'));
+    } catch (error: any) {
+      console.error('Failed to fetch archived classes:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [currentUser]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchClasses();
+    }, [fetchClasses])
+  );
 
   // ========================================================================
   // EVENT HANDLER
@@ -89,8 +105,10 @@ export default function MyArchive() {
         px: number,
         py: number,
       ) => {
+        const screenWidth = Dimensions.get('window').width;
         setMenuPosition({
-          x: px - 100,
+          // Anchor right edge of menu to right edge of ellipsis button
+          x: screenWidth - (px + width),
           y: py + height,
         });
         setSelectedClass(item);
@@ -118,6 +136,9 @@ export default function MyArchive() {
             try {
               await unarchiveClass(classItem.classId);
               Alert.alert('Success', 'Class unarchived successfully');
+              // ─── Added for studentIds/assignedClassIds source-of-truth refactor ──
+              await fetchClasses();
+              // ─── End ─────────────────────────────────────────────────────────────
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to unarchive class');
             } finally {
@@ -140,7 +161,6 @@ export default function MyArchive() {
       style={[
         myClass.classCard,
         myClass.archivedClassCard, // Add archived card style
-        { marginTop: index === 0 ? 0 : 12 }
       ]}
       onPress={() => {
         if (ellipsisVisible) {
@@ -198,7 +218,6 @@ export default function MyArchive() {
     </TouchableOpacity>
   );
 
-
   const handleDeletePress = async (classItem: ClassDocument) => {
     Alert.alert(
       'Delete Class',
@@ -210,12 +229,18 @@ export default function MyArchive() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const result = await getFacultyClasses_Student.deleteClass(
+              // ─── Modified for studentIds/assignedClassIds source-of-truth refactor ──
+              // Uses deleteClassByFaculty (atomic batch: assignedClassIds + class doc).
+              // ─── End ───────────────────────────────────────────────────────────────
+              await deleteClassByFaculty(
                 classItem.classId,
+                currentUser?.uid || '',
               );
-              if (result.success) {
-                Alert.alert('Success', result.message);
-              }
+              Alert.alert(
+                'Success',
+                `Class "${classItem.className || classItem.classId}" deleted successfully.`,
+              );
+              await fetchClasses();
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to delete class');
             }
@@ -225,8 +250,6 @@ export default function MyArchive() {
       ],
     );
   };
-
-
 
   return (
     <SafeAreaView style={myClass.container}>
@@ -241,10 +264,35 @@ export default function MyArchive() {
         {/* BUBBLE DECORATIONS */}
         <BubbleBackground />
 
-
-        {/* HEADER */}
+        {/* UNIFIED HEADER ROW: spacer | SVG title | menu button */}
         <View style={facultyDashboard.header}>
-          <Text style={facultyDashboard.headerLogo}>CISC KIDS</Text>
+          {/* Left spacer balances the menu button so title is truly centered */}
+          <View style={{ width: 44 }} />
+
+          {/* SVG outlined title */}
+          <Svg height={56} width={220}>
+            {/* Stroke layer — outline effect */}
+            <SvgText
+              x={110} y={38} fontSize={24}
+              fontFamily="Satoshi-Black" textAnchor="middle"
+              fill="none"
+              stroke="#E8F5EE"
+              strokeWidth={8}
+              strokeLinejoin="round"
+            >
+              My Archive
+            </SvgText>
+            {/* Fill layer — drawn on top */}
+            <SvgText
+              x={110} y={38} fontSize={24}
+              fontFamily="Satoshi-Black" textAnchor="middle"
+              fill="#1B2B22"
+            >
+              My Archive
+            </SvgText>
+          </Svg>
+
+          {/* Right: hamburger menu button */}
           <TouchableOpacity
             style={facultyDashboard.menuBtn}
             onPress={() => setMenuVisible(v => !v)}
@@ -263,6 +311,15 @@ export default function MyArchive() {
               activeOpacity={1}
             />
             <View style={facultyDashboard.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setMenuVisible(false); handleNextStep('About'); }}
+                style={facultyDashboard.dropdownItem}
+                activeOpacity={0.75}
+              >
+                <Icon name="info" size={sw(20)} color={FacultyColors.slate} filled />
+                <Text style={facultyDashboard.dropdownTextAbout}>About</Text>
+              </TouchableOpacity>
+              <View style={facultyDashboard.dropdownDivider} />
               <TouchableOpacity
                 onPress={() => { setMenuVisible(false); setLogoutVisible(true); }}
                 style={facultyDashboard.dropdownItem}
@@ -296,7 +353,7 @@ export default function MyArchive() {
               <View
                 style={[
                   myClass.contextMenu,
-                  { top: menuPosition.y, left: menuPosition.x },
+                  { top: menuPosition.y, right: menuPosition.x },
                 ]}
                 pointerEvents="box-none"
               >
@@ -334,14 +391,6 @@ export default function MyArchive() {
               </View>
             </>
           )}
-
-          {/* HEADER SECTION */}
-          <View style={myClass.headerSection}>
-            <Text style={myClass.pageTitle}>My Archive</Text>
-            <Text style={myClass.pageSubtitle}>
-              Manage and organize your archived classes
-            </Text>
-          </View>
 
           {/* CLASS COUNT */}
           {classes.length > 0 && (
@@ -381,7 +430,6 @@ export default function MyArchive() {
               )}
             </View>
           </TouchableOpacity>
-
 
         </View>
       </View>

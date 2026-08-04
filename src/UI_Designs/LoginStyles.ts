@@ -132,6 +132,11 @@ const login = StyleSheet.create({
   inputIcon: {
     fontSize: sf(16),
   },
+  eyeIcon: {
+    width: sw(22),
+    height: sw(22),
+    tintColor: C.slate,
+  },
   input: {
     flex: 1,
     fontSize: sf(15),
@@ -145,11 +150,12 @@ const login = StyleSheet.create({
     maxWidth: sw(340),
     backgroundColor: C.green,
     borderRadius: sw(14),
-    paddingVertical: sh(16),
+    paddingVertical: sh(14),
+    paddingHorizontal: sw(16),
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: sh(8),
-    marginBottom: sh(24),
+    marginBottom: sh(10),
     shadowColor: C.greenDark,
     shadowOffset: { width: 0, height: sw(4) },
     shadowOpacity: 0.3,
@@ -214,6 +220,8 @@ const login = StyleSheet.create({
 
   // ========== SIGNUP BUTTONS ==========
   signupwithgooglebutton: {
+    width: "100%",
+    maxWidth: sw(340),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -221,13 +229,16 @@ const login = StyleSheet.create({
     borderRadius: sw(14),
     paddingVertical: sh(14),
     paddingHorizontal: sw(16),
+    marginTop: sw(20),
+    marginBottom: sh(10),
     borderWidth: 1.5,
     borderColor: C.border,
     shadowColor: C.greenDark,
-    shadowOffset: { width: 0, height: sw(2) },
-    shadowOpacity: 0.07,
-    shadowRadius: sw(4),
-    elevation: 2,
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.3,
+
+    shadowRadius: sw(8),
+    elevation: 5,
   },
   signupwithemailbutton: {
     alignItems: 'center',
@@ -264,8 +275,11 @@ const login = StyleSheet.create({
     fontFamily: 'Nunito-Medium',
     fontSize: sf(15),
   },
-  forgotpass: {
+  forgotpassTouchable: {
     alignSelf: 'flex-end',
+    marginTop: sh(8),
+  },
+  forgotpass: {
     marginBottom: sh(10),
     fontSize: sf(13),
     fontFamily: 'Nunito-Regular',
@@ -363,11 +377,86 @@ const login = StyleSheet.create({
     backgroundColor: C.disabled,
     opacity: 0.7,
   },
-  forgotPassButton: {
-    alignSelf: 'flex-end',
-    marginEnd: sw(25),
-    marginBottom: sh(10),
+  // ========== FORGOT PASSWORD MODAL ==========
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '85%',
+    maxWidth: sw(340),
+    backgroundColor: C.white,
+    borderRadius: sw(16),
+    padding: sw(24),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: sw(4) },
+    shadowOpacity: 0.15,
+    shadowRadius: sw(12),
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: sf(18),
+    fontFamily: 'Nunito-Bold',
+    color: C.ink,
+    marginBottom: sh(16),
+    textAlign: 'center',
+  },
+  modalDescription: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Medium',
+    color: C.inkLight,
+    marginBottom: sh(20),
+    textAlign: 'center',
+  },
+  modalInput: {
+    width: '100%',
+    backgroundColor: C.inputBg,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: sw(12),
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(12),
+    fontSize: sf(15),
+    fontFamily: 'Nunito-Medium',
+    color: C.ink,
+    marginBottom: sh(24),
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: sw(12),
+  },
+  modalCancelBtn: {
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(16),
+    borderRadius: sw(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Bold',
+    color: C.slate,
+  },
+  modalSendBtn: {
+    paddingVertical: sh(10),
+    paddingHorizontal: sw(20),
+    borderRadius: sw(10),
+    backgroundColor: C.green,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalSendBtnDisabled: {
+    backgroundColor: C.disabled,
+  },
+  modalSendText: {
+    fontSize: sf(14),
+    fontFamily: 'Nunito-Bold',
+    color: C.white,
   },
 });
 
 export default login;
+

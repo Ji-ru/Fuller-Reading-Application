@@ -70,8 +70,8 @@ interface GradeBenchmark {
 }
 
 const GRADE_BENCHMARKS: GradeBenchmark[] = [
-  { grade: 1, label: 'Grade 1', wpmMin: 53,  wpmMax: 82,  accMin: 90, accMax: 100 },
-  { grade: 2, label: 'Grade 2', wpmMin: 89,  wpmMax: 120, accMin: 92, accMax: 100 },
+  { grade: 1, label: 'Grade 1', wpmMin: 53, wpmMax: 82, accMin: 90, accMax: 100 },
+  { grade: 2, label: 'Grade 2', wpmMin: 89, wpmMax: 120, accMin: 92, accMax: 100 },
   { grade: 3, label: 'Grade 3', wpmMin: 107, wpmMax: 140, accMin: 94, accMax: 100 },
 ];
 
@@ -83,7 +83,7 @@ const getBenchmarkStatus = (value: number, min: number, max: number): BenchmarkS
 
 const BENCHMARK_CONFIG: Record<BenchmarkStatus, { label: string; color: string; bg: string; icon: string }> = {
   below: { label: 'Below Grade Level', color: '#EF4444', bg: '#FEE2E2', icon: '▼' },
-  at:    { label: 'At Grade Level',    color: '#F59E0B', bg: '#FEF3C7', icon: '●' },
+  at: { label: 'At Grade Level', color: '#F59E0B', bg: '#FEF3C7', icon: '●' },
   above: { label: 'Above Grade Level', color: '#10B981', bg: '#D1FAE5', icon: '▲' },
 };
 
@@ -101,6 +101,9 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
     chartData,
     loading,
     error,
+    grandTotalWords,
+    grandAccuracySum,
+    grandTotalMinutes,
   } = useAccuracyTrends(facultyId, {
     timeRange,
     filterType: isOverall ? 'overall' : 'class',
@@ -116,49 +119,53 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
   const calc = useMemo(() => {
     if (!hasData) return null;
 
-    const avgAccuracy = accuracyValues.reduce((s, v) => s + v, 0) / accuracyValues.length;
-    const avgWpm = wpmValues.length > 0 ? wpmValues.reduce((s, v) => s + v, 0) / wpmValues.length : 0;
+    // Phase 4: use words-weighted grand averages — consistent with per-bucket computation
+    const avgAccuracy = grandTotalWords > 0
+      ? Math.min(100, Math.max(0, grandAccuracySum / grandTotalWords))
+      : 0;
+    const avgWpm = grandTotalMinutes > 0
+      ? grandTotalWords / grandTotalMinutes
+      : 0;
     const maxWpm = Math.max(...wpmValues, 1);
 
-    // Trend calculation: compare average of first half vs second half (chronologically).
-    // Falls back to first-vs-last when there are fewer than 4 valid points.
+    // Trend: compare average of first half vs second half (chronologically).
+    // Falls back to first-vs-last when fewer than 4 valid points.
     const validData = chartData.filter(d => d.accuracy > 0);
     let accDelta = 0;
-    let accPct = 0;
     if (validData.length >= 4) {
       const mid = Math.floor(validData.length / 2);
-      const firstHalf = validData.slice(0, mid);
-      const secondHalf = validData.slice(mid);
-      const avgFirst = firstHalf.reduce((s, d) => s + d.accuracy, 0) / firstHalf.length;
-      const avgSecond = secondHalf.reduce((s, d) => s + d.accuracy, 0) / secondHalf.length;
+      const avgFirst = validData.slice(0, mid).reduce((s, d) => s + d.accuracy, 0) / mid;
+      const avgSecond = validData.slice(mid).reduce((s, d) => s + d.accuracy, 0) / (validData.length - mid);
       accDelta = avgSecond - avgFirst;
-      accPct = avgFirst ? (accDelta / avgFirst) * 100 : 0;
     } else if (validData.length >= 2) {
       accDelta = (validData.at(-1)?.accuracy ?? 0) - (validData[0]?.accuracy ?? 0);
-      accPct = validData[0]?.accuracy ? (accDelta / validData[0].accuracy) * 100 : 0;
     }
-    // Treat sub-1% drift as "stable" to avoid noise-driven labels
+    // Phase 5: ±1 percentage-point threshold — matches the unit shown in the UI
     const accDir: 'up' | 'down' | 'same' =
       accDelta > 1 ? 'up' : accDelta < -1 ? 'down' : 'same';
 
-    // Peak index
     const peakIdx = chartData.reduce(
       (maxI, item, i, arr) => (item.accuracy > arr[maxI].accuracy ? i : maxI), 0
     );
 
-    return { avgAccuracy, avgWpm, maxWpm, accDir, accPct, peakIdx };
-  }, [chartData, accuracyValues, wpmValues, hasData]);
+    return { avgAccuracy, avgWpm, maxWpm, accDir, accDelta, peakIdx };
+  }, [chartData, wpmValues, hasData, grandTotalWords, grandAccuracySum, grandTotalMinutes]);
 
   const trendColor = calc?.accDir === 'up' ? C.green : calc?.accDir === 'down' ? C.coral : C.inkLight;
   const trendIcon = calc?.accDir === 'up' ? '▲' : calc?.accDir === 'down' ? '▼' : '—';
   const wpmBenchmark = gradeLevel ? getBenchmarkForGrade(gradeLevel) : null;
+  // Phase 6: normalize against the larger of the observed max and the benchmark ceiling
+  // so the band remains visible even when all students are below grade level.
+  // When no benchmark is available, fall back to the observed max (original behavior).
+  const wpmNormMax = calc
+    ? Math.max(calc.maxWpm, (wpmBenchmark?.expectedMax ?? 0) * 1.1)
+    : 1;
   const wpmBand = wpmBenchmark && calc
     ? {
-        leftPct: Math.max(0, Math.min(100, (wpmBenchmark.expectedMin / calc.maxWpm) * 100)),
-        rightPct: Math.max(0, Math.min(100, (wpmBenchmark.expectedMax / calc.maxWpm) * 100)),
-      }
+      leftPct: Math.max(0, Math.min(100, (wpmBenchmark.expectedMin / wpmNormMax) * 100)),
+      rightPct: Math.max(0, Math.min(100, (wpmBenchmark.expectedMax / wpmNormMax) * 100)),
+    }
     : null;
-
 
   return (
     <View style={S.container}>
@@ -208,13 +215,13 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
               <Text style={S.summaryValue}>{calc!.avgWpm.toFixed(0)}</Text>
               <Text style={S.summaryLabel}>Avg WPM</Text>
             </View>
-            <View style={S.summaryDivider} />
+            {/* <View style={S.summaryDivider} />
             <View style={S.summaryItem}>
               <Text style={[S.summaryValue, { color: trendColor }]}>
-                {trendIcon} {Math.abs(calc!.accPct).toFixed(1)}%
+                {trendIcon} {Math.abs(calc!.accDelta).toFixed(1)} pts
               </Text>
               <Text style={S.summaryLabel}>Trend</Text>
-            </View>
+            </View> */}
           </View>
 
           {/* Legend */}
@@ -230,7 +237,7 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
           </View>
 
           {/* Grade-level benchmark card */}
-          {(() => {
+          {/* {(() => {
             const benchmark = gradeLevel
               ? GRADE_BENCHMARKS.find(b => b.grade === gradeLevel) ?? null
               : null;
@@ -273,14 +280,14 @@ const AccuracyTrendsChart: React.FC<AccuracyTrendsChartProps> = ({
                 </View>
               </View>
             );
-          })()}
+          })()} */}
 
           {/* Horizontal Bar Breakdown */}
           <View style={S.breakdownCard}>
             {chartData.map((item, index) => {
               const isPeak = index === calc!.peakIdx && item.accuracy > 0;
               const accWidth = item.accuracy; // 0-100
-              const wpmWidth = calc!.maxWpm > 0 ? (item.wpm / calc!.maxWpm) * 100 : 0;
+              const wpmWidth = wpmNormMax > 0 ? (item.wpm / wpmNormMax) * 100 : 0;
               const isLast = index === chartData.length - 1;
 
               return (

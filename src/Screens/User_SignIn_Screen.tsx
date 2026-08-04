@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Keyboard,
+  Modal,
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Video from 'react-native-video';
@@ -20,19 +21,32 @@ import Video from 'react-native-video';
 // Styles
 import login from '../UI_Designs/LoginStyles';
 
+import AlertModal from '../Components/GlobalUse/Modal/AlertModal';
+
 // Controllers (Hooks)
 import { useNavigationHelper } from '../Controller/NavigationController';
-import { loginUser } from '../Controller/AuthenticationController';
+import { loginUser, sendPasswordResetEmail } from '../Controller/AuthenticationController';
 import { initiateGoogleSignUp } from '../Utilities/googleAuthUtils';
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
+
+  // Forgot Password State
+  const [forgotPasswordVisible, setForgotPasswordVisible] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+
+  // Alert Modal State
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   // Rate limiting & Network Resilience States
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -144,27 +158,20 @@ export default function LoginScreen() {
     } catch (error: any) {
       if (!isMounted.current) return;
 
-      let errorMessage = 'Login failed. Please try again.';
       const newAttempts = failedAttempts + 1;
-
       setFailedAttempts(newAttempts);
-      if (newAttempts >= 3) {
-        setLockoutTimer(15); // 15-second lockout
-      }
 
-      const rawMsg = error.message.toLowerCase();
-      if (rawMsg.includes('user-not-found')) errorMessage = 'No account found with this email.';
-      else if (rawMsg.includes('wrong-password')) errorMessage = 'Incorrect password. Please try again.';
-      else if (rawMsg.includes('too-many-requests')) {
-        errorMessage = 'Too many failed attempts. Please try again later.';
-        if (newAttempts < 3) { setFailedAttempts(3); setLockoutTimer(30); } // Harder lockout if Firebase triggers
+      let errorMessage = error.message || 'Login failed. Please try again.';
+
+      if (error.message?.includes('timeout-error')) {
+        errorMessage = 'Connection timed out. Please check your internet connection and try again.';
+      } else if (error.code === 'auth/too-many-requests') {
+        setFailedAttempts(Math.max(newAttempts, 3));
+        setLockoutTimer(30);
+      } else if (newAttempts >= 3) {
+        setLockoutTimer(15);
+        errorMessage = 'Too many failed attempts. Please wait 15 seconds before trying again.';
       }
-      else if (rawMsg.includes('user-disabled')) errorMessage = 'This account has been disabled.';
-      else if (rawMsg.includes('invalid-email')) errorMessage = 'Invalid email address.';
-      else if (rawMsg.includes('network-request-failed')) errorMessage = 'Network error. Please check your internet connection.';
-      else if (rawMsg.includes('invalid-credential')) errorMessage = 'Invalid email or password. Please try again.';
-      else if (rawMsg.includes('timeout-error')) errorMessage = 'Connection timed out. Please check your internet connection and try again.';
-      else errorMessage = error.message || 'Invalid email or password.';
 
       setAuthError(errorMessage);
     } finally {
@@ -217,6 +224,27 @@ export default function LoginScreen() {
       }
     } finally {
       if (isMounted.current) setGoogleLoading(false);
+    }
+  };
+
+  // ── Forgot Password ────────────────────────────────────────────────────────
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail.trim() || !isValidEmail(forgotPasswordEmail.trim())) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+    setForgotPasswordLoading(true);
+    try {
+      await sendPasswordResetEmail(forgotPasswordEmail.trim());
+      setAlertTitle('Success');
+      setAlertMessage('A password reset link has been sent to your email. Please check your spam folder as the link may be sent there.');
+      setAlertVisible(true);
+      setForgotPasswordVisible(false);
+      setForgotPasswordEmail('');
+    } catch (error: any) {
+      Alert.alert('Error', error?.message || 'Failed to send password reset email. Please try again.');
+    } finally {
+      if (isMounted.current) setForgotPasswordLoading(false);
     }
   };
 
@@ -298,7 +326,7 @@ export default function LoginScreen() {
                   </View>
                   <TextInput
                     style={login.input}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     placeholder="••••••••"
                     placeholderTextColor="#D1D5DB"
                     value={password}
@@ -310,7 +338,24 @@ export default function LoginScreen() {
                     returnKeyType="done"
                     onSubmitEditing={handleLogin}
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    disabled={loading}
+                  >
+                    <Image
+                      source={showPassword
+                        ? require('../../assets/icons/EyesClose-icon.png')
+                        : require('../../assets/icons/EyesOpen-icon.png')}
+                      style={login.eyeIcon}
+                    />
+                  </TouchableOpacity>
                 </View>
+                <TouchableOpacity 
+                  onPress={() => setForgotPasswordVisible(true)}
+                  style={login.forgotpassTouchable}
+                >
+                  <Text style={login.forgotpass}>Forgot Password?</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Login Button */}
@@ -331,7 +376,21 @@ export default function LoginScreen() {
                   </Text>
                 )}
               </TouchableOpacity>
-
+              {/* <TouchableOpacity
+                    style={login.signupwithgooglebutton}
+                    onPress={() => {
+                      dismissKeyboard();
+                      handleGoogleSignUp()
+                    }}
+                    activeOpacity={0.7}
+                    disabled={loading || googleLoading}
+                  >
+                    <Image
+                      style={login.googleimage}
+                      source={require('../../assets/images/Google-icon.png')}
+                    />
+                    <Text style={login.registerText}>Continue with Google</Text>
+                  </TouchableOpacity> */}
               {/* Divider */}
               <View style={login.dividerContainer}>
                 <View style={login.dividerLine} />
@@ -346,22 +405,6 @@ export default function LoginScreen() {
                 </Text>
 
                 <View style={login.registerButtonsContainer}>
-                  <TouchableOpacity
-                    style={login.signupwithgooglebutton}
-                    onPress={() => {
-                      dismissKeyboard();
-                      handleGoogleSignUp()
-                    }}
-                    activeOpacity={0.7}
-                    disabled={loading || googleLoading}
-                  >
-                    <Image
-                      style={login.googleimage}
-                      source={require('../../assets/images/Google-icon.png')}
-                    />
-                    <Text style={login.registerText}>Continue with Google</Text>
-                  </TouchableOpacity>
-
                   <TouchableOpacity
                     style={login.signupwithemailbutton}
                     onPress={() => {
@@ -380,6 +423,59 @@ export default function LoginScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
+
+      {/* Forgot Password Modal */}
+      <Modal visible={forgotPasswordVisible} transparent animationType="fade">
+        <View style={login.modalBackdrop}>
+          <View style={login.modalContainer}>
+            <Text style={login.modalTitle}>Forgot Password</Text>
+            <Text style={login.modalDescription}>
+              Enter your email address and we'll send you a link to reset your password.
+            </Text>
+            <TextInput
+              style={login.modalInput}
+              placeholder="example@gmail.com"
+              placeholderTextColor="#A5B8A7"
+              value={forgotPasswordEmail}
+              onChangeText={setForgotPasswordEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!forgotPasswordLoading}
+            />
+            <View style={login.modalActions}>
+              <TouchableOpacity
+                style={login.modalCancelBtn}
+                onPress={() => {
+                  setForgotPasswordVisible(false);
+                  setForgotPasswordEmail('');
+                }}
+                disabled={forgotPasswordLoading}
+              >
+                <Text style={login.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[login.modalSendBtn, forgotPasswordLoading && login.modalSendBtnDisabled]}
+                onPress={handleForgotPassword}
+                disabled={forgotPasswordLoading}
+              >
+                {forgotPasswordLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={login.modalSendText}>Send Link</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <AlertModal
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </SafeAreaProvider>
   );
 }

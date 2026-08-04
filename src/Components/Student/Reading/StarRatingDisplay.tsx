@@ -55,7 +55,6 @@ export const StarRatingDisplay: React.FC<StarRatingDisplayProps> = ({
       },
     );
 
-
     // sadRef.current = new Sound(
     //   require('../../../../assets/sfx/sad.wav'),
     //   error => {
@@ -91,7 +90,6 @@ export const StarRatingDisplay: React.FC<StarRatingDisplayProps> = ({
         celebrationRef.current?.setVolume(1.0);
         celebrationRef.current?.play();
       });
-
 
         setTimeout(() => {
           crowdRef.current?.stop();

@@ -51,6 +51,8 @@ interface MiscueInsightsProps {
   startDate?: Date;
   /** Optional explicit end of the date range. */
   endDate?: Date;
+  /** Optional prefetched miscue reports to prevent redundant Firebase queries */
+  prefetchedReports?: any[];
 }
 
 const MISCUE_COLORS: Record<string, { bar: string; bg: string }> = {
@@ -75,26 +77,26 @@ const getMiscueLabel = (type: string, role: string): string => {
   return type; // faculty or any other role → technical term
 };
 
-const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId, role = 'faculty', timeRange: externalTimeRange, anchor, startDate, endDate }) => {
+const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId, role = 'faculty', timeRange: externalTimeRange, anchor, startDate, endDate, prefetchedReports }) => {
   const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>('week');
   const timeRange = externalTimeRange ?? internalTimeRange;
 
   const {
     miscueData,
-    total,
-    loading: miscueLoading,
-    error: miscueError,
-  } = useStudentMiscueStats(studentId, timeRange, anchor, startDate, endDate);
+    total: totalMiscues,
+    loading: loadingStats,
+    error: errorStats,
+  } = useStudentMiscueStats(studentId, timeRange, anchor, startDate, endDate, prefetchedReports);
 
   const {
     topPassage,
     topWords,
-    loading: topLoading,
-    error: topError,
-  } = useStudentTopMiscuePassageAndWords(studentId, timeRange, anchor, startDate, endDate);
+    loading: loadingWords,
+    error: errorWords,
+  } = useStudentTopMiscuePassageAndWords(studentId, timeRange, anchor, startDate, endDate, prefetchedReports);
 
-  const loading = miscueLoading || topLoading;
-  const error = miscueError || topError;
+  const loading = loadingStats || loadingWords;
+  const error = errorStats || errorWords;
 
   const isCustomRange = !!(startDate && endDate);
   const rangeLabel = isCustomRange
@@ -149,9 +151,9 @@ const StudentMiscueInsights: React.FC<MiscueInsightsProps> = ({ studentId, role 
       {/* ── Section 1: Miscue Type Breakdown ────────────────────── */}
       <View style={S.sectionCard}>
         <Text style={S.sectionTitle}>Common Miscue Types</Text>
-        <Text style={S.sectionSubtitle}>{rangeLabel} · {total} total miscues</Text>
+        <Text style={S.sectionSubtitle}>{rangeLabel} · {totalMiscues} total miscues</Text>
 
-        {total === 0 ? (
+        {totalMiscues === 0 ? (
           <View style={S.emptyBox}>
             <Text style={S.emptyText}>No miscues recorded for this period 🎉</Text>
           </View>
